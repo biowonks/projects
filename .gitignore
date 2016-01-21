@@ -1,0 +1,6 @@
+node_modules/
+config.local.js
+gulp
+mocha
+boiler-node-api.sublime-project
+boiler-node-api.sublime-workspace

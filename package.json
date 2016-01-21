@@ -1,0 +1,41 @@
+{
+  "name": "boiler-node-api",
+  "version": "0.0.1",
+  "description": "API description",
+  "private": true,
+  "main": "index.js",
+  "repository": {},
+  "scripts": {
+    "test": "npm test"
+  },
+  "author": "Luke Ulrich",
+  "license": "",
+  "dependencies": {
+    "bluebird": "2.x",
+    "body-parser": "1.x",
+    "bunyan": "1.x",
+    "corser": "2.x",
+    "debug": "2.x",
+    "express": "4.x",
+    "lazy.js": "0.x",
+    "lodash": "3.x",
+    "moment": "2.x",
+    "pg": "4.x",
+    "pg-hstore": "2.x",
+    "sequelize": "3.x",
+    "umzug": "1.x",
+    "universal-analytics": "0.3.x"
+  },
+  "devDependencies": {
+    "chai": "2.x",
+    "commander": "2.x",
+    "eslint": "0.22.x",
+    "gulp": "3.x",
+    "gulp-eslint": "0.12.x",
+    "gulp-util": "3.x",
+    "mocha": "2.x",
+    "sinon": "^1.14.1",
+    "supertest": "1.x",
+    "supertest-as-promised": "2.x"
+  }
+}

@@ -1,0 +1,23 @@
+// --------------------------------------------------------
+Most every web application / API will need its communications to be secured via
+SSL.
+
+Reference: https://knowledge.rapidssl.com/support/ssl-certificate-support/index?page=content&actp=CROSSLINK&id=SO17540
+
+* Order a SSL certificate from your vendor of choice (e.g. cheapsslsecurity.com)
+* Generate a CSR (certificate signing request)
+  - From existing key:
+
+    $ openssl req -new -key releto.privatekey.pem -out releto.csr
+
+    Note: Include www. for the FQDN as this may be used for both the domains wih
+      and without the www.
+
+* Upload the CSR to the SSL cert store
+* They will mail out the certificate
+* Concatenate the primary and intermediate certificates
+* Install in nginx
+* Restart nginx
+
+## SSL Security
+Use (SSL Labs)[https://www.ssllabs.com/ssltest/] to test if the SSL is secure.
