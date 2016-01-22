@@ -58,4 +58,49 @@
   * average protein length, stddev
   * ...
 
-To manage and track the processing status ... 
+## Configuration
+
+All configuration will be stored in config.js under the pipeline section:
+
+``` javascript
+{
+	pipeline: {
+        hearbeat: {
+            maxChildDelay
+        },
+        paths: {
+            root: '.',
+            tmp: 'tmp',
+            data: 'data',
+            genomes: 'data/genomes',
+            scripts: 'scripts',
+            logs: 'logs'
+        }
+	}
+}
+```
+
+## Downloading assembly summaries and loading new genomes into the database
+
+scripts/enqueueNewGenomes.js
+
+* downloads new assembly reports into tmp directory
+* parse into rows
+* insert into genomes_queue where refseq_assembly_accession if not exists
+* Does not update existing genome records
+
+To manage and track the processing status ...
+
+status = {
+	active
+	last_heartbeat: timestamp
+	stage1: {
+		download,
+		parse,
+
+		done: false
+	}
+}
+
+Download -> add into genomes table where assembly accession is not found with stage1.done = false
+

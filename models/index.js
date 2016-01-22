@@ -25,21 +25,18 @@ var fs = require('fs'),
 	path = require('path');
 
 var _ = require('lodash'),
-	inflection = require('inflection');
+	inflection = require('inflection'),
+	Sequelize = require('sequelize');
 
-module.exports = function(app, Sequelize) {
-	var models = loadModels(app, Sequelize);
-	require(path.resolve(__dirname, '_associations'))(models, app.get('logger'));
+module.exports = function(sequelize, logger) {
+	var models = loadModels(sequelize, logger);
+	require(path.resolve(__dirname, '_associations'))(models, logger);
 	return models;
 };
 
 // ----------------------------------------------------------------------------
-function loadModels(app, Sequelize) {
-	if (!app)
-		throw new Error('Missing app argument!');
-
-	var logger = app.get('logger'),
-		models = {};
+function loadModels(sequelize, logger) {
+	var models = {};
 
 	logger.info('Loading models');
 
@@ -49,7 +46,7 @@ function loadModels(app, Sequelize) {
 			modelName = nameForDefinition(definition, modelFileName);
 		setupDefinition(definition, modelName);
 
-		var model = models[modelName] = app.get('sequelize').define(modelName, definition.fields, definition.params);
+		var model = models[modelName] = sequelize.define(modelName, definition.fields, definition.params);
 
 		logger.info('Loaded model:', modelName, '(' + definition.params.tableName + ')');
 	});

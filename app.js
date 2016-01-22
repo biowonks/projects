@@ -4,12 +4,10 @@ var	cluster = require('cluster'),
 	corser = require('corser'),
 	express = require('express'),
 	bodyParser = require('body-parser'),
-	path = require('path'),
-	Umzug = require('umzug'),
-	Promise = require('bluebird'),
-	Sequelize = require('sequelize');
+	path = require('path');
 
 var config = require('./config'),
+	dbSetup = require('./db-setup'),
 	errorHandler = require('./lib/error-handler'),
 	toolbag = require('./lib/toolbag'),
 	pathRoutify = require('./lib/path-routify'),
@@ -35,7 +33,7 @@ module.exports = function() {
 	app.set('logger', logger);
 	app.set('toolbag', toolbag);
 
-	return setupDatabase()
+	return dbSetup(config, logger)
 	.catch(function(error) {
 		// If unable to connect to the database, then the app has failed. Tell the master to close
 		// it down.
@@ -43,9 +41,11 @@ module.exports = function() {
 		logger.fatal('Unable to setup database: ' + error.message);
 		process.send('error db');
 	})
-	.then(function() {
+	.then(function(sequelize) {
 		if (failedSetup)
 			return;
+
+		app.set('sequelize', sequelize);
 
 		if (config.routing.ssl) {
 			logger.info('Forcing all requests to use SSL');
@@ -58,7 +58,7 @@ module.exports = function() {
 		app.use(addVersionToResponse);
 		app.use(bodyParser.json());
 
-		app.set('models', require('./models')(app, Sequelize));
+		app.set('models', require('./models')(sequelize, logger));
 		app.set('services', require('./services')(app));
 
 		pathRoutify(app, path.resolve('./routes'), config.routing.prefix);
@@ -147,75 +147,6 @@ module.exports = function() {
 			methods: ['GET', 'POST', 'PUT', 'DELETE'],
 			requestHeaders: corser.simpleRequestHeaders.concat([config.headerNames.apiToken]),
 			responseHeaders: corser.simpleResponseHeaders.concat([config.headerNames.version])
-		});
-	}
-
-	// --------------------------------------------------------
-	// Utility functions
-	function setupDatabase() {
-		var dbConfig = config.database;
-		if (!dbConfig.enabled)
-			return Promise.resolve();
-
-		logger.info('Validating database connection');
-
-		if (!dbConfig.name) {
-			logger.fatal('Invalid database configuration: missing database name');
-			return Promise.reject(new Error('Database enabled, but missing configuration (name)'));
-		}
-
-		var sequelize,
-			umzug;
-
-		try {
-			sequelize = new Sequelize(dbConfig.name, dbConfig.user, dbConfig.password, dbConfig.sequelizeOptions);
-		}
-		catch (error) {
-			return Promise.reject(error);
-		}
-
-		app.set('sequelize', sequelize);
-
-		return sequelize.authenticate()
-		.catch(function(error) {
-			logger.fatal('Unable to authenticate with database: ' + error.message);
-			throw error;
-		})
-		.then(function() {
-			logger.info('Successfully connected to database');
-
-			var options = config.migrations.umzug;
-
-			// Assign sequelize instance to the umzug engine if relevant
-			if (options.storage === 'sequelize') {
-				var DataTypes = sequelize.constructor,
-					migration = sequelize.getQueryInterface();
-
-				options.storageOptions.sequelize = sequelize;
-				options.migrations.params = [migration, DataTypes];
-			}
-
-			umzug = new Umzug(options);
-			return umzug.pending();
-		})
-		.then(function(migrations) {
-			if (!migrations.length)
-				return null;
-
-			logger.info('Running migrations');
-
-			return umzug.up()
-			.then(function(finishedMigrations) {
-				finishedMigrations.forEach(function(migration) {
-					logger.info({sqlFile: migration.file}, '  >> ' + migration.file);
-				});
-
-				logger.info('Migrations complete');
-			})
-			.catch(function(error) {
-				logger.fatal('Unable to perform migrations: ' + error.message);
-				throw error;
-			});
 		});
 	}
 };
