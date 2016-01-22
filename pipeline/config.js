@@ -27,10 +27,10 @@ module.exports = {
 					url: 'ftp://ftp.ncbi.nih.gov/genomes/refseq/archaea/assembly_summary.txt',
 					filename: 'archaea-assembly-summary.tsv'
 				},
-				// {
-				// 	url: 'ftp://ftp.ncbi.nih.gov/genomes/refseq/bacteria/assembly_summary.txt',
-				// 	filename: 'bacteria-assembly-summary.tsv'
-				// }
+				{
+					url: 'ftp://ftp.ncbi.nih.gov/genomes/refseq/bacteria/assembly_summary.txt',
+					filename: 'bacteria-assembly-summary.tsv'
+				}
 			]
 		}
 	},

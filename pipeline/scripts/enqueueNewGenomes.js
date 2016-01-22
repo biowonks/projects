@@ -131,16 +131,28 @@ class Enqueuer {
 				columns: true,
 				delimiter: '\t',
 				trim: true,
+				relax: true,
 				skip_empty_lines: true,
-				auto_parse: true,
-				auto_parse_date: true
+				auto_parse: true
 			})
 
-			fs.createReadStream(file)
+			let stream = fs.createReadStream(file)
 			.pipe(parser)
 			.on('error', reject)
 			.on('data', (row) => {
+				stream.pause()
 				this.insertGenome_(this.genomeDataFromRow_(row))
+				.then((genome) => {
+					if (genome) {
+						this.logger_.info('Enqueued new genome: ' + genome.name, {name: genome.name, refseq_assembly_accession: genome.refseq_assembly_accession})
+					}
+
+					stream.resume()
+				})
+				.catch((error) => {
+					stream.end()
+					reject(error)
+				})
 			})
 			.on('end', () => {
 				resolve()
@@ -183,7 +195,34 @@ class Enqueuer {
 	}
 
 	insertGenome_(genome) {
-		
+		return this.sequelize_.transaction((t) => {
+			return Promise.all([
+				this.existsInGenomes_(genome.refseq_assembly_accession, t),
+				this.alreadyQueued_(genome.refseq_assembly_accession, t)
+			])
+			.spread((existsInGenomes, alreadyQueued) => {
+				if (existsInGenomes || alreadyQueued)
+					return
+
+				return this.models_.GenomeQueue.create(genome)
+			})
+		})
+	}
+
+	existsInGenomes_(refseq_assembly_accession, t) {
+		return this.models_.Genome.find({
+			where: {
+				refseq_assembly_accession: refseq_assembly_accession
+			}
+		})
+	}
+
+	alreadyQueued_(refseq_assembly_accession, t) {
+		return this.models_.GenomeQueue.find({
+			where: {
+				refseq_assembly_accession: refseq_assembly_accession
+			}
+		})
 	}
 }
 

@@ -3,7 +3,6 @@
 module.exports = function(Sequelize, models) {
 	var fields = {
 		refseq_assembly_accession: {
-			primaryKey: true,
 			type: Sequelize.TEXT,
 			allowNull: false,
 			validate: {
@@ -58,17 +57,42 @@ module.exports = function(Sequelize, models) {
 		name: {
 			type: Sequelize.TEXT
 		},
-		locked: {
-			type: Sequelize.BOOLEAN,
-			allowNull: false,
-			defaultValue: false
+		superkingdom: {
+			type: Sequelize.TEXT
+		},
+		phylum: {
+			type: Sequelize.TEXT
+		},
+		class: {
+			type: Sequelize.TEXT
+		},
+		orderr: {
+			type: Sequelize.TEXT
+		},
+		family: {
+			type: Sequelize.TEXT
+		},
+		genus: {
+			type: Sequelize.TEXT
+		},
+		species: {
+			type: Sequelize.TEXT
+		},
+		strain: {
+			type: Sequelize.TEXT
+		},
+		taxonomic_group: {
+			type: Sequelize.TEXT
+		},
+		stats: {
+			type: Sequelize.JSONB
+		},
+		status: {
+			type: Sequelize.JSONB
 		}
 	}
 
 	return {
-		fields: fields,
-		params: {
-			tableName: 'genomes_queue'
-		}
+		fields: fields
 	}
 }
