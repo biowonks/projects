@@ -78,6 +78,8 @@ class Stage1Master {
 		if (signal || code !== 0) {
 			this.logger_.error(`Worker failure; signal: ${signal}, code: ${code}`, genome.toJSON())
 			this.increaseTries(genome.refseq_assembly_accession)
+			if (this.genomeTries_[genome.refseq_assembly_accession] >= this.masterConfig_.maxTriesPerGenome)
+				this.logger_.info('Too many failures for genome: ' + genome.name, genome.toJSON())
 		}
 		else {
 			// Worker exited without error

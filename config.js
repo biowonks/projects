@@ -137,7 +137,7 @@ mergeOptionalConfigFile('config.local');
 function mergeOptionalConfigFile(configFile) {
 	try {
 		_.merge(config, require('./' + configFile));
-		console.log('[Merged configuration]', configFile);	// eslint-disable-line no-console
+		// console.log('[Merged configuration]', configFile);	// eslint-disable-line no-console
 	}
 	catch(error) {
 		if (error.code === 'MODULE_NOT_FOUND')
