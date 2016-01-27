@@ -33,26 +33,30 @@
 
 ## Stages of a genome processing
 
+### Kick off
+
 * Download assembly summaries
 * Find new genomes
 * Insert new genomes
+
+### Stage 1
 * Download raw data files from the NCBI FTP site
 * Build core table data
   * aseqs
   * gseqs
 * Predict derived data
   * aseqs
-    * pfam domains
-    * agfam domains
-    * ecf domains
-    * das
-    * seg
-    * coils
-    * signal peptides?
+	* pfam domains
+	* agfam domains
+	* ecf domains
+	* das
+	* seg
+	* coils
+	* signal peptides?
   * genome
-    * gene clusters
+	* gene clusters
   * signal transduction
-    * tcp sets
+	* tcp sets
 * Statistical data
   * average gene length, stddev
   * average protein length, stddev
@@ -65,17 +69,17 @@ All configuration will be stored in config.js under the pipeline section:
 ``` javascript
 {
 	pipeline: {
-        hearbeat: {
-            maxChildDelay
-        },
-        paths: {
-            root: '.',
-            tmp: 'tmp',
-            data: 'data',
-            genomes: 'data/genomes',
-            scripts: 'scripts',
-            logs: 'logs'
-        }
+		hearbeat: {
+			maxChildDelay
+		},
+		paths: {
+			root: '.',
+			tmp: 'tmp',
+			data: 'data',
+			genomes: 'data/genomes',
+			scripts: 'scripts',
+			logs: 'logs'
+		}
 	}
 }
 ```
@@ -88,6 +92,19 @@ scripts/enqueueNewGenomes.js
 * parse into rows
 * insert into genomes_queue where refseq_assembly_accession if not exists
 * Does not update existing genome records
+
+## Stage 1
+
+### Bootstrapping
+Each stage 1 script instance begins by looking for previous script instances that failed. If one is found, it attempts to resume that analysis. If none is found, the first genome that where status is null in the genomes_queue table is analyzed next.
+
+Each script may be executed independently and in parallel with others. Database row locking is used to prevent multiple instances from analyzing the same genome. If an instance crashes, an attempt will be made to update its status and reason for the crash in the database. Moreover, the empty file, CRASHED, will be attempted to be written to the root work folder. Scripts that resume this project should reset the status to a fresh state by updating the database and removing the CRASHED file if present.
+
+In the event of a power failure, ...
+
+### A) Download core data files
+* 
+
 
 To manage and track the processing status ...
 

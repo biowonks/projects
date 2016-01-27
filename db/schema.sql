@@ -8,7 +8,7 @@ create table id_sequences (
 );
 
 -----------------------------------------------------------
--- Manage seqeuence-specific features in a source-agnostic manner (ala SeqDepot)
+-- Manage sequence-specific features in a source-agnostic manner (ala SeqDepot)
 create table gseqs (
 	id text not null primary key,
 	length integer not null,
@@ -45,8 +45,6 @@ create table genomes_queue (
 	ftp_path text,
 
 	name text not null,
-
-	locked boolean not null default false,
 
 	created_at timestamp with time zone not null default now(),
 	updated_at timestamp with time zone not null default now(),

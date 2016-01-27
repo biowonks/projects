@@ -45,5 +45,15 @@ module.exports = {
 			errFile: path.resolve(__dirname, 'logs', 'enqueuer.err')
 		},
 		summaryDuration: moment.duration(1, 'day')
+	},
+
+	stage1: {
+		master: {
+			numWorkers: 2,
+			// Amount to delay when kicking off parallel slaves
+			interSlaveDelayMs: 1000,
+			errFile: path.resolve(__dirname, 'logs', 'stage1-master.err'),
+			maxTriesPerGenome: 2
+		}
 	}
 }

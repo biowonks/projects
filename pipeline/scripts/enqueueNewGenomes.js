@@ -18,8 +18,7 @@
 'use strict';
 
 // Core node libraries
-let exec = require('child_process').exec,
-	fs = require('fs'),
+let fs = require('fs'),
 	path = require('path')
 
 // 3rd-party libraries
