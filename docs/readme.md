@@ -100,6 +100,15 @@ Each stage 1 script instance begins by looking for previous script instances tha
 
 Each script may be executed independently and in parallel with others. Database row locking is used to prevent multiple instances from analyzing the same genome. If an instance crashes, an attempt will be made to update its status and reason for the crash in the database. Moreover, the empty file, CRASHED, will be attempted to be written to the root work folder. Scripts that resume this project should reset the status to a fresh state by updating the database and removing the CRASHED file if present.
 
+If for some reason, the CRASHED file exists but is out of sync with the database, 
+
+Ways to check if a genome has crashed:
+1. Is the script running with the refseq assembly accession somehow "visible" in the command line parameters.
+2. status is crashed
+3. CRASHED file exists in work folder
+
+Perhaps the best approach is to use a master script that kicks off slave scripts with the accession as a command line parameter. Only one master script may be running at any given time.
+
 In the event of a power failure, ...
 
 ### A) Download core data files

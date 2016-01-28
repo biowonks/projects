@@ -10,6 +10,7 @@ let Promise = require('bluebird'),
 // Local includes
 let mutil = require('../lib/mutil')
 
+module.exports =
 class NCBIDataHelper {
 	constructor(fileNameMapper, logger) {
 		this.fileNameMapper_ = fileNameMapper
@@ -165,5 +166,3 @@ class NCBIDataHelper {
 		return [md5, fileName]
 	}
 }
-
-module.exports = NCBIDataHelper

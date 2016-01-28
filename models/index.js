@@ -46,6 +46,8 @@ function loadModels(sequelize, logger) {
 			modelName = nameForDefinition(definition, modelFileName);
 		setupDefinition(definition, modelName);
 
+		// injectGlobalModelMethods(definition, modelName, sequelize);
+
 		var model = models[modelName] = sequelize.define(modelName, definition.fields, definition.params);
 
 		logger.info('Loaded model:', modelName, '(' + definition.params.tableName + ')');
@@ -96,3 +98,18 @@ function setupDefinition(definition, modelName) {
 function defaultTableName(modelName) {
 	return inflection.underscore(inflection.pluralize(modelName));
 }
+
+// function injectGlobalModelMethods(definition, modelName, sequelize) {
+// 	if (!definition.params)
+// 		definition.params = {};
+// 	if (!definition.params.classMethods)
+// 		definition.params.classMethods = {};
+
+// 	if ('sequelize' in definition.params.classMethods)
+// 		throw new Error(`${modelName} definition error: classMethods.sequelize is a reserved global method name`)
+
+// 	// TODO: Rename this!
+// 	definition.params.classMethods.sequelize = function() {
+// 		return sequelize;
+// 	};
+// }

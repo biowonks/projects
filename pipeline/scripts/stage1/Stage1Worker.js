@@ -6,8 +6,9 @@ let fs = require('fs'),
 
 // Local includes
 let mutil = require('../lib/mutil'),
+	FileNameMapper = require('./FileNameMapper'),
 	NCBIDataHelper = require('./NCBIDataHelper'),
-	FileNameMapper = require('./FileNameMapper')
+	CoreDataBuilder = require('./CoreDataBuilder')
 
 class Stage1Worker {
 	constructor(config, logger) {
@@ -15,10 +16,13 @@ class Stage1Worker {
 		this.logger_ = logger.child({role: 'worker'})
 		this.sequelize_ = null
 		this.models_ = null
-		this.fileNameMapper_ = new FileNameMapper(config)
-		this.ncbiDataHelper_ = null
+
 		this.refseqAssemblyAccession_ = null
 		this.genome_ = null
+
+		this.fileNameMapper_ = new FileNameMapper(config)
+		this.ncbiDataHelper_ = null
+		this.coreDataBuilder_ = null
 
 		process.on('message', this.onMessage.bind(this))
 	}
@@ -87,7 +91,13 @@ class Stage1Worker {
 	main() {
 		this.ncbiDataHelper_.downloadAll()
 		.then(() => {
-			this.logger_.info('Download complete!')
+			this.logger_.info('Download complete')
+
+			this.coreDataBuilder_ = new CoreDataBuilder(this.fileNameMapper_, this.logger_)
+			return this.coreDataBuilder_.main()
+		})
+		.then(() => {
+			this.logger_.info('Core data complete')
 		})
 		.catch((error) => {
 			if (error) {

@@ -93,6 +93,13 @@ module.exports = function(Sequelize, models) {
 	}
 
 	return {
-		fields: fields
+		fields: fields,
+		params: {
+			classMethods: {
+				sequenceName: function() {
+					return 'genomes'
+				}
+			}
+		}
 	}
 }
