@@ -2,6 +2,7 @@
 
 // Core node libraries
 let child_process = require('child_process'),
+	crypto = require('crypto'),
 	fs = require('fs'),
 	path = require('path'),
 	temp = require('temp')
@@ -31,6 +32,10 @@ exports.initORM = function(config, logger) {
 		})
 }
 
+/**
+ * Uses wget to fetch files which is programmed to retry up to 20x by default. Thus,
+ * no need to check / retry multiple times.
+ */
 exports.download = function(url, optDestFile) {
 	return new Promise(function(resolve, reject) {
 		if (!url)
@@ -91,6 +96,67 @@ exports.pathIsYoungerThan = function(queryPath, intervalMs) {
 		})
 }
 
-exports.basename = function(filename) {
-	return path.basename(filename, path.extname(filename))
+exports.basename = function(fileName) {
+	return path.basename(fileName, path.extname(fileName))
+}
+
+exports.fileExists = function(file, optNotZero) {
+	return new Promise((resolve) => {
+		fs.stat(file, (error, stats) => {
+			if (error)
+				return resolve(false)
+
+			let hasBytes = stats.size > 0
+			resolve(optNotZero ? hasBytes : true)
+		})
+	})
+}
+
+exports.fileNotEmpty = function(file) {
+	return exports.fileExists(file, true)
+}
+
+// Resolves true if directory needed to be created
+exports.mkdir = function(directory) {
+	return new Promise((resolve, reject) => {
+		fs.mkdir(directory, (error) => {
+			if (error) {
+				if (error.code === 'EEXIST')
+					return resolve({created: false, directory: directory})
+
+				return reject(error)
+			}
+
+			resolve({created: true, directory: directory})
+		})
+	})
+}
+
+exports.unlink = function(file) {
+	return new Promise((resolve, reject) => {
+		fs.unlink(file, (error) => {
+			if (!error)
+				return resolve()
+
+			if (error !== 'ENOENT')
+				return reject(error)
+		})
+	})
+}
+
+exports.checkFileMD5 = function(file, md5) {
+	return new Promise((resolve, reject) => {
+		let stream = fs.createReadStream(file),
+			md5hash = crypto.createHash('md5')
+
+		md5hash.setEncoding('hex')
+		stream
+		.on('error', reject)
+		.on('end', () => {
+			md5hash.end()
+			resolve(md5hash.read().toLowerCase() === md5.toLowerCase())
+		})
+
+		stream.pipe(md5hash)
+	})
 }

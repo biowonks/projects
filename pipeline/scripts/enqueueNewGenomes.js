@@ -72,26 +72,17 @@ class Enqueuer {
 			return this.enqueueNewAssemblies_()
 		})
 		.catch((error) => {
-			this.logger_.error('Unexpected error', {error: error, stack: error.stack});
+			this.logger_.error({error: error, stack: error.stack}, 'Unexpected error');
 		})
 	}
 
 	// ----------------------------------------------------
 	// Private helper methods
 	createTemporaryDirectory_() {
-		return new Promise((resolve, reject) => {
-			this.logger_.info('Creating / checking temporary directory', {tempDir: this.tempDir_})
-			fs.mkdir(this.tempDir_, (error) => {
-				if (error) {
-					if (error.code === 'EEXIST')
-						return resolve()
-
-					return reject(error)
-				}
-
-				this.logger_.info('Created temporary directory', {tempDir: this.tempDir_})
-				resolve()
-			})
+		return mutil.mkdir(this.tempDir_)
+		.then((result) => {
+			if (result.created)
+				this.logger_.info({directory: result.directory}, 'Created temporary directory')
 		})
 	}
 
@@ -110,11 +101,11 @@ class Enqueuer {
 		return mutil.pathIsYoungerThan(destFile, this.config_.summaryDuration)
 			.then((isYounger) => {
 				if (isYounger) {
-					this.logger_.info('Summary file already exists and is younger than ' + this.config_.summaryDuration.humanize(), {path: destFile})
+					this.logger_.info({path: destFile}, 'Summary file already exists and is younger than ' + this.config_.summaryDuration.humanize())
 					return destFile
 				}
 
-				this.logger_.info('Downloading assembly summary: ' + link.filename, {path: destFile})
+				this.logger_.info({path: destFile}, 'Downloading assembly summary: ' + link.filename)
 				return mutil.download(link.url, destFile)
 					.then((downloadResult) => {
 						this.logger_.info('Download finished')
@@ -124,7 +115,7 @@ class Enqueuer {
 	}
 
 	processSummaryFile(file) {
-		this.logger_.info('Processing summary file', {file: file})
+		this.logger_.info({file: file}, 'Processing summary file')
 		return new Promise((resolve, reject) => {
 			let parser = parse({
 				columns: true,
@@ -143,7 +134,7 @@ class Enqueuer {
 				this.insertGenome_(this.genomeDataFromRow_(row))
 				.then((genome) => {
 					if (genome) {
-						this.logger_.info('Enqueued new genome: ' + genome.name, {name: genome.name, refseq_assembly_accession: genome.refseq_assembly_accession})
+						this.logger_.info({'genome.name': genome.name, refseq_assembly_accession: genome.refseq_assembly_accession}, 'Enqueued new genome')
 					}
 
 					stream.resume()

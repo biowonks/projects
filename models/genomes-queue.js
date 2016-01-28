@@ -68,7 +68,15 @@ module.exports = function(Sequelize, models) {
 	return {
 		fields: fields,
 		params: {
-			tableName: 'genomes_queue'
+			tableName: 'genomes_queue',
+			instanceMethods: {
+				short: function() {
+					return {
+						'genome.name': this.name,
+						refseq_assembly_accession: this.refseq_assembly_accession
+					}
+				}
+			}
 		}
 	}
 }

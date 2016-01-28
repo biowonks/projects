@@ -22,6 +22,7 @@ module.exports = {
 
 	ncbi: {
 		ftp: {
+			genomeDataRootUrl: 'ftp://ftp.ncbi.nlm.nih.gov/genomes/all',
 			assemblySummaryLinks: [
 				{
 					url: 'ftp://ftp.ncbi.nih.gov/genomes/refseq/archaea/assembly_summary.txt',
@@ -48,11 +49,11 @@ module.exports = {
 	},
 
 	stage1: {
+		// Logging is all done to stdout
 		master: {
-			numWorkers: 2,
+			numWorkers: 1,
 			// Amount to delay when kicking off parallel slaves
 			interSlaveDelayMs: 1000,
-			errFile: path.resolve(__dirname, 'logs', 'stage1-master.err'),
 			maxTriesPerGenome: 2
 		}
 	}

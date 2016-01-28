@@ -4,9 +4,6 @@
 let fs = require('fs'),
 	path = require('path')
 
-// 3rd-party libraries
-let bunyan = require('bunyan')
-
 // Local includes
 let mutil = require('../lib/mutil')
 
@@ -16,25 +13,13 @@ let lockFile = path.resolve(__dirname, 'lock.pid')
 dieIfAnotherInstanceRunning()
 
 class Stage1Master {
-	constructor(config, cluster) {
+	constructor(config, cluster, logger) {
 		this.config_ = config
 		this.masterConfig_ = config.stage1.master
 
 		this.cluster_ = cluster
 		this.delayMs_ = 0
-		this.logger_ = bunyan.createLogger({
-			name: 'stage1 master',
-			streams: [
-				{
-					level: 'info',
-					stream: process.stdout
-				},
-				{
-					level: 'error',
-					path: this.masterConfig_.errFile
-				}
-			]
-		})
+		this.logger_ = logger.child({role: 'master'})
 		this.sequelize_ = null
 		this.models_ = null
 
@@ -67,7 +52,7 @@ class Stage1Master {
 			this.processNextGenome()
 		})
 		.catch((error) => {
-			this.logger_.error('Unexpected error', {error: error, stack: error.stack});
+			this.logger_.error({error: error, stack: error.stack}, 'Unexpected error');
 		})
 	}
 
@@ -76,14 +61,14 @@ class Stage1Master {
 			genome = this.pidToGenome_[pid]
 
 		if (signal || code !== 0) {
-			this.logger_.error(`Worker failure; signal: ${signal}, code: ${code}`, genome.toJSON())
+			this.logger_.error(genome.short(), `Worker exited prematurely; signal: ${signal}, code: ${code}`)
 			this.increaseTries(genome.refseq_assembly_accession)
 			if (this.genomeTries_[genome.refseq_assembly_accession] >= this.masterConfig_.maxTriesPerGenome)
-				this.logger_.info('Too many failures for genome: ' + genome.name, genome.toJSON())
+				this.logger_.info(genome.short(), 'Too many process failures')
 		}
 		else {
 			// Worker exited without error
-			this.logger_.info(`Worker exited cleanly`, genome.toJSON())
+			this.logger_.info(genome.short(), 'Worker exited cleanly')
 		}
 
 		delete this.pidToGenome_[pid]
@@ -146,31 +131,39 @@ class Stage1Master {
 
 	startWorker(genome) {
 		let raa = genome.refseq_assembly_accession
-		this.logger_.info('Launching worker for RefSeq accession: ' + raa, genome.toJSON())
+		this.logger_.info(genome.short(), 'Launching worker')
 		let worker = this.cluster_.fork()
 		this.pidToGenome_[worker.process.pid] = genome
 		worker.on('message', (message) => {
 			this.onWorkerMessage(worker, message)
-		});
+		})
+
+		worker.send(`setup ${raa}`)
 	}
 
 	onWorkerMessage(worker, message) {
-		let raa = this.pidToGenome_[worker.process.pid].refseq_assembly_accession
+		let genome = this.pidToGenome_[worker.process.pid]
 		if (message === 'ready') {
 			this.delayMs_ = this.masterConfig_.interSlaveDelayMs
-			worker.send(`process ${raa}`)
+			worker.send('start')
 			this.processNextGenome()
 		}
 		else if (message === 'done') {
-			this.logger_.info('Worker done for RefSeq accession: ' + raa, {refseq_assembly_accession: raa})
+			this.logger_.info(genome.short(), 'Worker done')
 		}
 		else if (message === 'error db') {
-			this.cluster_.disconnect(() => {
-				this.logger_.error('\nFATAL: Database initialization error. Please check the logs and restart the application');
-				process.exit(2)
-			})
-			return
+			this.choke('FATAL: Database initialization error. Please check the logs and restart the application')
 		}
+		else if (message === 'error setup') {
+			this.choke('FATAL: Setup error. Please check the logs and restart the application')
+		}
+	}
+
+	choke(message) {
+		this.cluster_.disconnect(() => {
+			this.logger_.error(message)
+			process.exit(2)
+		})
 	}
 }
 
