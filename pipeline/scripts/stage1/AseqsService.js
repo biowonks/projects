@@ -9,4 +9,16 @@ class AseqsService {
 	constructor(AseqModel) {
 
 	}
+
+	aseqIdFor(sequence) {
+		
+	}
+
+	insert() {
+
+	}
+
+	compute(aseqIds, tools) {
+
+	}
 }

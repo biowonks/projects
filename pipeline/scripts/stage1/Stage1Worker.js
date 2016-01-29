@@ -8,7 +8,10 @@ let fs = require('fs'),
 let mutil = require('../lib/mutil'),
 	FileNameMapper = require('./FileNameMapper'),
 	NCBIDataHelper = require('./NCBIDataHelper'),
-	CoreDataBuilder = require('./CoreDataBuilder')
+	CoreDataBuilder = require('./CoreDataBuilder'),
+
+	// Services
+	IdAllocator = require('./IdAllocator')
 
 class Stage1Worker {
 	constructor(config, logger) {
@@ -16,6 +19,7 @@ class Stage1Worker {
 		this.logger_ = logger.child({role: 'worker'})
 		this.sequelize_ = null
 		this.models_ = null
+		this.services_ = {}
 
 		this.refseqAssemblyAccession_ = null
 		this.genome_ = null
@@ -93,7 +97,9 @@ class Stage1Worker {
 		.then(() => {
 			this.logger_.info('Download complete')
 
-			this.coreDataBuilder_ = new CoreDataBuilder(this.fileNameMapper_, this.logger_)
+			this.setupServices_()
+
+			this.coreDataBuilder_ = new CoreDataBuilder(this.services_, this.models_, this.fileNameMapper_, this.logger_)
 			return this.coreDataBuilder_.main()
 		})
 		.then(() => {
@@ -116,6 +122,10 @@ class Stage1Worker {
 	getRefseqAssemblyAccession_(message) {
 		let matches = /^\S+\s+(\S+)/.exec(message)
 		return matches ? matches[1] : null
+	}
+
+	setupServices_() {
+		this.services_.idAllocator = new IdAllocator(this.models_.IdSequence, this.logger_)
 	}
 }
 

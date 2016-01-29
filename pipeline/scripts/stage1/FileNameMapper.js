@@ -51,6 +51,10 @@ class FileNameMapper {
 		return this.genomeRootPath() + '/' + this.fileNameFor(sourceType)
 	}
 
+	idCacheFile() {
+		return this.genomeRootPath() + '/id-blocks.json'
+	}
+
 	/**
 	 * Returns a pathless string representing the data file corresponding to sourceType.
 	 *

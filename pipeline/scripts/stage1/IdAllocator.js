@@ -16,8 +16,9 @@ class IdAllocator {
 	/**
 	 * @param {Model} IdSequenceModel sequelize defined model
 	 */
-	constructor(IdSequenceModel) {
+	constructor(IdSequenceModel, logger) {
 		this.IdSequence_ = IdSequenceModel
+		this.logger_ = logger
 	}
 
 	/**
@@ -34,12 +35,12 @@ class IdAllocator {
 	 * @return {Array.<number>[2]}
 	 */
 	reserve(sequenceName, amount) {
-		console.assert(amount instanceof Number && amount > 0, 'amount must be a positive integer')
+		console.assert(typeof amount === 'number' && amount > 0, 'amount must be a positive integer')
 
 		let result = null
 
 		return this.IdSequence_.sequelize.transaction({
-			isolationLevel: Sequelize.Transaction.READ_COMMITTED
+			isolationLevel: Sequelize.Transaction.ISOLATION_LEVELS.READ_COMMITTED
 		}, (t) => {
 			return this.IdSequence_.findById(sequenceName, {
 				transaction: t,
@@ -50,13 +51,17 @@ class IdAllocator {
 					return null
 
 				let start = idSequence.last_value + 1,
-					stop = start + amount
+					stop = start + amount - 1
 
 				result = [start, stop]
 				idSequence.last_value = stop
-				return idSequence.save({fields: ['last_value']})
+				return idSequence.save({
+					fields: ['last_value'],
+					transaction: t
+				})
 			})
 			.then(() => {
+				this.logger_.info({sequenceName: sequenceName, start: result[0], stop: result[1]}, `Reserved ${result[1] - result[0] + 1} identifiers for the sequence named '${sequenceName}'`)
 				return result
 			})
 		})
