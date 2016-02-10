@@ -5,13 +5,19 @@ let crypto = require('crypto')
 
 module.exports =
 class Seq {
-	constructor(optSequence) {
+	constructor(optSequence, optDontClean) {
 		this.sequence_ = optSequence || ''
-		this.clean_()
+		this.isCircular_ = false
+		if (!optDontClean)
+			this.clean_()
 	}
 
 	invalidSymbol() {
 		return '@'
+	}
+
+	isCircular() {
+		return this.isCircular_
 	}
 
 	isEmpty() {
@@ -37,6 +43,26 @@ class Seq {
 			.replace(/\//g, '_')
 	}
 
+	setCircular(optCircular) {
+		this.isCircular_ = typeof optCircular === undefined ? true : !!optCircular
+	}
+
+	substr(start, stop) {
+		assert(start > 0, 'start must be positive')
+		assert(stop > 0, 'stop must be positive')
+		assert(start <= this.length(), 'start must be <= length')
+		assert(stop <= this.length(), 'stop must be <= length')
+
+		if (this.isCircular_ || start <= stop) {
+			assert(start <= stop, 'start must be <= stop on non-circular sequences')
+			return new Seq(this.oneBasedSubstr_(start, stop), true /* don't clean */)
+		}
+
+		// Circular sequence and the start is > stop
+		return new Seq(this.oneBasedSubstr_(start, this.length()) +
+			this.oneBasedSubstr_(1, stop), true /* don't clean */)
+	}
+
 	// ----------------------------------------------------
 	// Private methods
 	clean_() {
@@ -44,5 +70,9 @@ class Seq {
 			.replace(/\s+/g, '')
 			.replace(/\W|\d|_/g, '@')
 			.toUpperCase()
+	}
+
+	oneBasedSubstr_(start, stop) {
+		return this.sequence_.substr(start + 1, stop - start + 1)
 	}
 }
