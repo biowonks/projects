@@ -77,6 +77,6 @@ class Seq {
 	}
 
 	oneBasedSubstr_(start, stop) {
-		return this.sequence_.substr(start + 1, stop - start + 1)
+		return this.sequence_.substr(start - 1, stop - start + 1)
 	}
 }
