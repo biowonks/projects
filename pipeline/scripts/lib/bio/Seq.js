@@ -12,6 +12,10 @@ class Seq {
 			this.clean_()
 	}
 
+	complement() {
+		throw new Error('Not yet implemented')
+	}
+
 	invalidSymbol() {
 		return '@'
 	}

@@ -62,9 +62,6 @@ class BoundedLocationPoint extends LocationPoint {
 
 module.exports =
 class AbstractLocation {
-	constructor() {
-	}
-
 	transcriptFrom(seq) {
 		throw new Error('Unimplemented')
 	}
@@ -88,16 +85,19 @@ class PointLocation extends Location {
 	}
 }
 
-class ComplexLocation extends AbstractLocation {
-	constructor(locations) {
-		assert(locations instanceof Array, 'ComplexLocation requires an array of locations')
-		this.locations_ = locations
+class ComplementLocation extends Location {
+	constructor(startLocationPoint, stopLocationPoint) {
+		super(startLocationPoint, stopLocationPoint)
+	}
+
+	transcriptFrom(seq) {
+		return super.transcriptFrom(seq).complement()
 	}
 }
 
-class JoinLocation extends ComplexLocation {
+class JoinLocation extends AbstractLocation {
 	constructor(locations) {
-		super(locations)
+		assert(locations instanceof Array, 'ComplexLocation requires an array of locations')
 	}
 
 	transcriptFrom(seq) {
@@ -106,11 +106,5 @@ class JoinLocation extends ComplexLocation {
 		})
 
 		return new Seq(seqStrings.join(''), true /* don't clean */)
-	}
-}
-
-class ComplementLocation extends ComplexLocation {
-	constructor(location1, ...) {
-
 	}
 }
