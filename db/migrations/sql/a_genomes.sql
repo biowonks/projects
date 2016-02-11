@@ -29,8 +29,6 @@ create table genomes_queue (
 );
 comment on table genomes_queue is 'Assembly reports yet to be processed';
 
-create view unassigned_genomes_queue as select * from genomes_queue where locked is false or now() - updated_at > interval '30 minutes';
-
 create table genomes (
 	id integer primary key,
 	refseq_assembly_accession text not null,
