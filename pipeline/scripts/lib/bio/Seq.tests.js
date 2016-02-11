@@ -97,6 +97,22 @@ describe('Seq', function() {
 		})
 	})
 
+	describe('subseq', function() {
+		let examples = [
+			{ start:1,stop:20,seq:'QWERTYIPASDFGHKLCVNM',subseq:'QWERTYIPASDFGHKLCVNM'},
+			{ start:2,stop:5,seq:'QWERTYIPASDFGHKLCVNM',subseq:'WERT'},
+			{ start:18,stop:20,seq:'QWERTYIPASDFGHKLCVNM',subseq:'VNM'},
+			{ start:18,stop:200,seq:'QWERTYIPASDFGHKLCVNM',subseq:'VNM'},
+			{ start:-5,stop:200,seq:'QWERTYIPASDFGHKLCVNM',subseq:'QWERTYIPASDFGHKLCVNM'}
+		]
+		examples.forEach(function(example) {
+		it(`${example.subseq} is subsequence of ${example.seq} from ${example.start} to ${example.stop}`, function(){
+			let seq = new Seq(example.seq)
+			expect(seq.subseq(example.start,example.stop).sequence()).equal(example.subseq)
+			})
+		})
+	})
+
 	describe('seqId', function() {
 		let fixtures = [
 			{
