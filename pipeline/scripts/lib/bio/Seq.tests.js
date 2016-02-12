@@ -5,6 +5,12 @@ let Seq = require('./Seq')
 describe('Seq', function() {
 	let defaultSeq = new Seq()
 
+	describe('invalidSymbol', function() {
+		it('should equal "@"', function() {
+			expect(defaultSeq.invalidSymbol()).equal('@')
+		})
+	})
+
 	describe('isEmpty', function() {
 		it('default constructed sequence should be empty', function() {
 			expect(defaultSeq.isEmpty()).true
@@ -26,12 +32,6 @@ describe('Seq', function() {
 			it(`'${characters}' should not be empty`, function() {
 				expect((new Seq(characters)).isEmpty()).false
 			})
-		})
-	})
-
-	describe('invalidSymbol', function() {
-		it('should equal "@"', function() {
-			expect(defaultSeq.invalidSymbol()).equal('@')
 		})
 	})
 
@@ -97,22 +97,6 @@ describe('Seq', function() {
 		})
 	})
 
-	describe('subseq', function() {
-		let examples = [
-			{ start:1,stop:20,seq:'QWERTYIPASDFGHKLCVNM',subseq:'QWERTYIPASDFGHKLCVNM'},
-			{ start:2,stop:5,seq:'QWERTYIPASDFGHKLCVNM',subseq:'WERT'},
-			{ start:18,stop:20,seq:'QWERTYIPASDFGHKLCVNM',subseq:'VNM'},
-			{ start:18,stop:200,seq:'QWERTYIPASDFGHKLCVNM',subseq:'VNM'},
-			{ start:-5,stop:200,seq:'QWERTYIPASDFGHKLCVNM',subseq:'QWERTYIPASDFGHKLCVNM'}
-		]
-		examples.forEach(function(example) {
-		it(`${example.subseq} is subsequence of ${example.seq} from ${example.start} to ${example.stop}`, function(){
-			let seq = new Seq(example.seq)
-			expect(seq.subseq(example.start,example.stop).sequence()).equal(example.subseq)
-			})
-		})
-	})
-
 	describe('seqId', function() {
 		let fixtures = [
 			{
@@ -133,10 +117,117 @@ describe('Seq', function() {
 			}
 		]
 
-		fixtures.forEach(function(fiture) {
-			it(`${fiture.seqId} from ${fiture.sequence.substr(0, 32) + '...'}`, function() {
-				let seq = new Seq(fiture.sequence)
-				expect(seq.seqId()).equal(fiture.seqId)
+		fixtures.forEach(function(fixture) {
+			it(`${fixture.seqId} from ${fixture.sequence.substr(0, 32) + '...'}`, function() {
+				let seq = new Seq(fixture.sequence)
+				expect(seq.seqId()).equal(fixture.seqId)
+			})
+		})
+	})
+
+	describe('setCircular, isCircular', function() {
+		it('new Seqs are linear by default', function() {
+			let seq = new Seq('ATG')
+			expect(seq.isCircular()).false
+		})
+
+		it('set to circular', function() {
+			let seq = new Seq('ATG')
+			seq.setCircular()
+			expect(seq.isCircular()).true
+		})
+
+		it('setCircular() -> setCircular(false) restores linear property', function() {
+			let seq = new Seq('ATG')
+			seq.setCircular()
+			seq.setCircular(false)
+			expect(seq.isCircular()).false
+		})
+	})
+
+	describe('subseq', function() {
+		let linearSeq = new Seq('QWERTYIPASDFGHKLCVNM'),
+			//                   |   |    |    |    |  
+			//                   1   5    10   15   20
+			circularSeq = new Seq('QWERTYIPASDFGHKLCVNM')
+
+		circularSeq.setCircular()
+
+		describe('basic assertions', function() {
+			it('start value of zero throws error', function() {
+				expect(function() {
+					linearSeq.subseq(0, 5)
+				}).throw(Error)
+			})
+
+			it('negative start value throws error', function() {
+				expect(function() {
+					linearSeq.subseq(-1, 5)
+				}).throw(Error)
+			})
+
+			it('stop value of zero throws error', function() {
+				expect(function() {
+					linearSeq.subseq(1, 0)
+				}).throw(Error)
+			})
+
+			it('negative stop value throws error', function() {
+				expect(function() {
+					linearSeq.subseq(5, -1)
+				}).throw(Error)
+			})
+
+			it('start value greater than length throws error', function() {
+				expect(function() {
+					linearSeq.subseq(linearSeq.length() + 1, 5)
+				}).throw(Error)
+			})
+
+			it('stop value greater than length throws error', function() {
+				expect(function() {
+					linearSeq.subseq(1, linearSeq.length() + 1)
+				}).throw(Error)
+			})
+		})
+
+		describe('on linear sequences', function() {
+			let seqStr = linearSeq.sequence(),
+				examples = [
+					{start: 1, stop: linearSeq.length(), expectedSequence: seqStr},
+					{start: 2, stop: 5, expectedSequence: seqStr.substr(2 - 1, 5 - 2 + 1)},
+					{start: 12, stop: 12, expectedSequence: seqStr.substr(12 - 1, 1)},
+				]
+
+			examples.forEach(function(example) {
+				it(`${example.start} .. ${example.stop} --> ${example.expectedSequence}`, function() {
+					let result = linearSeq.subseq(example.start, example.stop)
+
+					expect(result).instanceof(Seq)
+					expect(result !== linearSeq).equal(true, 'subseq method should return new instance')
+
+					expect(result.sequence()).equal(example.expectedSequence)
+				})
+			})
+
+			it('start greater than stop throws error', function() {
+				expect(function() {
+					linearSeq.subseq(15, 10)
+				}).throw(Error)
+			})
+		})
+
+		describe('on circular sequences', function() {
+			let examples = [
+				{start: 15, stop: 5, expectedSequence: 'KLCVNM' + 'QWERT'},
+				{start: 10, stop: 9, expectedSequence: 'SDFGHKLCVNM' + 'QWERTYIPA'}
+			]
+
+			examples.forEach(function(example) {
+				it(`${example.start} .. ${example.stop} --> ${example.expectedSequence}`, function() {
+					let result = circularSeq.subseq(example.start, example.stop)
+					expect(result.sequence()).equal(example.expectedSequence)
+				})
 			})
 		})
 	})

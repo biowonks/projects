@@ -1,7 +1,8 @@
 'use strict'
 
 // Core node libraries
-let crypto = require('crypto')
+let assert = require('assert'),
+	crypto = require('crypto')
 
 module.exports =
 class Seq {
@@ -48,26 +49,17 @@ class Seq {
 	}
 
 	setCircular(optCircular) {
-		this.isCircular_ = typeof optCircular === undefined ? true : !!optCircular
+		this.isCircular_ = optCircular === undefined ? true : !!optCircular
 	}
 
-	//substr(start, stop) {
-	// substr is a default javascipt function which can be confusing wih this substr
 	subseq(start, stop) {
-		// asserts commented out because this function is not defined
-		//assert(start > 0, 'start must be positive')
-		//assert(stop > 0, 'stop must be positive')
-		//assert(start <= this.length(), 'start must be <= length')
-		//assert(stop <= this.length(), 'stop must be <= length')
+		assert(start > 0, 'start must be positive')
+		assert(stop > 0, 'stop must be positive')
+		assert(start <= this.length(), 'start must be <= length')
+		assert(stop <= this.length(), 'stop must be <= length')
 	
-		if (! this.isCircular_){
-		start = Math.max(1,start)
-		stop = Math.min(this.length(),stop)
-		start = Math.min(start,stop)
-		}
-
-		if (this.isCircular_ || start <= stop) {
-			//assert(start <= stop, 'start must be <= stop on non-circular sequences')
+		if (!this.isCircular_ || start <= stop) {
+			assert(start <= stop, 'start must be <= stop on non-circular sequences')
 			return new Seq(this.oneBasedSubstr_(start, stop), true /* don't clean */)
 		}
 
