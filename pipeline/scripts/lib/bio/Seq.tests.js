@@ -131,6 +131,13 @@ describe('Seq', function() {
 			expect(seq.isCircular()).false
 		})
 
+		it('returns seq instance', function() {
+			let seq = new Seq('ATG'),
+				tmp = seq.setCircular()
+
+			expect(seq === tmp).true
+		})
+
 		it('set to circular', function() {
 			let seq = new Seq('ATG')
 			seq.setCircular()
@@ -149,9 +156,7 @@ describe('Seq', function() {
 		let linearSeq = new Seq('QWERTYIPASDFGHKLCVNM'),
 			//                   |   |    |    |    |  
 			//                   1   5    10   15   20
-			circularSeq = new Seq('QWERTYIPASDFGHKLCVNM')
-
-		circularSeq.setCircular()
+			circularSeq = new Seq('QWERTYIPASDFGHKLCVNM').setCircular()
 
 		describe('basic assertions', function() {
 			it('start value of zero throws error', function() {

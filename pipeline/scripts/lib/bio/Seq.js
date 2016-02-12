@@ -50,6 +50,7 @@ class Seq {
 
 	setCircular(optCircular) {
 		this.isCircular_ = optCircular === undefined ? true : !!optCircular
+		return this
 	}
 
 	subseq(start, stop) {
