@@ -37,6 +37,10 @@ class Seq {
 		return this.sequence_.length
 	}
 
+	reverseComplement() {
+		throw new Error('Not yet implemented')
+	}
+
 	sequence() {
 		return this.sequence_
 	}

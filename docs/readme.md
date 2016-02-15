@@ -130,3 +130,6 @@ status = {
 
 Download -> add into genomes table where assembly accession is not found with stage1.done = false
 
+
+Taxonomy retrieval
+http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=taxonomy&id=476210&retmode=text&rettype=xml
