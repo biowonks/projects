@@ -1,5 +1,6 @@
 'use strict'
 
+// Local includes
 let Location = require('./Location'),
 	Seq = require('./Seq')
 
