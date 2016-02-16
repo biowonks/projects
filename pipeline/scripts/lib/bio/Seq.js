@@ -14,7 +14,13 @@ class Seq {
 	}
 
 	complement() {
-		throw new Error('Not yet implemented')
+		var complementaryBase = {"A":"T","C":"G","G":"C","T":"A","U":"A","R":"Y","Y":"R","S":"S","W":"W","K":"M","M":"K","B":"V","D":"H","H":"D","V":"B","N":"N","X":"X","-":"-",".":"."}
+		var complementaryStrand = ""
+		console.log(this.sequence())
+		this.sequence().split("").forEach(function(letter){
+			complementaryStrand += complementaryBase[letter]
+			})
+		return complementaryStrand
 	}
 
 	invalidSymbol() {
@@ -38,7 +44,7 @@ class Seq {
 	}
 
 	reverseComplement() {
-		throw new Error('Not yet implemented')
+		return this.complement().split("").reverse().join("")
 	}
 
 	sequence() {
