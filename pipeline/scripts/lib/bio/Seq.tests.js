@@ -236,4 +236,17 @@ describe('Seq', function() {
 			})
 		})
 	})
+
+	describe('complement', function() {
+		let nucleotideSeq = new Seq('AATTGGCCYYRRWWSSKKMMXXNNAAATTTGGGCCC')
+		it('complementary', function(){
+			expect(nucleotideSeq.complement()).equal('TTAACCGGRRYYWWSSMMKKXXNNTTTAAACCCGGG')
+			})
+		it('reverse complementary', function(){
+			expect(nucleotideSeq.reverseComplement()).equal('GGGCCCAAATTTNNXXKKMMSSWWYYRRGGCCAATT')
+			})
+	})	
+
+
+
 })

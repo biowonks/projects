@@ -17,6 +17,7 @@ class Seq {
 		var complementaryBase = {"A":"T","C":"G","G":"C","T":"A","U":"A","R":"Y","Y":"R","S":"S","W":"W","K":"M","M":"K","B":"V","D":"H","H":"D","V":"B","N":"N","X":"X","-":"-",".":"."}
 		var complementaryStrand = ""
 		this.sequence().split("").forEach(function(letter){
+			assert(Object.keys(complementaryBase).indexOf(letter)!=-1, letter + ' is not a nucleotide')
 			complementaryStrand += complementaryBase[letter]
 			})
 		return complementaryStrand
