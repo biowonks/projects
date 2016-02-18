@@ -6,7 +6,7 @@
   "main": "index.js",
   "repository": {},
   "scripts": {
-    "test": "npm test"
+    "test": "./node_modules/.bin/mocha -r pipeline/scripts/test-setup.js pipeline/scripts/lib/bio/Seq.tests.js"
   },
   "author": "Luke Ulrich",
   "license": "",

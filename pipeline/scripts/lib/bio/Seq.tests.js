@@ -239,14 +239,42 @@ describe('Seq', function() {
 
 	describe('complement', function() {
 		let nucleotideSeq = new Seq('AATTGGCCYYRRWWSSKKMMXXNNAAATTTGGGCCC')
-		it('complementary', function(){
-			expect(nucleotideSeq.complement()).equal('TTAACCGGRRYYWWSSMMKKXXNNTTTAAACCCGGG')
-			})
-		it('reverse complementary', function(){
-			expect(nucleotideSeq.reverseComplement()).equal('GGGCCCAAATTTNNXXKKMMSSWWYYRRGGCCAATT')
-			})
-	})	
 
+		it('should return Seq', function() {
+			let x = new Seq('A'),
+				result = x.complement()
 
+			expect(result).instanceof(Seq)
+			expect(result !== x).true
+		})
 
+		it('empty sequence should return empty sequence', function() {
+			let x = new Seq()
+			expect(x.complement().sequence()).equal('')
+		})
+
+		it('complementary', function() {
+			expect(nucleotideSeq.complement().sequence()).equal('TTAACCGGRRYYWWSSMMKKXXNNTTTAAACCCGGG')
+		})
+
+		it('lower case letters throw error', function() {
+			let x = new Seq('at', true)
+			expect(function() {
+				x.complement()
+			}).throw(Error)
+		})
+
+		it('non nucleotides should throw error', function() {
+			let x = new Seq('E')
+			expect(function() {
+				x.complement()
+			}).throw(Error)
+		})
+	})
+
+	describe('reverseComplement', function() {
+		it.skip('reverse complementary', function() {
+			expect(nucleotideSeq.reverseComplement().sequence()).equal('GGGCCCAAATTTNNXXKKMMSSWWYYRRGGCCAATT')
+		})
+	})
 })

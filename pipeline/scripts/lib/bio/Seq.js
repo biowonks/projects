@@ -4,6 +4,29 @@
 let assert = require('assert'),
 	crypto = require('crypto')
 
+// Constants
+let kComplementaryBases = {
+	A: 'T',
+	C: 'G',
+	G: 'C',
+	T: 'A',
+	U: 'A',
+	R: 'Y',
+	Y: 'R',
+	S: 'S',
+	W: 'W',
+	K: 'M',
+	M: 'K',
+	B: 'V',
+	D: 'H',
+	H: 'D',
+	V: 'B',
+	N: 'N',
+	X: 'X',
+	'-': '-',
+	'.': '.'
+}
+
 module.exports =
 class Seq {
 	constructor(optSequence, optDontClean) {
@@ -14,13 +37,15 @@ class Seq {
 	}
 
 	complement() {
-		var complementaryBase = {"A":"T","C":"G","G":"C","T":"A","U":"A","R":"Y","Y":"R","S":"S","W":"W","K":"M","M":"K","B":"V","D":"H","H":"D","V":"B","N":"N","X":"X","-":"-",".":"."}
-		var complementaryStrand = ""
-		this.sequence().split("").forEach(function(letter){
-			assert(Object.keys(complementaryBase).indexOf(letter)!=-1, letter + ' is not a nucleotide')
-			complementaryStrand += complementaryBase[letter]
-			})
-		return complementaryStrand
+		let complementaryStrand = ''
+
+		for (let i = 0, z = this.sequence_.length; i < z; i++) {
+			let letter = this.sequence_[i]
+			assert(this.isNucleotide_(letter), letter + ' is not a nucleotide')
+			complementaryStrand += kComplementaryBases[letter]
+		}
+
+		return new Seq(complementaryStrand, false /* don't clean */)
 	}
 
 	invalidSymbol() {
@@ -86,6 +111,10 @@ class Seq {
 			.replace(/\s+/g, '')
 			.replace(/\W|\d|_/g, '@')
 			.toUpperCase()
+	}
+
+	isNucleotide_(letter) {
+		return letter in kComplementaryBases
 	}
 
 	oneBasedSubstr_(start, stop) {
