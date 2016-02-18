@@ -1,7 +1,8 @@
 'use strict'
 
 // Core node libraries
-let crypto = require('crypto')
+let assert = require('assert'),
+	crypto = require('crypto')
 
 module.exports =
 class Seq {
@@ -13,7 +14,13 @@ class Seq {
 	}
 
 	complement() {
-		throw new Error('Not yet implemented')
+		var complementaryBase = {"A":"T","C":"G","G":"C","T":"A","U":"A","R":"Y","Y":"R","S":"S","W":"W","K":"M","M":"K","B":"V","D":"H","H":"D","V":"B","N":"N","X":"X","-":"-",".":"."}
+		var complementaryStrand = ""
+		this.sequence().split("").forEach(function(letter){
+			assert(Object.keys(complementaryBase).indexOf(letter)!=-1, letter + ' is not a nucleotide')
+			complementaryStrand += complementaryBase[letter]
+			})
+		return complementaryStrand
 	}
 
 	invalidSymbol() {
@@ -36,6 +43,10 @@ class Seq {
 		return this.sequence_.length
 	}
 
+	reverseComplement() {
+		return this.complement().split("").reverse().join("")
+	}
+
 	sequence() {
 		return this.sequence_
 	}
@@ -48,16 +59,17 @@ class Seq {
 	}
 
 	setCircular(optCircular) {
-		this.isCircular_ = typeof optCircular === undefined ? true : !!optCircular
+		this.isCircular_ = optCircular === undefined ? true : !!optCircular
+		return this
 	}
 
-	substr(start, stop) {
+	subseq(start, stop) {
 		assert(start > 0, 'start must be positive')
 		assert(stop > 0, 'stop must be positive')
 		assert(start <= this.length(), 'start must be <= length')
 		assert(stop <= this.length(), 'stop must be <= length')
-
-		if (this.isCircular_ || start <= stop) {
+	
+		if (!this.isCircular_ || start <= stop) {
 			assert(start <= stop, 'start must be <= stop on non-circular sequences')
 			return new Seq(this.oneBasedSubstr_(start, stop), true /* don't clean */)
 		}
@@ -77,6 +89,6 @@ class Seq {
 	}
 
 	oneBasedSubstr_(start, stop) {
-		return this.sequence_.substr(start + 1, stop - start + 1)
+		return this.sequence_.substr(start - 1, stop - start + 1)
 	}
 }

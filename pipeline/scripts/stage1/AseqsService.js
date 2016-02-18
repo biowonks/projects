@@ -11,14 +11,14 @@ class AseqsService {
 	}
 
 	aseqIdFor(sequence) {
-		
-	}
-
-	insert() {
 
 	}
 
-	compute(aseqIds, tools) {
+	fetchForFasta(fastaSeqs, tools) {
+
+	}
+
+	fetchForAseqs(aseqIds, tools) {
 
 	}
 }
