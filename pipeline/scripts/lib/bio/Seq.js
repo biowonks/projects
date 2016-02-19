@@ -36,11 +36,12 @@ class Seq {
 			this.clean_()
 	}
 
-	complement() {
-		let complementaryStrand = ''
+	complement(optReverse) {
+		let changingDirection = optReverse === undefined ? false : optReverse,
+			complementaryStrand = ''
 
 		for (let i = 0, z = this.sequence_.length; i < z; i++) {
-			let letter = this.sequence_[i]
+			let letter = changingDirection ? this.sequence_[z-i-1] : this.sequence_[i]
 			assert(this.isNucleotide_(letter), letter + ' is not a nucleotide')
 			complementaryStrand += kComplementaryBases[letter]
 		}
@@ -69,7 +70,7 @@ class Seq {
 	}
 
 	reverseComplement() {
-		return this.complement().split("").reverse().join("")
+		return this.complement(true /* change direction */)
 	}
 
 	sequence() {
