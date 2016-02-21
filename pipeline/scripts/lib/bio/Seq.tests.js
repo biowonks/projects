@@ -257,18 +257,14 @@ describe('Seq', function() {
 			expect(nucleotideSeq.complement().sequence()).equal('TTAACCGGRRYYWWSSMMKKXXNNTTTAAACCCGGG')
 		})
 
-		it('lower case letters throw error', function() {
+		it('lower case letters should return not be changed', function() {
 			let x = new Seq('at', true)
-			expect(function() {
-				x.complement()
-			}).throw(Error)
+			expect(x.complement().sequence()).equal('at')
 		})
 
-		it('non nucleotides should throw error', function() {
+		it('non nucleotides should not be modified', function() {
 			let x = new Seq('E')
-			expect(function() {
-				x.complement()
-			}).throw(Error)
+			expect(x.complement().sequence()).equal('E')
 		})
 	})
 

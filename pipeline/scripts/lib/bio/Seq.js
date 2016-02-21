@@ -13,18 +13,12 @@ let kComplementaryBases = {
 	U: 'A',
 	R: 'Y',
 	Y: 'R',
-	S: 'S',
-	W: 'W',
 	K: 'M',
 	M: 'K',
 	B: 'V',
 	D: 'H',
 	H: 'D',
-	V: 'B',
-	N: 'N',
-	X: 'X',
-	'-': '-',
-	'.': '.'
+	V: 'B'
 }
 
 module.exports =
@@ -42,11 +36,10 @@ class Seq {
 
 		for (let i = 0, z = this.sequence_.length; i < z; i++) {
 			let letter = changingDirection ? this.sequence_[z-i-1] : this.sequence_[i]
-			assert(this.isNucleotide_(letter), letter + ' is not a nucleotide')
-			complementaryStrand += kComplementaryBases[letter]
+			complementaryStrand += kComplementaryBases[letter] || letter
 		}
 
-		return new Seq(complementaryStrand, false /* don't clean */)
+		return new Seq(complementaryStrand, true /* don't clean */)
 	}
 
 	invalidSymbol() {
