@@ -8,7 +8,10 @@ module.exports =
 class JoinLocation extends AbstractLocation {
 	constructor(locations) {
 		super()
-		assert(locations instanceof Array, 'JoinLocation must be instantiated with an array of Location instances')
+		assert(locations instanceof Array, 'locations argument must be an array')
+		assert(locations.length > 0, 'locations array must not be empty')
+		if (locations.length === 1)
+			console.warn('JoinLocation::constructor() - constructed with only one location')
 		this.locations_ = locations
 	}
 

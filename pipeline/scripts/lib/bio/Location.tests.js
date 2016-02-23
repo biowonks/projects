@@ -37,39 +37,23 @@ describe('Location', function() {
 		})
 	})
 
-	describe('transcriptFrom (linear sequence)', function() {
-		let seq = new Seq('ABCDEFGHIJ')
-		//                 |   |    |
-		//                 1   5    10
+	describe('accession', function() {
+		it('has null accession by default', function() {
+			let lp = new LocationPoint(5),
+				x = new Location(lp, lp)
 
-		it('throws error with string', function() {
-			expect(function() {
-				let x = new Location(new LocationPoint(1), new LocationPoint(5))
-				x.transcriptFrom('ATCGATGC')
-			}).throw(Error)
+			expect(x.accession()).null
 		})
 
-		it('>1..5 throws error', function() {
-			expect(function() {
-				let x = new Location(new FuzzyLocationPoint('>', 1), new LocationPoint(5))
-				x.transcriptFrom(new Seq('ATCGATGC'))
-			}).throw(Error)
-		})
+		it('returns accession defined in constructor', function() {
+			let lp = new LocationPoint(5),
+				x = new Location(lp, lp, 'ABC123.1')
 
-		it('2..<5 throws error', function() {
-			expect(function() {
-				let x = new Location(new LocationPoint(2), new FuzzyLocationPoint('<', 5))
-				x.transcriptFrom(new Seq('ATCGATGC'))
-			}).throw(Error)
+			expect(x.accession()).equal('ABC123.1')
 		})
+	})
 
-		it('>1..<2 throws error', function() {
-			expect(function() {
-				let x = new Location(new FuzzyLocationPoint('>', 1), new FuzzyLocationPoint('<', 2))
-				x.transcriptFrom(new Seq('ATCGATGC'))
-			}).throw(Error)
-		})
-
+	describe('transcriptFrom', function() {
 		// ------------------------------------------------
 		// Helper functions
 		function locationFromString(locationString) {
@@ -97,31 +81,77 @@ describe('Location', function() {
 			throw new Error('Unexpected location point string: ' + locationPointString)
 		}
 
-		let examples = [
-			['5..5', 'E'],
-			['5..6', 'EF'],
-			['5..7^8', 'EFGH'],
-			['4^5..7', 'DEFG'],
-			['4^5..7^8', 'DEFGH'],
-			['1.3..5', 'ABCDE'],
-			['2..4.6', 'BCDEF'],
-			['<1..2', 'AB'],
-			['1..>2', 'AB'],
-			['<1..>2', 'AB']
-		]
+		it('with external acession throws Error', function() {
+			let seq = new Seq('ATG'),
+				x = new Location(new LocationPoint(1), new LocationPoint(3), 'ABC123.1')
 
-		examples.forEach((example) => {
-			let locationString = example[0],
-				expectedSequence = example[1]
+			expect(function() {
+				x.transcriptFrom(seq)
+			}).throw(Error)
+		})
 
-			it(locationString, function() {
-				let x = locationFromString(locationString),
-					result = x.transcriptFrom(seq)
-				expect(result).ok
-				expect(result).instanceof(Seq)
-				expect(result !== seq)
-				expect(result.sequence()).equal(expectedSequence)
+		describe('linear sequence', function() {
+			let seq = new Seq('ABCDEFGHIJ')
+			//                 |   |    |
+			//                 1   5    10
+
+			it('throws error with string', function() {
+				expect(function() {
+					let x = new Location(new LocationPoint(1), new LocationPoint(5))
+					x.transcriptFrom('ATCGATGC')
+				}).throw(Error)
 			})
+
+			it('>1..5 throws error', function() {
+				expect(function() {
+					let x = new Location(new FuzzyLocationPoint('>', 1), new LocationPoint(5))
+					x.transcriptFrom(new Seq('ATCGATGC'))
+				}).throw(Error)
+			})
+
+			it('2..<5 throws error', function() {
+				expect(function() {
+					let x = new Location(new LocationPoint(2), new FuzzyLocationPoint('<', 5))
+					x.transcriptFrom(new Seq('ATCGATGC'))
+				}).throw(Error)
+			})
+
+			it('>1..<2 throws error', function() {
+				expect(function() {
+					let x = new Location(new FuzzyLocationPoint('>', 1), new FuzzyLocationPoint('<', 2))
+					x.transcriptFrom(new Seq('ATCGATGC'))
+				}).throw(Error)
+			})
+
+			let examples = [
+				['5..5', 'E'],
+				['5..6', 'EF'],
+				['5..7^8', 'EFGH'],
+				['4^5..7', 'DEFG'],
+				['4^5..7^8', 'DEFGH'],
+				['1.3..5', 'ABCDE'],
+				['2..4.6', 'BCDEF'],
+				['<1..2', 'AB'],
+				['1..>2', 'AB'],
+				['<1..>2', 'AB']
+			]
+
+			examples.forEach((example) => {
+				let locationString = example[0],
+					expectedSequence = example[1]
+
+				it(locationString, function() {
+					let x = locationFromString(locationString),
+						result = x.transcriptFrom(seq)
+					expect(result).ok
+					expect(result).instanceof(Seq)
+					expect(result !== seq)
+					expect(result.sequence()).equal(expectedSequence)
+				})
+			})
+		})
+
+		describe('circular sequence', function() {
 		})
 	})
 })
