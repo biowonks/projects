@@ -20,6 +20,8 @@ class Location extends AbstractLocation {
 
 	transcriptFrom(seq) {
 		assert(seq instanceof Seq, 'seq is not a valid Seq instance')
+		assert(this.startLocationPoint_.hasDefiniteStart(), 'starting location point does not have definite start')
+		assert(this.stopLocationPoint_.hasDefiniteStop(), 'stop location point does not have definite stop')
 		return seq.subseq(this.startLocationPoint_.lowerBound(), this.stopLocationPoint_.upperBound())
 	}
 }

@@ -12,6 +12,15 @@ class FuzzyLocationPoint extends LocationPoint {
 	constructor(operator, position) {
 		assert(operator === '>' || operator === '<', 'operator must be either > or <')
 		super(position)
+		this.operator_ = operator
 		this.exact_ = false
+	}
+
+	hasDefiniteStart() {
+		return this.operator_ === '<'
+	}
+
+	hasDefiniteStop() {
+		return this.operator_ === '>'
 	}
 }

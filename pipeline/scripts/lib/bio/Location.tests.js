@@ -49,6 +49,27 @@ describe('Location', function() {
 			}).throw(Error)
 		})
 
+		it('>1..5 throws error', function() {
+			expect(function() {
+				let x = new Location(new FuzzyLocationPoint('>', 1), new LocationPoint(5))
+				x.transcriptFrom(new Seq('ATCGATGC'))
+			}).throw(Error)
+		})
+
+		it('2..<5 throws error', function() {
+			expect(function() {
+				let x = new Location(new LocationPoint(2), new FuzzyLocationPoint('<', 5))
+				x.transcriptFrom(new Seq('ATCGATGC'))
+			}).throw(Error)
+		})
+
+		it('>1..<2 throws error', function() {
+			expect(function() {
+				let x = new Location(new FuzzyLocationPoint('>', 1), new FuzzyLocationPoint('<', 2))
+				x.transcriptFrom(new Seq('ATCGATGC'))
+			}).throw(Error)
+		})
+
 		// ------------------------------------------------
 		// Helper functions
 		function locationFromString(locationString) {
@@ -78,9 +99,17 @@ describe('Location', function() {
 
 		let examples = [
 			['5..5', 'E'],
+			['5..6', 'EF'],
 			['5..7^8', 'EFGH'],
-			['4^5..7', 'DEFG']
+			['4^5..7', 'DEFG'],
+			['4^5..7^8', 'DEFGH'],
+			['1.3..5', 'ABCDE'],
+			['2..4.6', 'BCDEF'],
+			['<1..2', 'AB'],
+			['1..>2', 'AB'],
+			['<1..>2', 'AB']
 		]
+
 		examples.forEach((example) => {
 			let locationString = example[0],
 				expectedSequence = example[1]
