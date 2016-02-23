@@ -152,6 +152,29 @@ describe('Location', function() {
 		})
 
 		describe('circular sequence', function() {
+			let seq = new Seq('ABCDEFGHIJ')
+			//                 |   |    |
+			//                 1   5    10
+			seq.setCircular()
+
+			let examples = [
+				['10..1', 'JA'],
+				['5..4', 'EFGHIJABCD']
+			]
+
+			examples.forEach((example) => {
+				let locationString = example[0],
+					expectedSequence = example[1]
+
+				it(locationString, function() {
+					let x = locationFromString(locationString),
+						result = x.transcriptFrom(seq)
+					expect(result).ok
+					expect(result).instanceof(Seq)
+					expect(result !== seq)
+					expect(result.sequence()).equal(expectedSequence)
+				})
+			})
 		})
 	})
 })
