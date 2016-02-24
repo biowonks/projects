@@ -210,6 +210,7 @@ describe('Seq', function() {
 
 					expect(result).instanceof(Seq)
 					expect(result !== linearSeq).equal(true, 'subseq method should return new instance')
+					expect(result.isCircular()).false
 
 					expect(result.sequence()).equal(example.expectedSequence)
 				})
@@ -232,6 +233,7 @@ describe('Seq', function() {
 				it(`${example.start} .. ${example.stop} --> ${example.expectedSequence}`, function() {
 					let result = circularSeq.subseq(example.start, example.stop)
 					expect(result.sequence()).equal(example.expectedSequence)
+					expect(result.isCircular()).false
 				})
 			})
 		})

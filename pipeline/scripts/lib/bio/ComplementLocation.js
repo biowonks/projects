@@ -1,7 +1,10 @@
 'use strict'
 
+// Core includes
+let assert = require('assert')
+
 // Local includes
-let Location = require('./AbstractLocation'),
+let AbstractLocation = require('./AbstractLocation'),
 	Seq = require('./Seq')
 
 module.exports =

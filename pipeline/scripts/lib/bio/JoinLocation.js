@@ -1,5 +1,8 @@
 'use strict'
 
+// Core includes
+let assert = require('assert')
+
 // Local includes
 let AbstractLocation = require('./AbstractLocation'),
 	Seq = require('./Seq')
@@ -15,6 +18,7 @@ class JoinLocation extends AbstractLocation {
 		this.locations_ = locations
 	}
 
+	// Overlaps are permitted
 	transcriptFrom(seq) {
 		assert(seq instanceof Seq, 'seq is not a valid Seq instance')
 		let seqStrings = this.locations_.map((location) => {
