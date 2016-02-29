@@ -1,7 +1,18 @@
+/**
+ * Parses feature locations typically associated with GenBank records. The resulting Location
+ * object may be paired with a source DNA sequence to produce the source transcript.
+ *
+ * Locations vary in complexity from single bases to multiple transformations of join, complement,
+ * order, etc. The location string is first parsed into a tree representation and then traversed
+ * to produce a single location object representing this location string.
+ */
+
 'use strict'
 
+// Core node libraries
 let assert = require('assert')
 
+// Local includes
 let LocationPoint = require('./LocationPoint'),
 	BetweenLocationPoint = require('./BetweenLocationPoint'),
 	FuzzyLocationPoint = require('./FuzzyLocationPoint'),
@@ -10,96 +21,8 @@ let LocationPoint = require('./LocationPoint'),
 	ComplementLocation = require('./ComplementLocation'),
 	JoinLocation = require('./JoinLocation')
 
-class Node {
-	constructor() {
-		this.parent_ = null
-		this.children_ = []
-	}
-
-	location() {
-		assert(this.hasChildren())
-		assert(this.isRoot())
-		return this.children_[0].location()
-	}
-
-	parent() {
-		return this.parent_
-	}
-
-	push(childNode) {
-		assert(childNode !== this)
-		childNode.parent_ = this
-		this.children_.push(childNode)
-	}
-
-	hasChildren() {
-		return this.children_.length > 0
-	}
-
-	isLeaf() {
-		return !this.hasChildren()
-	}
-
-	isRoot() {
-		return this.parent_ === null
-	}
-
-	children() {
-		return this.children_
-	}
-}
-
-class ComplementNode extends Node {
-	location() {
-		assert(this.children().length === 1)
-		return new ComplementLocation(this.children()[0].location())
-	}
-
-	push(childNode) {
-		if (this.hasChildren())
-			throw new Error('Complement nodes may only have one child')
-
-		super.push(childNode)
-	}
-}
-
-class JoinNode extends Node {
-	location() {
-		assert(this.hasChildren())
-		let locations = []
-		this.children().forEach((childNode) => {
-			locations.push(childNode.location())
-		})
-		return new JoinLocation(locations)
-	}
-}
-
-class OrderNode extends Node {
-	location() {
-		throw new Error('not yet implemented')
-	}
-}
-
-class LocationNode extends Node {
-	constructor(location) {
-		super()
-		this.location_ = location
-	}
-
-	push(childNode) {
-		throw new Error('Location nodes may not have children')
-	}
-
-	location() {
-		return this.location_
-	}
-}
-
 module.exports =
 class LocationStringParser {
-	constructor() {
-	}
-
 	/**
 	 * @param {string} locationString
 	 * @return {AbstractLocation}
@@ -110,6 +33,8 @@ class LocationStringParser {
 		return root.location()
 	}
 
+	// ----------------------------------------------------
+	// Private methods
 	recursivelyParse_(locationString, parentNode) {
 		if (/^complement\(/.test(locationString)) {
 			let node = new ComplementNode()
@@ -128,6 +53,9 @@ class LocationStringParser {
 		}
 		else if (locationString[0] === ',') {
 			this.recursivelyParse_(locationString.substr(1), parentNode)
+		}
+		else if (locationString[0] === ')') {
+			this.recursivelyParse_(locationString.substr(1), parentNode.parent())
 		}
 		else {
 			let matches = /^(?:([A-Za-z0-9](?:[A-Za-z0-9._]*[A-Za-z0-9])?):)?([<>0-9.^]+?)([,)]|$)/.exec(locationString)
@@ -177,6 +105,9 @@ class LocationStringParser {
 			let isBetween = locationPointText.indexOf('^') >= 0,
 				positions = locationPointText.split(/[.^]/)
 
+			positions[0] = parseInt(positions[0])
+			positions[1] = parseInt(positions[1])
+
 			return isBetween
 				? new BetweenLocationPoint(positions[0], positions[1])
 				: new BoundedLocationPoint(positions[0], positions[1])
@@ -187,5 +118,107 @@ class LocationStringParser {
 			return new FuzzyLocationPoint(locationPointText[0], parseInt(locationPointText.substr(1)))
 
 		return null
+	}
+}
+
+// --------------------------------------------------------
+/**
+ * Private classes for supporting the parse process. Note these are not exported.
+ */
+
+/**
+ * Generic tree node.
+ */
+class Node {
+	constructor() {
+		this.parent_ = null
+		this.children_ = []
+	}
+
+	location() {
+		assert(this.hasChildren())
+		assert(this.isRoot())
+		return this.children_[0].location()
+	}
+
+	parent() {
+		return this.parent_
+	}
+
+	push(childNode) {
+		assert(childNode !== this)
+		childNode.parent_ = this
+		this.children_.push(childNode)
+	}
+
+	hasChildren() {
+		return this.children_.length > 0
+	}
+
+	isLeaf() {
+		return !this.hasChildren()
+	}
+
+	isRoot() {
+		return this.parent_ === null
+	}
+
+	children() {
+		return this.children_
+	}
+}
+
+/**
+ * Represents the complement of one and only one child location.
+ */
+class ComplementNode extends Node {
+	location() {
+		assert(this.children().length === 1, 'complement nodes must have one and only have one child')
+		return new ComplementLocation(this.children()[0].location())
+	}
+
+	push(childNode) {
+		if (this.hasChildren())
+			throw new Error('Complement nodes may only have one child')
+
+		super.push(childNode)
+	}
+}
+
+/**
+ * Represents the join operator of one or multiple child locations.
+ */
+class JoinNode extends Node {
+	location() {
+		assert(this.hasChildren(), 'join nodes must have at least one child')
+		let locations = []
+		this.children().forEach((childNode) => {
+			locations.push(childNode.location())
+		})
+		return new JoinLocation(locations)
+	}
+}
+
+class OrderNode extends Node {
+	location() {
+		throw new Error('not yet implemented')
+	}
+}
+
+/**
+ * Represents a simple location, which does not have any children.
+ */
+class LocationNode extends Node {
+	constructor(location) {
+		super()
+		this.location_ = location
+	}
+
+	push(childNode) {
+		throw new Error('Location nodes may not have children')
+	}
+
+	location() {
+		return this.location_
 	}
 }
