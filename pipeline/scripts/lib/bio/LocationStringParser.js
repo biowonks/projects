@@ -179,7 +179,7 @@ class ComplementNode extends Node {
 
 	push(childNode) {
 		if (this.hasChildren())
-			throw new Error('Complement nodes may only have one child')
+			throw new Error('complement nodes may only have one child')
 
 		super.push(childNode)
 	}
@@ -215,7 +215,7 @@ class LocationNode extends Node {
 	}
 
 	push(childNode) {
-		throw new Error('Location nodes may not have children')
+		throw new Error('location nodes may not have children')
 	}
 
 	location() {
