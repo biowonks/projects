@@ -12,7 +12,7 @@ let FastaSeq = require('../bio/FastaSeq')
 let kRecordSeparator = '\n>'
 
 module.exports =
-class FastaReaderStream = function(optSkipEmptySequence) {
+class FastaReaderStream extends Transform {
 	constructor(optSkipEmptySequence) {
 		super({objectMode: true})
 
@@ -85,10 +85,11 @@ class FastaReaderStream = function(optSkipEmptySequence) {
 		assert(/\S/.test(header), 'fasta header must not be empty')
 
 		let fastaSeq = new FastaSeq(header, sequence)
-		if (fastaSeq.isEmpty() && !this.skipEmptySequence_)
-			throw new Error('fasta sequence is unexpectedly empty (' + header + ')')
+		if (fastaSeq.length())
+			return this.push(fastaSeq)
 
-		this.push(fastaSeq)
+		if (!this.skipEmptySequence_)
+			throw new Error('fasta sequence is unexpectedly empty (' + header + ')')
 	}
 
 	throwMissingCaret_() {
