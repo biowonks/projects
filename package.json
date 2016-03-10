@@ -6,7 +6,7 @@
   "main": "index.js",
   "repository": {},
   "scripts": {
-    "test": "./node_modules/.bin/mocha -r pipeline/scripts/test-setup.js pipeline/scripts/lib/bio/Seq.tests.js"
+    "test": "./node_modules/.bin/gulp test"
   },
   "author": "Luke Ulrich",
   "license": "",
@@ -35,8 +35,9 @@
     "commander": "^2.9.0",
     "csv-parse": "^1.0.1",
     "eslint": "0.22.x",
-    "gulp": "3.x",
+    "gulp": "git://github.com/gulpjs/gulp.git#4.0",
     "gulp-eslint": "0.12.x",
+    "gulp-mocha": "^2.2.0",
     "gulp-util": "3.x",
     "mocha": "^2.3.4",
     "moment": "^2.11.1",

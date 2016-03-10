@@ -1,15 +1,17 @@
-'use strict';
+'use strict'
 
-var gulp = require('gulp'),
+// 3rd party includes
+let gulp = require('gulp'),
+	gulpMocha = require('gulp-mocha'),
 	gutil = require('gulp-util'),
 	eslint = require('gulp-eslint'),
-	spawn = require('child_process').spawn;
+	spawn = require('child_process').spawn
 
-var serverInstance;
+let serverInstance
 
 // --------------------------------------------------------
 // Configuration
-var config = {
+let config = {
 	watchPatterns: [
 		'./*.js',
 		'lib/**/*.js',
@@ -17,11 +19,28 @@ var config = {
 		'routes/**/*.js',
 		'services/**/*.js'
 	]
-};
+}
 
 // --------------------------------------------------------
-gulp.task('default', ['server', 'watch']);
+// gulp.task('default', gulp.series(['server', 'watch'])
 
+let kTestFiles = [
+	'pipeline/scripts/**/*.tests.js'
+]
+
+gulp.task('test', function(done) {
+	gulp.src(kTestFiles)
+		.pipe(gulpMocha({
+			timeout: 30000,
+			log: false,
+			require: [
+				'./pipeline/scripts/test-setup.js'
+			]
+		}))
+		.on('end', () => (done ? done() : null))
+})
+
+/*
 gulp.task('lint', function() {
 	return gulp.src(config.watchPatterns)
         // eslint() attaches the lint output to the eslint property
@@ -32,28 +51,28 @@ gulp.task('lint', function() {
         .pipe(eslint.format())
         // To have the process exit with an error code (1) on
         // lint error, return the stream and pipe to failOnError last.
-        .pipe(eslint.failOnError());
-});
+        .pipe(eslint.failOnError())
+})
 
 gulp.task('watch', function() {
-	gulp.watch(config.watchPatterns, ['server']);
-});
+	gulp.watch(config.watchPatterns, ['server'])
+})
 
 gulp.task('server', function() {
 	if (serverInstance)
-		serverInstance.kill();
+		serverInstance.kill()
 
-	serverInstance = spawn('node', ['index.js'], {stdio: 'inherit'});
+	serverInstance = spawn('node', ['index.js'], {stdio: 'inherit'})
 	serverInstance.on('close', function(code) {
 		if (code === 1)
-			gutil.log('Error detected, waiting for changes...');
+			gutil.log('Error detected, waiting for changes...')
 		else if (code === 2)
-			process.exit(2);
-	});
-});
-
+			process.exit(2)
+	})
+})
+*/
 // --------------------------------------------------------
 process.on('exit', function() {
 	if (serverInstance)
-		serverInstance.kill();
-});
+		serverInstance.kill()
+})
