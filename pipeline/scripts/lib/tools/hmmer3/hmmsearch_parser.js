@@ -1,17 +1,24 @@
 'use strict'
 
-let output = root + "/pipeline/scripts/lib/tools/hmmer3/out.tbl"
+let root = __dirname.split('mist3-api')[0] + "mist3-api",
+	fastaInput = process.argv[2],
+	output = process.argv[3],
+	outputJson = process.argv[4]
 
 let fs = require('fs'),
 	assert = require('assert'),
-	byline = require('byline')
+	byline = require('byline'),
+	FastaReaderStream = require(root + '/pipeline/scripts/lib/streams/FastaReaderStream')
+
+let fastaReaderStream = new FastaReaderStream(),
+	fastaStream = fs.createReadStream(fastaInput)
 
 function line2data(line){
 
 	let values = line.replace(/\s+/g, ' ').split(' ')
 	assert(values.length==23,"Line is missing expected 23 values: \n" + line)
 	
-	let seq_id = values[0],
+	let header = values[0],
 		seq_len = parseInt(values[2]),
 		domain_name = values[3],
 		profile_len = parseInt(values[5]),
@@ -35,25 +42,48 @@ function line2data(line){
 		env_start, env_stop, env_extent,
 		dom_score, c_evalue, i_evalue, acc]
 
-	return {"seq_id": seq_id, "data":data}
+	return {"header": header, "data":data}
 }
 
-let results = {}
+let fastaHeader2seqId = {},
+	results = {}
 
-let inputStream = byline(fs.createReadStream(output, {encoding: 'utf8'}))
-inputStream.on('data', function(line) {
-	if (line[0] != "#"){
-		let lineData = line2data(line),
-			seq_id = lineData.seq_id,
-			data = lineData.data
+fastaStream.pipe(fastaReaderStream)
+.on('data', function(fastaSeq) {
+	let header = fastaSeq.header(),
+		seqId = fastaSeq.seqId()
 
-		if (results[seq_id]){
-			results[seq_id].push(data)
-		}
-		else{
-		results[seq_id] = [data]
-		}
-	}
+	fastaHeader2seqId[header] = seqId
+	results[header] = {"_id":seqId, "t":{}}
 })
+.on('end',function(){
 
-inputStream.on('end',function(){console.log(results)})
+
+	let inputStream = byline(fs.createReadStream(output, {encoding: 'utf8'}))
+	inputStream.on('data', function(line) {
+		if (line[0] != "#"){
+			let lineData = line2data(line),
+				header = lineData.header,
+				data = lineData.data,
+				seqId = fastaHeader2seqId[header],
+				final_data = {"_id":seqId, "t.pfam29":data}
+
+			if (results[header]["t"]["pfam29"]){
+				results[header]["t"]["pfam29"].push(data)
+			}
+			else{
+			results[header]["t"] = {"pfam29":[data]}
+			}
+		}
+	})
+	.on('end',function(){
+		fs.writeFile(outputJson, JSON.stringify(results, null, 2), function(err) {
+			if(err) {
+				return console.log(err);
+			}
+			//console.log(JSON.stringify(results, null, 2))})
+			console.log("The file was saved!");
+		})
+	}) 	
+
+})
