@@ -17,33 +17,21 @@ class FastaSeq extends Seq {
 		return this.header_
 	}
 
+	/**
+	 * Convert this instance back into a FASTA formatted string. For example,
+	 *
+	 * >chea
+	 * HDSDKJTASDF <-- newline here as well
+	 *
+	 * @param {number?} optCharsPerLine an optional number of lines to split
+	 *    the sequence into; defaults to 0 which implies outputting the entire
+	 *    sequence on a single line
+	 * @returns {string}
+	 */
 	toString(optCharsPerLine) {
-		
-		if (!optCharsPerLine){
-			optCharsPerLine = 0
-		}
-		else{
-			assert(typeof(optCharsPerLine) == 'number', 'optCharsPerLine must be a number')
-			optCharsPerLine = Math.max(parseInt(optCharsPerLine),0)
-		}
-
-		let string = '>' + this.header() + '\n',
-			sequenceLength = this.length(),
-			lineNum = this.length()/optCharsPerLine
-
-		if (lineNum%1) lineNum = parseInt(lineNum) + 1
-
-		if (optCharsPerLine > 0){
-			for (let i = 0; i < lineNum; i++){
-				if(i) string += "\n"
-				string += this.subseq(i*optCharsPerLine + 1, Math.min(sequenceLength,(i+1)*optCharsPerLine)).sequence()
-			}
-		}
-		else{
-			string += this.sequence()
-		}
-
-		return string
+		let charsPerLine = !optCharsPerLine ? 0 : Math.max(parseInt(optCharsPerLine), 0)
+		assert(typeof charsPerLine === 'number', 'optCharsPerLine must be a number')
+		return '>' + this.header_ + '\n' + this.spliceNewlines_(charsPerLine)
 	}
 	
 	// ----------------------------------------------------
@@ -51,5 +39,22 @@ class FastaSeq extends Seq {
 	removeLeadingCaret_() {
 		if (this.header_[0] === '>')
 			this.header_ = this.header_.substr(1)
-	}	
+	}
+
+	/**
+	 * @param {number} charsPerLine
+	 * @return {string}
+	 */
+	spliceNewlines_(charsPerLine) {
+		assert(charsPerLine >= 0, 'charsPerLine must be 0 or a positive integer')
+		let fullSequence = this.sequence()
+		if (!charsPerLine)
+			return fullSequence + '\n'
+
+		let result = ''
+		for (let i = 0, z = fullSequence.length; i < z; i += charsPerLine)
+			result += fullSequence.substr(i, charsPerLine) + '\n'
+
+		return result
+	}
 }
