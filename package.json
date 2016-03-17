@@ -37,6 +37,7 @@
     "eslint": "0.22.x",
     "gulp": "git://github.com/gulpjs/gulp.git#4.0",
     "gulp-eslint": "0.12.x",
+    "gulp-istanbul": "^0.10.3",
     "gulp-mocha": "^2.2.0",
     "gulp-util": "3.x",
     "mocha": "^2.3.4",
