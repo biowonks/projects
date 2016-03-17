@@ -17,6 +17,17 @@ class FastaSeq extends Seq {
 		return this.header_
 	}
 
+	/**
+	 * Convert this instance back into a FASTA formatted string. For example,
+	 *
+	 * >chea
+	 * HDSDKJTASDF <-- newline here as well
+	 *
+	 * @param {number?} optCharsPerLine an optional number of lines to split
+	 *    the sequence into; defaults to 0 which implies outputting the entire
+	 *    sequence on a single line
+	 * @returns {string}
+	 */
 	toString(optCharsPerLine) {
 		let charsPerLine = !optCharsPerLine ? 0 : Math.max(parseInt(optCharsPerLine), 0)
 		assert(typeof charsPerLine === 'number', 'optCharsPerLine must be a number')
@@ -30,6 +41,10 @@ class FastaSeq extends Seq {
 			this.header_ = this.header_.substr(1)
 	}
 
+	/**
+	 * @param {number} charsPerLine
+	 * @return {string}
+	 */
 	spliceNewlines_(charsPerLine) {
 		assert(charsPerLine >= 0, 'charsPerLine must be 0 or a positive integer')
 		let fullSequence = this.sequence()

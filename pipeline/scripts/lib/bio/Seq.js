@@ -82,6 +82,10 @@ class Seq {
 		return this
 	}
 
+	/**
+	 * @param {number} start 1-based value
+	 * @param {number} stop 1-based value
+	 */
 	subseq(start, stop) {
 		assert(start > 0, 'start must be positive')
 		assert(stop > 0, 'stop must be positive')
