@@ -47,11 +47,11 @@ describe('FastaSeq', function() {
 			uncleanedSeq = new FastaSeq(fastaHeader,uncleanedFastaSequence)
 
 		it('Default should give one line sequence', function() {
-			expect(seq.toString()).equal(fastaHeader + '\n' + fastaSequence)
+			expect(seq.toString()).equal(fastaHeader + '\n' + fastaSequence + '\n')
 		})
 
 		it('Negative values should give one line sequence', function() {
-			expect(seq.toString(-2)).equal(fastaHeader + '\n' + fastaSequence)
+			expect(seq.toString(-2)).equal(fastaHeader + '\n' + fastaSequence + '\n')
 		})
 
 		it('Non-number parameter should give an error', function() {
@@ -59,13 +59,13 @@ describe('FastaSeq', function() {
 		})
 
 		it('Sequence should be separated into lines', function() {
-			expect(seq.toString(5)).equal('>header_name\nAAAAA\nTTTTT\nGGGGG\nCCCCC')
-			expect(seq.toString(1)).equal('>header_name\nA\nA\nA\nA\nA\nT\nT\nT\nT\nT\nG\nG\nG\nG\nG\nC\nC\nC\nC\nC')
-			expect(seq.toString(19)).equal('>header_name\nAAAAATTTTTGGGGGCCCC\nC')
+			expect(seq.toString(5)).equal('>header_name\nAAAAA\nTTTTT\nGGGGG\nCCCCC\n')
+			expect(seq.toString(1)).equal('>header_name\nA\nA\nA\nA\nA\nT\nT\nT\nT\nT\nG\nG\nG\nG\nG\nC\nC\nC\nC\nC\n')
+			expect(seq.toString(19)).equal('>header_name\nAAAAATTTTTGGGGGCCCC\nC\n')
 		})
 
 		it('Whitespace should be trimmed', function() {
-			expect(seq.toString(5)).equal('>header_name\nAAAAA\nTTTTT\nGGGGG\nCCCCC')
+			expect(seq.toString(5)).equal('>header_name\nAAAAA\nTTTTT\nGGGGG\nCCCCC\n')
 		})
 	})
 })
