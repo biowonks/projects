@@ -16,7 +16,7 @@ describe('Seq', function() {
 			expect(defaultSeq.isEmpty()).true
 		})
 
-		it('whitespace characters should be empty', function() {
+		it.only('whitespace characters should be empty', function() {
 			let seq = new Seq(' \n\f\t\r')
 			expect(seq.isEmpty()).true
 		})

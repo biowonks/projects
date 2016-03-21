@@ -21,13 +21,24 @@ let kComplementaryBases = {
 	V: 'B'
 }
 
+let kInvalidSymbol = '@'
+
+// Create the equivalent lower case base complements
+for (let base in kComplementaryBases)
+	kComplementaryBases[base.toLowerCase()] = kComplementaryBases[base].toLowerCase()
+
+/**
+ * @constructor
+ * @param {string?} optSequence defauls to the empty string
+ */
 module.exports =
 class Seq {
-	constructor(optSequence, optDontClean) {
-		this.sequence_ = optSequence || ''
+	constructor(optSequence) {
+		this.sequence_ = (optSequence || '').trim()
 		this.isCircular_ = false
-		if (!optDontClean)
-			this.clean_()
+		this.isNormalized_ = false
+		this.removeNonSpaceWhitespace_()
+		this.clean_()
 	}
 
 	complement(optReverse) {
@@ -39,11 +50,11 @@ class Seq {
 			complementaryStrand += kComplementaryBases[letter] || letter
 		}
 
-		return new Seq(complementaryStrand, true /* don't clean */)
+		return new Seq(complementaryStrand)
 	}
 
 	invalidSymbol() {
-		return '@'
+		return kInvalidSymbol
 	}
 
 	isCircular() {
@@ -55,11 +66,20 @@ class Seq {
 	}
 
 	isValid() {
-		return this.sequence_.indexOf('@') === -1
+		return this.sequence_.indexOf(kInvalidSymbol) === -1
 	}
 
 	length() {
 		return this.sequence_.length
+	}
+
+	normalize() {
+		if (!this.isNormalized_) {
+			this.sequence_ = this.normalizedSequence_()
+			this.isNormalized_ = true
+		}
+
+		return this
 	}
 
 	reverseComplement() {
@@ -71,7 +91,7 @@ class Seq {
 	}
 
 	seqId() {
-		let md5base64 = crypto.createHash('md5').update(this.sequence_).digest('base64')
+		let md5base64 = crypto.createHash('md5').update(this.normalizedSequence_()).digest('base64')
 		return md5base64.replace(/=+/g, '')
 			.replace(/\+/g, '-')
 			.replace(/\//g, '_')
@@ -94,28 +114,28 @@ class Seq {
 	
 		if (!this.isCircular_ || start <= stop) {
 			assert(start <= stop, 'start must be <= stop on non-circular sequences')
-			return new Seq(this.oneBasedSubstr_(start, stop), true /* don't clean */)
+			return new Seq(this.oneBasedSubstr_(start, stop))
 		}
 
 		// Circular sequence and the start is > stop
-		return new Seq(this.oneBasedSubstr_(start, this.length()) +
-			this.oneBasedSubstr_(1, stop), true /* don't clean */)
+		return new Seq(this.oneBasedSubstr_(start, this.length()) + this.oneBasedSubstr_(1, stop))
 	}
 
 	// ----------------------------------------------------
 	// Private methods
 	clean_() {
-		this.sequence_ = this.sequence_
-			.replace(/\s+/g, '')
-			.replace(/\W|\d|_/g, '@')
-			.toUpperCase()
+		this.sequence_ = this.sequence_.replace(/[^A-Za-z.\-* ]/g, '@')
 	}
 
-	isNucleotide_(letter) {
-		return letter in kComplementaryBases
+	normalizedSequence_() {
+		return this.isNormalized_ ? this.sequence_ : this.sequence_.replace(/ /g, '').toUpperCase()
 	}
 
 	oneBasedSubstr_(start, stop) {
 		return this.sequence_.substr(start - 1, stop - start + 1)
+	}
+
+	removeNonSpaceWhitespace_() {
+		this.sequence_ = this.sequence_.replace(/(\n|\r|\f|\t|\v)/g, '')
 	}
 }
