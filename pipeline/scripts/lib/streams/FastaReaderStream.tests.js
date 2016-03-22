@@ -37,7 +37,7 @@ describe('FastaReaderStream', function() {
 			['>123\nABC\n>456\nDEF', [['123', 'ABC'], ['456', 'DEF']]],
 			['>123\nABC\n>456\nDEF\n', [['123', 'ABC'], ['456', 'DEF']]],
 			['>123\nABC\n>456\n\nDEF', [['123', 'ABC'], ['456', 'DEF']]],
-			['>Header\n\nA\tB\fC\rD\vE  F\n>Header2\nDEF', [['Header', 'ABCDEF'], ['Header2', 'DEF']]],
+			['>Header\n\nA\tB\fC\rD\vE  F\n>Header2\nDEF', [['Header', 'ABCDE  F'], ['Header2', 'DEF']]],
 			['>1\nA\n>2\nB\n>3\nC\n>4\nD\n>5\nE\n', [['1', 'A'], ['2', 'B'], ['3', 'C'], ['4', 'D'], ['5', 'E']]],
 			['>Header\nABC\nDEF\nGHI\n>Header2\nJKL\n', [['Header', 'ABCDEFGHI'], ['Header2', 'JKL']]]
 		]
