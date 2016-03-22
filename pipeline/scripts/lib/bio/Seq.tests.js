@@ -16,8 +16,13 @@ describe('Seq', function() {
 			expect(defaultSeq.isEmpty()).true
 		})
 
-		it.only('whitespace characters should be empty', function() {
-			let seq = new Seq(' \n\f\t\r')
+		it('non-space whitespace should be removed and result in empty sequence', function() {
+			let seq = new Seq('\n\f\t\r\v')
+			expect(seq.isEmpty()).true
+		})
+
+		it('surrounding whitespace should be trimmed', function() {
+			let seq = new Seq(' \n ')
 			expect(seq.isEmpty()).true
 		})
 
@@ -40,12 +45,12 @@ describe('Seq', function() {
 			expect(defaultSeq.isValid()).true
 		})
 
-		it('all alphabetic characters should be valid', function() {
-			let seq = new Seq('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ')
+		it('A-Z, a-z, ., *, -, " " should be valid', function() {
+			let seq = new Seq('ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz.*-')
 			expect(seq.isValid()).true
 		})
 
-		let inputs = '1234567890!@#$%^&*()-_=+`~,./;\'\\<>?"{}|'.split('')
+		let inputs = '1234567890!@#$%^&()_=+`~,/;\'\\<>?"{}|'.split('')
 		inputs.forEach(function(character) {
 			it(`'${character}' should not be valid`, function() {
 				expect((new Seq(character)).isValid()).false
@@ -63,9 +68,27 @@ describe('Seq', function() {
 			expect(seq.length()).equal(3)
 		})
 
-		it('dirty characters should not count towards length', function() {
-			let seq = new Seq(' A T G')
+		it('surruonding spaces are trimmed and do not count towards the length', function() {
+			let seq = new Seq(' ATG ')
 			expect(seq.length()).equal(3)
+		})
+
+		it('internal spaces count towards length', function() {
+			let seq = new Seq('A T G')
+			expect(seq.length()).equal(5)
+		})
+	})
+
+	describe('normalize', function() {
+		it('removes internal whitespace and upper-cases sequence', function() {
+			let seq = new Seq('a T g')
+			seq.normalize()
+			expect(seq.sequence()).equal('ATG')
+		})
+
+		it('returns itself', function() {
+			let seq = new Seq('a T g')
+			expect(seq.normalize()).equal(seq)
 		})
 	})
 
@@ -76,18 +99,18 @@ describe('Seq', function() {
 		})
 
 		it('basic sequence should be retrievable', function() {
-			let seq = new Seq('ATG')
-			expect(seq.sequence()).equal('ATG')
+			let seq = new Seq('AtG')
+			expect(seq.sequence()).equal('AtG')
 		})
 
-		it('whitespace should not be removed', function() {
-			let seq = new Seq(' A\nTG\n')
-			expect(seq.sequence()).equal('ATG')
+		it('all whitespace except internal spaces is removed', function() {
+			let seq = new Seq(' A\n TG\n ')
+			expect(seq.sequence()).equal('A TG')
 		})
 
-		it('all characters should be upper-cased', function() {
-			let seq = new Seq('atg')
-			expect(seq.sequence()).equal('ATG')
+		it('case is not changed', function() {
+			let seq = new Seq('aTg')
+			expect(seq.sequence()).equal('aTg')
 		})
 
 		it('invalid characters should be replaced with the invalid symbol', function() {
@@ -117,10 +140,44 @@ describe('Seq', function() {
 			}
 		]
 
+		function randomPosition(string) {
+			return Math.floor(Math.random() * string.length)
+		}
+
+		function randomlyLowerCase(sequence) {
+			let pos = randomPosition(sequence)
+			return sequence.substr(0, pos) + sequence[pos].toLowerCase() + sequence.substr(pos + 1)
+		}
+
+		function randomlyInsertSpace(sequence) {
+			let pos = randomPosition(sequence)
+			return sequence.substr(0, pos) + ' ' + sequence.substr(pos)
+		}
+
+		function changeCaseAndInjectWhitespace(sequence) {
+			let result = sequence
+			for (let i = 0; i < 10; i++) {
+				result = randomlyLowerCase(result)
+				result = randomlyInsertSpace(result)
+			}
+
+			return result
+		}
+
 		fixtures.forEach(function(fixture) {
 			it(`${fixture.seqId} from ${fixture.sequence.substr(0, 32) + '...'}`, function() {
 				let seq = new Seq(fixture.sequence)
 				expect(seq.seqId()).equal(fixture.seqId)
+			})
+
+			if (!fixture.sequence)
+				return
+
+			let mungedSequence = changeCaseAndInjectWhitespace(fixture.sequence)
+			it(`${fixture.seqId} from ${mungedSequence.substr(0, 32) + '...'}`, function() {
+				let seq = new Seq(mungedSequence)
+				expect(seq.seqId()).equal(fixture.seqId)
+				expect(seq.sequence()).equal(mungedSequence.trim())
 			})
 		})
 	})
@@ -255,13 +312,13 @@ describe('Seq', function() {
 			expect(x.complement().sequence()).equal('')
 		})
 
-		it('complementary', function() {
+		it('upper case', function() {
 			expect(nucleotideSeq.complement().sequence()).equal('TTAACCGGRRYYWWSSMMKKXXNNTTTAAACCCGGG')
 		})
 
-		it('lower case letters should return not be changed', function() {
-			let x = new Seq('at', true)
-			expect(x.complement().sequence()).equal('at')
+		it('lower case', function() {
+			let x = new Seq(nucleotideSeq.sequence().toLowerCase())
+			expect(x.complement().sequence()).equal('ttaaccggrryywwssmmkkxxnntttaaacccggg')
 		})
 
 		it('non nucleotides should not be modified', function() {

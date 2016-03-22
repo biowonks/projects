@@ -28,6 +28,9 @@ for (let base in kComplementaryBases)
 	kComplementaryBases[base.toLowerCase()] = kComplementaryBases[base].toLowerCase()
 
 /**
+ * Surrounding spaces are removed; however, internal spaces are preserved unless the sequence
+ * is normalized.
+ *
  * @constructor
  * @param {string?} optSequence defauls to the empty string
  */
@@ -97,6 +100,9 @@ class Seq {
 			.replace(/\//g, '_')
 	}
 
+	/**
+	 * @param {boolean?} optCircular defaults to true
+	 */
 	setCircular(optCircular) {
 		this.isCircular_ = optCircular === undefined ? true : !!optCircular
 		return this
@@ -123,14 +129,25 @@ class Seq {
 
 	// ----------------------------------------------------
 	// Private methods
+	/**
+	 * Replaces all characters except for A-Z, a-z, ., -, *, or ' ' with the ampersand symbol
+	 */
 	clean_() {
 		this.sequence_ = this.sequence_.replace(/[^A-Za-z.\-* ]/g, '@')
 	}
 
+	/**
+	 * Removes all spaces and upper-cases the sequence. The result is cached.
+	 */
 	normalizedSequence_() {
 		return this.isNormalized_ ? this.sequence_ : this.sequence_.replace(/ /g, '').toUpperCase()
 	}
 
+	/**
+	 * @param {number} start 1-based value
+	 * @param {number} stop 1-based value
+	 * @returns {string}
+	 */
 	oneBasedSubstr_(start, stop) {
 		return this.sequence_.substr(start - 1, stop - start + 1)
 	}

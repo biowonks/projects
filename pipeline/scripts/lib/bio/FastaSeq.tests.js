@@ -13,7 +13,7 @@ describe('FastaSeq', function() {
 
 		it('should have base Seq constructor applied', function() {
 			let seq = new FastaSeq('Header', ' a 2 tG\n')
-			expect(seq.sequence()).equal('A@TG')
+			expect(seq.sequence()).equal('a @ tG')
 		})
 	})
 
