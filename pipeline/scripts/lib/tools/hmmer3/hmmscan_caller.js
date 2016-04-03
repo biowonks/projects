@@ -1,30 +1,21 @@
 'use strict'
 
 /*
-hmmscan --noali --cut_ga ~/mist3-api/db/pfam/29.0/Pfam-A.hmm demo.faa | node hmmscan_caller.js
+Example usage:
+hmmscan --noali --cut_ga ~/mist3-api/db/pfam/29.0/Pfam-A.hmm ~/mist3-api/pipeline/scripts/lib/tools/hmmer3/demo.faa | node ~/mist3-api/pipeline/scripts/lib/tools/hmmer3/hmmscan_caller.js
 */
 
 let fs = require('fs'),
 	path = require('path'),
-	//hmmscanReaderStream = require('./HmmscanReaderStream'),
 	hmmscanReaderStream = require(path.resolve(__dirname, 'HmmscanReaderStream')),
-	//HmmscanResult = require('./HmmscanResult'),
-	HmmscanResult = require(path.resolve(__dirname, 'HmmscanResult')),
-	//inStream = fs.createReadStream(process.argv[2])
-	inStream = process.stdin
+	HmmscanResult = require(path.resolve(__dirname, 'HmmscanResult'))
 
-let hmmscanStream = new hmmscanReaderStream(),
-	results = []
-
+let inStream = process.stdin,
+	hmmscanStream = new hmmscanReaderStream()
 
 inStream.pipe(hmmscanStream)
 	.on('data', (result) => {
-
 		let HmmscanResultObject = new HmmscanResult(result)
-
 		console.log(HmmscanResultObject)
 	})
-	.on('finish', () => {
-
-		//console.log(results[0])
-	})
+	.on('finish', () => {})

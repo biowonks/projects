@@ -4,7 +4,6 @@
 let assert = require('assert'),
 	crypto = require('crypto')
 
-
 module.exports =
 class HmmscanResult {
 	constructor(hmmscanResultText){
@@ -20,9 +19,9 @@ class HmmscanResult {
 		if (!string)
 			string = ''
 		let theList = string.match(regex)
-		if(theList) {
+		if (theList) {
 			for (let i = 1; i < theList.length ; i++) {
-				this[variables[i-1]] = theList[i]
+				this[variables[i - 1]] = theList[i]
 			}
 			return true
 		}
@@ -32,14 +31,13 @@ class HmmscanResult {
 		let linesLength = this.lines.length
 		for (let i = 0; i < linesLength; i++){
 			let currentLine = this.lines[i]
-			if(this.regex2checkAndList_(currentLine, /^Query:\s+(\S+)\s+\[L\=(\d+)\]/, ['seqName', 'seqLength']))
+			if (this.regex2checkAndList_(currentLine, /^Query:\s+(\S+)\s+\[L\=(\d+)\]/, ['seqName', 'seqLength']))
 				this.lines =  this.lines.slice(i + 1, linesLength)
 		}
 		assert(this.seqName, "Sequence Name was not found.")
 	}
 
-	readUnitHits_(){
-
+	readUnitHits_() {
 		for (let i = 0; i < this.lines.length; i++){
 			let currentLine = this.lines[i]
 			if (this.regex2checkAndList_(currentLine, /^[(\/\/|Internal)]/, [])) {
@@ -61,7 +59,7 @@ class HmmscanResult {
 			else if (this.regex2checkAndList_(currentLine, /^$/, [])) {
 				continue
 			}
-			else 	if (this.regex2checkAndList_(currentLine, /^\s+\d+\s+!/, [])) {
+			else if (this.regex2checkAndList_(currentLine, /^\s+\d+\s+!/, [])) {
 	
 				let dMatch = currentLine.split(/\s+/)
 				assert(dMatch.length == 17, 'Expected 16 elements of data ' + currentLine + '\n')
@@ -83,7 +81,6 @@ class HmmscanResult {
 					envCov		: dMatch[15],
 					acc			: parseFloat(dMatch[16])
 				})
-
 				continue
 			}
 			// else if (this.regex2checkAndList_(currentLine, /^Scores for complete/, [])) {
