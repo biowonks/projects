@@ -9,7 +9,7 @@ let child_process = require('child_process'),
 let HmmscanResultReaderStream = require('./HmmscanResultReaderStream')
 
 // Constants
-let kHmmscanToolFile = path.resolve(__dirname, 'hmmscan')
+let kHmmscanToolFile = path.resolve(__dirname, 'bin/hmmscan')
 
 /**
  * HmmscanStream executes HMMER3 for a given HMM database and FASTA file. The results
@@ -31,7 +31,7 @@ class HmmscanStream extends Transform {
 		this.hmmscanResultReaderStream_.pipe(this)
 	}
 
-	_transfrom(parsedResult, encoding, done) {
+	_transform(parsedResult, encoding, done) {
 		this.push(parsedResult)
 		done()
 	}
