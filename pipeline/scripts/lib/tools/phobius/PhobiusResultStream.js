@@ -5,10 +5,8 @@ let assert = require('assert'),
 	StringDecoder = require('string_decoder').StringDecoder,
 	Transform = require('stream').Transform;
 
-
 // Constants
 let kRecordSeparator = '\n'
-
 
 module.exports =
 class PhobiusReadStream extends Transform {
@@ -46,7 +44,7 @@ class PhobiusReadStream extends Transform {
 			lineTo = this.buffer_.indexOf(kRecordSeparator, lastPos)
 		while (lineTo >= 0) {
 			let  line = this.buffer_.substr(lastPos, lineTo - lastPos)
-			console.log("Line "+line)
+			console.log("Line ", line)
 			this.processLine_(line)
 			lastPos = lineTo + 1
 		 	lineTo = this.buffer_.indexOf(kRecordSeparator, lastPos)
