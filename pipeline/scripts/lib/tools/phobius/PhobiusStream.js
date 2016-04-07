@@ -1,74 +1,46 @@
 'use strict'
 
-// Core node libraries
+//Core node libraries
 let child_process = require('child_process'),
 	path = require('path'),
 	Transform = require('stream').Transform
 
 // Local includes
-let FastaReaderStream = require('../../streams/FastaReaderStream')
+let FastaReaderStream = require('../../streams/FastaReaderStream'),
+	PhobiusResultStream = require('./PhobiusResultStream')
+	
+//Constants
+let kPhobiusToolDir = path.resolve(__dirname,'phobius'),
+	kPhobiusToolFile = path.resolve(kPhobiusToolDir,'phobius.pl')
 
-// Constants
-let kPhobiusToolDir = path.resolve(__dirname, './phobius'),
-	kPhobiusToolFile = path.resolve(kPhobiusToolDir, 'phobius.pl')
-
-module.exports =
+module.exports = 
 class PhobiusStream extends Transform {
 	constructor() {
 		super({objectMode: true})
-
-		this.phobiusTool_ = child_process.spawn(kPhobiusTToolFile, ['-short'],{
-			env: {
-				PHOBIUSDIR: kPhobiusToolDir
-			}
 		
-		})
+		this.phobiusTool_ = child_process.spawn(kPhobiusToolFile,['-short'])
 
-		this.fastaReaderStream_ = new FastaReaderStrem(true /* skip empty sequences */)
-		this.fastaReaderStream_.pipe(this)
+                this.fastaReaderStream_ = new FastaReaderStream(true)
+                this.fastaReaderStream_.pipe(this)
+
+		//this.phobiusResultStream_ = new PhobiusResultStream()
+		//this.phobusTool_.stdout.pipe(this.phobiusResultStream_)
+
 
 		let self = this
-		this.on('pipe', function(src){
+		this.on('pipe',function(src) {
 			src.unpipe(self)
 
 			src.pipe(self.phobiusTool_.stdin)
-			//self.phobiusTool_.stdout.pipe()
+			self.phobiusResultStream_ = new PhobiusResultStream()
+			self.phobusTool_.stdout.pipe(self.phobiusResultStream_)
 		
 		})
-	}
-
-
-	static parsePhobiusOut(tmPred) {
-		let tmPositions = []
-		let arr = tmPred.split(/\s+/)
-		let header = arr[0],
-			topology = arr[3]
-			
-			topology = topology.replace((/[o,i]/g," ")
-
-			let tm_arr = topology.trim().split(/\s+/)
-			tm_arr.forEach(function(tm){
-				pos = tm.split("-")
-				start = pos[0]
-				end = pos[1]
-				console.log("TM "+header + " " + start + " " + end)
-				let tm = [start, stop]
-				tmPositions.push(tm)
-
-			)}
-		return tmPositions
 
 	}
 
-	transform(fastaSeq, encoding done) {
-		this.push({
-			header: fastaSeq.header(),
-			phobius: PhobiusStream.parsePhobiusOut(fastaSeq.sequence())
-		
-		})
+	_transform(result,encoding,done) {
+		this.push({result})
 		done()
-	
-	
 	}
-
 }
