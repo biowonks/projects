@@ -45,7 +45,8 @@ class PhobiusReadStream extends Transform {
 		let lastPos = 0,
 			lineTo = this.buffer_.indexOf(kRecordSeparator, lastPos)
 		while (lineTo >= 0) {
-			let  line = line = this.buffer_.substr(lastPos, lineTo - lastPos)
+			let  line = this.buffer_.substr(lastPos, lineTo - lastPos)
+			console.log("Line "+line)
 			this.processLine_(line)
 			lastPos = lineTo + 1
 		 	lineTo = this.buffer_.indexOf(kRecordSeparator, lastPos)
@@ -58,25 +59,34 @@ class PhobiusReadStream extends Transform {
 	}
 
 	processLine_(line) {
-		let head='',
-			topology = '',
-			tm=[],
-			line_arr = line.split(/\s+/)
-			
-			head = line_arr[0]
-			
-			topology = line_arr[1]
-			topology = topology.replace(/[o,i]/g,' ')
-			tm_arr = topology.split(/\s+/)
+		let tm=[],
+			signal=[],
+			line_arr = line.split(/\s+/),
+			head = line_arr[0],
+			num_tm = line_arr[1],
+			sp = line_arr[2],
+			topology = line_arr[3]
 
-			for(i =0;i<tm_arr.length;i++) {
-				tm_pos = tm_arr[i].split('-')
-				tm.push([tm_pos[0],tm_pos[1]])
+
+			console.log("Header "+head + " Num of TM" + num_tm)
+
+			if(num_tm > 0) {
+				
+				topology = topology.replace(/[o,i]/g,' ')
+				let tm_arr = topology.trim().split(/\s+/),
+					i=0
+
+				for(i =0;i<tm_arr.length;i++) {
+				
+						let tm_pos = tm_arr[i].split('-')
+						tm.push([tm_pos[0],tm_pos[1]])
+				}					
 			}
 
-		return this.push({
-		header: head,
-		tm_regions: tm
-		})
+		console.log("TM ")
+		console.log(tm)
+
+		let results = [head,signal,tm]
+		return this.push(results)
 	}
 }

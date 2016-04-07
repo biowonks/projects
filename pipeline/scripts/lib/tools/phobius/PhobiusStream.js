@@ -11,7 +11,7 @@ let FastaReaderStream = require('../../streams/FastaReaderStream'),
 	
 //Constants
 let kPhobiusToolDir = path.resolve(__dirname,'phobius'),
-	kPhobiusToolFile = path.resolve(kPhobiusToolDir,'phobius.pl')
+	kPhobiusToolFile = path.resolve(kPhobiusToolDir,'./phobius.pl')
 
 module.exports = 
 class PhobiusStream extends Transform {
@@ -23,8 +23,7 @@ class PhobiusStream extends Transform {
                 this.fastaReaderStream_ = new FastaReaderStream(true)
                 this.fastaReaderStream_.pipe(this)
 
-		//this.phobiusResultStream_ = new PhobiusResultStream()
-		//this.phobusTool_.stdout.pipe(this.phobiusResultStream_)
+		this.phobiusResultStream_ = new PhobiusResultStream()
 
 
 		let self = this
@@ -32,15 +31,16 @@ class PhobiusStream extends Transform {
 			src.unpipe(self)
 
 			src.pipe(self.phobiusTool_.stdin)
-			self.phobiusResultStream_ = new PhobiusResultStream()
-			self.phobusTool_.stdout.pipe(self.phobiusResultStream_)
-		
+			//self.phobiusResultStream_ = new PhobiusResultStream()
+			self.phobiusTool_.stdout.pipe(self.phobiusResultStream_)
+
 		})
 
 	}
 
 	_transform(result,encoding,done) {
 		this.push({result})
+		console.log("Final "+result)
 		done()
 	}
 }
