@@ -40,9 +40,10 @@ gulp.task('test', function(done) {
 		.on('end', () => (done ? done() : null))
 })
 
-gulp.task('downloadPfam', function() {
+gulp.task('downloadPfam', function(done) {
 	let downloadPfam = require('./pipeline/scripts/lib/tools/hmmer3/downloadPfam.js')
 	downloadPfam()
+	done()
 })
 
 /*
