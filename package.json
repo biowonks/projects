@@ -17,16 +17,22 @@
     "byline": "^4.2.1",
     "corser": "2.x",
     "debug": "2.x",
+    "domain": "0.0.1",
+    "exec": "^0.2.1",
     "express": "4.x",
+    "ftp": "^0.3.10",
     "inflection": "^1.8.0",
     "lazy.js": "0.x",
+    "liner": "^0.3.3",
     "lodash": "3.x",
     "moment": "2.x",
     "pg": "4.x",
     "pg-hstore": "2.x",
     "sequelize": "3.x",
+    "shelljs": "^0.6.0",
     "umzug": "1.x",
-    "universal-analytics": "0.3.x"
+    "universal-analytics": "0.3.x",
+    "wget": "0.0.1"
   },
   "devDependencies": {
     "bluebird": "^2.10.2",

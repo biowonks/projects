@@ -3,9 +3,11 @@
 // Core node libraries
 let child_process = require('child_process'),
 	crypto = require('crypto'),
+	domain = require('domain'),
 	fs = require('fs'),
 	path = require('path'),
-	temp = require('temp')
+	temp = require('temp'),
+	zlib = require('zlib')
 
 // 3rd-party libraries
 let Promise = require('bluebird'),
@@ -43,7 +45,7 @@ exports.download = function(url, optDestFile) {
 
 		let destFile = optDestFile ? optDestFile : exports.basename(url),
 			tmpDestFile = destFile + '.tmp'
-		let command = 'wget -O "' + tmpDestFile + '" ' + url
+		let command = 'wget --quiet -O "' + tmpDestFile + '" ' + url
 
 		child_process.exec(command, function(error, stdout) {
 			if (error)
@@ -68,6 +70,36 @@ exports.durationFromInterval = function(interval) {
 		return moment.duration(interval)
 
 	return moment.duration(parseInt(matches[1]), matches[2])
+}
+
+/**
+ * @param {string} gzFile
+ * @param {string?} optDestFile
+ * @return {Promise}
+ */
+exports.gunzip = function(gzFile, optDestFile) {
+	return new Promise((resolve, reject) => {
+		let gunzipDomain = domain.create()
+		gunzipDomain.on('error', (error) => {
+			reject(error)
+		})
+		gunzipDomain.run(() => {
+			let gzFileStream = fs.createReadStream(gzFile),
+				gunzipStream = zlib.createGunzip(),
+				destFile = optDestFile ? optDestFile : exports.basename(gzFile),
+				destFileStream = fs.createWriteStream(destFile)
+
+			gzFileStream
+				.pipe(gunzipStream)
+				.pipe(destFileStream)
+				.on('close', () => {
+					resolve({
+						gzFile: gzFile,
+						destFile: destFile
+					})
+				})
+		})
+	})
 }
 
 exports.pathStat = function(queryPath) {

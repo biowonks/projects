@@ -16,8 +16,9 @@ module.exports = {
 		data: path.resolve(__dirname, 'data'),
 		genomes: path.resolve(__dirname, 'data', 'genomes'),
 		scripts: path.resolve(__dirname, 'scripts'),
-		lib: path.resolve(__dirname, 'lib'),
-		logs: path.resolve(__dirname, 'logs')
+		lib: path.resolve(__dirname, 'scripts', 'lib'),
+		logs: path.resolve(__dirname, 'logs'),
+		db: path.resolve(__dirname, 'db')
 	},
 
 	ncbi: {
@@ -34,7 +35,23 @@ module.exports = {
 				}
 			]
 		}
+	},	
+
+	pfam: {
+		ftp: {
+			root: 'ftp.ebi.ac.uk',
+			currentReleaseDir: 'ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release',
+			releasesDir: 'ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases',
+			versionFile: 'Pfam.version.gz'
+		},
+		files: {
+			hmm: 'Pfam-A.hmm',
+			hmmDat: 'Pfam-A.hmm.dat',
+			hmmGzip: 'Pfam-A.hmm.gz',
+			hmmDatGzip: 'Pfam-A.hmm.dat.gz'
+		}
 	},
+
 
 	database: globalConfig.database,
 	migrations: globalConfig.migrations,
