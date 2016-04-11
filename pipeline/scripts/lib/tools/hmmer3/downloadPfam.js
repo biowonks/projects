@@ -19,11 +19,13 @@ let paths = config.paths,
 
 module.exports = function(optVersion, optSkipDownload, optSkipExtraction, optSkipHmmpress) {
 	if (optVersion) {
+
 		assert(typeof(optVersion) == 'string', 'Version must be a string, eg: \'Pfam29.0\'')
 		assert(optVersion.match(/^[0-9]*\.[0-9]*/), 'Version input is not valid')
 		validatePfamVersion(optVersion)
 
 		let version = optVersion
+		// createNecessaryDirs([paths.db, localPfamPath, path.resolve(localPfamPath, optVersion)])
 		downloadPfam(version, optSkipDownload, optSkipExtraction, optSkipHmmpress)
 	}
 	else {
@@ -57,6 +59,7 @@ function downloadLatestPfamVersion() {
 				version = firstLine.split(':')[1].trim()
 				// return version
 				console.log('The most recent Pfam version: ' + version + ' will be downloaded.')
+				// createNecessaryDirs([paths.db, localPfamPath, path.resolve(localPfamPath, version)])
 				downloadPfam(version)
 			})
 		})
@@ -130,16 +133,23 @@ function runUnzipAndHmmPress(localHmmGz, fullPathHmmFile, hmmpress, optSkipExtra
 	}
 }
 
+function createNecessaryDirs(dirList) {
+	for (let i = 0; i < dirList.length; i++) {
+		console.log(dirList[i])
+		createDir(dirList[i])
+	}
+	// // For initial building, check if db dirctory was created
+	// createDir(paths.db)
+	// // For initial building, check if pfam dirctory was created
+	// createDir(localPfamPath)
+	// // Check if PfamVersion directory was created
+	// createDir(pfamVersionDir)
+}
+
 function downloadPfam(version, optSkipDownload, optSkipExtraction, optSkipHmmpress) {
 	let pfamVersionDir = path.resolve(localPfamPath, version),
 		remoteVersionFtp = pfamFtp.releasesDir + '/' + 'Pfam' + version
 
-	// For initial building, check if db dirctory was created
-	createDir(paths.db)
-	// For initial building, check if pfam dirctory was created
-	createDir(localPfamPath)
-	// Check if PfamVersion directory was created
-	createDir(pfamVersionDir)
 
 	let fullPathHmmFile = path.resolve(pfamVersionDir, hmmFile),
 		hmmExists = fileExists(fullPathHmmFile)
@@ -150,7 +160,7 @@ function downloadPfam(version, optSkipDownload, optSkipExtraction, optSkipHmmpre
 
 		if(!optSkipDownload) {
 			console.log('Downloading HMM database...')
-			mutil.download(remoteHmmGz, localHmmGz)
+			mutil.download(remoteHmmGz, localHmmGz, true /*force mkdir*/)
 				.then(() => {
 					console.log('Downloading HMM database completed.')
 					runUnzipAndHmmPress(localHmmGz, fullPathHmmFile, hmmpress, optSkipExtraction, optSkipHmmpress)

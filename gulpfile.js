@@ -40,6 +40,11 @@ gulp.task('test', function(done) {
 		.on('end', () => (done ? done() : null))
 })
 
+gulp.task('downloadPfam', function() {
+	let downloadPfam = require('./pipeline/scripts/lib/tools/hmmer3/downloadPfam.js')
+	downloadPfam()
+})
+
 /*
 gulp.task('lint', function() {
 	return gulp.src(config.watchPatterns)

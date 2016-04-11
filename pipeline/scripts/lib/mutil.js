@@ -38,14 +38,20 @@ exports.initORM = function(config, logger) {
  * Uses wget to fetch files which is programmed to retry up to 20x by default. Thus,
  * no need to check / retry multiple times.
  */
-exports.download = function(url, optDestFile) {
+exports.download = function(url, optDestFile, optForceDirectoriesFlag) {
 	return new Promise(function(resolve, reject) {
 		if (!url)
 			return reject(new Error('Missing url argument: url'))
 
 		let destFile = optDestFile ? optDestFile : exports.basename(url),
-			tmpDestFile = destFile + '.tmp'
-		let command = 'wget --quiet -O "' + tmpDestFile + '" ' + url
+			tmpDestFile = destFile + '.tmp',
+			forceDirectoriesFlag = ''
+
+		if(optForceDirectoriesFlag) {
+			forceDirectoriesFlag = ' --force-directories '
+		}
+
+		let command = 'wget ' + forceDirectoriesFlag + '--quiet -O "' + tmpDestFile + '" ' + url
 
 		child_process.exec(command, function(error, stdout) {
 			if (error)
