@@ -3,9 +3,11 @@
 // Core node libraries
 let child_process = require('child_process'),
 	crypto = require('crypto'),
+	domain = require('domain'),
 	fs = require('fs'),
 	path = require('path'),
-	temp = require('temp')
+	temp = require('temp'),
+	zlib = require('zlib')
 
 // 3rd-party libraries
 let Promise = require('bluebird'),
@@ -68,6 +70,36 @@ exports.durationFromInterval = function(interval) {
 		return moment.duration(interval)
 
 	return moment.duration(parseInt(matches[1]), matches[2])
+}
+
+/**
+ * @param {string} gzFile
+ * @param {string?} optDestFile
+ * @return {Promise}
+ */
+exports.gunzip = function(gzFile, optDestFile) {
+	return new Promise((resolve, reject) => {
+		let domain = domain.create()
+		domain.on('error', (error) => {
+			reject(error)
+		})
+		domain.run(() => {
+			let gzFileStream = fs.createReadStream(gzFile),
+				gunzipStream = zlib.createGunzip(),
+				destFile = optDestFile ? optDestFile : exports.basename(gzFile),
+				destFileStream = fs.createWriteStream(destFile)
+
+			gzFileStream
+				.pipe(gunzipStream)
+				.pipe(destFileStream)
+				.on('close', () => {
+					resolve({
+						gzFile: gzFile,
+						destFile: destFile
+					})
+				})
+		})
+	})
 }
 
 exports.pathStat = function(queryPath) {

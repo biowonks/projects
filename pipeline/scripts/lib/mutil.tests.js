@@ -8,6 +8,10 @@ let expect = require('chai').expect
 let mutil = require('./mutil')
 
 describe('mutil', function() {
+	describe('gunzip', function() {
+		
+	})
+
 	describe('pathIsYoungerThan', function() {
 		let testFile = path.resolve(__dirname, '__test-file__')
 		before(() => {
