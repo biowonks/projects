@@ -40,8 +40,6 @@ class HmmscanResultReaderStream extends Transform {
 	}
 
 	_flush(done) {
-		// TODO: Process any remaining buffer data (see FastaReaderStream for an example)if (!this.buffer_.length)
-
 		if (!this.buffer_.length)
 			return done()
 		else if(this.buffer_.substr(0,4) == '[ok]')

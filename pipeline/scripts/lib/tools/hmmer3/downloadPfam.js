@@ -37,7 +37,6 @@ module.exports = function(optVersion, optSkipDownload, optSkipExtraction, optSki
 
 function downloadLatestPfamVersion() {
 	let version = undefined
-	// To be done!
 	let remoteVersion = pfamFtp.currentReleaseDir + '/' + pfamFtp.versionFile,
 		localVersionFile = paths.tmp + '/' + 'Pfam.version',
 		localVersionGz = localVersionFile + '.gz'
@@ -57,9 +56,7 @@ function downloadLatestPfamVersion() {
 				let firstLine = data.split('\n')[0]
 				assert(firstLine.indexOf('Pfam release') != -1, 'No version information here')
 				version = firstLine.split(':')[1].trim()
-				// return version
 				console.log('The most recent Pfam version: ' + version + ' will be downloaded.')
-				// createNecessaryDirs([paths.db, localPfamPath, path.resolve(localPfamPath, version)])
 				downloadPfam(version)
 			})
 		})
@@ -138,12 +135,6 @@ function createNecessaryDirs(dirList) {
 		console.log(dirList[i])
 		createDir(dirList[i])
 	}
-	// // For initial building, check if db dirctory was created
-	// createDir(paths.db)
-	// // For initial building, check if pfam dirctory was created
-	// createDir(localPfamPath)
-	// // Check if PfamVersion directory was created
-	// createDir(pfamVersionDir)
 }
 
 function downloadPfam(version, optSkipDownload, optSkipExtraction, optSkipHmmpress) {

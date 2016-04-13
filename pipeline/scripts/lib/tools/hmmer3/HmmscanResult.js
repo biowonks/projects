@@ -50,12 +50,6 @@ class HmmscanResult {
 			else if (this.regex2checkAndList_(currentLine, /^\>\>\s+(\S+)/, ['currentDomain'])) {
 				continue
 			}
-			// else if (this.regex2checkAndList_(currentLine, /^\s+Alignments for each domain:/, [])) {
-			// 	continue
-			// }
-			// else if (this.regex2checkAndList_(currentLine, /^\s+(#\s+score|---)/, [])) {
-			// 	continue
-			// }
 			else if (this.regex2checkAndList_(currentLine, /^$/, [])) {
 				continue
 			}
@@ -83,21 +77,6 @@ class HmmscanResult {
 				})
 				continue
 			}
-			// else if (this.regex2checkAndList_(currentLine, /^Scores for complete/, [])) {
-			// 	continue
-			// }
-			// else if (this.regex2checkAndList_(currentLine, /^    E-value  score/, [])) {
-			// 	continue
-			// }
-			// else if (this.regex2checkAndList_(currentLine, /^    ------- ------/, [])) {
-			// 	continue
-			// }
-			// else if (this.regex2checkAndList_(currentLine, /^\s+\[No individual domains/, [])) {
-			// 	continue
-			// }
-			// else {
-			// 	assert(false, 'Did not parse line: ' + currentLine)
-			// }
 		}
 	}
 }
