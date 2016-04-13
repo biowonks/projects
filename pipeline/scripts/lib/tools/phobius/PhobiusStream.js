@@ -7,7 +7,7 @@ let child_process = require('child_process'),
 
 // Local includes
 let PhobiusResultStream = require('./PhobiusResultStream')
-	
+
 // Constants
 let kPhobiusToolDir = path.resolve(__dirname, 'phobius'),
 	kPhobiusToolFile = path.resolve(kPhobiusToolDir, 'phobius.pl')
@@ -16,7 +16,7 @@ module.exports =
 class PhobiusStream extends Transform {
 	constructor() {
 		super({objectMode: true})
-		
+
 		this.phobiusTool_ = child_process.spawn(kPhobiusToolFile, ['-short'])
 		this.phobiusResultStream_ = new PhobiusResultStream()
 		this.phobiusResultStream_.pipe(this)
@@ -32,7 +32,6 @@ class PhobiusStream extends Transform {
 
 	_transform(result, encoding, done) {
 		this.push(result)
-		console.log('Final' + result)
 		done()
 	}
 }
