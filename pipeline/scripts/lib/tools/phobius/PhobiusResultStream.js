@@ -23,14 +23,13 @@ class PhobiusReadStream extends Transform {
 		this.buffer_ += this.decoder_.write(chunk)
 
 		let lastPos = 0,
-			lineTo = this.buffer_.indexOf(kRecordSeparator, lastPos)
-				
+			lineTo = this.lineTo_()
+
 		while (lineTo >= 0) {
 			let line = this.buffer_.substr(lastPos, lineTo - lastPos)
-			if (!this.isHeader_(line))
-				this.processLine_(line)	
+			this.processLine_(line)
 			lastPos = lineTo + 1
-		 	lineTo = this.buffer_.indexOf(kRecordSeparator, lastPos)
+			lineTo = this.lineTo_(lastPos)
 		}
 
 		if (lastPos)
@@ -41,17 +40,14 @@ class PhobiusReadStream extends Transform {
 
 	_flush(done) {
 		// Allow empty lines
-		if (!this.buffer_.length)
+		if (!this.buffer_)
 			return done()
 
-		let line = '',
-			lineTo = this.buffer_.indexOf(kRecordSeparator)
-
-		if (lineTo !== -1)
-			line = this.buffer_.substr(1, lineTo - 1)
-
-		if (!this.isHeader_(line))
+		let lineTo = this.lineTo_()
+		if (lineTo !== -1) {
+			let line = this.buffer_.substr(1, lineTo - 1)
 			this.processLine_(line)
+		}
 
 		this.buffer_ = ''
 
@@ -86,13 +82,16 @@ class PhobiusReadStream extends Transform {
 	 * @return {Object}
 	 */
 	processLine_(line) {
+		if (this.isHeader_(line))
+			return
+
 		let tms = [],
 			signalPeptide = null,
-			line_arr = line.split(/\s+/),
-			header = line_arr[0],
-			hasTransmembrane = Number(line_arr[1]) > 0,
-			isSignalPeptide = line_arr[2] === 'Y',
-			topology = line_arr[3]
+			lineArr = line.split(/\s+/),
+			header = lineArr[0],
+			hasTransmembrane = Number(lineArr[1]) > 0,
+			isSignalPeptide = lineArr[2] === 'Y',
+			topology = lineArr[3]
 
 		if (isSignalPeptide) {
 			let matches = /n(\d+)\-(\d+)c(\d+)\/\d+(.*)/.exec(topology)
@@ -135,5 +134,9 @@ class PhobiusReadStream extends Transform {
 
 	isHeader_(line) {
 		return /SEQENCE\s+ID\s+TM\sSP\sPREDICTION/.test(line)
+	}
+
+	lineTo_(optLastPos) {
+		return this.buffer_.indexOf(kRecordSeparator, optLastPos)
 	}
 }
