@@ -1,11 +1,13 @@
 'use strict'
 
+// Core node libraries
 let fs = require('fs'),
 	path = require('path')
 
+// Local includes
 let PhobiusStream = require('./PhobiusStream')
 
-describe ('PhobiusStream', function() {
+describe('PhobiusStream', function() {
 	it('streaming prediction of TM', function(done) {
 		let inputFile = path.resolve(__dirname, 'test.fa'),
 			inStream = fs.createReadStream(inputFile),
@@ -20,33 +22,30 @@ describe ('PhobiusStream', function() {
 			expect(results).deep.equal([
 				{
 					header: '5H2A_CRIGR',
-					sigP: {},
-					numTM: 7,
+					sp: null,
 					tms: [
-						[ 76, 99 ],
-						[ 111, 139 ],
-						[ 151, 171 ],
-						[ 192, 214 ],
-						[ 234, 256 ],
-						[ 324, 348 ],
-						[ 360, 383 ]
+						[76, 99],
+						[111, 139],
+						[151, 171],
+						[192, 214],
+						[234, 256],
+						[324, 348],
+						[360, 383]
 					]
 				},
 				{
 					header: 'YkuI_C',
-					sigP: {},
-					numTM: 0,
+					sp: null,
 					tms: []
 				},
 				{
 					header: '2CSK_N',
-					sigP: {
-						sp: [1, 37],
+					sp: {
+						stop: 37,
 						N: [1, 7],
 						H: [8, 19],
 						C: [20, 37]
 					},
-					numTM: 1,
 					tms: [
 						[155, 178]
 					]

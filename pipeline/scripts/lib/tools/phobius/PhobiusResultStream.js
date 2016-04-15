@@ -13,12 +13,32 @@ class PhobiusReadStream extends Transform {
 	constructor() {
 		super({objectMode: true})
 
-			this.buffer_ = ''
-			this.decoder_ = new StringDecoder('utf8')
+		this.buffer_ = ''
+		this.decoder_ = new StringDecoder('utf8')
 	}
 
 	// ----------------------------------------------------
 	// Private methods
+	_transform(chunk, encoding, done) {
+		this.buffer_ += this.decoder_.write(chunk)
+
+		let lastPos = 0,
+			lineTo = this.buffer_.indexOf(kRecordSeparator, lastPos)
+				
+		while (lineTo >= 0) {
+			let line = this.buffer_.substr(lastPos, lineTo - lastPos)
+			if (!this.isHeader_(line))
+				this.processLine_(line)	
+			lastPos = lineTo + 1
+		 	lineTo = this.buffer_.indexOf(kRecordSeparator, lastPos)
+		}
+
+		if (lastPos)
+			this.buffer_ = this.buffer_.substr(lastPos)
+
+		done()
+	}
+
 	_flush(done) {
 		// Allow empty lines
 		if (!this.buffer_.length)
@@ -27,36 +47,13 @@ class PhobiusReadStream extends Transform {
 		let line = '',
 			lineTo = this.buffer_.indexOf(kRecordSeparator)
 
-		if (lineTo !== -1) {
+		if (lineTo !== -1)
 			line = this.buffer_.substr(1, lineTo - 1)
-		}
 
-		if(!(line.match(/SEQENCE\s+ID\s+TM\sSP\sPREDICTION/))) {
+		if (!this.isHeader_(line))
 			this.processLine_(line)
-		}
 
 		this.buffer_ = ''
-
-		done()
-	}
-
-	_transform(chunk, encoding, done) {
-		this.buffer_ += this.decoder_.write(chunk)
-
-		let lastPos = 0,
-			lineTo = this.buffer_.indexOf(kRecordSeparator, lastPos)
-				
-		while (lineTo >= 0) {
-			let  line = this.buffer_.substr(lastPos, lineTo - lastPos)
-			if(!(line.match(/SEQENCE\s+ID\s+TM\sSP\sPREDICTION/))) {
-				this.processLine_(line)	
-			}
-			lastPos = lineTo + 1
-		 	lineTo = this.buffer_.indexOf(kRecordSeparator, lastPos)
-		}
-
-		if (lastPos)
-			this.buffer_ = this.buffer_.substr(lastPos)
 
 		done()
 	}
@@ -69,66 +66,74 @@ class PhobiusReadStream extends Transform {
 	 * 2CSK_N                          1  Y n8-19c37/38o155-178i
 	 * returns
 	 * {
-	 *	header: 2CSK_N
-	 *	sigP: { 
-	 *		sp: [1, 37],
-	 *		N: [1, 7],
-	 *		H: [8, 19],
-	 *		C: [20, 37]
-	 *	},
-	 *	numTM: 1,
-	 *	tms: [
+	 *   header: '2CSK_N'
+	 *   // sp is null if there is no signal peptide predicted
+	 *	 sp: {
+	 *	   stop: 37
+	 *	   N: [1, 7],
+	 *	   H: [8, 19],
+	 *	   C: [20, 37]
+	 *	 },
+	 *   // tms is an empty array if no transmembrane regions are found
+	 *	 tms: [
 	 *		[155, 178]
-	 *	]
-	 *}
+	 *	 ]
+	 * }
 	 *
-	 * An empty array is returned if no singal prptide or TM exist.
+	 * An empty array is returned if no signal peptide or transmembrane exists.
 	 *
 	 * @param {string} maskedSequence
- 	*/
-
+	 * @return {Object}
+	 */
 	processLine_(line) {
-		let tms=[],
-			sigP = new Object(),
+		let tms = [],
+			signalPeptide = null,
 			line_arr = line.split(/\s+/),
 			header = line_arr[0],
-			numTM = parseInt(line_arr[1]),
-			isSigP = line_arr[2],
+			hasTransmembrane = Number(line_arr[1]) > 0,
+			isSignalPeptide = line_arr[2] === 'Y',
 			topology = line_arr[3]
 
-		if(isSigP === 'Y') {
-			let re = /n(\d+)\-(\d+)c(\d+)\/\d+(.*)/,
-				matchArr = topology.match(re),
-				hStart = parseInt(matchArr[1]), 
-				hStop = parseInt(matchArr[2]),
-				sigPStop = parseInt(matchArr[3])
-			
-				sigP['sp'] = [1, sigPStop]	
-				sigP['N'] = [1, hStart - 1]
-				sigP['H'] = [hStart, hStop]
-				sigP['C'] = [hStop + 1, sigPStop]
+		if (isSignalPeptide) {
+			let matches = /n(\d+)\-(\d+)c(\d+)\/\d+(.*)/.exec(topology)
+			if (!matches)
+				// Ignore this line?
+				return
 
-				topology = matchArr[4]
+			let hStart = Number(matches[1]),
+				hStop = Number(matches[2]),
+				spStop = Number(matches[3])
 
+			signalPeptide = {
+				// the start is implicitly at position 1
+				stop: spStop,
+				N: [1, hStart - 1],
+				H: [hStart, hStop],
+				C: [hStop + 1, spStop]
+			}
 
+			topology = matches[4]
 		}
 
-		if(numTM > 0) {
-			topology = topology.replace(/[o,i]/g,' ')
-			let tm_arr = topology.trim().split(/\s+/),
-				i=0
-
-			for(i =0; i < tm_arr.length; i++) {
-				let tm_pos = tm_arr[i].split('-')
-				tms.push([parseInt(tm_pos[0]), parseInt(tm_pos[1])])
-			}
+		if (hasTransmembrane) {
+			let tmSegments = topology.replace(/[o,i]/g,' ').trim().split(/\s+/)
+			tmSegments.forEach((tmSegment) => {
+				let span = tmSegment.split('-')
+				tms.push([
+					Number(span[0]),
+					Number(span[1])
+				])
+			})
 		}
 
 		return this.push({
-				header: header,
-				sigP: sigP,
-				numTM: numTM,
-				tms: tms
+			header: header,
+			sp: signalPeptide,
+			tms: tms
 		});
+	}
+
+	isHeader_(line) {
+		return /SEQENCE\s+ID\s+TM\sSP\sPREDICTION/.test(line)
 	}
 }
