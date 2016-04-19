@@ -21,6 +21,7 @@
     "lazy.js": "0.x",
     "lodash": "3.x",
     "moment": "2.x",
+    "node-mkdirp": "0.0.1",
     "pg": "4.x",
     "pg-hstore": "2.x",
     "sequelize": "3.x",

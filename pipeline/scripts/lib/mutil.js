@@ -11,6 +11,7 @@ let child_process = require('child_process'),
 
 // 3rd-party libraries
 let Promise = require('bluebird'),
+	mkdirp = require('mkdirp'),
 	moment = require('moment')
 
 // Local includes
@@ -132,6 +133,17 @@ exports.basename = function(fileName) {
 	return path.basename(fileName, path.extname(fileName))
 }
 
+exports.directoryExists = function(directory) {
+	return new Promise((resolve) => {
+		fs.stat(directory, (error, stats) => {
+			if (error)
+				return resolve(false)
+
+		resolve(stats.isDirectory())
+		})
+	})
+};
+
 exports.fileExists = function(file, optNotZero) {
 	return new Promise((resolve) => {
 		fs.stat(file, (error, stats) => {
@@ -148,7 +160,10 @@ exports.fileNotEmpty = function(file) {
 	return exports.fileExists(file, true)
 }
 
-// Resolves true if directory needed to be created
+/**
+ * @param {string} directory
+ * @returns {Promise}
+ */
 exports.mkdir = function(directory) {
 	return new Promise((resolve, reject) => {
 		fs.mkdir(directory, (error) => {
@@ -162,6 +177,27 @@ exports.mkdir = function(directory) {
 			resolve({created: true, directory: directory})
 		})
 	})
+}
+
+/**
+ * @param {string} directory
+ * @returns {Promise}
+ */
+exports.mkdirp = function(directory) {
+	return exports.directoryExists(directory)
+		.then((directoryExists) => {
+			if (directoryExists)
+				return {created: false, directory: directory}
+
+			return new Promise((resolve, reject) => {
+				mkdirp(directory, (error) => {
+					if (error)
+						return reject(error)
+
+					resolve({created: true, directory: directory})
+				})
+			})
+		})
 }
 
 exports.unlink = function(file) {
