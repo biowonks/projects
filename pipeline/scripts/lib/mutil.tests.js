@@ -39,4 +39,22 @@ describe('mutil', function() {
 				});
 		})
 	})
+	describe('shellCommand', function() {
+		it.only('deneme', function(done) {
+			setTimeout(function() {
+				mutil.shellCommand('ls -lah')
+					.then(function(result) {
+						shellCommand('echo echooo')
+						expect(result).true
+						return result
+					})
+					.then(function(result) {
+						shellCommand('echo echooo-2')
+						expect(result).true
+						done()
+					})
+					.catch(done)
+			}, 1500);
+		})
+	})
 })
