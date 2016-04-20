@@ -7,7 +7,8 @@ let child_process = require('child_process'),
 	fs = require('fs'),
 	path = require('path'),
 	temp = require('temp'),
-	zlib = require('zlib')
+	zlib = require('zlib'),
+	exec = child_process.exec
 
 // 3rd-party libraries
 let Promise = require('bluebird'),
@@ -34,6 +35,53 @@ exports.initORM = function(config, logger) {
 		})
 }
 
+// Resolves true if directory needed to be created
+let mkdir = function(directory) {
+	return new Promise((resolve, reject) => {
+		fs.mkdir(directory, (error) => {
+			if (error) {
+				if (error.code === 'EEXIST')
+					return resolve({created: false, directory: directory})
+
+				return reject(error)
+			}
+
+			resolve({created: true, directory: directory})
+		})
+	})
+}
+
+exports.mkdir = mkdir
+
+exports.voidPromise = function() {
+	return new Promise((resolve, reject) => {
+		resolve()
+	})
+}
+
+exports.shellCommand = function(command, optSkip) {
+	return new Promise((resolve, reject) => {
+		if (!optSkip) {
+			console.log(command)
+			exec(command, function(err, stdout, stderr) {
+				if (err)
+					reject(err)
+				resolve({'stdout': stdout, 'stderr': stderr})
+			})
+		}
+		else {
+			resolve({'message': 'skipped'})
+		}
+	})
+}
+
+exports.chdir = function(path) {
+	return new Promise((resolve, reject) => {
+		process.chdir(path)
+		resolve({'path': path})
+	})
+}
+
 /**
  * Uses wget to fetch files which is programmed to retry up to 20x by default. Thus,
  * no need to check / retry multiple times.
@@ -46,6 +94,11 @@ exports.download = function(url, optDestFile, optMkdirFlag) {
 		let destFile = optDestFile ? optDestFile : exports.basename(url),
 			tmpDestFile = destFile + '.tmp',
 			mkdirCommand = ''
+
+		mkdir(optDestFile.split('/').slice(0, -1).join('/'))
+		.then((result) => {
+			 
+		})
 
 		if(optMkdirFlag) {
 			mkdirCommand = 'mkdir -p ' + optDestFile.split('/').slice(0, -1).join('/') + ' &&'
@@ -107,6 +160,15 @@ exports.gunzip = function(gzFile, optDestFile) {
 		})
 	})
 }
+exports.readFile = function(file) {
+	return new Promise(function(resolve, reject){
+		fs.readFile(file, 'utf8', (err, data) => {
+			if (err)
+				return reject(err)
+			resolve(data)
+		})
+	})
+}
 
 exports.pathStat = function(queryPath) {
 	return new Promise(function(resolve, reject) {
@@ -152,22 +214,6 @@ exports.fileExists = function(file, optNotZero) {
 
 exports.fileNotEmpty = function(file) {
 	return exports.fileExists(file, true)
-}
-
-// Resolves true if directory needed to be created
-exports.mkdir = function(directory) {
-	return new Promise((resolve, reject) => {
-		fs.mkdir(directory, (error) => {
-			if (error) {
-				if (error.code === 'EEXIST')
-					return resolve({created: false, directory: directory})
-
-				return reject(error)
-			}
-
-			resolve({created: true, directory: directory})
-		})
-	})
 }
 
 exports.unlink = function(file) {

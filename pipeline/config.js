@@ -18,7 +18,9 @@ module.exports = {
 		scripts: path.resolve(__dirname, 'scripts'),
 		lib: path.resolve(__dirname, 'scripts', 'lib'),
 		logs: path.resolve(__dirname, 'logs'),
-		db: path.resolve(__dirname, 'db')
+		vendor: path.resolve(__dirname, 'vendor'),
+		hmmdb: path.resolve(__dirname, 'vendor', 'hmmdb'),
+		vendorTools: path.resolve(__dirname, 'vendor', 'tools')
 	},
 
 	ncbi: {
@@ -48,10 +50,19 @@ module.exports = {
 			hmm: 'Pfam-A.hmm',
 			hmmDat: 'Pfam-A.hmm.dat',
 			hmmGzip: 'Pfam-A.hmm.gz',
-			hmmDatGzip: 'Pfam-A.hmm.dat.gz'
+			hmmDatGzip: 'Pfam-A.hmm.dat.gz',
+			hmmpressed: ['Pfam-A.hmm', 'Pfam-A.hmm.h3f', 'Pfam-A.hmm.h3i', 'Pfam-A.hmm.h3m', 'Pfam-A.hmm.h3p']
 		}
 	},
 
+	hmmer: {
+		ftp: {
+			'3.1': 'http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz'
+		},
+		local: {
+			'3.1': 'hmmer3.1'
+		}
+	},
 
 	database: globalConfig.database,
 	migrations: globalConfig.migrations,

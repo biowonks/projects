@@ -40,21 +40,22 @@ describe('mutil', function() {
 		})
 	})
 	describe('shellCommand', function() {
-		it.only('deneme', function(done) {
-			setTimeout(function() {
-				mutil.shellCommand('ls -lah')
-					.then(function(result) {
-						shellCommand('echo echooo')
-						expect(result).true
-						return result
-					})
-					.then(function(result) {
-						shellCommand('echo echooo-2')
-						expect(result).true
-						done()
-					})
-					.catch(done)
-			}, 1500);
+		it.only('shellCommand ', function(done) {
+			mutil.shellCommand('ls -lah', 'ls a*')
+			.then((result) => {
+				console.log('result#1 => ls -lah ', result)
+				return mutil.shellCommand(result.command2, 'ls b*')
+			})
+			.then(function(result) {
+				console.log('result#2 => ls a*', result)
+				return mutil.shellCommand(result.command2)			
+			})
+			.then((result) => {
+				console.log('result#3 => ls b*', result)
+				expect(true).true
+				done()
+			})
+			.catch(done)
 		})
 	})
 })
