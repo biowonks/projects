@@ -40,19 +40,17 @@ describe('mutil', function() {
 		})
 	})
 	describe('shellCommand', function() {
-		it.only('shellCommand ', function(done) {
-			mutil.shellCommand('ls -lah', 'ls a*')
+		it('shellCommand waits for the previous promise', function(done) {
+			mutil.shellCommand('printf 15')
 			.then((result) => {
-				console.log('result#1 => ls -lah ', result)
-				return mutil.shellCommand(result.command2, 'ls b*')
+				console.log(result)
+				return mutil.shellCommand('printf ' + (parseInt(result.stdout) + 1))
 			})
 			.then(function(result) {
-				console.log('result#2 => ls a*', result)
-				return mutil.shellCommand(result.command2)			
+				return mutil.shellCommand('printf ' + (parseInt(result.stdout) + 1))			
 			})
 			.then((result) => {
-				console.log('result#3 => ls b*', result)
-				expect(true).true
+				expect(result.stdout).equal('17')
 				done()
 			})
 			.catch(done)
