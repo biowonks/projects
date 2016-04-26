@@ -17,16 +17,19 @@ let paths = config.paths,
 	defaultHmmFileGz = path.resolve(paths.vendorTools, hmmerFtpAddress.split('\/').slice(-1)[0]),
 	defaultHmmFile = path.resolve(paths.vendorTools, hmmerFtpAddress.split('\/').slice(-1)[0]).replace('.tar.gz', '')
 
-mutil.download(hmmerFtpAddress, localHmmerGz)
-.then(() => {return mutil.shellCommand('tar xzvf ' + localHmmerGz + ' -C ' + paths.vendorTools)
-.then(() => {return mutil.shellCommand('rm ' + localHmmerGz)})
-})
-.then(() => {return mutil.shellCommand('mv ' + defaultHmmFile + ' ' + localHmmer)})
-.then(() => {return mutil.chdir(localHmmer)})
-.then(() => {return mutil.shellCommand('./configure' + ' --prefix ' + localHmmer)})
-.then(() => {return mutil.shellCommand('make')})
-.then(() => {return mutil.shellCommand('make check')})
-.then(() => {return mutil.shellCommand('make install')})
-.catch((error) => {
-	console.log(error)
-})
+
+module.exports = function() {
+	return mutil.download(hmmerFtpAddress, localHmmerGz)
+	.then(() => {return mutil.shellCommand('tar xzvf ' + localHmmerGz + ' -C ' + paths.vendorTools)
+	.then(() => {return mutil.shellCommand('rm ' + localHmmerGz)})
+	})
+	.then(() => {return mutil.shellCommand('mv ' + defaultHmmFile + ' ' + localHmmer)})
+	.then(() => {return mutil.chdir(localHmmer)})
+	.then(() => {return mutil.shellCommand('./configure' + ' --prefix ' + localHmmer)})
+	.then(() => {return mutil.shellCommand('make')})
+	.then(() => {return mutil.shellCommand('make check')})
+	.then(() => {return mutil.shellCommand('make install')})
+	.catch((error) => {
+		console.log(error)
+	})
+}

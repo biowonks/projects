@@ -46,6 +46,12 @@ gulp.task('downloadPfam', function(done) {
 	done()
 })
 
+gulp.task('installHmmer', function(done) {
+	let installHmmer = require('./pipeline/scripts/lib/tools/hmmer3/installHmmer.js')
+	installHmmer()
+	// .then(done()) --> Why isn't it working? Gulp says  "Finished 'installHmmer'" before finishing up.
+})
+
 /*
 gulp.task('lint', function() {
 	return gulp.src(config.watchPatterns)
