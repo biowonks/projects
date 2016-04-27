@@ -25,6 +25,8 @@ nvm alias default node
 #### Pulling down the codebase
 ```
 git clone git@bitbucket.org:lukeulrich/mist3-api.git
+cd mist3-api
+npm install
 ```
 
 #### Postgresql database setup
@@ -34,3 +36,13 @@ git clone git@bitbucket.org:lukeulrich/mist3-api.git
 #### Running the API
 
 #### Unit tests
+
+
+
+
+
+
+
+
+
+
