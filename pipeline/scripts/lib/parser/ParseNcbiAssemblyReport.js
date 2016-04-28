@@ -62,7 +62,9 @@ class ParseNcbiAssemblyReport extends Transform {
 			for ( let i = 0; i < AssemblyInfo.length; i++) {
 				let result = {}
 				for (let j = 0 ; j < AssemblyInfo[i].length; j++) {
-					result[this.keysCode[header[j]]] = AssemblyInfo[i][j]
+					if ( this.keysCode[header[j]] !== undefined ) {
+						result[this.keysCode[header[j]]] = AssemblyInfo[i][j]
+					}
 				}
 				this.push(result)
 			}	
