@@ -13,13 +13,13 @@ class ParseNcbiAssemblyReport extends Transform {
 			this.buffer_ = ''
 			this.decoder_ = new StringDecoder('utf8')
 			this.keysCode = { 	'Sequence-Name' : 'name', 
-							'Sequence-Role' : 'role',
-							'Assigned-Molecule' : 'assigned_molecule',
-							'Assigned-Molecule-Location/Type' : 'type',
-							'GenBank-Accn' : 'genbank_accession',
-							'Relationship' : 'genbank_refseq_relationship',
-							'RefSeq-Accn' : 'refseq_accession',
-							'Assembly-Unit' : 'unit',
+								'Sequence-Role' : 'role',
+								'Assigned-Molecule' : 'assigned_molecule',
+								'Assigned-Molecule-Location/Type' : 'type',
+								'GenBank-Accn' : 'genbank_accession',
+								'Relationship' : 'genbank_refseq_relationship',
+								'RefSeq-Accn' : 'refseq_accession',
+								'Assembly-Unit' : 'unit',
 						}
 			this.keys = [ 	'Sequence-Name', 
 							'Sequence-Role',
@@ -33,14 +33,6 @@ class ParseNcbiAssemblyReport extends Transform {
 		}
 		//------------------------------------------
 		// Private methods
-		/*_flush(done) {
-			if (!this.buffer_.length)
-				this.throwEmptyFile_()
-				return done()
-
-			console.log(this.buffer_)
-
-		}*/
 		_transform(chunk, encoding, done) {
 			this.buffer_ += this.decoder_.write(chunk)
 
@@ -50,16 +42,12 @@ class ParseNcbiAssemblyReport extends Transform {
 				AssemblyInfo = []
 
 			while (pos >= 0 ) {
-				//console.log(this.buffer_.substr(lastPos, pos))
-				//console.log( this.buffer_.substr(lastPos, pos).split('\t').length)
-				//console.log( '\n' + lastPos + '\t' + pos + '\n')
 				if (this.buffer_[lastPos] === '#'){
 					header = this.buffer_.substr(lastPos, pos - lastPos ).replace(/(\r\n|\n|\r|# )/gm,'').split('\t')
 				}
 				else {
 					AssemblyInfo.push(this.buffer_.substr(lastPos, pos - lastPos).replace(/(\r\n|\n|\r)/gm,'').split('\t'))
 				}
-		
 				lastPos = pos + 1
 				pos = this.buffer_.indexOf(kRecordSeparator, lastPos)
 		
@@ -70,15 +58,17 @@ class ParseNcbiAssemblyReport extends Transform {
 		}
 
 		processAssemblyInfo_(header, AssemblyInfo) {
-			let info = []	
+			//let info = []	
 			for ( let i = 0; i < AssemblyInfo.length; i++) {
 				let result = {}
 				for (let j = 0 ; j < AssemblyInfo[i].length; j++) {
-					result[this.keysCode[header[j]]] = AssemblyInfo[i][j]
+					if ( this.keysCode[header[j]] !== undefined ) {
+						result[this.keysCode[header[j]]] = AssemblyInfo[i][j]
+					}
 				}
-				info.push(result)
+				this.push(result)
 			}	
-			console.log(info)
+
 		}
 
 		testHeader_(header) {
