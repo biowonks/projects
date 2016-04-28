@@ -24,6 +24,7 @@
     "node-mkdirp": "0.0.1",
     "pg": "4.x",
     "pg-hstore": "2.x",
+    "request-promise": "^3.0.0",
     "sequelize": "3.x",
     "umzug": "1.x",
     "universal-analytics": "0.3.x"
@@ -43,9 +44,9 @@
     "gulp-util": "3.x",
     "mocha": "^2.3.4",
     "moment": "^2.11.1",
+    "nock": "^8.0.0",
     "sinon": "^1.14.1",
     "supertest": "1.x",
-    "supertest-as-promised": "2.x",
     "temp": "^0.8.3"
   }
 }
