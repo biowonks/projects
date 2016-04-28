@@ -1,0 +1,57 @@
+# Assembly name:  Ente_faec_SF6375_V1
+# Organism name:  Enterococcus faecalis EnGen0341 (firmicutes)
+# Infraspecific name:  strain=SF6375
+# Taxid:          1169280
+# BioSample:      SAMN00847596
+# Submitter:      Broad Institute
+# Date:           2013-5-14
+# Assembly type:  n/a
+# Release type:   major
+# Assembly level: Scaffold
+# Genome representation: full
+# WGS project:    ASCU01
+# Assembly method: allpaths v. R42411
+# Genome coverage: 302.0x
+# Sequencing technology: Illumina
+# GenBank assembly accession: GCA_000392755.1 (latest)
+# RefSeq assembly accession: GCF_000392755.1 (latest)
+# RefSeq assembly and GenBank assemblies identical: yes
+#
+## Assembly-Units:
+## GenBank Unit Accession	RefSeq Unit Accession	Assembly-Unit name
+## GCA_000392765.1	GCF_000392765.1	Primary Assembly
+#
+# Ordered by chromosome/plasmid; the chromosomes/plasmids are followed by
+# unlocalized scaffolds.
+# Unplaced scaffolds are listed at the end.
+# RefSeq is equal or derived from GenBank object.
+#
+# Sequence-Name	Sequence-Role	Assigned-Molecule	Assigned-Molecule-Location/Type	GenBank-Accn	Relationship	RefSeq-Accn	Assembly-Unit	Sequence-Length	UCSC-style-name
+acHWB-supercont1.1	unplaced-scaffold	na	na	KB944513.1	=	NZ_KB944513.1	Primary Assembly	7189	na
+acHWB-supercont1.10	unplaced-scaffold	na	na	KB944514.1	=	NZ_KB944514.1	Primary Assembly	5544	na
+acHWB-supercont1.11	unplaced-scaffold	na	na	KB944515.1	=	NZ_KB944515.1	Primary Assembly	2805	na
+acHWB-supercont1.12	unplaced-scaffold	na	na	KB944516.1	=	NZ_KB944516.1	Primary Assembly	2109	na
+acHWB-supercont1.13	unplaced-scaffold	na	na	KB944517.1	=	NZ_KB944517.1	Primary Assembly	3888	na
+acHWB-supercont1.14	unplaced-scaffold	na	na	KB944518.1	=	NZ_KB944518.1	Primary Assembly	3602	na
+acHWB-supercont1.15	unplaced-scaffold	na	na	KB944519.1	=	NZ_KB944519.1	Primary Assembly	1335	na
+acHWB-supercont1.16	unplaced-scaffold	na	na	KB944520.1	=	NZ_KB944520.1	Primary Assembly	5668	na
+acHWB-supercont1.17	unplaced-scaffold	na	na	KB944521.1	=	NZ_KB944521.1	Primary Assembly	4357	na
+acHWB-supercont1.18	unplaced-scaffold	na	na	KB944522.1	=	NZ_KB944522.1	Primary Assembly	5385	na
+acHWB-supercont1.19	unplaced-scaffold	na	na	KB944523.1	=	NZ_KB944523.1	Primary Assembly	6527	na
+acHWB-supercont1.2	unplaced-scaffold	na	na	KB944524.1	=	NZ_KB944524.1	Primary Assembly	8646	na
+acHWB-supercont1.20	unplaced-scaffold	na	na	KB944525.1	=	NZ_KB944525.1	Primary Assembly	3516	na
+acHWB-supercont1.21	unplaced-scaffold	na	na	KB944526.1	=	NZ_KB944526.1	Primary Assembly	1427	na
+acHWB-supercont1.22	unplaced-scaffold	na	na	KB944527.1	=	NZ_KB944527.1	Primary Assembly	1260	na
+acHWB-supercont1.23	unplaced-scaffold	na	na	KB944528.1	=	NZ_KB944528.1	Primary Assembly	2131	na
+acHWB-supercont1.24	unplaced-scaffold	na	na	KB944529.1	=	NZ_KB944529.1	Primary Assembly	5670	na
+acHWB-supercont1.25	unplaced-scaffold	na	na	KB944530.1	=	NZ_KB944530.1	Primary Assembly	1914	na
+acHWB-supercont1.26	unplaced-scaffold	na	na	KB944531.1	=	NZ_KB944531.1	Primary Assembly	3094	na
+acHWB-supercont1.27	unplaced-scaffold	na	na	KB944532.1	=	NZ_KB944532.1	Primary Assembly	2810	na
+acHWB-supercont1.28	unplaced-scaffold	na	na	KB944533.1	=	NZ_KB944533.1	Primary Assembly	4092	na
+acHWB-supercont1.3	unplaced-scaffold	na	na	KB944534.1	=	NZ_KB944534.1	Primary Assembly	290170	na
+acHWB-supercont1.4	unplaced-scaffold	na	na	KB944535.1	=	NZ_KB944535.1	Primary Assembly	1774	na
+acHWB-supercont1.5	unplaced-scaffold	na	na	KB944536.1	=	NZ_KB944536.1	Primary Assembly	27171	na
+acHWB-supercont1.6	unplaced-scaffold	na	na	KB944537.1	=	NZ_KB944537.1	Primary Assembly	2276756	na
+acHWB-supercont1.7	unplaced-scaffold	na	na	KB944538.1	=	NZ_KB944538.1	Primary Assembly	536302	na
+acHWB-supercont1.8	unplaced-scaffold	na	na	KB944539.1	=	NZ_KB944539.1	Primary Assembly	26616	na
+acHWB-supercont1.9	unplaced-scaffold	na	na	KB944540.1	=	NZ_KB944540.1	Primary Assembly	2102	na
