@@ -29,7 +29,7 @@ describe('ParseNcbiAssemblyReport', function() {
     				unit: 'Primary Assembly',
     			} 
     		])
-    	done()
+    		done()
 		})
 	})
 	it('streaming parser of Contig NCBI Assembly Reports', function(done){
@@ -37,6 +37,7 @@ describe('ParseNcbiAssemblyReport', function() {
 			inStream = fs.createReadStream(inputFile),
 			parseNcbiAssemblyReport = new ParseNcbiAssemblyReport(),
 			results = []
+		
 		inStream.pipe(parseNcbiAssemblyReport)
 		.on('data', (info) => {
 			results.push(info)
@@ -964,7 +965,7 @@ describe('ParseNcbiAssemblyReport', function() {
 				    unit: 'Primary Assembly' 
 				}
 	   		])
-	   	done()
+	   		done()
 		})
 	})	
 	it('streaming parser of Chromosome NCBI Assembly Reports', function(done){
@@ -1306,7 +1307,7 @@ describe('ParseNcbiAssemblyReport', function() {
 				    unit: 'Primary Assembly' 
 				}
     		])
-    	done()
+    		done()
 		})
 	})
 })

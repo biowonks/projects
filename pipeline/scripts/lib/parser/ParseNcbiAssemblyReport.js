@@ -45,28 +45,34 @@ class ParseNcbiAssemblyReport extends Transform {
 				if (this.buffer_[lastPos] === '#'){
 					header = this.buffer_.substr(lastPos, pos - lastPos ).replace(/(\r\n|\n|\r|# )/gm,'').split('\t')
 				}
+
 				else {
 					AssemblyInfo.push(this.buffer_.substr(lastPos, pos - lastPos).replace(/(\r\n|\n|\r)/gm,'').split('\t'))
 				}
+				
 				lastPos = pos + 1
 				pos = this.buffer_.indexOf(kRecordSeparator, lastPos)
 		
 			}
+
 			this.testHeader_(header)
 			this.processAssemblyInfo_( header, AssemblyInfo)
+			
 			done()
 		}
 
 		processAssemblyInfo_(header, AssemblyInfo) {
-			//let info = []
 			for ( let i = 0; i < AssemblyInfo.length; i++) {
+
 				let result = {}
 				for (let j = 0 ; j < AssemblyInfo[i].length; j++) {
 					if ( this.keysCode[header[j]] !== undefined ) {
 						result[this.keysCode[header[j]]] = AssemblyInfo[i][j]
 					}
 				}
+
 				this.push(result)
+
 			}
 		}
 
@@ -77,9 +83,4 @@ class ParseNcbiAssemblyReport extends Transform {
 				}
 			}
 		}
-
-		throwEmptyFile_() {
-			throw new Error('File is Empty')
-		}
-
 }
