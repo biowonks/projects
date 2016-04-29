@@ -1,35 +1,50 @@
 'use strict'
 
-let fs = require('fs'),
-	path = require('path'),
-	assert = require('assert'),
-	exec = require('child_process').exec,
-	config = require(path.resolve(__dirname, '../../../../config.js')),
-	mutil = require(path.resolve(config.paths.lib, 'mutil')),
-	Promise = require('bluebird')
-	
-let paths = config.paths,
-	hmmerFtp = config.hmmer.ftp,
-	version = '3.1',
-	hmmerFtpAddress = hmmerFtp[version],
-	localHmmer = path.resolve(paths.vendorTools, config.hmmer.local[version]),
-	localHmmerGz = localHmmer + '.tar.gz',
-	defaultHmmFileGz = path.resolve(paths.vendorTools, hmmerFtpAddress.split('\/').slice(-1)[0]),
-	defaultHmmFile = path.resolve(paths.vendorTools, hmmerFtpAddress.split('\/').slice(-1)[0]).replace('.tar.gz', '')
+// Core includes
+let path = require('path')
 
+// Local includes
+let config = require('../../../../config.js'),
+	mutil = require(path.resolve(config.paths.lib, 'mutil'))
 
+// Constants
+let kAlias = 'hmmer3',
+	kHmmer3Config = config.vendor.tools[kAlias]
+		
 module.exports = function() {
-	return mutil.download(hmmerFtpAddress, localHmmerGz)
-	.then(() => {return mutil.shellCommand('tar xzvf ' + localHmmerGz + ' -C ' + paths.vendorTools)
-	.then(() => {return mutil.shellCommand('rm ' + localHmmerGz)})
+	let hmmer3SrcDir = path.basename(kHmmer3Config.ftpUrl, '.tar.gz'),
+		hmmer3BinDir = path.resolve(config.paths.vendorTools, kAlias, kHmmer3Config.version),
+		downloadResult = null,
+		originalDirectory = process.cwd()
+
+	process.chdir(config.paths.vendorTools)
+	
+	return mutil.download(kHmmer3Config.ftpUrl, config.paths.vendorTools)
+	.then((result) => {
+		downloadResult = result
+		return mutil.shellCommand(`tar zxvf ${result.destFile}`)
 	})
-	.then(() => {return mutil.shellCommand('mv ' + defaultHmmFile + ' ' + localHmmer)})
-	.then(() => {return mutil.chdir(localHmmer)})
-	.then(() => {return mutil.shellCommand('./configure' + ' --prefix ' + localHmmer)})
-	.then(() => {return mutil.shellCommand('make')})
-	.then(() => {return mutil.shellCommand('make check')})
-	.then(() => {return mutil.shellCommand('make install')})
+	.then(() => {
+		process.chdir(hmmer3SrcDir)
+		return mutil.shellCommands([
+			`./configure --prefix ${hmmer3BinDir}`,
+			'make',
+			'make check',
+			'make install'
+		], true /* verbose */)
+	})
+	.then(() => {
+		process.chdir(config.paths.vendorTools)
+		return mutil.unlink(downloadResult.destFile)
+	})
+	.then(() => {
+		return mutil.shellCommand(`rm -rf ${hmmer3SrcDir}`, true /* verbose */)
+	})
 	.catch((error) => {
-		console.log(error)
+		console.error(error)
+		throw error
+	})
+	.finally(() => {
+		process.chdir(originalDirectory)
 	})
 }

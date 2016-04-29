@@ -7,7 +7,7 @@ let path = require('path'),
 // Local includes
 let HmmscanResultReaderStream = require('./HmmscanResultReaderStream')
 
-describe.only('HmmscanResultReaderStream', function() {
+describe('HmmscanResultReaderStream', function() {
 	it('streaming prediction of hmmscan', function(done) {
 		let inputFile = path.resolve(__dirname, 'HmmscanResultReaderStream.test.hmmscanResults.txt'),
 			inStream = fs.createReadStream(inputFile),

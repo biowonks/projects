@@ -9,19 +9,21 @@ let moment = require('moment')
 // Local includes
 let globalConfig = require('../config')
 
+let paths = {
+	root: __dirname,
+	tmp: path.resolve(__dirname, 'tmp'),
+	data: path.resolve(__dirname, 'data'),
+	genomes: path.resolve(__dirname, 'data', 'genomes'),
+	scripts: path.resolve(__dirname, 'scripts'),
+	lib: path.resolve(__dirname, 'scripts', 'lib'),
+	logs: path.resolve(__dirname, 'logs'),
+	vendor: path.resolve(__dirname, 'vendor'),
+	hmmdb: path.resolve(__dirname, 'vendor', 'hmmdb'),
+	vendorTools: path.resolve(__dirname, 'vendor', 'tools')
+}
+
 module.exports = {
-	paths: {
-		root: __dirname,
-		tmp: path.resolve(__dirname, 'tmp'),
-		data: path.resolve(__dirname, 'data'),
-		genomes: path.resolve(__dirname, 'data', 'genomes'),
-		scripts: path.resolve(__dirname, 'scripts'),
-		lib: path.resolve(__dirname, 'scripts', 'lib'),
-		logs: path.resolve(__dirname, 'logs'),
-		vendor: path.resolve(__dirname, 'vendor'),
-		hmmdb: path.resolve(__dirname, 'vendor', 'hmmdb'),
-		vendorTools: path.resolve(__dirname, 'vendor', 'tools')
-	},
+	paths: paths,
 
 	ncbi: {
 		ftp: {
@@ -52,6 +54,18 @@ module.exports = {
 			hmmGzip: 'Pfam-A.hmm.gz',
 			hmmDatGzip: 'Pfam-A.hmm.dat.gz',
 			hmmpressed: ['Pfam-A.hmm', 'Pfam-A.hmm.h3f', 'Pfam-A.hmm.h3i', 'Pfam-A.hmm.h3m', 'Pfam-A.hmm.h3p']
+		}
+	},
+
+	vendor: {
+		tools: {
+			hmmer3: {
+				version: '3.1b2',
+				ftpUrl: 'http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz',
+				binPaths: {
+					hmmscan: path.resolve(paths.vendorTools, 'hmmer3', '3.1b2', 'bin', 'hmmscan')
+				}
+			}
 		}
 	},
 

@@ -48,8 +48,9 @@ gulp.task('downloadPfam', function(done) {
 
 gulp.task('installHmmer', function(done) {
 	let installHmmer = require('./pipeline/scripts/lib/tools/hmmer3/installHmmer.js')
-	installHmmer()
-	// .then(done()) --> Why isn't it working? Gulp says  "Finished 'installHmmer'" before finishing up.
+	installHmmer().then(() => {
+		done()
+	})
 })
 
 /*
