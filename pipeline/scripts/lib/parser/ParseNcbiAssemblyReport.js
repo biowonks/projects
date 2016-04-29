@@ -58,7 +58,7 @@ class ParseNcbiAssemblyReport extends Transform {
 		}
 
 		processAssemblyInfo_(header, AssemblyInfo) {
-			//let info = []	
+			//let info = []
 			for ( let i = 0; i < AssemblyInfo.length; i++) {
 				let result = {}
 				for (let j = 0 ; j < AssemblyInfo[i].length; j++) {
@@ -67,8 +67,7 @@ class ParseNcbiAssemblyReport extends Transform {
 					}
 				}
 				this.push(result)
-			}	
-
+			}
 		}
 
 		testHeader_(header) {
