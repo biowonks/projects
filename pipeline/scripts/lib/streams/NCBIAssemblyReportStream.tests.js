@@ -3,16 +3,16 @@
 let fs = require('fs'),
 	path = require('path')
 
-let ParseNcbiAssemblyReport = require('./ParseNcbiAssemblyReport.js')
+let NCBIAssemblyReportStream = require('./NCBIAssemblyReportStream.js')
 
-describe('ParseNcbiAssemblyReport', function() {
+describe('NCBIAssemblyReportStream', function() {
 	it('streaming parser of Complete NCBI Assembly Reports', function(done){
 		let inputFile = path.resolve(__dirname, 'GCF_000006765.1_ASM676v1_assembly_report.txt'),
 			inStream = fs.createReadStream(inputFile),
-			parseNcbiAssemblyReport = new ParseNcbiAssemblyReport(),
+			ncbiAssemblyReportStream = new NCBIAssemblyReportStream(),
 			results = []
 
-		inStream.pipe(parseNcbiAssemblyReport)
+		inStream.pipe(ncbiAssemblyReportStream)
 		.on('data', (info) => {
 			results.push(info)
 		})
@@ -35,10 +35,10 @@ describe('ParseNcbiAssemblyReport', function() {
 	it('streaming parser of Contig NCBI Assembly Reports', function(done){
 		let inputFile = path.resolve(__dirname, 'GCF_000316035.1_Draft_genome_sequence_of_PAMC_26794_assembly_report.txt'),
 			inStream = fs.createReadStream(inputFile),
-			parseNcbiAssemblyReport = new ParseNcbiAssemblyReport(),
+			ncbiAssemblyReportStream = new NCBIAssemblyReportStream(),
 			results = []
 		
-		inStream.pipe(parseNcbiAssemblyReport)
+		inStream.pipe(ncbiAssemblyReportStream)
 		.on('data', (info) => {
 			results.push(info)
 		})
@@ -971,10 +971,10 @@ describe('ParseNcbiAssemblyReport', function() {
 	it('streaming parser of Chromosome NCBI Assembly Reports', function(done){
 		let inputFile = path.resolve(__dirname, 'GCF_000020845.1_ASM2084v1_assembly_report.txt'),
 			inStream = fs.createReadStream(inputFile),
-			parseNcbiAssemblyReport = new ParseNcbiAssemblyReport(),
+			ncbiAssemblyReportStream = new NCBIAssemblyReportStream(),
 			results = []
 
-		inStream.pipe(parseNcbiAssemblyReport)
+		inStream.pipe(ncbiAssemblyReportStream)
 		.on('data', (info) => {
 			results.push(info)
 		})
@@ -1017,10 +1017,10 @@ describe('ParseNcbiAssemblyReport', function() {
 	it('streaming parser of Scaffold NCBI Assembly Reports', function(done){
 		let inputFile = path.resolve(__dirname, 'GCF_000392755.1_Ente_faec_SF6375_V1_assembly_report.txt'),
 			inStream = fs.createReadStream(inputFile),
-			parseNcbiAssemblyReport = new ParseNcbiAssemblyReport(),
+			ncbiAssemblyReportStream = new NCBIAssemblyReportStream(),
 			results = []
 
-		inStream.pipe(parseNcbiAssemblyReport)
+		inStream.pipe(ncbiAssemblyReportStream)
 		.on('data', (info) => {
 			results.push(info)
 		})
