@@ -62,19 +62,8 @@ module.exports = {
 			hmmer3: {
 				version: '3.1b2',
 				ftpUrl: 'http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz',
-				binPaths: {
-					hmmscan: path.resolve(paths.vendorTools, 'hmmer3', '3.1b2', 'bin', 'hmmscan')
-				}
+				binPath: path.resolve(paths.vendorTools, 'hmmer3', '3.1b2', 'bin')
 			}
-		}
-	},
-
-	hmmer: {
-		ftp: {
-			'3.1': 'http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz'
-		},
-		local: {
-			'3.1': 'hmmer3.1'
 		}
 	},
 

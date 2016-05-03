@@ -46,9 +46,9 @@ gulp.task('downloadPfam', function(done) {
 	done()
 })
 
-gulp.task('installHmmer', function(done) {
-	let installHmmer = require('./pipeline/scripts/lib/tools/hmmer3/installHmmer.js')
-	installHmmer().then(() => {
+gulp.task('install-hmmer3', function(done) {
+	let installHmmer3 = require('./pipeline/scripts/install-hmmer3')
+	installHmmer3().then(() => {
 		done()
 	})
 })
