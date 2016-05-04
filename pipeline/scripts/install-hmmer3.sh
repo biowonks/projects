@@ -33,6 +33,8 @@ make
 make check
 make install
 echo "Cleaning up"
+cd /tmp
+rm -r $TARBALL_BASENAME
 rm $TARBALL_FILENAME
 
 echo "Successfully installed HMMER3 version $VERSION"
