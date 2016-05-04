@@ -17,9 +17,7 @@ let paths = {
 	scripts: path.resolve(__dirname, 'scripts'),
 	lib: path.resolve(__dirname, 'scripts', 'lib'),
 	logs: path.resolve(__dirname, 'logs'),
-	vendor: path.resolve(__dirname, 'vendor'),
-	hmmdb: path.resolve(__dirname, 'vendor', 'hmmdb'),
-	vendorTools: path.resolve(__dirname, 'vendor', 'tools')
+	vendor: path.resolve(__dirname, 'vendor')
 }
 
 module.exports = {
@@ -41,29 +39,18 @@ module.exports = {
 		}
 	},	
 
-	pfam: {
-		ftp: {
-			root: 'ftp.ebi.ac.uk',
-			currentReleaseDir: 'ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release',
-			releasesDir: 'ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases',
-			versionFile: 'Pfam.version.gz'
-		},
-		files: {
-			hmm: 'Pfam-A.hmm',
-			hmmDat: 'Pfam-A.hmm.dat',
-			hmmGzip: 'Pfam-A.hmm.gz',
-			hmmDatGzip: 'Pfam-A.hmm.dat.gz',
-			hmmpressed: ['Pfam-A.hmm', 'Pfam-A.hmm.h3f', 'Pfam-A.hmm.h3i', 'Pfam-A.hmm.h3m', 'Pfam-A.hmm.h3p']
-		}
-	},
-
 	vendor: {
-		tools: {
-			hmmer3: {
-				version: '3.1b2',
-				ftpUrl: 'http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz',
-				binPath: path.resolve(paths.vendorTools, 'hmmer3', '3.1b2', 'bin')
-			}
+		// Tools
+		hmmer3: {
+			version: '3.1b2',
+			basePath: path.resolve(paths.vendor, 'hmmer3', '3.1b2'),
+			// ftpUrl: 'http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz',
+			binPath: path.resolve(paths.vendor, 'hmmer3', '3.1b2', 'bin')
+		},
+		// Databases
+		pfam: {
+			version: '29.0',
+			basePath: path.resolve(paths.vendor, 'pfam', '29.0')
 		}
 	},
 

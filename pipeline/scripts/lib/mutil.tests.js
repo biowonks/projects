@@ -7,7 +7,7 @@ let fs = require('fs'),
 // Local includes
 let mutil = require('./mutil')
 
-describe.only('mutil', function() {
+describe('mutil', function() {
 	describe('download', function() {
 		it('missing url throws error', function() {
 			return mutil.download()
@@ -37,8 +37,8 @@ describe.only('mutil', function() {
 				})
 		})
 		
-		it('download google.com should to non-existent folder throws error', function() {
-			return mutil.download('http://google.com', '/tmp/this/folder/should/not/exit')
+		it('download mistdb.com should to non-existent folder throws error', function() {
+			return mutil.download('http://mistdb.com', '/tmp/this/folder/should/not/exit')
 				.then((result) => {
 					fs.unlinkSync(result.destFile)
 					throw new Error()
@@ -46,13 +46,13 @@ describe.only('mutil', function() {
 				.catch(() => {})
 		})
 		
-		it('download google.com to /tmp saves it to /tmp/google.com', function() {
+		it('download mistdb.com to /tmp saves it to /tmp/mistdb.com', function() {
 			let destDir = '/tmp',
-				destFile = destDir + '/google.com'
-			return mutil.download('http://google.com', destDir)
+				destFile = destDir + '/mistdb.com'
+			return mutil.download('http://mistdb.com', destDir)
 				.then((result) => {
 					expect(result).deep.equal({
-						url: 'http://google.com',
+						url: 'http://mistdb.com',
 						destFile: destFile
 					})
 					
@@ -64,12 +64,12 @@ describe.only('mutil', function() {
 				})
 		})
 
-		it('download google.com to /tmp/google works', function() {
-			let destFile = '/tmp/google'
-			return mutil.download('http://google.com', destFile)
+		it('download mistdb.com to /tmp/mistdb works', function() {
+			let destFile = '/tmp/mistdb'
+			return mutil.download('http://mistdb.com', destFile)
 				.then((result) => {
 					expect(result).deep.equal({
-						url: 'http://google.com',
+						url: 'http://mistdb.com',
 						destFile: destFile
 					})
 					
@@ -81,12 +81,12 @@ describe.only('mutil', function() {
 				})
 		})
 
-		it('download google.com to google', function() {
-			let destFile = 'google'
-			return mutil.download('http://google.com', destFile)
+		it('download mistdb.com to mistdb', function() {
+			let destFile = 'mistdb'
+			return mutil.download('http://mistdb.com', destFile)
 				.then((result) => {
 					expect(result).deep.equal({
-						url: 'http://google.com',
+						url: 'http://mistdb.com',
 						destFile: path.resolve(process.cwd(), destFile)
 					})
 					
