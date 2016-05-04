@@ -3,14 +3,13 @@
 let fs = require('fs'),
 	path = require('path'),
 	assert = require('assert'),
-	shell = require('shelljs'),
 	spawn = require('child_process').spawn,
 	config = require(path.resolve(__dirname, '../../../../config.js')),
 	ftp = require('ftp'),
 	mutil = require(path.resolve(config.paths.lib, 'mutil'))
 	
 let paths = config.paths,	
-	localPfamPath = path.resolve(paths.db, 'pfam'),
+	localHmmdbPath = paths.hmmdb,
 	remotePfam = config.pfam,
 	pfamFtp = remotePfam.ftp,
 	pfamFiles = remotePfam.files,
@@ -21,11 +20,10 @@ module.exports = function(optVersion, optSkipDownload, optSkipExtraction, optSki
 	if (optVersion) {
 
 		assert(typeof(optVersion) == 'string', 'Version must be a string, eg: \'Pfam29.0\'')
-		assert(optVersion.match(/^[0-9]*\.[0-9]*/), 'Version input is not valid')
+		assert(optVersion.match(/^Pfam[0-9]*\.[0-9]*/), 'Version input is not valid')
 		validatePfamVersion(optVersion)
 
 		let version = optVersion
-		// createNecessaryDirs([paths.db, localPfamPath, path.resolve(localPfamPath, optVersion)])
 		downloadPfam(version, optSkipDownload, optSkipExtraction, optSkipHmmpress)
 	}
 	else {
@@ -35,32 +33,43 @@ module.exports = function(optVersion, optSkipDownload, optSkipExtraction, optSki
 
 // ----------------------------------------------------------------------------
 
+function pfamVersionData2version(data) {
+	/* version file	example
+	Pfam release       : 29.0
+	Pfam-A families    : 16035
+	Date               : 2015-10
+	Based on UniProtKB : 2015_08
+	*/
+	let firstLine = data.split('\n')[0]
+	assert(firstLine.indexOf('Pfam release') != -1, 'No version information here')
+	let version = firstLine.split(':')[1].trim()
+	console.log('The most recent Pfam version: ' + version + ' will be downloaded.')
+	return 'Pfam' + version
+}
+
 function downloadLatestPfamVersion() {
-	let version = undefined
 	let remoteVersion = pfamFtp.currentReleaseDir + '/' + pfamFtp.versionFile,
 		localVersionFile = paths.tmp + '/' + 'Pfam.version',
 		localVersionGz = localVersionFile + '.gz'
 
 	mutil.download(remoteVersion, localVersionGz)
-	mutil.gunzip(localVersionGz)
-		.then((result) => {
-			/* version file	example
-			Pfam release       : 29.0
-			Pfam-A families    : 16035
-			Date               : 2015-10
-			Based on UniProtKB : 2015_08
-			*/
-			fs.readFile(localVersionFile, 'utf8', (err, data) => {
-				if (err)
-					throw err
-				let firstLine = data.split('\n')[0]
-				assert(firstLine.indexOf('Pfam release') != -1, 'No version information here')
-				version = firstLine.split(':')[1].trim()
-				console.log('The most recent Pfam version: ' + version + ' will be downloaded.')
-				downloadPfam(version)
-			})
-		})
-	return version
+	.then(() => {
+		mutil.gunzip(localVersionGz)
+	})
+	.then(() => {
+		return mutil.readFile(localVersionFile)
+	})
+	.then((result) => {
+		let version = pfamVersionData2version(result)
+		if(!version) {
+			console.log('version is ' + version, '- exiting..')
+			process.exit()
+		}
+		downloadPfam(version)
+	})
+	.catch((error) => {
+		console.log(error)
+	})
 }
 
 function validatePfamVersion(version) { 
@@ -79,16 +88,20 @@ function validatePfamVersion(version) {
 	client.connect({'host':pfamFtp.root})
 }
 
-function createDir(fullPath) {
-	fs.access(fullPath, fs.F_OK, function(err) {
-		if (err) {
-			shell.mkdir('-p', fullPath)
-		}
-	})
-}
-
 function fileExists(fullPath) {
 	return fs.existsSync(fullPath)
+}
+
+function filesExist(files, optRoot) {
+	let root = './'
+	if (optRoot)
+		root = optRoot
+	for (let i = 0; i<files.length; i++) {
+		let file = files[i]
+		if(!fs.existsSync(path.resolve(root, file)))
+			return false
+	}
+	return true
 }
 
 function runHmmpress(hmmpress, dbPath, optSkipHmmpress) {
@@ -130,39 +143,34 @@ function runUnzipAndHmmPress(localHmmGz, fullPathHmmFile, hmmpress, optSkipExtra
 	}
 }
 
-function createNecessaryDirs(dirList) {
-	for (let i = 0; i < dirList.length; i++) {
-		console.log(dirList[i])
-		createDir(dirList[i])
-	}
-}
+
 
 function downloadPfam(version, optSkipDownload, optSkipExtraction, optSkipHmmpress) {
-	let pfamVersionDir = path.resolve(localPfamPath, version),
-		remoteVersionFtp = pfamFtp.releasesDir + '/' + 'Pfam' + version
+	let pfamVersionDir = path.resolve(localHmmdbPath, version),
+		remoteVersionFtp = pfamFtp.releasesDir + '/' + version
 
 
 	let fullPathHmmFile = path.resolve(pfamVersionDir, hmmFile),
-		hmmExists = fileExists(fullPathHmmFile)
+		hmmExists = filesExist(pfamFiles.hmmpressed, pfamVersionDir)
 
 	if (!hmmExists || optSkipDownload || optSkipExtraction || optSkipHmmpress) {
 		let remoteHmmGz = remoteVersionFtp + '/' + hmmFile + '.gz',
 			localHmmGz = fullPathHmmFile + '.gz'
 
 		if(!optSkipDownload) {
-			console.log('Downloading HMM database...')
+			console.log('Downloading HMM database', version, '...')
 			mutil.download(remoteHmmGz, localHmmGz, true /*force mkdir*/)
 				.then(() => {
-					console.log('Downloading HMM database completed.')
+					console.log('HMM database download completed.')
 					runUnzipAndHmmPress(localHmmGz, fullPathHmmFile, hmmpress, optSkipExtraction, optSkipHmmpress)
 				})
 		}
 		else {
-			console.log('Downloading HMM database skipped.')
+			console.log('Downloading HMM database', version, 'skipped.')
 			runUnzipAndHmmPress(localHmmGz, fullPathHmmFile, hmmpress, optSkipExtraction, optSkipHmmpress)
 		}
 	}
 	else {
-		console.log('HMM database already exists: ' + fullPathHmmFile)
+		console.log('HMM database', version, 'already exists and hmmpressed:', pfamVersionDir, pfamFiles.hmmpressed)
 	}
 }

@@ -7,7 +7,7 @@ let path = require('path'),
 // Local includes
 let HmmscanResultReaderStream = require('./HmmscanResultReaderStream')
 
-describe.only('HmmscanResultReaderStream', function() {
+describe('HmmscanResultReaderStream', function() {
 	it('streaming prediction of hmmscan', function(done) {
 		let inputFile = path.resolve(__dirname, 'HmmscanResultReaderStream.test.hmmscanResults.txt'),
 			inStream = fs.createReadStream(inputFile),
@@ -120,7 +120,7 @@ describe.only('HmmscanResultReaderStream', function() {
 								acc: 0.98
 							}
 						],
-						seqName: 'accession: NP_415222.1|locus: b0694|genom',
+						seqName: 'accession:NP_415222.1|locus:b0694|genom',
 						seqLength: '225'
 					},
 					{
@@ -319,7 +319,7 @@ describe.only('HmmscanResultReaderStream', function() {
 								acc: 0.99
 							}
 						],
-						seqName: 'locus: b0698_potassium_translocating_ATPase,_subunit_A_[E._coli]',
+						seqName: 'locus:b0698_potassium_translocating_ATPase,_subunit_A_[E._coli]',
 						seqLength: '557'
 					}
 				])
