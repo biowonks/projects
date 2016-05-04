@@ -62,9 +62,6 @@ exports.mkdir = function(directory) {
 	})
 }
 
-// TODO: Refactor the code that is calling this
-exports.voidPromise = Promise.resolve
-
 /**
  * Runs ${command} on the shell and resolves with the stdout and stderr output.
  * 
@@ -101,13 +98,6 @@ exports.shellCommands = function(commands, optVerbose) {
 		return exports.shellCommand(command, optVerbose)
 	})
 }
-
-// exports.chdir = function(path) {
-// 	return new Promise((resolve, reject) => {
-// 		process.chdir(path)
-// 		resolve({'path': path})
-// 	})
-// }
 
 /**
  * Uses wget to fetch files which is programmed to retry up to 20x by default. Thus,
@@ -232,9 +222,7 @@ exports.readFile = function(file) {
 	})
 }
 
-// TODO: Refactor pathStat to stat
-exports.stat =
-exports.pathStat = function(queryPath) {
+exports.stat = function(queryPath) {
 	return new Promise((resolve, reject) => {
 		fs.stat(queryPath, function(error, stats) {
 			if (error)
