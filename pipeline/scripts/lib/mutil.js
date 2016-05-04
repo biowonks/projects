@@ -7,8 +7,7 @@ let child_process = require('child_process'),
 	fs = require('fs'),
 	path = require('path'),
 	temp = require('temp'),
-	zlib = require('zlib'),
-	exec = child_process.exec
+	zlib = require('zlib')
 
 // 3rd-party libraries
 let Promise = require('bluebird'),
@@ -35,92 +34,143 @@ exports.initORM = function(config, logger) {
 		})
 }
 
-// Resolves true if directory needed to be created
-let mkdir = function(directory) {
+/**
+ * Creates the directory ${directory} if it does not already exist. Note, the immediate
+ * parent directory must already exist for this to succeed.
+ *
+ * @param {string} directory
+ * @return {Promise}
+ */
+exports.mkdir = function(directory) {
 	return new Promise((resolve, reject) => {
 		fs.mkdir(directory, (error) => {
 			if (error) {
 				if (error.code === 'EEXIST')
-					return resolve({created: false, directory: directory})
+					return resolve({
+						created: false,
+						directory: directory
+				})
 
 				return reject(error)
 			}
 
-			resolve({created: true, directory: directory})
+			resolve({
+				created: true,
+				directory: directory
+			})
 		})
 	})
 }
 
-exports.mkdir = mkdir
-
-exports.voidPromise = function() {
+/**
+ * Runs ${command} on the shell and resolves with the stdout and stderr output.
+ * 
+ * @param {string} command
+ * @param {boolean?} optVerbose if true log the command being executed; defaults to false
+ * @return {Promise}
+ */
+exports.shellCommand = function(command, optVerbose) {
 	return new Promise((resolve, reject) => {
-		resolve()
-	})
-}
-
-exports.shellCommand = function(command, optSkip) {
-	return new Promise((resolve, reject) => {
-		if (!optSkip) {
+		if (optVerbose)
 			console.log(command)
-			exec(command, function(err, stdout, stderr) {
-				if (err)
-					reject(err)
-				resolve({'stdout': stdout, 'stderr': stderr})
+
+		child_process.exec(command, function(err, stdout, stderr) {
+			if (err)
+				return reject(err)
+
+			resolve({
+				stdout: stdout,
+				stderr: stderr
 			})
-		}
-		else {
-			resolve({'message': 'skipped'})
-		}
+		})
 	})
 }
 
-exports.chdir = function(path) {
-	return new Promise((resolve, reject) => {
-		process.chdir(path)
-		resolve({'path': path})
+/**
+ * Serially executes each command in the ${commands} array.
+ * 
+ * @param {Array.<string>} commands
+ * @param {boolean?} optVerbose if true log the command being executed; defaults to false
+ * @return {Promise}
+ */
+exports.shellCommands = function(commands, optVerbose) {
+	return Promise.each(commands, (command) => {
+		return exports.shellCommand(command, optVerbose)
 	})
 }
 
 /**
  * Uses wget to fetch files which is programmed to retry up to 20x by default. Thus,
  * no need to check / retry multiple times.
+ * 
+ * @param {string} url
+ * @param {string?} optDestFile defaults to the base name of url in the current directory;
+ *   if optDestFile is a directory, then the resulting file is that directory/
+ *   url base name 
+ * @return {Promise}
  */
-exports.download = function(url, optDestFile, optMkdirFlag) {
-	return new Promise(function(resolve, reject) {
-		if (!url)
-			return reject(new Error('Missing url argument: url'))
+exports.download = function(url, optDestFile) {
+	if (!url)
+		return Promise.reject(new Error('Missing url argument: url'))
 
-		let destFile = optDestFile ? optDestFile : exports.basename(url),
-			tmpDestFile = destFile + '.tmp',
-			mkdirCommand = ''
-
-		mkdir(optDestFile.split('/').slice(0, -1).join('/'))
+	let destFile = null,
+		tmpDestFile = null
+	return determineDestFile_(url, optDestFile)
 		.then((result) => {
-			 
+			destFile = result
+			tmpDestFile = destFile + '.tmp'
+			
+			return exports.shellCommand(`wget --quiet -O "${tmpDestFile}" ${url}`)
 		})
-
-		if(optMkdirFlag) {
-			mkdirCommand = 'mkdir -p ' + optDestFile.split('/').slice(0, -1).join('/') + ' &&'
-		}
-
-		let command = mkdirCommand + ' ' + 'wget --quiet -O "' + tmpDestFile + '" ' + url
-
-		child_process.exec(command, function(error, stdout) {
-			if (error)
-				return reject(error)
-
-			fs.rename(tmpDestFile, destFile, function(error) {
-				if (error)
-					return reject(error)
-
-				resolve({
-					url: url,
-					destFile: destFile
+		.catch((error) => {
+			// Cleanup the temporary file created by wget on failure
+			return exports.unlink(tmpDestFile)
+				// Swallow any unlink errors (e.g. file didn't actually exist, etc - because
+				// we don't care about such things here)
+				.catch(() => {})
+				// But at the end of all this, rethrow the original shell command error
+				.finally(() => {
+					throw error 
 				})
-			})
 		})
-	})
+		.then(() => {
+			return exports.rename(tmpDestFile, destFile)
+		})
+		.then(() => {
+			return {
+				url: url,
+				destFile: destFile
+			}
+		})
+}
+
+/**
+ * Private helper function to determine a suitable destFile name from ${url} and the optional
+ * ${optDestFile}. There are 3 possible scenarios:
+ * 1) ${optDestFile} is not defined: return the basename of the url
+ * 2) ${optDestFile} is a directory, return the directory name + the ${url} basename
+ * 3) ${optDestFile} is an actual path with a file name (that may or may not exist): return
+ *    the path
+ *
+ * @param {string} url
+ * @param {string?} optDestFile
+ * @return {string} absolute path to the computed destFile
+ */
+function determineDestFile_(url, optDestFile) {
+	if (!optDestFile)
+		return Promise.resolve(path.basename(url))
+	
+	return exports.stat(optDestFile)
+		.then((stats) => {
+			return stats.isDirectory() ? path.resolve(optDestFile, path.basename(url)) : optDestFile
+		})
+		.catch((error) => {
+			let fileDoesntExist = error.code === 'ENOENT'
+			if (fileDoesntExist)
+				return path.resolve(optDestFile)
+
+			throw error
+		})
 }
 
 exports.durationFromInterval = function(interval) {
@@ -160,18 +210,20 @@ exports.gunzip = function(gzFile, optDestFile) {
 		})
 	})
 }
+
 exports.readFile = function(file) {
-	return new Promise(function(resolve, reject){
+	return new Promise((resolve, reject) => {
 		fs.readFile(file, 'utf8', (err, data) => {
 			if (err)
 				return reject(err)
+
 			resolve(data)
 		})
 	})
 }
 
-exports.pathStat = function(queryPath) {
-	return new Promise(function(resolve, reject) {
+exports.stat = function(queryPath) {
+	return new Promise((resolve, reject) => {
 		fs.stat(queryPath, function(error, stats) {
 			if (error)
 				return reject(error);
@@ -185,7 +237,7 @@ exports.pathStat = function(queryPath) {
  * Returns true if ${queryPath} both exists and is younger than ${intervalMs}
  */
 exports.pathIsYoungerThan = function(queryPath, intervalMs) {
-	return exports.pathStat(queryPath)
+	return exports.stat(queryPath)
 		.then(function(fsStats) {
 			let birthMoment = moment(fsStats.birthtime)
 
@@ -214,6 +266,26 @@ exports.fileExists = function(file, optNotZero) {
 
 exports.fileNotEmpty = function(file) {
 	return exports.fileExists(file, true)
+}
+
+/**
+ * Renames ${srcFile} to ${destFile}. It is the caller's responsibility to ensure that
+ * the parent directory for ${destFile} already exists.
+ * 
+ * @param {string} srcFile
+ */
+exports.rename = function(srcFile, destFile) {
+	return new Promise((resolve, reject) => {
+		fs.rename(srcFile, destFile, function(error) {
+			if (error)
+				return reject(error)
+
+			resolve({
+				srcFile: srcFile,
+				destFile: destFile
+			})
+		})
+	})
 }
 
 exports.unlink = function(file) {

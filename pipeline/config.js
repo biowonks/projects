@@ -9,19 +9,19 @@ let moment = require('moment')
 // Local includes
 let globalConfig = require('../config')
 
+let paths = {
+	root: __dirname,
+	tmp: path.resolve(__dirname, 'tmp'),
+	data: path.resolve(__dirname, 'data'),
+	genomes: path.resolve(__dirname, 'data', 'genomes'),
+	scripts: path.resolve(__dirname, 'scripts'),
+	lib: path.resolve(__dirname, 'scripts', 'lib'),
+	logs: path.resolve(__dirname, 'logs'),
+	vendor: path.resolve(__dirname, 'vendor')
+}
+
 module.exports = {
-	paths: {
-		root: __dirname,
-		tmp: path.resolve(__dirname, 'tmp'),
-		data: path.resolve(__dirname, 'data'),
-		genomes: path.resolve(__dirname, 'data', 'genomes'),
-		scripts: path.resolve(__dirname, 'scripts'),
-		lib: path.resolve(__dirname, 'scripts', 'lib'),
-		logs: path.resolve(__dirname, 'logs'),
-		vendor: path.resolve(__dirname, 'vendor'),
-		hmmdb: path.resolve(__dirname, 'vendor', 'hmmdb'),
-		vendorTools: path.resolve(__dirname, 'vendor', 'tools')
-	},
+	paths: paths,
 
 	ncbi: {
 		ftp: {
@@ -39,28 +39,18 @@ module.exports = {
 		}
 	},	
 
-	pfam: {
-		ftp: {
-			root: 'ftp.ebi.ac.uk',
-			currentReleaseDir: 'ftp://ftp.ebi.ac.uk/pub/databases/Pfam/current_release',
-			releasesDir: 'ftp://ftp.ebi.ac.uk/pub/databases/Pfam/releases',
-			versionFile: 'Pfam.version.gz'
+	vendor: {
+		// Tools
+		hmmer3: {
+			version: '3.1b2',
+			basePath: path.resolve(paths.vendor, 'hmmer3', '3.1b2'),
+			// ftpUrl: 'http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz',
+			binPath: path.resolve(paths.vendor, 'hmmer3', '3.1b2', 'bin')
 		},
-		files: {
-			hmm: 'Pfam-A.hmm',
-			hmmDat: 'Pfam-A.hmm.dat',
-			hmmGzip: 'Pfam-A.hmm.gz',
-			hmmDatGzip: 'Pfam-A.hmm.dat.gz',
-			hmmpressed: ['Pfam-A.hmm', 'Pfam-A.hmm.h3f', 'Pfam-A.hmm.h3i', 'Pfam-A.hmm.h3m', 'Pfam-A.hmm.h3p']
-		}
-	},
-
-	hmmer: {
-		ftp: {
-			'3.1': 'http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz'
-		},
-		local: {
-			'3.1': 'hmmer3.1'
+		// Databases
+		pfam: {
+			version: '29.0',
+			basePath: path.resolve(paths.vendor, 'pfam', '29.0')
 		}
 	},
 

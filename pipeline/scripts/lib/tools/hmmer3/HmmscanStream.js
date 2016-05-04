@@ -6,10 +6,11 @@ let child_process = require('child_process'),
 	Transform = require('stream').Transform
 
 // Local includes
-let HmmscanResultReaderStream = require('./HmmscanResultReaderStream')
+let config = require('../../../../config'),
+	HmmscanResultReaderStream = require('./HmmscanResultReaderStream')
 
 // Constants
-let kHmmscanToolFile = path.resolve(__dirname, 'bin/hmmscan')
+let kHmmscanPath = path.resolve(config.vendor.hmmer3.binPath, 'hmmscan')
 
 /**
  * HmmscanStream executes HMMER3 for a given HMM database and FASTA file. The results
@@ -26,11 +27,13 @@ class HmmscanStream extends Transform {
 		super({objectMode: true})
 
 		this.hmmscanResultReaderStream_ = new HmmscanResultReaderStream()
-		this.hmmscanTool_ = child_process.spawn(kHmmscanToolFile, ['--noali', '--cut_ga', hmmDatabaseFile, fastaFile])
+		this.hmmscanTool_ = child_process.spawn(kHmmscanPath, ['--noali', '--cut_ga', hmmDatabaseFile, fastaFile])
 		this.hmmscanTool_.stdout.pipe(this.hmmscanResultReaderStream_)
 		this.hmmscanResultReaderStream_.pipe(this)
 	}
 
+	// ----------------------------------------------------
+	// Private methods
 	_transform(parsedResult, encoding, done) {
 		this.push(parsedResult)
 		done()
