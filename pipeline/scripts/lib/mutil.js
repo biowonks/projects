@@ -237,7 +237,7 @@ exports.stat = function(queryPath) {
  * Returns true if ${queryPath} both exists and is younger than ${intervalMs}
  */
 exports.pathIsYoungerThan = function(queryPath, intervalMs) {
-	return exports.pathStat(queryPath)
+	return exports.stat(queryPath)
 		.then(function(fsStats) {
 			let birthMoment = moment(fsStats.birthtime)
 

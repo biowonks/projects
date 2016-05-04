@@ -120,7 +120,7 @@ describe('HmmscanResultReaderStream', function() {
 								acc: 0.98
 							}
 						],
-						seqName: 'accession: NP_415222.1|locus: b0694|genom',
+						seqName: 'accession:NP_415222.1|locus:b0694|genom',
 						seqLength: '225'
 					},
 					{
@@ -319,7 +319,7 @@ describe('HmmscanResultReaderStream', function() {
 								acc: 0.99
 							}
 						],
-						seqName: 'locus: b0698_potassium_translocating_ATPase,_subunit_A_[E._coli]',
+						seqName: 'locus:b0698_potassium_translocating_ATPase,_subunit_A_[E._coli]',
 						seqLength: '557'
 					}
 				])
