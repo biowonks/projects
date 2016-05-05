@@ -31,11 +31,4 @@ class HmmscanStream extends Transform {
 		this.hmmscanTool_.stdout.pipe(this.hmmscanResultReaderStream_)
 		this.hmmscanResultReaderStream_.pipe(this)
 	}
-
-	// ----------------------------------------------------
-	// Private methods
-	_transform(parsedResult, encoding, done) {
-		this.push(parsedResult)
-		done()
-	}
 }
