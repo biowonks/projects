@@ -19,16 +19,30 @@ let kHmmscanPath = path.resolve(config.vendor.hmmer3.binPath, 'hmmscan')
 module.exports =
 class HmmscanStream extends Transform {
 	/**
-	 * @constructor
 	 * @param {string} hmmDatabaseFile path to hmm database to search
 	 * @param {string} fastaFile path to source fasta file to run hmmscan against
+	 * @param {number?} optZ number of comparisons to base E-value calculation from
 	 */
-	constructor(hmmDatabaseFile, fastaFile) {
+	constructor(hmmDatabaseFile, fastaFile, optZ) {
 		super({objectMode: true})
 
-		this.hmmscanResultReaderStream_ = new HmmscanResultReaderStream()
-		this.hmmscanTool_ = child_process.spawn(kHmmscanPath, ['--noali', '--cut_ga', hmmDatabaseFile, fastaFile])
-		this.hmmscanTool_.stdout.pipe(this.hmmscanResultReaderStream_)
-		this.hmmscanResultReaderStream_.pipe(this)
+		let hmmscanArgs = ['--noali', '--cut_ga']
+		if (optZ) {
+			hmmscanArgs.push('-Z')
+			hmmscanArgs.push(optZ)
+		}
+		hmmscanArgs.push(hmmDatabaseFile)
+		hmmscanArgs.push(fastaFile)
+
+		let hmmscanResultReaderStream = new HmmscanResultReaderStream(),
+			hmmscanProcess = child_process.spawn(kHmmscanPath, hmmscanArgs)
+
+		hmmscanResultReaderStream.pipe(this)
+		hmmscanProcess.stdout.pipe(hmmscanResultReaderStream)
+	}
+
+	_transform(result, encoding, done) {
+		this.push(result)
+		done();
 	}
 }

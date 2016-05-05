@@ -1,7 +1,8 @@
 'use strict'
 
 // Core node libraries
-let assert = require('assert')
+let assert = require('assert'),
+	StringDecoder = require('string_decoder').StringDecoder
 
 // Local includes
 let LineStream = require('../../streams/LineStream')
@@ -17,10 +18,13 @@ module.exports =
 class HmmscanResultReaderStream extends LineStream {
 	constructor() {
 		super()
+		this.decoder_ = new StringDecoder('utf8')
 		this.reset_()
 	}
-	
+
 	_transform(line, encoding, done) {
+		line = this.decoder_.write(line)
+
 		if (this.skipRemainingLines_) {
 			let lineIsRecordSeparator = line[0] === '/' && line[1] === '/'
 			if (lineIsRecordSeparator) {
@@ -54,18 +58,18 @@ class HmmscanResultReaderStream extends LineStream {
 		
 		if (!this.queryLength_)
 			throw new Error('Missing sequence length')
-			
+
 		this.push({
 			queryName: this.queryName_,
 			queryLength: this.queryLength_,
 			domains: this.domains_
 		})
 	}
-	
+
 	isComment_(line) {
 		return line[0] === '#'
 	}
-	
+
 	parseHeader_(line) {
 		let matches = /^Query:\s+(\S+)\s+\[L\=(\d+)\]/.exec(line)
 		if (!matches)
@@ -74,7 +78,7 @@ class HmmscanResultReaderStream extends LineStream {
 		this.queryName_ = matches[1]
 		this.queryLength_ = parseInt(matches[2])
 	}
-	
+
 	parseDomainName_(line) {
 		let matches = /^>>\s+(\S+)/.exec(line)
 		if (!matches)
@@ -82,7 +86,7 @@ class HmmscanResultReaderStream extends LineStream {
 			
 		this.currentDomainName_ = matches[1]
 	}
-	
+
 	parseDomainHit_(line) {
 		let dMatch = line.split(/\s+/)
 		assert(dMatch.length === 17, 'Expected 16 elements of data ' + line)
@@ -105,7 +109,7 @@ class HmmscanResultReaderStream extends LineStream {
 			acc: parseFloat(dMatch[16])
 		})
 	}
-	
+
 	reset_() {
 		this.queryName_ = null
 		this.queryLength_ = null
@@ -113,7 +117,7 @@ class HmmscanResultReaderStream extends LineStream {
 		this.domains_ = []
 		this.skipRemainingLines_ = false
 	}
-	
+
 	sortDomainsByConditionalEvalue_() {
 		this.domains_.sort((a, b) => {
 			return a.c_evalue > b.c_evalue ? 1 : 
