@@ -1,0 +1,289 @@
+# hmmscan :: search sequence(s) against a profile database
+# HMMER 3.1b2 (February 2015); http://hmmer.org/
+# Copyright (C) 2015 Howard Hughes Medical Institute.
+# Freely distributed under the GNU General Public License (GPLv3).
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+# query sequence file:             /home/ogun/mist3-api/pipeline/scripts/lib/tools/hmmer3/demo.faa
+# target HMM database:             /home/ogun/mist3-api/db/pfam/29.0/Pfam-A.hmm
+# show alignments in output:       no
+# model-specific thresholding:     GA cutoffs
+# - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Query:       demoSeqA  [L=151]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    3.5e-23   82.3   0.0    4.6e-23   81.9   0.0    1.2  1  ETF       Electron transfer flavoprotein domain
+
+
+Domain annotation for each model:
+>> ETF  Electron transfer flavoprotein domain
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   81.9   0.0   2.8e-27   4.6e-23      80     180 ..       2     108 ..       1     110 [. 0.95
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (151 residues searched)
+Target model(s):                       16295  (2857995 nodes)
+Passed MSV filter:                       414  (0.0254066); expected 325.9 (0.02)
+Passed bias filter:                      361  (0.022154); expected 325.9 (0.02)
+Passed Vit filter:                        30  (0.00184106); expected 16.3 (0.001)
+Passed Fwd filter:                         1  (6.13685e-05); expected 0.2 (1e-05)
+Initial search space (Z):              16295  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.77u 0.30s 00:00:01.07 Elapsed: 00:00:00.74
+# Mc/sec: 583.19
+//
+Query:       demoSeqB  [L=494]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model         Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------      -----------
+    1.2e-87  292.4   0.9    1.4e-42  145.5   0.1    2.2  2  ETF            Electron transfer flavoprotein domain
+    1.9e-06   28.2   0.2       0.12   12.8   0.0    2.6  0  Biotin_carb_N  Biotin carboxylase, N-terminal domain
+
+
+Domain annotation for each model:
+>> ETF  Electron transfer flavoprotein domain
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  145.5   0.1   1.7e-46   1.4e-42       6     180 ..      28     204 ..      24     206 .. 0.94
+   2 !  145.5   0.1   1.7e-46   1.4e-42       6     180 ..     275     451 ..     271     453 .. 0.94
+
+>> Biotin_carb_N  Biotin carboxylase, N-terminal domain
+   [No individual domains that satisfy reporting thresholds (although complete target did)]
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (494 residues searched)
+Target model(s):                       16295  (2857995 nodes)
+Passed MSV filter:                       307  (0.0188401); expected 325.9 (0.02)
+Passed bias filter:                      272  (0.0166922); expected 325.9 (0.02)
+Passed Vit filter:                        36  (0.00220927); expected 16.3 (0.001)
+Passed Fwd filter:                        13  (0.000797791); expected 0.2 (1e-05)
+Initial search space (Z):              16295  [actual number of targets]
+Domain search space  (domZ):               2  [number of targets reported over threshold]
+# CPU time: 0.90u 0.33s 00:00:01.23 Elapsed: 00:00:00.75
+# Mc/sec: 1882.47
+//
+Query:       accession:NP_415222.1|locus:b0694|genom  [L=225]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model        Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------     -----------
+    1.4e-29  102.3   0.0      2e-29  101.9   0.0    1.2  1  Response_reg  Response regulator receiver domain
+      3e-22   78.3   0.0    6.7e-22   77.2   0.0    1.6  1  Trans_reg_C   Transcriptional regulatory protein, C terminal
+
+
+Domain annotation for each model:
+>> Response_reg  Response regulator receiver domain
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  101.9   0.0   2.5e-33     2e-29       1     111 [.       4     112 ..       4     113 .. 0.98
+
+>> Trans_reg_C  Transcriptional regulatory protein, C terminal
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   77.2   0.0   8.2e-26   6.7e-22       2      77 .]     148     223 ..     146     223 .. 0.98
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (225 residues searched)
+Target model(s):                       16295  (2857995 nodes)
+Passed MSV filter:                       275  (0.0168763); expected 325.9 (0.02)
+Passed bias filter:                      250  (0.0153421); expected 325.9 (0.02)
+Passed Vit filter:                        21  (0.00128874); expected 16.3 (0.001)
+Passed Fwd filter:                         2  (0.000122737); expected 0.2 (1e-05)
+Initial search space (Z):              16295  [actual number of targets]
+Domain search space  (domZ):               2  [number of targets reported over threshold]
+# CPU time: 0.74u 0.36s 00:00:01.10 Elapsed: 00:00:00.74
+# Mc/sec: 868.98
+//
+Query:       noDomain  [L=159]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+
+   [No hits detected that satisfy reporting thresholds]
+
+
+Domain annotation for each model:
+
+   [No targets detected that satisfy reporting thresholds]
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (159 residues searched)
+Target model(s):                       16295  (2857995 nodes)
+Passed MSV filter:                      1399  (0.0858546); expected 325.9 (0.02)
+Passed bias filter:                      434  (0.0266339); expected 325.9 (0.02)
+Passed Vit filter:                       394  (0.0241792); expected 16.3 (0.001)
+Passed Fwd filter:                        79  (0.00484811); expected 0.2 (1e-05)
+Initial search space (Z):              16295  [actual number of targets]
+Domain search space  (domZ):               0  [number of targets reported over threshold]
+# CPU time: 2.57u 0.52s 00:00:03.09 Elapsed: 00:00:01.10
+# Mc/sec: 413.11
+//
+Query:       b0695  [L=894]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model     Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------  -----------
+    5.7e-98  326.4   0.0    8.6e-98  325.8   0.0    1.3  1  KdpD       Osmosensitive K+ channel His kinase sensor domain
+    1.1e-28   99.0  15.7    1.1e-28   99.0  15.7    1.7  1  DUF4118    Domain of unknown function (DUF4118)
+    4.9e-23   81.7   0.0    1.1e-22   80.5   0.0    1.7  1  HATPase_c  Histidine kinase-, DNA gyrase B-, and HSP90-like A
+    1.5e-10   40.8   1.8    1.5e-10   40.8   1.8    2.3  1  HisKA      His Kinase A (phospho-acceptor) domain
+      1e-08   35.4   0.0    2.2e-08   34.4   0.0    1.6  1  GAF_3      GAF domain
+
+
+Domain annotation for each model:
+>> KdpD  Osmosensitive K+ channel His kinase sensor domain
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  325.8   0.0  2.6e-101   8.6e-98       1     210 []      21     230 ..      21     230 .. 1.00
+
+>> DUF4118  Domain of unknown function (DUF4118)
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   99.0  15.7   3.3e-32   1.1e-28       2     106 ..     403     507 ..     402     508 .. 0.95
+
+>> HATPase_c  Histidine kinase-, DNA gyrase B-, and HSP90-like ATPase
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   80.5   0.0   3.4e-26   1.1e-22       4     109 ..     776     882 ..     773     883 .. 0.94
+
+>> HisKA  His Kinase A (phospho-acceptor) domain
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   40.8   1.8   4.5e-14   1.5e-10       2      64 .]     664     730 ..     663     730 .. 0.91
+
+>> GAF_3  GAF domain
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   34.4   0.0   6.7e-12   2.2e-08       1     129 []     527     644 ..     527     644 .. 0.89
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (894 residues searched)
+Target model(s):                       16295  (2857995 nodes)
+Passed MSV filter:                       669  (0.0410555); expected 325.9 (0.02)
+Passed bias filter:                      400  (0.0245474); expected 325.9 (0.02)
+Passed Vit filter:                        51  (0.00312979); expected 16.3 (0.001)
+Passed Fwd filter:                         7  (0.00042958); expected 0.2 (1e-05)
+Initial search space (Z):              16295  [actual number of targets]
+Domain search space  (domZ):               5  [number of targets reported over threshold]
+# CPU time: 1.31u 0.28s 00:00:01.59 Elapsed: 00:00:00.79
+# Mc/sec: 3234.24
+//
+Query:       KdpC  [L=190]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+    4.9e-68  228.4   0.0    5.5e-68  228.3   0.0    1.0  1  KdpC      K+-transporting ATPase, c chain
+
+
+Domain annotation for each model:
+>> KdpC  K+-transporting ATPase, c chain
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  228.3   0.0   3.4e-72   5.5e-68       2     182 .]       5     187 ..       4     187 .. 0.98
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (190 residues searched)
+Target model(s):                       16295  (2857995 nodes)
+Passed MSV filter:                       441  (0.0270635); expected 325.9 (0.02)
+Passed bias filter:                      377  (0.0231359); expected 325.9 (0.02)
+Passed Vit filter:                        31  (0.00190242); expected 16.3 (0.001)
+Passed Fwd filter:                         1  (6.13685e-05); expected 0.2 (1e-05)
+Initial search space (Z):              16295  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 0.73u 0.37s 00:00:01.10 Elapsed: 00:00:00.73
+# Mc/sec: 743.86
+//
+Query:       NP_415225.1_Transmembrane_protein  [L=682]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model        Description
+    ------- ------ -----    ------- ------ -----   ---- --  --------     -----------
+    3.9e-41  140.6   0.6    3.9e-41  140.6   0.6    2.1  1  E1-E2_ATPase  E1-E2 ATPase
+    1.1e-38  133.6   4.1      2e-38  132.6   4.1    1.5  1  Hydrolase     haloacid dehalogenase-like hydrolase
+      4e-05   23.3   1.1    0.00015   21.4   0.3    2.1  1  Hydrolase_3   haloacid dehalogenase-like hydrolase
+
+
+Domain annotation for each model:
+>> E1-E2_ATPase  E1-E2 ATPase
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  140.6   0.6   7.3e-45   3.9e-41       3     221 .]      72     296 ..      70     296 .. 0.94
+
+>> Hydrolase  haloacid dehalogenase-like hydrolase
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  132.6   4.1   3.8e-42     2e-38       1     210 []     301     530 ..     301     530 .. 0.90
+
+>> Hydrolase_3  haloacid dehalogenase-like hydrolase
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !   21.4   0.3   2.8e-08   0.00015     194     242 ..     501     549 ..     497     556 .. 0.90
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (682 residues searched)
+Target model(s):                       16295  (2857995 nodes)
+Passed MSV filter:                       685  (0.0420374); expected 325.9 (0.02)
+Passed bias filter:                      357  (0.0219086); expected 325.9 (0.02)
+Passed Vit filter:                        41  (0.00251611); expected 16.3 (0.001)
+Passed Fwd filter:                         7  (0.00042958); expected 0.2 (1e-05)
+Initial search space (Z):              16295  [actual number of targets]
+Domain search space  (domZ):               3  [number of targets reported over threshold]
+# CPU time: 0.99u 0.35s 00:00:01.34 Elapsed: 00:00:00.73
+# Mc/sec: 2670.07
+//
+Query:       locus:b0698_potassium_translocating_ATPase,_subunit_A_[E._coli]  [L=557]
+Scores for complete sequence (score includes all domains):
+   --- full sequence ---   --- best 1 domain ---    -#dom-
+    E-value  score  bias    E-value  score  bias    exp  N  Model    Description
+    ------- ------ -----    ------- ------ -----   ---- --  -------- -----------
+   7.4e-237  786.8  34.0   8.6e-237  786.5  34.0    1.0  1  KdpA      Potassium-transporting ATPase A subunit
+
+
+Domain annotation for each model:
+>> KdpA  Potassium-transporting ATPase A subunit
+   #    score  bias  c-Evalue  i-Evalue hmmfrom  hmm to    alifrom  ali to    envfrom  env to     acc
+ ---   ------ ----- --------- --------- ------- -------    ------- -------    ------- -------    ----
+   1 !  786.5  34.0  5.3e-241  8.6e-237       2     546 .]      11     556 ..      10     556 .. 0.99
+
+
+
+Internal pipeline statistics summary:
+-------------------------------------
+Query sequence(s):                         1  (557 residues searched)
+Target model(s):                       16295  (2857995 nodes)
+Passed MSV filter:                       726  (0.0445535); expected 325.9 (0.02)
+Passed bias filter:                      283  (0.0173673); expected 325.9 (0.02)
+Passed Vit filter:                        30  (0.00184106); expected 16.3 (0.001)
+Passed Fwd filter:                         7  (0.00042958); expected 0.2 (1e-05)
+Initial search space (Z):              16295  [actual number of targets]
+Domain search space  (domZ):               1  [number of targets reported over threshold]
+# CPU time: 1.05u 0.45s 00:00:01.50 Elapsed: 00:00:00.80
+# Mc/sec: 1989.88
+//
+[ok]

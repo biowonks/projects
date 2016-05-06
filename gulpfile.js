@@ -1,26 +1,31 @@
 'use strict'
 
+// Core includes
+let path = require('path'),
+	spawn = require('child_process').spawn
+
 // 3rd party includes
 let gulp = require('gulp'),
 	gulpIstanbul = require('gulp-istanbul'),
 	gulpMocha = require('gulp-mocha'),
 	gutil = require('gulp-util'),
-	eslint = require('gulp-eslint'),
-	spawn = require('child_process').spawn
+	eslint = require('gulp-eslint')
 
+// Local includes
+let pipelineConfig = require('./pipeline/config')
+
+// Special variables :)
 let serverInstance
 
 // --------------------------------------------------------
 // Configuration
-let config = {
-	watchPatterns: [
-		'./*.js',
-		'lib/**/*.js',
-		'models/**/*.js',
-		'routes/**/*.js',
-		'services/**/*.js'
-	]
-}
+let kWatchPatterns = [
+	'./*.js',
+	'lib/**/*.js',
+	'models/**/*.js',
+	'routes/**/*.js',
+	'services/**/*.js'
+]
 
 // --------------------------------------------------------
 // gulp.task('default', gulp.series(['server', 'watch'])
@@ -73,9 +78,31 @@ function coverage(done) {
 }
 
 
+gulp.task('install-hmmer3', function(done) {
+	let installScript = path.resolve(__dirname, 'pipeline', 'scripts', 'install-hmmer3.sh'),
+		hmmer3Config = pipelineConfig.vendor.hmmer3
+	
+	gutil.log(`Installing HMMER3 version ${hmmer3Config.version}`)
+	shellCommandHelper(installScript, [hmmer3Config.version, hmmer3Config.basePath], undefined, done)
+})
+
+gulp.task('install-pfam', gulp.series('install-hmmer3', installPfamHelper))
+function installPfamHelper(done) {
+	let installScript = path.resolve(__dirname, 'pipeline', 'scripts', 'install-pfam.sh'),
+		pfamConfig = pipelineConfig.vendor.pfam,
+		env = Object.create(process.env)
+	
+	env.PATH = `${env.PATH}:${pipelineConfig.vendor.hmmer3.binPath}`
+	
+	gutil.log(`Installing Pfam ${pfamConfig.version}`)
+	shellCommandHelper(installScript, [pfamConfig.version, pfamConfig.basePath], {
+		env: env
+	}, done)
+}
+
 /*
 gulp.task('lint', function() {
-	return gulp.src(config.watchPatterns)
+	return gulp.src(kWatchPatterns)
         // eslint() attaches the lint output to the eslint property
         // of the file object so it can be used by other modules.
         .pipe(eslint())
@@ -88,7 +115,7 @@ gulp.task('lint', function() {
 })
 
 gulp.task('watch', function() {
-	gulp.watch(config.watchPatterns, ['server'])
+	gulp.watch(kWatchPatterns, ['server'])
 })
 
 gulp.task('server', function() {
@@ -104,8 +131,29 @@ gulp.task('server', function() {
 	})
 })
 */
+
+// --------------------------------------------------------
+// Private helper methods
+function shellCommandHelper(command, args, options, done) {
+	let child = spawn(command, args, options)
+	
+	function toConsole(data) {
+		gutil.log(data.toString())
+	}
+	
+	child.stdout.on('data', toConsole)
+	child.stderr.on('data', toConsole)
+	child.on('close', (code) => {
+		if (code)
+			return done(new Error(`Command failed: ${command}`))
+		
+		done()
+	})
+}
+
 // --------------------------------------------------------
 process.on('exit', function() {
 	if (serverInstance)
 		serverInstance.kill()
 })
+
