@@ -9,16 +9,19 @@ let moment = require('moment')
 // Local includes
 let globalConfig = require('../config')
 
+let paths = {
+	root: __dirname,
+	tmp: path.resolve(__dirname, 'tmp'),
+	data: path.resolve(__dirname, 'data'),
+	genomes: path.resolve(__dirname, 'data', 'genomes'),
+	scripts: path.resolve(__dirname, 'scripts'),
+	lib: path.resolve(__dirname, 'scripts', 'lib'),
+	logs: path.resolve(__dirname, 'logs'),
+	vendor: path.resolve(__dirname, 'vendor')
+}
+
 module.exports = {
-	paths: {
-		root: __dirname,
-		tmp: path.resolve(__dirname, 'tmp'),
-		data: path.resolve(__dirname, 'data'),
-		genomes: path.resolve(__dirname, 'data', 'genomes'),
-		scripts: path.resolve(__dirname, 'scripts'),
-		lib: path.resolve(__dirname, 'lib'),
-		logs: path.resolve(__dirname, 'logs')
-	},
+	paths: paths,
 
 	ncbi: {
 		ftp: {
@@ -33,6 +36,21 @@ module.exports = {
 					filename: 'bacteria-assembly-summary.tsv'
 				}
 			]
+		}
+	},	
+
+	vendor: {
+		// Tools
+		hmmer3: {
+			version: '3.1b2',
+			basePath: path.resolve(paths.vendor, 'hmmer3', '3.1b2'),
+			// ftpUrl: 'http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz',
+			binPath: path.resolve(paths.vendor, 'hmmer3', '3.1b2', 'bin')
+		},
+		// Databases
+		pfam: {
+			version: '29.0',
+			basePath: path.resolve(paths.vendor, 'pfam', '29.0')
 		}
 	},
 
