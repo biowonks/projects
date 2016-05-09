@@ -7,7 +7,8 @@ let child_process = require('child_process'),
 	fs = require('fs'),
 	path = require('path'),
 	temp = require('temp'),
-	zlib = require('zlib')
+	zlib = require('zlib'),
+	mv = require('mv')
 
 // 3rd-party libraries
 let Promise = require('bluebird'),
@@ -290,7 +291,7 @@ exports.fileNotEmpty = function(file) {
  */
 exports.rename = function(srcFile, destFile) {
 	return new Promise((resolve, reject) => {
-		fs.rename(srcFile, destFile, function(error) {
+		mv(srcFile, destFile, function(error) {
 			if (error)
 				return reject(error)
 
