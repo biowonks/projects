@@ -13,7 +13,6 @@ describe.only('NCBIAssemblyReportStream', function() {
 			results = []
 		expect(function() {
 			inStream.pipe(ncbiAssemblyReportStream)
-
 		}).throw(Error)
 		done()
 	})
