@@ -5,7 +5,18 @@ let fs = require('fs'),
 
 let NCBIAssemblyReportStream = require('./NCBIAssemblyReportStream.js')
 
-describe('NCBIAssemblyReportStream', function() {
+describe.only('NCBIAssemblyReportStream', function() {
+	it('Should throw Error for missing info in file', function () {
+		let inputFile = path.resolve(__dirname, 'GCF_000006765.1_ASM676v1_assembly_report.txt'),
+			inStream = fs.createReadStream(inputFile),
+			ncbiAssemblyReportStream = new NCBIAssemblyReportStream(),
+			results = []
+		expect(function() {
+			inStream.pipe(ncbiAssemblyReportStream)
+
+		}).throw(Error)
+		done()
+	})
 	it('streaming parser of Complete NCBI Assembly Reports', function(done){
 		let inputFile = path.resolve(__dirname, 'GCF_000006765.1_ASM676v1_assembly_report.txt'),
 			inStream = fs.createReadStream(inputFile),
@@ -29,7 +40,7 @@ describe('NCBIAssemblyReportStream', function() {
     				unit: 'Primary Assembly',
     			} 
     		])
-    		done()
+    	done()
 		})
 	})
 	it('streaming parser of Contig NCBI Assembly Reports', function(done){
@@ -965,7 +976,7 @@ describe('NCBIAssemblyReportStream', function() {
 				    unit: 'Primary Assembly' 
 				}
 	   		])
-	   		done()
+	   	done()
 		})
 	})	
 	it('streaming parser of Chromosome NCBI Assembly Reports', function(done){
@@ -1307,7 +1318,7 @@ describe('NCBIAssemblyReportStream', function() {
 				    unit: 'Primary Assembly' 
 				}
     		])
-    		done()
+    	done()
 		})
 	})
 })

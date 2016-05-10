@@ -15,10 +15,10 @@
 let Transform = require('stream').Transform,
 	StringDecoder = require('string_decoder').StringDecoder
 
-let kRecordSeparator = '\n'
+let LineStream = require('./LineStream')
 
 module.exports =
-class NCBIAssemblyReportStream extends Transform {
+class NCBIAssemblyReportStream extends LineStream {
 	constructor() {
 		super({objectMode: true})
 
@@ -40,31 +40,18 @@ class NCBIAssemblyReportStream extends Transform {
 	//------------------------------------------
 	// Private methods
 	_transform(chunk, encoding, done) {
-		this.buffer_ += this.decoder_.write(chunk)
-
-		let lastPos = 0,
-			pos = this.buffer_.indexOf(kRecordSeparator, lastPos)
-
-		while (pos >= 0) {
-			let line = this.buffer_.substr(lastPos, pos - lastPos)
-			if (this.buffer_[lastPos] === '#') {
+		let line = this.decoder_.write(chunk)
+		if (line[0] === '#') {
 				this.header_ = this.parseAssemblyHeader_(line)
 			}
-			else {
-				if (!this.processedHeader_) {
-					this.testHeader_()
-					this.processedHeader_ = true
-				}
-
-				let assemblyInfo = this.parseAssemblyInfo_(line) 
-
-				this.processAssemblyInfo_(assemblyInfo)
+		else {
+			if (!this.processedHeader_) {
+				this.testHeader_()
+				this.processedHeader_ = true
 			}
-			
-			lastPos = pos + 1
-			pos = this.buffer_.indexOf(kRecordSeparator, lastPos)
+			let assemblyInfo = this.parseAssemblyInfo_(line) 
+			this.processAssemblyInfo_(assemblyInfo)
 		}
-
 		done()
 	}
 
@@ -75,13 +62,12 @@ class NCBIAssemblyReportStream extends Transform {
 		for (let i = 0; i < assemblyInfo.length; i++)
 			if (this.keysCode_[this.header_[i]])
 				result[this.keysCode_[this.header_[i]]] = assemblyInfo[i]
-
 		this.push(result)
 	}
 
 	testHeader_() {
-		for ( let name in this.keysCode_ ) {
-			if ( this.header_.indexOf(name) === -1 ) {
+		for (let name in this.keysCode_) {
+			if (this.header_.indexOf(name) === -1) {
 				throw new Error('This assembly report seems to not contain all fields.\nCheck the file or if NCBI changed the format')
 			}
 		}
