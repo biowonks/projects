@@ -13,6 +13,9 @@ describe.only('NCBIAssemblyReportStream', function() {
 			results = []
 		expect(function() {
 			inStream.pipe(ncbiAssemblyReportStream)
+			.on('data', (info) => {
+				results.push(info)
+			})
 		}).throw(Error)
 		done()
 	})

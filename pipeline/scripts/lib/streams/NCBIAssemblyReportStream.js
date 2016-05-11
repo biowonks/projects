@@ -68,7 +68,7 @@ class NCBIAssemblyReportStream extends LineStream {
 	testHeader_() {
 		for (let name in this.keysCode_) {
 			if (this.header_.indexOf(name) === -1) {
-				throw new Error('This assembly report seems to not contain all fields.\nCheck the file or if NCBI changed the format')
+				throw new Error('Not all fields in assembly report files.')
 			}
 		}
 	}
