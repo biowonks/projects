@@ -41,36 +41,30 @@ class NCBIAssemblyReportStream extends LineStream {
 	// Private methods
 	_transform(chunk, encoding, done) {
 		let line = this.decoder_.write(chunk)
-		if (this.isDataLine_(line)) {
+		if (this.isMetadataLine_(line)) {
 			if (!this.processedHeader_) {
 				this.headerFields_ = this.parseAssemblyHeader_(this.lastLine_)
 				if (this.isInvalidHeader_())
 					return done(new Error('Not all fields in assembly report files.'))
 				this.processedHeader_ = true
 			}
-			
 			let assemblyInfo = this.parseAssemblyInfo_(line) 
 			this.processAssemblyInfo_(assemblyInfo)
 		}
-		
 		this.lastLine_ = line
 		done()
 	}
 
-	// ----------------------------------------------------
-	// Private methods
-	isDataLine_(line) {
+	isMetadataLine_(line) {
 		return line[0] !== '#'
 	}
-	
 	/**
 	 * @returns {boolean} true header has all expected field names; false otherwise
 	 */
 	isInvalidHeader_() {
 		for (let name in this.headerFieldNameMap_)
 			if (this.headerFields_.indexOf(name) === -1)
-				return true
-		
+				return true	
 		return false
 	}
 	
