@@ -11,8 +11,8 @@ curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | b
 
 #### Node installation
 ```
-nvm install 4.3.0
-nvm use 4.3.0
+nvm install 6.1.0
+nvm use 6.1.0
 nvm alias default node
 ```
 
