@@ -6,19 +6,21 @@ let fs = require('fs'),
 let NCBIAssemblyReportStream = require('./NCBIAssemblyReportStream.js')
 
 describe.only('NCBIAssemblyReportStream', function() {
-	it('Should throw Error for missing info in file', function () {
-		let inputFile = path.resolve(__dirname, 'GCF_000006765.1_ASM676v1_assembly_report.txt'),
+	it('should throw Error for missing info in file', function(done) {
+		let inputFile = path.resolve(__dirname, 'GCF_000006765.1_ASM676v1_assembly_report.broken.txt'),
 			inStream = fs.createReadStream(inputFile),
 			ncbiAssemblyReportStream = new NCBIAssemblyReportStream(),
 			results = []
-		expect(function() {
-			inStream.pipe(ncbiAssemblyReportStream)
-			.on('data', (info) => {
-				results.push(info)
-			})
-		}).throw(Error)
-		done()
+
+		inStream.pipe(ncbiAssemblyReportStream)
+		.on('error', (error) => {
+			done()
+		})
+		.on('finish', () => {
+			done(new Error('expected error, but not was thrown'))
+		})
 	})
+
 	it('streaming parser of Complete NCBI Assembly Reports', function(done){
 		let inputFile = path.resolve(__dirname, 'GCF_000006765.1_ASM676v1_assembly_report.txt'),
 			inStream = fs.createReadStream(inputFile),
@@ -42,9 +44,10 @@ describe.only('NCBIAssemblyReportStream', function() {
     				unit: 'Primary Assembly',
     			} 
     		])
-    	done()
+    		done()
 		})
 	})
+
 	it('streaming parser of Contig NCBI Assembly Reports', function(done){
 		let inputFile = path.resolve(__dirname, 'GCF_000316035.1_Draft_genome_sequence_of_PAMC_26794_assembly_report.txt'),
 			inStream = fs.createReadStream(inputFile),
@@ -1026,7 +1029,8 @@ describe.only('NCBIAssemblyReportStream', function() {
 			])
 		})
 		done()
-	})	
+	})
+
 	it('streaming parser of Scaffold NCBI Assembly Reports', function(done){
 		let inputFile = path.resolve(__dirname, 'GCF_000392755.1_Ente_faec_SF6375_V1_assembly_report.txt'),
 			inStream = fs.createReadStream(inputFile),
@@ -1320,7 +1324,7 @@ describe.only('NCBIAssemblyReportStream', function() {
 				    unit: 'Primary Assembly' 
 				}
     		])
-    	done()
+    		done()
 		})
 	})
 })

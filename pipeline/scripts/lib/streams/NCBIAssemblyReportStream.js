@@ -22,11 +22,11 @@ class NCBIAssemblyReportStream extends LineStream {
 	constructor() {
 		super({objectMode: true})
 
-		this.header_ = null
+		this.lastLine_ = null
+		this.headerFields_ = null
 		this.processedHeader_ = false
-		this.buffer_ = ''
 		this.decoder_ = new StringDecoder('utf8')
-		this.keysCode_ = {
+		this.headerFieldNameMap_ = {
 			'Sequence-Name': 'name', 
 			'Sequence-Role': 'role',
 			'Assigned-Molecule': 'assigned_molecule',
@@ -41,41 +41,49 @@ class NCBIAssemblyReportStream extends LineStream {
 	// Private methods
 	_transform(chunk, encoding, done) {
 		let line = this.decoder_.write(chunk)
-		if (line[0] === '#') {
-				this.header_ = this.parseAssemblyHeader_(line)
-			}
-		else {
+		if (this.isDataLine_(line)) {
 			if (!this.processedHeader_) {
-				this.testHeader_()
+				this.headerFields_ = this.parseAssemblyHeader_(this.lastLine_)
+				if (this.isInvalidHeader_())
+					return done(new Error('Not all fields in assembly report files.'))
 				this.processedHeader_ = true
 			}
+			
 			let assemblyInfo = this.parseAssemblyInfo_(line) 
 			this.processAssemblyInfo_(assemblyInfo)
 		}
+		
+		this.lastLine_ = line
 		done()
 	}
 
 	// ----------------------------------------------------
 	// Private methods
-	processAssemblyInfo_(assemblyInfo) {
-		let result = {}
-		for (let i = 0; i < assemblyInfo.length; i++)
-			if (this.keysCode_[this.header_[i]])
-				result[this.keysCode_[this.header_[i]]] = assemblyInfo[i]
-		this.push(result)
+	isDataLine_(line) {
+		return line[0] !== '#'
 	}
-
-	testHeader_() {
-		for (let name in this.keysCode_) {
-			if (this.header_.indexOf(name) === -1) {
-				throw new Error('Not all fields in assembly report files.')
-			}
-		}
+	
+	/**
+	 * @returns {boolean} true header has all expected field names; false otherwise
+	 */
+	isInvalidHeader_() {
+		for (let name in this.headerFieldNameMap_)
+			if (this.headerFields_.indexOf(name) === -1)
+				return true
+		
+		return false
 	}
 	
 	parseAssemblyHeader_(line) {
-		return line.replace(/\r|\n|#| /gm, '')
-			.split('\t')
+		return line.replace(/\r|\n|#| /gm, '').split('\t')
+	}
+	
+	processAssemblyInfo_(assemblyInfo) {
+		let result = {}
+		for (let i = 0; i < assemblyInfo.length; i++)
+			if (this.headerFieldNameMap_[this.headerFields_[i]])
+				result[this.headerFieldNameMap_[this.headerFields_[i]]] = assemblyInfo[i]
+		this.push(result)
 	}
 	
 	parseAssemblyInfo_(line) {
