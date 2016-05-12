@@ -5,7 +5,7 @@ let fs = require('fs'),
 
 let NCBIAssemblyReportStream = require('./NCBIAssemblyReportStream.js')
 
-describe.only('NCBIAssemblyReportStream', function() {
+describe('NCBIAssemblyReportStream', function() {
 	it('should throw Error for missing info in file', function(done) {
 		let inputFile = path.resolve(__dirname, 'GCF_000006765.1_ASM676v1_assembly_report.broken.txt'),
 			inStream = fs.createReadStream(inputFile),
