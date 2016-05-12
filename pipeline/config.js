@@ -44,7 +44,6 @@ module.exports = {
 		hmmer3: {
 			version: '3.1b2',
 			basePath: path.resolve(paths.vendor, 'hmmer3', '3.1b2'),
-			// ftpUrl: 'http://eddylab.org/software/hmmer3/3.1b2/hmmer-3.1b2-linux-intel-x86_64.tar.gz',
 			binPath: path.resolve(paths.vendor, 'hmmer3', '3.1b2', 'bin')
 		},
 		// Databases
