@@ -6,7 +6,8 @@
   "main": "index.js",
   "repository": {},
   "scripts": {
-    "test": "./node_modules/.bin/gulp test"
+    "test": "node_modules/.bin/gulp test",
+    "eslint": "scripts/eslint.sh"
   },
   "author": "Luke Ulrich",
   "license": "",
@@ -41,11 +42,11 @@
     "chai": "^2.3.0",
     "commander": "^2.9.0",
     "csv-parse": "^1.0.1",
-    "eslint": "0.22.x",
+    "eslint": "^2.9.0",
     "gulp": "git://github.com/gulpjs/gulp.git#4.0",
-    "gulp-eslint": "0.12.x",
     "gulp-istanbul": "^0.10.3",
     "gulp-mocha": "^2.2.0",
+    "gulp-shell": "^0.5.2",
     "gulp-util": "3.x",
     "mocha": "^2.3.4",
     "sinon": "^1.14.1",

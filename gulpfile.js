@@ -8,14 +8,14 @@ let path = require('path'),
 let gulp = require('gulp'),
 	gulpIstanbul = require('gulp-istanbul'),
 	gulpMocha = require('gulp-mocha'),
-	gutil = require('gulp-util'),
-	eslint = require('gulp-eslint')
+	gulpShell = require('gulp-shell'),
+	gutil = require('gulp-util')
 
 // Local includes
 let pipelineConfig = require('./pipeline/config')
 
 // Special variables :)
-let serverInstance
+let serverInstance = null
 
 // --------------------------------------------------------
 // Configuration
@@ -100,20 +100,9 @@ function installPfamHelper(done) {
 	}, done)
 }
 
-/*
-gulp.task('lint', function() {
-	return gulp.src(kWatchPatterns)
-        // eslint() attaches the lint output to the eslint property
-        // of the file object so it can be used by other modules.
-        .pipe(eslint())
-        // eslint.format() outputs the lint results to the console.
-        // Alternatively use eslint.formatEach() (see Docs).
-        .pipe(eslint.format())
-        // To have the process exit with an error code (1) on
-        // lint error, return the stream and pipe to failOnError last.
-        .pipe(eslint.failOnError())
-})
+gulp.task('eslint', gulpShell.task(path.resolve(__dirname, 'scripts', 'eslint.sh')))
 
+/*
 gulp.task('watch', function() {
 	gulp.watch(kWatchPatterns, ['server'])
 })

@@ -39,7 +39,7 @@ module.exports = {
 		'valid-jsdoc': 1,
 		'valid-typeof': 2,
 
-		// Best practises
+		// Best practices
 		'accessor-pairs': 2,
 		'array-callback-return': 1,
 		'block-scoped-var': 2,
@@ -149,7 +149,7 @@ module.exports = {
 		'id-blacklist': 0,
 		'id-length': 0,
 		'id-match': 0,
-		'indent': [2, 'tab', {'indentSwitchCase': false}],
+		'indent': [2, 'tab', {'SwitchCase': 1}],
 		'jsx-quotes': [2, 'prefer-double'],
 		'key-spacing': [2, {beforeColon: false, afterColon: true}],
 		'keyword-spacing': [2, {before: true, after: true}],
