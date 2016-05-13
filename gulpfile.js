@@ -82,7 +82,8 @@ gulp.task('install-hmmer3', function(done) {
 		hmmer3Config = pipelineConfig.vendor.hmmer3
 
 	gutil.log(`Installing HMMER3 version ${hmmer3Config.version}`)
-	shellCommandHelper(installScript, [hmmer3Config.version, hmmer3Config.basePath], null, done)
+	// eslint-disable-next-line no-undefined
+	shellCommandHelper(installScript, [hmmer3Config.version, hmmer3Config.basePath], undefined, done)
 })
 
 gulp.task('install-pfam', gulp.series('install-hmmer3', installPfamHelper))
@@ -91,7 +92,7 @@ function installPfamHelper(done) {
 		pfamConfig = pipelineConfig.vendor.pfam,
 		env = Object.create(process.env)
 
-	env.PATH = `${env.PATH}:${pipelineConfig.vendor.hmmer3.binPath}`
+	env.PATH = env.PATH + ':' + pipelineConfig.vendor.hmmer3.binPath
 
 	gutil.log(`Installing Pfam ${pfamConfig.version}`)
 	shellCommandHelper(installScript, [pfamConfig.version, pfamConfig.basePath], {env}, done)
