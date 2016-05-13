@@ -1,3 +1,5 @@
+/* eslint-disable no-magic-numbers, no-undefined, no-new */
+
 'use strict'
 
 let BetweenLocationPoint = require('./BetweenLocationPoint')
@@ -16,19 +18,19 @@ describe('BetweenLocationPoint', function() {
 		]
 
 		nonNumbers.forEach((nonNumber) => {
-			it(nonNumber + '..1 throws error', function() {
+			it(`${nonNumber}..1 throws error`, function() {
 				expect(function() {
 					new BetweenLocationPoint(nonNumber, 1)
 				}).throw(Error)
 			})
 
-			it('1..' + nonNumber + ' throws error', function() {
+			it(`1..${nonNumber} throws error`, function() {
 				expect(function() {
 					new BetweenLocationPoint(1, nonNumber)
 				}).throw(Error)
 			})
 
-			it(nonNumber + '..' + nonNumber + ' throws error', function() {
+			it(`${nonNumber}..${nonNumber} throws error`, function() {
 				expect(function() {
 					new BetweenLocationPoint(nonNumber, nonNumber)
 				}).throw(Error)
@@ -44,7 +46,7 @@ describe('BetweenLocationPoint', function() {
 		invalidRanges.forEach((invalidRange) => {
 			let start = invalidRange[0],
 				stop = invalidRange[1]
-			it(start + '..' + stop + ' throws error', function() {
+			it(`${start}..${stop} throws error`, function() {
 				expect(function() {
 					new BetweenLocationPoint(start, stop)
 				}).throw(Error)

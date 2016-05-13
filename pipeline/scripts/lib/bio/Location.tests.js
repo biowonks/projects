@@ -1,3 +1,5 @@
+/* eslint-disable no-magic-numbers, no-new, no-unused-expressions */
+
 'use strict'
 
 let Location = require('./Location'),
@@ -78,7 +80,7 @@ describe('Location', function() {
 			if (locationPointString[0] === '<' || locationPointString[0] === '>')
 				return new FuzzyLocationPoint(locationPointString[0], parseInt(locationPointString.substr(1)))
 
-			throw new Error('Unexpected location point string: ' + locationPointString)
+			throw new Error(`Unexpected location point string: ${locationPointString}`)
 		}
 
 		it('with external acession throws Error', function() {

@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-expressions, no-magic-numbers */
+
 'use strict'
 
 let Seq = require('./Seq')
@@ -115,7 +117,7 @@ describe('Seq', function() {
 
 		it('invalid characters should be replaced with the invalid symbol', function() {
 			let seq = new Seq('A1T%G'),
-				seqString = 'A' + seq.invalidSymbol() + 'T' + seq.invalidSymbol() + 'G'
+				seqString = `A${seq.invalidSymbol()}T${seq.invalidSymbol()}G`
 			expect(seq.sequence()).equal(seqString)
 		})
 	})
@@ -151,7 +153,7 @@ describe('Seq', function() {
 
 		function randomlyInsertSpace(sequence) {
 			let pos = randomPosition(sequence)
-			return sequence.substr(0, pos) + ' ' + sequence.substr(pos)
+			return `${sequence.substr(0, pos)} ${sequence.substr(pos)}`
 		}
 
 		function changeCaseAndInjectWhitespace(sequence) {
@@ -165,7 +167,7 @@ describe('Seq', function() {
 		}
 
 		fixtures.forEach(function(fixture) {
-			it(`${fixture.seqId} from ${fixture.sequence.substr(0, 32) + '...'}`, function() {
+			it(`${fixture.seqId} from ${fixture.sequence.substr(0, 32)}...`, function() {
 				let seq = new Seq(fixture.sequence)
 				expect(seq.seqId()).equal(fixture.seqId)
 			})
@@ -174,7 +176,7 @@ describe('Seq', function() {
 				return
 
 			let mungedSequence = changeCaseAndInjectWhitespace(fixture.sequence)
-			it(`${fixture.seqId} from ${mungedSequence.substr(0, 32) + '...'}`, function() {
+			it(`${fixture.seqId} from ${mungedSequence.substr(0, 32)}...`, function() {
 				let seq = new Seq(mungedSequence)
 				expect(seq.seqId()).equal(fixture.seqId)
 				expect(seq.sequence()).equal(mungedSequence.trim())
@@ -211,7 +213,7 @@ describe('Seq', function() {
 
 	describe('subseq', function() {
 		let linearSeq = new Seq('QWERTYIPASDFGHKLCVNM'),
-			//                   |   |    |    |    |  
+			//                   |   |    |    |    |
 			//                   1   5    10   15   20
 			circularSeq = new Seq('QWERTYIPASDFGHKLCVNM').setCircular()
 
@@ -258,7 +260,7 @@ describe('Seq', function() {
 				examples = [
 					{start: 1, stop: linearSeq.length(), expectedSequence: seqStr},
 					{start: 2, stop: 5, expectedSequence: seqStr.substr(2 - 1, 5 - 2 + 1)},
-					{start: 12, stop: 12, expectedSequence: seqStr.substr(12 - 1, 1)},
+					{start: 12, stop: 12, expectedSequence: seqStr.substr(12 - 1, 1)}
 				]
 
 			examples.forEach(function(example) {
@@ -282,8 +284,8 @@ describe('Seq', function() {
 
 		describe('on circular sequences', function() {
 			let examples = [
-				{start: 15, stop: 5, expectedSequence: 'KLCVNM' + 'QWERT'},
-				{start: 10, stop: 9, expectedSequence: 'SDFGHKLCVNM' + 'QWERTYIPA'}
+				{start: 15, stop: 5, expectedSequence: 'KLCVNMQWERT'},
+				{start: 10, stop: 9, expectedSequence: 'SDFGHKLCVNMQWERTYIPA'}
 			]
 
 			examples.forEach(function(example) {
@@ -333,7 +335,11 @@ describe('Seq', function() {
 			expect(nucleotideSeq.reverseComplement().sequence()).equal('GGGCCCAAATTTNNXXKKMMSSWWYYRRGGCCAATT')
 		})
 		it('reverse complementary of reverse complement', function() {
-			expect(nucleotideSeq.reverseComplement().reverseComplement().sequence()).equal(nucleotideSeq.sequence())
+			let sequence = nucleotideSeq
+				.reverseComplement()
+				.reverseComplement()
+				.sequence()
+			expect(sequence).equal(nucleotideSeq.sequence())
 		})
 	})
 })

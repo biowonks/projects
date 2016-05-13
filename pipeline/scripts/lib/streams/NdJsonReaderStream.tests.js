@@ -1,6 +1,6 @@
-'use strict';
+'use strict'
 
-let NdJsonReaderStream = require('./NdJsonReaderStream');
+let NdJsonReaderStream = require('./NdJsonReaderStream')
 
 describe('NdJsonReaderStream', function() {
 	it('parses newline delimited data', function() {

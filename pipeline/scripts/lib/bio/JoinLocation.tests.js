@@ -1,3 +1,5 @@
+/* eslint-disable no-magic-numbers, no-new */
+
 'use strict'
 
 let JoinLocation = require('./JoinLocation'),

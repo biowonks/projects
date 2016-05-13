@@ -9,10 +9,11 @@ let HmmscanResultReaderStream = require('./HmmscanResultReaderStream')
 
 describe('HmmscanResultReaderStream', function() {
 	it('parses hmmscan results', function(done) {
+		// eslint-disable-next-line no-mixed-requires
 		let inputFile = path.resolve(__dirname, 'test-data/hmmscan-results.txt'),
 			inStream = fs.createReadStream(inputFile, {highWaterMark: 1024}),
 			hmmscanResultReaderStream = new HmmscanResultReaderStream(),
-			expectedResults = require('./test-data/hmmscan-results'),
+			expectedResults = require('./test-data/hmmscan-results'), // eslint-disable-line global-require
 			results = []
 
 		inStream

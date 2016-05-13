@@ -1,3 +1,5 @@
+/* eslint-disable no-magic-numbers */
+
 'use strict'
 
 let seqUtil = require('./seq-util')
@@ -16,7 +18,7 @@ describe('seq-util', function() {
 		]
 
 		examples.forEach((example) => {
-			it(example.sequence + ' --> ' + JSON.stringify(example.output), function() {
+			it(`${example.sequence} --> ${JSON.stringify(example.output)}`, function() {
 				expect(seqUtil.parseMaskedRegions(example.sequence)).deep.equal(example.output)
 			})
 		})

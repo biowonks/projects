@@ -23,7 +23,7 @@ describe('LocationStringParser', function() {
 			]
 
 			examples.forEach((example) => {
-				it(example + ' throws error', function() {
+				it(`${example} throws error`, function() {
 					expect(function() {
 						x.parse(example)
 					}).throw(Error)
@@ -55,7 +55,7 @@ describe('LocationStringParser', function() {
 			]
 
 			examples.forEach(function(example) {
-				it(example.locationString + ' --> ' + example.sequence, function() {
+				it(`${example.locationString} --> ${example.sequence}`, function() {
 					let location = x.parse(example.locationString)
 					expect(location.transcriptFrom(seq).sequence()).equal(example.sequence)
 				})

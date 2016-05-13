@@ -1,3 +1,5 @@
+/* eslint-disable no-magic-numbers, no-undefined, no-new */
+
 'use strict'
 
 let BoundedLocationPoint = require('./BoundedLocationPoint')
@@ -16,7 +18,7 @@ describe('BoundedLocationPoint', function() {
 		]
 
 		nonNumbers.forEach((nonNumber) => {
-			it('1..' + nonNumber + ' throws error', function() {
+			it(`1..${nonNumber} throws error`, function() {
 				expect(function() {
 					new BoundedLocationPoint(1, nonNumber)
 				}).throw(Error)

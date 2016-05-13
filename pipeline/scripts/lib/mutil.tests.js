@@ -1,9 +1,11 @@
+/* eslint-disable no-unused-expressions, no-magic-numbers */
+
 'use strict'
 
 // Core includes
 let fs = require('fs'),
 	path = require('path')
-	
+
 // Local includes
 let mutil = require('./mutil')
 
@@ -16,10 +18,10 @@ describe('mutil', function() {
 				})
 				.catch(() => {})
 		})
-		
+
 		it('download inaccessible url does not create file', function() {
 			let destFile = '/tmp/dummy-file'
-			
+
 			return mutil.download('http://localhost/dummy-file-that-does-not-exist', destFile)
 				.then((result) => {
 					fs.unlinkSync(destFile)
@@ -30,13 +32,13 @@ describe('mutil', function() {
 				})
 				.then((dummyFileExists) => {
 					expect(dummyFileExists).false
-					return mutil.fileExists(destFile + '.tmp')
+					return mutil.fileExists(`${destFile}.tmp`)
 				})
 				.then((tmpDummyFileExists) => {
 					expect(tmpDummyFileExists).false
 				})
 		})
-		
+
 		it('download mistdb.com should to non-existent folder throws error', function() {
 			return mutil.download('http://mistdb.com', '/tmp/this/folder/should/not/exit')
 				.then((result) => {
@@ -45,17 +47,17 @@ describe('mutil', function() {
 				})
 				.catch(() => {})
 		})
-		
+
 		it('download mistdb.com to /tmp saves it to /tmp/mistdb.com', function() {
 			let destDir = '/tmp',
-				destFile = destDir + '/mistdb.com'
+				destFile = `${destDir}/mistdb.com`
 			return mutil.download('http://mistdb.com', destDir)
 				.then((result) => {
 					expect(result).deep.equal({
 						url: 'http://mistdb.com',
-						destFile: destFile
+						destFile
 					})
-					
+
 					return mutil.fileNotEmpty(destFile)
 				})
 				.then((result) => {
@@ -70,9 +72,9 @@ describe('mutil', function() {
 				.then((result) => {
 					expect(result).deep.equal({
 						url: 'http://mistdb.com',
-						destFile: destFile
+						destFile
 					})
-					
+
 					return mutil.fileNotEmpty(destFile)
 				})
 				.then((result) => {
@@ -89,7 +91,7 @@ describe('mutil', function() {
 						url: 'http://mistdb.com',
 						destFile: path.resolve(process.cwd(), destFile)
 					})
-					
+
 					return mutil.fileNotEmpty(destFile)
 				})
 				.then((result) => {
@@ -98,7 +100,7 @@ describe('mutil', function() {
 				})
 		})
 	})
-	
+
 	describe('pathIsYoungerThan', function() {
 		let testFile = path.resolve(__dirname, '__test-file__')
 		before(() => {
@@ -120,37 +122,33 @@ describe('mutil', function() {
 						done()
 					})
 					.catch(done)
-			}, 50);
+			}, 50)
 		})
 
 		it('non-existent file returns false', function() {
 			return mutil.pathIsYoungerThan('this-file-does-not-exist', 4500)
 				.then(function(result) {
 					expect(result).false
-				});
+				})
 		})
 	})
-	
+
 	describe('rename', function() {
 		let temporaryBaseFileName = 'mutil.tests.tmp',
 			temporaryFile = path.resolve(__dirname, temporaryBaseFileName),
-			targetFileInSameDir = temporaryFile + '.target',
+			targetFileInSameDir = `${temporaryFile}.target`,
 			targetFileInOtherDir = `/tmp/${temporaryBaseFileName}`
 
-		/**
-		 * ${file} may or may not exist, therefore, ignore any error about non-existent files.
-		 * 
-		 * @param {string} file
-		 */
+		// ${file} may or may not exist, therefore, ignore any error about non-existent files.
 		function ensureUnlinked(file) {
 			try {
 				fs.unlinkSync(file)
 			}
 			catch (error) {
-				let didNotExist = error.code === 'ENOENT' 
+				let didNotExist = error.code === 'ENOENT'
 				if (didNotExist)
 					return
-				
+
 				throw error
 			}
 		}
@@ -160,7 +158,7 @@ describe('mutil', function() {
 			ensureUnlinked(targetFileInSameDir)
 			ensureUnlinked(targetFileInOtherDir)
 		})
-		
+
 		afterEach(() => {
 			ensureUnlinked(temporaryFile)
 			ensureUnlinked(targetFileInSameDir)
@@ -169,7 +167,7 @@ describe('mutil', function() {
 
 		it('renaming non-existent file throws error', function() {
 			let nonExistingFile = path.resolve(__dirname, 'non-existent-test-file'),
-				destFile = nonExistingFile + '.tmp'
+				destFile = `${nonExistingFile}.tmp`
 			return mutil.rename(nonExistingFile, destFile)
 				.then(() => {
 					throw new Error()
@@ -195,45 +193,44 @@ describe('mutil', function() {
 					expect(destFileExists).false
 				})
 		})
-		
-		 it('rename existing file within the same directory', function() {
-			 return mutil.rename(temporaryFile, targetFileInSameDir)
-			 	.then(() => {
-					 return mutil.fileExists(targetFileInSameDir)
-				 })
-				 .then((targetFileExists) => {
-					 expect(targetFileExists).true
-					 return mutil.fileExists(temporaryFile)
-				 })
-				 .then((originalFileExists) => {
-					 expect(originalFileExists).false
-				 })
-		 })
-		 
-		 it('rename existing file to another directory', function() {
-			 return mutil.rename(temporaryFile, targetFileInOtherDir)
-			 	.then(() => {
-					 return mutil.fileExists(targetFileInOtherDir)
-				 })
-				 .then((targetFileExists) => {
-					 expect(targetFileExists).true
-					 return mutil.fileExists(temporaryFile)
-				 })
-				 .then((originalFileExists) => {
-					 expect(originalFileExists).false
-				 })
-		 })
+
+		it('rename existing file within the same directory', function() {
+			return mutil.rename(temporaryFile, targetFileInSameDir)
+				.then(() => {
+					return mutil.fileExists(targetFileInSameDir)
+				})
+				.then((targetFileExists) => {
+					expect(targetFileExists).true
+					return mutil.fileExists(temporaryFile)
+				})
+				.then((originalFileExists) => {
+					expect(originalFileExists).false
+				})
+		})
+
+		it('rename existing file to another directory', function() {
+			return mutil.rename(temporaryFile, targetFileInOtherDir)
+				.then(() => {
+					return mutil.fileExists(targetFileInOtherDir)
+				})
+				.then((targetFileExists) => {
+					expect(targetFileExists).true
+					return mutil.fileExists(temporaryFile)
+				})
+				.then((originalFileExists) => {
+					expect(originalFileExists).false
+				})
+		})
 	})
 
 	describe('shellCommand', function() {
 		it('shellCommand waits for the previous promise', function(done) {
 			mutil.shellCommand('printf 15')
 			.then((result) => {
-				console.log(result)
-				return mutil.shellCommand('printf ' + (parseInt(result.stdout) + 1))
+				return mutil.shellCommand(`printf ${parseInt(result.stdout) + 1}`)
 			})
 			.then(function(result) {
-				return mutil.shellCommand('printf ' + (parseInt(result.stdout) + 1))			
+				return mutil.shellCommand(`printf ${parseInt(result.stdout) + 1}`)
 			})
 			.then((result) => {
 				expect(result.stdout).equal('17')

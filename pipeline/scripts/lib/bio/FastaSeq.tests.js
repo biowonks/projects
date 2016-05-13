@@ -1,8 +1,9 @@
+/* eslint-disable no-magic-numbers */
+
 'use strict'
 
 let Seq = require('./Seq'),
-	FastaSeq = require('./FastaSeq'),
-	assert = require('assert')
+	FastaSeq = require('./FastaSeq')
 
 describe('FastaSeq', function() {
 	describe('constructor', function() {
@@ -42,20 +43,20 @@ describe('FastaSeq', function() {
 	describe('toString', function() {
 		let fastaHeader = '>header_name',
 			fastaSequence = 'AAAAATTTTTGGGGGCCCCC',
-			uncleanedFastaSequence = 'AAAA\nATTTT\nTGGG\nGGCCC\nCC',
-			seq = new FastaSeq(fastaHeader, fastaSequence),
-			uncleanedSeq = new FastaSeq(fastaHeader,uncleanedFastaSequence)
+			seq = new FastaSeq(fastaHeader, fastaSequence)
 
 		it('Default should give one line sequence', function() {
-			expect(seq.toString()).equal(fastaHeader + '\n' + fastaSequence + '\n')
+			expect(seq.toString()).equal(`${fastaHeader}\n${fastaSequence}\n`)
 		})
 
 		it('Negative values should give one line sequence', function() {
-			expect(seq.toString(-2)).equal(fastaHeader + '\n' + fastaSequence + '\n')
+			expect(seq.toString(-2)).equal(`${fastaHeader}\n${fastaSequence}\n`)
 		})
 
 		it('Non-number parameter should give an error', function() {
-			expect(function(){seq.toString('non-number')}).throw(Error)
+			expect(function() {
+				seq.toString('non-number')
+			}).throw(Error)
 		})
 
 		it('Sequence should be separated into lines', function() {

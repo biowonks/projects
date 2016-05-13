@@ -1,3 +1,5 @@
+/* eslint-disable no-magic-numbers, no-unused-expressions, no-new */
+
 'use strict'
 
 let FuzzyLocationPoint = require('./FuzzyLocationPoint')

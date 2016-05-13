@@ -1,3 +1,5 @@
+/* eslint-disable no-magic-numbers, no-new, no-unused-expressions, no-undefined */
+
 'use strict'
 
 let LocationPoint = require('./LocationPoint')
@@ -16,7 +18,7 @@ describe('LocationPoint', function() {
 		]
 
 		nonNumbers.forEach((nonNumber) => {
-			it(nonNumber + ' throws error', function() {
+			it(`${nonNumber} throws error`, function() {
 				expect(function() {
 					new LocationPoint(nonNumber)
 				}).throw(Error)
@@ -39,7 +41,7 @@ describe('LocationPoint', function() {
 		]
 
 		positions.forEach((position) => {
-			it(position + ' is exact', function() {
+			it(`${position} is exact`, function() {
 				let x = new LocationPoint(position)
 				expect(x.isExact()).true
 			})

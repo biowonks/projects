@@ -3,8 +3,8 @@
 let FastaReaderStream = require('./FastaReaderStream')
 
 describe('FastaReaderStream', function() {
-	let reader,
-		result
+	let reader = null,
+		result = null
 
 	describe('do not skip empty sequences', function() {
 		beforeEach(function() {
@@ -48,7 +48,7 @@ describe('FastaReaderStream', function() {
 				expectError = fixture[2]
 
 			let messageInput = input.replace(/\s/g, '\\n'),
-				itMessage = '"' + messageInput + '" ' + (expectError ? 'fails as expected' : 'works')
+				itMessage = `"${messageInput}" ${expectError ? 'fails as expected' : 'works'}`
 			if (expectError) {
 				it(itMessage, function() {
 					expect(function() {
@@ -99,7 +99,7 @@ describe('FastaReaderStream', function() {
 			['>1\nABC\n>2', [['1', 'ABC']]],
 			['>1\nABC\n>2\n', [['1', 'ABC']]],
 			['>1\nABC\n>2\n\n', [['1', 'ABC']]],
-			['>1\nABC\n>2\n\n>3\nDEF', [['1', 'ABC'], ['3', 'DEF']]],
+			['>1\nABC\n>2\n\n>3\nDEF', [['1', 'ABC'], ['3', 'DEF']]]
 		]
 
 		fixtures.forEach(function(fixture) {
@@ -108,7 +108,7 @@ describe('FastaReaderStream', function() {
 				expectError = fixture[2]
 
 			let messageInput = input.replace(/\s/g, '\\n'),
-				itMessage = '"' + messageInput + '" ' + (expectError ? 'fails as expected' : 'works')
+				itMessage = `"${messageInput}" ${expectError ? 'fails as expected' : 'works'}`
 			if (expectError) {
 				it(itMessage, function() {
 					expect(function() {
@@ -124,8 +124,8 @@ describe('FastaReaderStream', function() {
 
 					// Special case
 					if (desiredOutput.length === 0) {
-						expect(result.length).equal(0);
-						return;
+						expect(result.length).equal(0)
+						return
 					}
 
 					result.forEach(function(fastaSeq, i) {

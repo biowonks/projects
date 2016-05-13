@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-expressions, no-magic-numbers, no-new */
+
 'use strict'
 
 let ComplementLocation = require('./ComplementLocation'),
