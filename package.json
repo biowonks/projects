@@ -9,6 +9,9 @@
     "test": "node_modules/.bin/gulp test",
     "eslint": "node_modules/.bin/eslint 'pipeline/scripts/**/*.js'"
   },
+  "pre-commit": [
+    "eslint"
+  ],
   "author": "Luke Ulrich",
   "license": "",
   "dependencies": {
@@ -49,6 +52,7 @@
     "gulp-shell": "^0.5.2",
     "gulp-util": "3.x",
     "mocha": "^2.3.4",
+    "pre-commit": "^1.1.3",
     "sinon": "^1.14.1",
     "supertest": "1.x",
     "supertest-as-promised": "2.x",
