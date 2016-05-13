@@ -62,7 +62,7 @@ function instrument() {
 			includeUntested: true
 		}))
 		// Force `require` to return covered files
-		.pipe(gulpIstanbul.hookRequire());
+		.pipe(gulpIstanbul.hookRequire())
 }
 
 function coverage(done) {
@@ -74,16 +74,15 @@ function coverage(done) {
 				'html'
 			]
 		}))
-		// .on('end', endProcess.bind(null, done)); // call `done` & then exit
 }
 
 
 gulp.task('install-hmmer3', function(done) {
 	let installScript = path.resolve(__dirname, 'pipeline', 'scripts', 'install-hmmer3.sh'),
 		hmmer3Config = pipelineConfig.vendor.hmmer3
-	
+
 	gutil.log(`Installing HMMER3 version ${hmmer3Config.version}`)
-	shellCommandHelper(installScript, [hmmer3Config.version, hmmer3Config.basePath], undefined, done)
+	shellCommandHelper(installScript, [hmmer3Config.version, hmmer3Config.basePath], null, done)
 })
 
 gulp.task('install-pfam', gulp.series('install-hmmer3', installPfamHelper))
@@ -91,13 +90,11 @@ function installPfamHelper(done) {
 	let installScript = path.resolve(__dirname, 'pipeline', 'scripts', 'install-pfam.sh'),
 		pfamConfig = pipelineConfig.vendor.pfam,
 		env = Object.create(process.env)
-	
+
 	env.PATH = `${env.PATH}:${pipelineConfig.vendor.hmmer3.binPath}`
-	
+
 	gutil.log(`Installing Pfam ${pfamConfig.version}`)
-	shellCommandHelper(installScript, [pfamConfig.version, pfamConfig.basePath], {
-		env: env
-	}, done)
+	shellCommandHelper(installScript, [pfamConfig.version, pfamConfig.basePath], {env}, done)
 }
 
 gulp.task('eslint', gulpShell.task(path.resolve(__dirname, 'scripts', 'eslint.sh')))
@@ -125,18 +122,16 @@ gulp.task('server', function() {
 // Private helper methods
 function shellCommandHelper(command, args, options, done) {
 	let child = spawn(command, args, options)
-	
+
 	function toConsole(data) {
 		gutil.log(data.toString())
 	}
-	
+
 	child.stdout.on('data', toConsole)
 	child.stderr.on('data', toConsole)
 	child.on('close', (code) => {
-		if (code)
-			return done(new Error(`Command failed: ${command}`))
-		
-		done()
+		let error = code ? new Error(`Command failed: ${command}`) : null
+		done(error)
 	})
 }
 

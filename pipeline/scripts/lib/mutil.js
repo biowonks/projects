@@ -156,7 +156,7 @@ function determineDestFile_(url, optDestFile) {
 
 	return exports.stat(optDestFile)
 		.then((stats) => {
-			return stats.isDirectory() ? path.resolve(optDestFile, path.basename(url)) : optDestFile
+			return stats.isDirectory() ? path.resolve(optDestFile, path.basename(url)) : path.resolve(optDestFile)
 		})
 		.catch((error) => {
 			let fileDoesntExist = error.code === 'ENOENT'

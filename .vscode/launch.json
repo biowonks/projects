@@ -24,16 +24,18 @@
 			"outDir": null
 		},
 		{
-			"name": "Attach",
+			"name": "Unit tests",
 			"type": "node",
-			"request": "attach",
-			"port": 5858,
-			"address": "localhost",
-			"restart": false,
-			"sourceMaps": false,
-			"outDir": null,
-			"localRoot": "${workspaceRoot}",
-			"remoteRoot": null
+			"request": "launch",
+			"program": "${workspaceRoot}/node_modules/.bin/_mocha",
+			"stopOnEntry": false,
+			"cwd": "${workspaceRoot}",
+			"args": [
+				"--timeout", "30000",
+				"--require", "pipeline/scripts/test-setup.js",
+				"pipeline/scripts/**/*.tests.js"
+			],
+			"runtimeExecutable": null
 		}
 	]
 }
