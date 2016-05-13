@@ -1,9 +1,4 @@
 'use strict'
 
-class NCBIService {
-	constructor() {
-
-	}
-
-
-}
+// class NCBIService {
+// }

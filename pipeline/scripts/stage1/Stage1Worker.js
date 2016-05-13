@@ -1,9 +1,5 @@
 'use strict'
 
-// Core node libraries
-let fs = require('fs'),
-	path = require('path')
-
 // Local includes
 let mutil = require('../lib/mutil'),
 	FileNameMapper = require('./FileNameMapper'),
@@ -51,7 +47,7 @@ class Stage1Worker {
 		this.logger_.info({refseq_assembly_accession: this.refseqAssemblyAccession_}, 'setup')
 		mutil.initORM(this.config_, this.logger_)
 		.catch((error) => {
-			this.logger_.error({error: error, stack: error.stack}, 'Setup database failed')
+			this.logger_.error({error, stack: error.stack}, 'Setup database failed')
 			process.send('error db')
 			process.exit(1)
 		})
@@ -67,7 +63,7 @@ class Stage1Worker {
 				this.logger_.warn({refseq_assembly_accession: this.refseqAssemblyAccession_}, 'RefSeq Assembly Accession not found in the database. Ignoring this request')
 				process.send('done')
 				process.exit()
-				return
+				return null
 			}
 
 			this.genome_ = genome
@@ -85,7 +81,7 @@ class Stage1Worker {
 			process.send('ready')
 		})
 		.catch((error) => {
-			this.logger_.error({error: error, stack: error.stack}, 'Setup error')
+			this.logger_.error({error, stack: error.stack}, 'Setup error')
 			process.send('error setup')
 			process.exit(1)
 		})
@@ -107,7 +103,7 @@ class Stage1Worker {
 		})
 		.catch((error) => {
 			if (error) {
-				this.logger_.error('Unhandled error ' + error, error)
+				this.logger_.error({error, stack: error.stack}, 'Unhandled error')
 				process.exit(1)
 				return
 			}

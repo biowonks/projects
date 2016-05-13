@@ -1,7 +1,8 @@
 'use strict'
 
 // Core node libraries
-let fs = require('fs')
+let assert = require('assert'),
+	fs = require('fs')
 
 // 3rd-party libraries
 let Promise = require('bluebird'),
@@ -30,7 +31,7 @@ class NCBIDataHelper {
 
 	download_(sourceType) {
 		if (sourceType === 'checksums')
-			return
+			return Promise.resolve()
 
 		let destFile = this.fileNameMapper_.pathFor(sourceType)
 		return mutil.fileNotEmpty(destFile)
@@ -41,10 +42,10 @@ class NCBIDataHelper {
 			return this.verify_(sourceType)
 			.then((isComplete) => {
 				if (isComplete)
-					return
+					return null
 
 				// File exists but is not complete
-				this.logger_.info({sourceType: sourceType, file: destFile}, 'File exists, but is not complete')
+				this.logger_.info({sourceType, file: destFile}, 'File exists, but is not complete')
 				return mutil.unlink(destFile)
 				.then(() => {
 					this.logger_.info({file: destFile}, 'Removed file')
@@ -55,33 +56,33 @@ class NCBIDataHelper {
 	}
 
 	downloadAndVerify_(sourceType) {
-		console.assert(!!this.checksums_, 'Expected checksums to be defined')
+		assert(!!this.checksums_, 'Expected checksums to be defined')
 
 		let url = this.fileNameMapper_.urlFor(sourceType),
 			destFile = this.fileNameMapper_.pathFor(sourceType)
 
-		this.logger_.info({sourceType: sourceType, url: url, file: destFile}, 'Downloading ' + sourceType)
+		this.logger_.info({sourceType, url, file: destFile}, `Downloading ${sourceType}`)
 		return mutil.download(url, destFile)
 		.then(() => {
 			return this.verify_(sourceType)
 		})
 		.then((isComplete) => {
 			if (!isComplete) {
-				this.logger_.error({sourceType: sourceType, url: url, file: destFile}, 'File contents are not valid')
-				throw new Error('Incomplete data for ' + sourceType + ' from: ' + url)
+				this.logger_.error({sourceType, url, file: destFile}, 'File contents are not valid')
+				throw new Error(`Incomplete data for ${sourceType} from: ${url}`)
 			}
 		})
 	}
 
 	verify_(sourceType) {
-		console.assert(!!this.checksums_, 'Expected checksums to be defined')
+		assert(!!this.checksums_, 'Expected checksums to be defined')
 
 		let destFile = this.fileNameMapper_.pathFor(sourceType),
 			fileName = this.fileNameMapper_.fileNameFor(sourceType),
 			checksum = this.checksums_[fileName]
 
 		if (checksum) {
-			this.logger_.info({sourceType: sourceType}, 'Verifying file contents')
+			this.logger_.info({sourceType}, 'Verifying file contents')
 			return mutil.checkFileMD5(destFile, checksum)
 		}
 
@@ -102,13 +103,13 @@ class NCBIDataHelper {
 		return mutil.fileNotEmpty(destFile)
 		.then((exists) => {
 			if (!exists) {
-				this.logger_.info({url: url}, 'Downloading checksums')
+				this.logger_.info({url}, 'Downloading checksums')
 				return mutil.download(url, destFile)
 			}
+
+			return null
 		})
-		.then(() => {
-			return this.readChecksumsFromFile_(destFile)
-		})
+		.then(() => this.readChecksumsFromFile_(destFile))
 		.catch((error) => {
 			return mutil.unlink(destFile)
 			.finally(() => {
@@ -150,7 +151,7 @@ class NCBIDataHelper {
 				}
 				else {
 					this.logger_.error({line: invalidChecksumLine}, 'Invalid checksum line')
-					reject(new Error('Invalid checksum line: ' + invalidChecksumLine))
+					reject(new Error(`Invalid checksum line: ${invalidChecksumLine}`))
 				}
 			})
 		})
@@ -159,7 +160,7 @@ class NCBIDataHelper {
 	parseChecksumLine_(line) {
 		let matches = /^([a-f0-9]{32})\s+(?:\.\/)?(\S+)/i.exec(line)
 		if (!matches)
-			return
+			return null
 
 		let md5 = matches[1],
 			fileName = matches[2]

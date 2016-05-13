@@ -32,15 +32,15 @@ class FileNameMapper {
 		if (!this.genome_)
 			throw new Error('Genome has not been set. Please call setGenome first')
 
-		return this.genome_.refseq_assembly_accession + '_' + this.genome_.assembly_name
+		return `${this.genome_.refseq_assembly_accession}_${this.genome_.assembly_name}`
 	}
 
 	ftpSourceDirectory() {
-		return this.config_.ncbi.ftp.genomeDataRootUrl + '/' + this.corePrefix()
+		return `${this.config_.ncbi.ftp.genomeDataRootUrl}/${this.corePrefix()}`
 	}
 
 	urlFor(sourceType) {
-		return this.ftpSourceDirectory() + '/' + this.fileNameFor(sourceType)
+		return `${this.ftpSourceDirectory()}/${this.fileNameFor(sourceType)}`
 	}
 
 	genomeRootPath() {
@@ -48,30 +48,32 @@ class FileNameMapper {
 	}
 
 	pathFor(sourceType) {
-		return this.genomeRootPath() + '/' + this.fileNameFor(sourceType)
+		return `${this.genomeRootPath()}/${this.fileNameFor(sourceType)}`
 	}
 
 	idCacheFile() {
-		return this.genomeRootPath() + '/id-blocks.json'
+		return `${this.genomeRootPath()}/id-blocks.json`
 	}
 
 	/**
 	 * Returns a pathless string representing the data file corresponding to sourceType.
 	 *
-	 * @param {string} sourceType
-	 * @return {string}
+	 * @param {string} sourceType type of NCBI data file being analyzed
+	 * @returns {string} the relevant file name
 	 */
 	fileNameFor(sourceType) {
 		let prefix = this.corePrefix()
 
 		switch (sourceType) {
 			case 'checksums':		return 'md5checksums.txt'
-			case 'genomic-fasta':	return prefix + '_genomic.fna.gz'
-			case 'protein-fasta':	return prefix + '_protein.faa.gz'
-			case 'assembly-report':	return prefix + '_assembly_report.txt'
-			case 'genes-gff':		return prefix + '_genomic.gff.gz'
-			case 'feature-table':	return prefix + '_feature_table.txt.gz'
+			case 'genomic-fasta':	return `${prefix}_genomic.fna.gz`
+			case 'protein-fasta':	return `${prefix}_protein.faa.gz`
+			case 'assembly-report':	return `${prefix}_assembly_report.txt`
+			case 'genes-gff':		return `${prefix}_genomic.gff.gz`
+			case 'feature-table':	return `${prefix}_feature_table.txt.gz`
 		}
+
+		throw new Error(`${sourceType} is not supported`)
 	}
 
 	sourceTypes() {

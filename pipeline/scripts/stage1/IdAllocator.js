@@ -8,6 +8,9 @@
 
 'use strict'
 
+// Core includes
+let assert = require('assert')
+
 // 3rd party includes
 let Sequelize = require('sequelize')
 
@@ -15,6 +18,7 @@ module.exports =
 class IdAllocator {
 	/**
 	 * @param {Model} IdSequenceModel sequelize defined model
+	 * @param {Object} logger the source logger
 	 */
 	constructor(IdSequenceModel, logger) {
 		this.IdSequence_ = IdSequenceModel
@@ -30,12 +34,12 @@ class IdAllocator {
 	 *
 	 * If ${sequenceName} is not found, then null is returned.
 	 *
-	 * @param {string} sequenceName
-	 * @param {number} amount
-	 * @return {Array.<number>[2]}
+	 * @param {string} sequenceName name of sequence in database
+	 * @param {number} amount number of ids to allocate
+	 * @return {Array.<number>} 2-element array denoting the range of ids that have been allocated
 	 */
 	reserve(sequenceName, amount) {
-		console.assert(typeof amount === 'number' && amount > 0, 'amount must be a positive integer')
+		assert(typeof amount === 'number' && amount > 0, 'amount must be a positive integer')
 
 		let result = null
 
@@ -61,7 +65,11 @@ class IdAllocator {
 				})
 			})
 			.then(() => {
-				this.logger_.info({sequenceName: sequenceName, start: result[0], stop: result[1]}, `Reserved ${result[1] - result[0] + 1} identifiers for the sequence named '${sequenceName}'`)
+				this.logger_.info({
+					sequenceName,
+					start: result[0],
+					stop: result[1]
+				}, `Reserved ${result[1] - result[0] + 1} identifiers for the sequence named '${sequenceName}'`)
 				return result
 			})
 		})

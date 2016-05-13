@@ -1,3 +1,5 @@
+/* eslint-disable */
+
 /**
  * CoreDataBuilder takes raw NCBI data files obtained with the NCBIDataHelper and produces
  * a set of core genomic data files for downstream processing. These correspond to the

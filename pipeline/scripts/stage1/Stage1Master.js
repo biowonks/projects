@@ -7,8 +7,9 @@ let fs = require('fs'),
 // Local includes
 let mutil = require('../lib/mutil')
 
-// Glocals
-let lockFile = path.resolve(__dirname, 'lock.pid')
+// Constants
+let kLockFile = path.resolve(__dirname, 'lock.pid'),
+	kExitErrorCode = 2
 
 dieIfAnotherInstanceRunning()
 
@@ -36,7 +37,7 @@ class Stage1Master {
 		this.halt_ = true
 		this.logger_.error('User interrupted process. Disconnecting clients')
 		this.cluster_.disconnect(() => {
-			process.exit(2)
+			process.exit(kExitErrorCode)
 		})
 	}
 
@@ -52,7 +53,7 @@ class Stage1Master {
 			this.processNextGenome()
 		})
 		.catch((error) => {
-			this.logger_.error({error: error, stack: error.stack}, 'Unexpected error')
+			this.logger_.error({error, stack: error.stack}, 'Unexpected error')
 		})
 	}
 
@@ -71,7 +72,7 @@ class Stage1Master {
 			this.logger_.info(genome.short(), 'Worker exited cleanly')
 		}
 
-		delete this.pidToGenome_[pid]
+		Reflect.deleteProperty(this.pidToGenome_, pid)
 
 		this.processNextGenome()
 	}
@@ -114,16 +115,17 @@ class Stage1Master {
 		}
 
 		return this.models_.GenomeQueue.findOne({
-			where: where,
+			where,
 			attributes: ['refseq_assembly_accession', 'name']
 		})
 	}
 
 	excludedRefSeqAccessions() {
 		let accessions = []
-		for (let accession in this.genomeTries_)
+		for (let accession in this.genomeTries_) {
 			if (this.genomeTries_[accession] >= this.masterConfig_.maxTriesPerGenome)
 				accessions.push(accession)
+		}
 		for (let pid in this.pidToGenome_)
 			accessions.push(this.pidToGenome_[pid].refseq_assembly_accession)
 		return accessions
@@ -162,14 +164,15 @@ class Stage1Master {
 	choke(message) {
 		this.cluster_.disconnect(() => {
 			this.logger_.error(message)
-			process.exit(2)
+			process.exit(kExitErrorCode)
 		})
 	}
 }
 
 function dieIfAnotherInstanceRunning() {
-	if (fs.existsSync(lockFile)) {
-		console.error(`Stage 1 is already running. If this is an error, remove ${lockFile} and re-run this script`)
+	if (fs.existsSync(kLockFile)) {
+		// eslint-disable-next-line no-console
+		console.error(`Stage 1 is already running. If this is an error, remove ${kLockFile} and re-run this script`)
 		process.exit(1)
 	}
 
@@ -177,14 +180,16 @@ function dieIfAnotherInstanceRunning() {
 }
 
 function createLockFile() {
-	fs.writeFileSync(lockFile, process.pid)
+	fs.writeFileSync(kLockFile, process.pid)
 }
 
 function removeLockFile() {
 	try {
-		fs.unlinkSync(lockFile)
+		fs.unlinkSync(kLockFile)
 	}
-	catch (error) {}
+	catch (error) {
+		// noop
+	}
 }
 
 process.on('exit', () => {
