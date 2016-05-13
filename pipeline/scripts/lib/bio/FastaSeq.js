@@ -26,14 +26,15 @@ class FastaSeq extends Seq {
 	 * @param {number?} optCharsPerLine an optional number of lines to split
 	 *    the sequence into; defaults to 0 which implies outputting the entire
 	 *    sequence on a single line
-	 * @returns {string}
+	 * @returns {string} FASTA string
 	 */
 	toString(optCharsPerLine) {
 		let charsPerLine = !optCharsPerLine ? 0 : Math.max(parseInt(optCharsPerLine), 0)
 		assert(typeof charsPerLine === 'number', 'optCharsPerLine must be a number')
-		return '>' + this.header_ + '\n' + this.spliceNewlines_(charsPerLine)
+		let splicedString = this.spliceNewlines_(charsPerLine)
+		return `>${this.header_}\n${splicedString}`
 	}
-	
+
 	// ----------------------------------------------------
 	// Private methods
 	removeLeadingCaret_() {
@@ -42,18 +43,18 @@ class FastaSeq extends Seq {
 	}
 
 	/**
-	 * @param {number} charsPerLine
-	 * @return {string}
+	 * @param {number} charsPerLine number of sequence characters per line
+	 * @return {string} FASTA sequence portion
 	 */
 	spliceNewlines_(charsPerLine) {
 		assert(charsPerLine >= 0, 'charsPerLine must be 0 or a positive integer')
 		let fullSequence = this.sequence()
 		if (!charsPerLine)
-			return fullSequence + '\n'
+			return `${fullSequence}\n`
 
 		let result = ''
 		for (let i = 0, z = fullSequence.length; i < z; i += charsPerLine)
-			result += fullSequence.substr(i, charsPerLine) + '\n'
+			result += `${fullSequence.substr(i, charsPerLine)}\n`
 
 		return result
 	}

@@ -45,11 +45,11 @@ class Seq {
 	}
 
 	complement(optReverse) {
-		let changingDirection = optReverse === undefined ? false : optReverse,
+		let changingDirection = typeof optReverse === 'undefined' ? false : Boolean(optReverse),
 			complementaryStrand = ''
 
 		for (let i = 0, z = this.sequence_.length; i < z; i++) {
-			let letter = changingDirection ? this.sequence_[z-i-1] : this.sequence_[i]
+			let letter = changingDirection ? this.sequence_[z - i - 1] : this.sequence_[i]
 			complementaryStrand += kComplementaryBases[letter] || letter
 		}
 
@@ -69,7 +69,7 @@ class Seq {
 	}
 
 	isValid() {
-		return this.sequence_.indexOf(kInvalidSymbol) === -1
+		return this.sequence_.indexOf(kInvalidSymbol) < 0
 	}
 
 	length() {
@@ -94,30 +94,36 @@ class Seq {
 	}
 
 	seqId() {
-		let md5base64 = crypto.createHash('md5').update(this.normalizedSequence_()).digest('base64')
-		return md5base64.replace(/=+/g, '')
+		let md5base64 = crypto
+			.createHash('md5')
+			.update(this.normalizedSequence_())
+			.digest('base64')
+		return md5base64
+			.replace(/=+/g, '')
 			.replace(/\+/g, '-')
 			.replace(/\//g, '_')
 	}
 
 	/**
 	 * @param {boolean?} optCircular defaults to true
+	 * @returns {Seq} instance that called this method
 	 */
 	setCircular(optCircular) {
-		this.isCircular_ = optCircular === undefined ? true : !!optCircular
+		this.isCircular_ = typeof optCircular === 'undefined' ? true : !!optCircular
 		return this
 	}
 
 	/**
 	 * @param {number} start 1-based value
 	 * @param {number} stop 1-based value
+	 * @returns {Seq} new sequence object
 	 */
 	subseq(start, stop) {
 		assert(start > 0, 'start must be positive')
 		assert(stop > 0, 'stop must be positive')
 		assert(start <= this.length(), 'start must be <= length')
 		assert(stop <= this.length(), 'stop must be <= length')
-	
+
 		if (!this.isCircular_ || start <= stop) {
 			assert(start <= stop, 'start must be <= stop on non-circular sequences')
 			return new Seq(this.oneBasedSubstr_(start, stop))
@@ -131,6 +137,7 @@ class Seq {
 	// Private methods
 	/**
 	 * Replaces all characters except for A-Z, a-z, ., -, *, or ' ' with the ampersand symbol
+	 * @returns {undefined}
 	 */
 	clean_() {
 		this.sequence_ = this.sequence_.replace(/[^A-Za-z.\-* ]/g, '@')
@@ -138,6 +145,7 @@ class Seq {
 
 	/**
 	 * Removes all spaces and upper-cases the sequence. The result is cached.
+	 * @returns {string} normalized sequence string
 	 */
 	normalizedSequence_() {
 		return this.isNormalized_ ? this.sequence_ : this.sequence_.replace(/ /g, '').toUpperCase()
@@ -146,7 +154,7 @@ class Seq {
 	/**
 	 * @param {number} start 1-based value
 	 * @param {number} stop 1-based value
-	 * @returns {string}
+	 * @returns {string} characters between ${start} and ${stop}
 	 */
 	oneBasedSubstr_(start, stop) {
 		return this.sequence_.substr(start - 1, stop - start + 1)

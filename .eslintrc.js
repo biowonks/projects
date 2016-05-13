@@ -73,7 +73,7 @@ module.exports = {
 		'no-labels': 1,
 		'no-lone-blocks': 2,
 		'no-loop-func': 2,
-		'no-magic-numbers': [2, {ignore: [1], ignoreArrayIndexes: true}],
+		'no-magic-numbers': [2, {ignore: [-1, 0, 1], ignoreArrayIndexes: true}],
 		'no-multi-spaces': 2,
 		'no-multi-str': 1,
 		'no-native-reassign': 2,
@@ -198,7 +198,6 @@ module.exports = {
 		'sort-vars': 0,
 		'space-before-blocks': [2, 'always'],
 		'space-before-function-paren': [2, 'never'],
-		'space-in-brackets': [2, 'never'],
 		'space-in-parens': [2, 'never'],
 		'space-infix-ops': 2,
 		'space-unary-ops': [1, {words: true, nonwords: false }],
@@ -206,7 +205,7 @@ module.exports = {
 		'wrap-regex': 0,
 
 		// ES6
-		'arrow-body-style': [2, 'as-needed'],
+		'arrow-body-style': 0,
 		'arrow-parens': [2, 'always'],
 		'arrow-spacing': [2, {before: true, after: true}],
 		'constructor-super': 2,

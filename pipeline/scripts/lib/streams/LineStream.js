@@ -17,6 +17,6 @@ class LineStream extends Transform {
 		this.on('pipe', (src) => {
 			src.unpipe(this)
 			src.pipe(this.byLineStream_)
-		})		
+		})
 	}
 }

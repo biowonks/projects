@@ -52,7 +52,7 @@ class Stage1Master {
 			this.processNextGenome()
 		})
 		.catch((error) => {
-			this.logger_.error({error: error, stack: error.stack}, 'Unexpected error');
+			this.logger_.error({error: error, stack: error.stack}, 'Unexpected error')
 		})
 	}
 
@@ -110,7 +110,7 @@ class Stage1Master {
 				refseq_assembly_accession: {
 					$notIn: excludedAccessions
 				}
-			};
+			}
 		}
 
 		return this.models_.GenomeQueue.findOne({

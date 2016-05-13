@@ -1,20 +1,21 @@
 /**
  * Parsing of the NCBI RefSeq assembly reports
- * 
+ *
  * What does this do !?
- * 
+ *
  * The NCBI RefSeq genome dataset is the core source of genomic data. Parsing these data files
  * is a foundational step to this pipeline. In particular, the assembly report file
  * (GCF_...assembly_report.txt) lists "components" (replicons, contigs, etc) belonging to each
  *  genome. The parser is designed to extract this information into a form that may be readily
  *  transformed for insertion into the database (JSON)
  *
- */ 
+ */
 'use strict'
 
-let Transform = require('stream').Transform,
-	StringDecoder = require('string_decoder').StringDecoder
+// Core includes
+let StringDecoder = require('string_decoder').StringDecoder
 
+// Local includes
 let LineStream = require('./LineStream')
 
 module.exports =
@@ -27,14 +28,14 @@ class NCBIAssemblyReportStream extends LineStream {
 		this.processedHeader_ = false
 		this.decoder_ = new StringDecoder('utf8')
 		this.headerFieldNameMap_ = {
-			'Sequence-Name': 'name', 
+			'Sequence-Name': 'name',
 			'Sequence-Role': 'role',
 			'Assigned-Molecule': 'assigned_molecule',
 			'Assigned-Molecule-Location/Type': 'type',
 			'GenBank-Accn': 'genbank_accession',
-			'Relationship': 'genbank_refseq_relationship',
+			Relationship: 'genbank_refseq_relationship',
 			'RefSeq-Accn': 'refseq_accession',
-			'Assembly-Unit': 'unit',
+			'Assembly-Unit': 'unit'
 		}
 	}
 	//------------------------------------------
@@ -44,11 +45,13 @@ class NCBIAssemblyReportStream extends LineStream {
 		if (this.isMetadataLine_(line)) {
 			if (!this.processedHeader_) {
 				this.headerFields_ = this.parseAssemblyHeader_(this.lastLine_)
-				if (this.isInvalidHeader_())
-					return done(new Error('Not all fields in assembly report files.'))
+				if (this.isInvalidHeader_()) {
+					done(new Error('Not all fields in assembly report files.'))
+					return
+				}
 				this.processedHeader_ = true
 			}
-			let assemblyInfo = this.parseAssemblyInfo_(line) 
+			let assemblyInfo = this.parseAssemblyInfo_(line)
 			this.processAssemblyInfo_(assemblyInfo)
 		}
 		this.lastLine_ = line
@@ -58,30 +61,36 @@ class NCBIAssemblyReportStream extends LineStream {
 	isMetadataLine_(line) {
 		return line[0] !== '#'
 	}
+
 	/**
 	 * @returns {boolean} true header has all expected field names; false otherwise
 	 */
 	isInvalidHeader_() {
-		for (let name in this.headerFieldNameMap_)
-			if (this.headerFields_.indexOf(name) === -1)
-				return true	
+		for (let name in this.headerFieldNameMap_) {
+			if (this.headerFields_.indexOf(name) < 0)
+				return true
+		}
 		return false
 	}
-	
+
 	parseAssemblyHeader_(line) {
-		return line.replace(/\r|\n|#| /gm, '').split('\t')
+		return line
+			.replace(/\r|\n|#| /gm, '')
+			.split('\t')
 	}
-	
+
 	processAssemblyInfo_(assemblyInfo) {
 		let result = {}
-		for (let i = 0; i < assemblyInfo.length; i++)
+		for (let i = 0; i < assemblyInfo.length; i++) {
 			if (this.headerFieldNameMap_[this.headerFields_[i]])
 				result[this.headerFieldNameMap_[this.headerFields_[i]]] = assemblyInfo[i]
+		}
 		this.push(result)
 	}
-	
+
 	parseAssemblyInfo_(line) {
-		return line.replace(/\r|\n/gm, '')
+		return line
+			.replace(/\r|\n/gm, '')
 			.split('\t')
 	}
 }

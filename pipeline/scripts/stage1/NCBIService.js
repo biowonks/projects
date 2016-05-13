@@ -5,5 +5,5 @@ class NCBIService {
 
 	}
 
-	
+
 }

@@ -10,13 +10,18 @@ let AbstractLocation = require('./AbstractLocation'),
 
 module.exports =
 class Location extends AbstractLocation {
+	/**
+	 * @param {LocationPoint} startLocationPoint starting point for this location
+	 * @param {LocationPoint} stopLocationPoint stopping point for this location
+	 * @param {string?} optAccession defaults to null if not a string
+	 */
 	constructor(startLocationPoint, stopLocationPoint, optAccession) {
 		super()
 		assert(startLocationPoint instanceof LocationPoint, 'startLocationPoint argument must be a LocationPoint instance')
 		assert(stopLocationPoint instanceof LocationPoint, 'stopLocationPoint argument must be a LocationPoint instance')
 		this.startLocationPoint_ = startLocationPoint
 		this.stopLocationPoint_ = stopLocationPoint
-		this.accession_ = optAccession !== undefined ? optAccession : null
+		this.accession_ = typeof optAccession === 'string' ? optAccession : null
 	}
 
 	accession() {

@@ -7,7 +7,7 @@
   "repository": {},
   "scripts": {
     "test": "node_modules/.bin/gulp test",
-    "eslint": "scripts/eslint.sh"
+    "eslint": "node_modules/.bin/eslint 'pipeline/scripts/**/*.js'"
   },
   "author": "Luke Ulrich",
   "license": "",

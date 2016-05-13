@@ -1,12 +1,11 @@
 'use strict'
 
 // Core node libraries
-let child_process = require('child_process'),
+let child_process = require('child_process'), // eslint-disable-line camelcase
 	crypto = require('crypto'),
 	domain = require('domain'),
 	fs = require('fs'),
 	path = require('path'),
-	temp = require('temp'),
 	zlib = require('zlib'),
 	mv = require('mv')
 
@@ -23,7 +22,7 @@ exports.initORM = function(config, logger) {
 	let result = {
 		sequelize: null,
 		models: null
-	};
+	}
 
 	return dbSetup(config, logger)
 		.then((sequelize) => {
@@ -40,25 +39,28 @@ exports.initORM = function(config, logger) {
  * Creates the directory ${directory} if it does not already exist. Note, the immediate
  * parent directory must already exist for this to succeed.
  *
- * @param {string} directory
- * @return {Promise}
+ * @param {string} directory name of directory
+ * @returns {Promise} promise
  */
 exports.mkdir = function(directory) {
 	return new Promise((resolve, reject) => {
 		fs.mkdir(directory, (error) => {
 			if (error) {
-				if (error.code === 'EEXIST')
-					return resolve({
+				if (error.code === 'EEXIST') {
+					resolve({
 						created: false,
-						directory: directory
-				})
+						directory
+					})
+					return
+				}
 
-				return reject(error)
+				reject(error)
+				return
 			}
 
 			resolve({
 				created: true,
-				directory: directory
+				directory
 			})
 		})
 	})
@@ -66,50 +68,45 @@ exports.mkdir = function(directory) {
 
 /**
  * Runs ${command} on the shell and resolves with the stdout and stderr output.
- * 
- * @param {string} command
+ *
+ * @param {string} command actual command to be run on the shell
  * @param {boolean?} optVerbose if true log the command being executed; defaults to false
- * @return {Promise}
+ * @returns {Promise} promise
  */
 exports.shellCommand = function(command, optVerbose) {
 	return new Promise((resolve, reject) => {
 		if (optVerbose)
-			console.log(command)
+			console.info(command) // eslint-disable-line no-console
 
-		child_process.exec(command, function(err, stdout, stderr) {
-			if (err)
-				return reject(err)
-
-			resolve({
-				stdout: stdout,
-				stderr: stderr
-			})
+		child_process.exec(command, (error, stdout, stderr) => {
+			if (error)
+				reject(error)
+			else
+				resolve({stdout, stderr})
 		})
 	})
 }
 
 /**
  * Serially executes each command in the ${commands} array.
- * 
- * @param {Array.<string>} commands
+ *
+ * @param {Array.<string>} commands array of actual commands to serially run on the shell
  * @param {boolean?} optVerbose if true log the command being executed; defaults to false
- * @return {Promise}
+ * @returns {Promise} promise
  */
 exports.shellCommands = function(commands, optVerbose) {
-	return Promise.each(commands, (command) => {
-		return exports.shellCommand(command, optVerbose)
-	})
+	return Promise.each(commands, (command) => exports.shellCommand(command, optVerbose))
 }
 
 /**
  * Uses wget to fetch files which is programmed to retry up to 20x by default. Thus,
  * no need to check / retry multiple times.
- * 
- * @param {string} url
+ *
+ * @param {string} url URL
  * @param {string?} optDestFile defaults to the base name of url in the current directory;
  *   if optDestFile is a directory, then the resulting file is that directory/
- *   url base name 
- * @return {Promise}
+ *   url base name
+ * @returns {Promise} promise
  */
 exports.download = function(url, optDestFile) {
 	if (!url)
@@ -120,8 +117,8 @@ exports.download = function(url, optDestFile) {
 	return determineDestFile_(url, optDestFile)
 		.then((result) => {
 			destFile = result
-			tmpDestFile = destFile + '.tmp'
-			
+			tmpDestFile = `${destFile}.tmp`
+
 			return exports.shellCommand(`wget --quiet -O "${tmpDestFile}" ${url}`)
 		})
 		.catch((error) => {
@@ -132,17 +129,12 @@ exports.download = function(url, optDestFile) {
 				.catch(() => {})
 				// But at the end of all this, rethrow the original shell command error
 				.finally(() => {
-					throw error 
+					throw error
 				})
 		})
+		.then(() => exports.rename(tmpDestFile, destFile))
 		.then(() => {
-			return exports.rename(tmpDestFile, destFile)
-		})
-		.then(() => {
-			return {
-				url: url,
-				destFile: destFile
-			}
+			return {url, destFile}
 		})
 }
 
@@ -154,14 +146,14 @@ exports.download = function(url, optDestFile) {
  * 3) ${optDestFile} is an actual path with a file name (that may or may not exist): return
  *    the path
  *
- * @param {string} url
- * @param {string?} optDestFile
+ * @param {string} url URL
+ * @param {string?} optDestFile see above for details
  * @return {string} absolute path to the computed destFile
  */
 function determineDestFile_(url, optDestFile) {
 	if (!optDestFile)
 		return Promise.resolve(path.basename(url))
-	
+
 	return exports.stat(optDestFile)
 		.then((stats) => {
 			return stats.isDirectory() ? path.resolve(optDestFile, path.basename(url)) : optDestFile
@@ -184,17 +176,17 @@ exports.durationFromInterval = function(interval) {
 }
 
 /**
- * @param {string} gzFile
- * @param {string?} optDestFile
- * @return {Promise}
+ * @param {string} gzFile path to gzipped file
+ * @param {string?} optDestFile optional file name
+ * @returns {Promise} promise
  */
 exports.gunzip = function(gzFile, optDestFile) {
 	return new Promise((resolve, reject) => {
-		let domain = domain.create()
-		domain.on('error', (error) => {
+		let d = domain.create()
+		d.on('error', (error) => {
 			reject(error)
 		})
-		domain.run(() => {
+		d.run(() => {
 			let gzFileStream = fs.createReadStream(gzFile),
 				gunzipStream = zlib.createGunzip(),
 				destFile = optDestFile ? optDestFile : exports.basename(gzFile),
@@ -204,10 +196,7 @@ exports.gunzip = function(gzFile, optDestFile) {
 				.pipe(gunzipStream)
 				.pipe(destFileStream)
 				.on('close', () => {
-					resolve({
-						gzFile: gzFile,
-						destFile: destFile
-					})
+					resolve({gzFile, destFile})
 				})
 		})
 	})
@@ -215,39 +204,40 @@ exports.gunzip = function(gzFile, optDestFile) {
 
 exports.readFile = function(file) {
 	return new Promise((resolve, reject) => {
-		fs.readFile(file, 'utf8', (err, data) => {
-			if (err)
-				return reject(err)
-
-			resolve(data)
+		fs.readFile(file, 'utf8', (error, data) => {
+			if (error)
+				reject(error)
+			else
+				resolve(data)
 		})
 	})
 }
 
 exports.stat = function(queryPath) {
 	return new Promise((resolve, reject) => {
-		fs.stat(queryPath, function(error, stats) {
+		fs.stat(queryPath, (error, stats) => {
 			if (error)
-				return reject(error);
-
-			resolve(stats)
+				reject(error)
+			else
+				resolve(stats)
 		})
 	})
 }
 
 /**
- * Returns true if ${queryPath} both exists and is younger than ${intervalMs}
+ * @param {string} queryPath path to test
+ * @param {number} ms number of milliseconds
+ * @returns {Promise} resolves to true if ${queryPath} both exists and is younger than ${ms};
+ *   false otherwise
  */
-exports.pathIsYoungerThan = function(queryPath, intervalMs) {
+exports.pathIsYoungerThan = function(queryPath, ms) {
 	return exports.stat(queryPath)
-		.then(function(fsStats) {
+		.then((fsStats) => {
 			let birthMoment = moment(fsStats.birthtime)
 
-			return moment().diff(birthMoment) < intervalMs
+			return moment().diff(birthMoment) < ms
 		})
-		.catch(function(error) {
-			return false
-		})
+		.catch(() => false)
 }
 
 exports.basename = function(fileName) {
@@ -258,21 +248,22 @@ exports.directoryExists = function(directory) {
 	return new Promise((resolve) => {
 		fs.stat(directory, (error, stats) => {
 			if (error)
-				return resolve(false)
-
-		resolve(stats.isDirectory())
+				resolve(false)
+			else
+				resolve(stats.isDirectory())
 		})
 	})
-};
+}
 
 exports.fileExists = function(file, optNotZero) {
 	return new Promise((resolve) => {
 		fs.stat(file, (error, stats) => {
-			if (error)
-				return resolve(false)
+			if (error) {
+				resolve(false)
+				return
+			}
 
-			let hasBytes = stats.size > 0
-			resolve(optNotZero ? hasBytes : true)
+			resolve(optNotZero ? stats.size > 0 : true)
 		})
 	})
 }
@@ -284,41 +275,38 @@ exports.fileNotEmpty = function(file) {
 /**
  * Renames ${srcFile} to ${destFile}. It is the caller's responsibility to ensure that
  * the parent directory for ${destFile} already exists.
- * 
- * @param {string} srcFile
- * @param {string} destFile}
- @ returns {Promise}
+ *
+ * @param {string} srcFile path to source file
+ * @param {string} destFile path to dest file
+ * @returns {Promise} promise
  */
 exports.rename = function(srcFile, destFile) {
 	return new Promise((resolve, reject) => {
-		mv(srcFile, destFile, function(error) {
+		mv(srcFile, destFile, (error) => {
 			if (error)
-				return reject(error)
-
-			resolve({
-				srcFile: srcFile,
-				destFile: destFile
-			})
+				reject(error)
+			else
+				resolve({srcFile, destFile})
 		})
 	})
 }
 
 /**
- * @param {string} directory
- * @returns {Promise}
+ * @param {string} directory target directory
+ * @returns {Promise} promise
  */
 exports.mkdirp = function(directory) {
 	return exports.directoryExists(directory)
 		.then((directoryExists) => {
 			if (directoryExists)
-				return {created: false, directory: directory}
+				return {created: false, directory}
 
 			return new Promise((resolve, reject) => {
 				mkdirp(directory, (error) => {
 					if (error)
-						return reject(error)
-
-					resolve({created: true, directory: directory})
+						reject(error)
+					else
+						resolve({created: true, directory})
 				})
 			})
 		})
@@ -327,11 +315,10 @@ exports.mkdirp = function(directory) {
 exports.unlink = function(file) {
 	return new Promise((resolve, reject) => {
 		fs.unlink(file, (error) => {
-			if (!error)
-				return resolve()
-
-			if (error !== 'ENOENT')
-				return reject(error)
+			if (!error || error.code === 'ENOENT')
+				resolve()
+			else
+				reject(error)
 		})
 	})
 }

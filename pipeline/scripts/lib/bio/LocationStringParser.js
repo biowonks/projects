@@ -21,111 +21,9 @@ let LocationPoint = require('./LocationPoint'),
 	ComplementLocation = require('./ComplementLocation'),
 	JoinLocation = require('./JoinLocation')
 
-module.exports =
-class LocationStringParser {
-	/**
-	 * @param {string} locationString
-	 * @return {AbstractLocation}
-	 */
-	parse(locationString) {
-		let root = new Node('root')
-		this.recursivelyParse_(locationString, root)
-		return root.location()
-	}
-
-	// ----------------------------------------------------
-	// Private methods
-	recursivelyParse_(locationString, parentNode) {
-		if (/^complement\(/.test(locationString)) {
-			let node = new ComplementNode()
-			parentNode.push(node)
-			this.recursivelyParse_(locationString.substr('complement('.length), node)
-		}
-		else if (/^join\(/.test(locationString)) {
-			let node = new JoinNode()
-			parentNode.push(node)
-			this.recursivelyParse_(locationString.substr('join('.length), node)
-		}
-		else if (/^order\(/.test(locationString)) {
-			let node = new OrderNode()
-			parentNode.push(node)
-			this.recursivelyParse_(locationString.substr('join('.length), node)
-		}
-		else if (locationString[0] === ',') {
-			this.recursivelyParse_(locationString.substr(1), parentNode)
-		}
-		else if (locationString[0] === ')') {
-			this.recursivelyParse_(locationString.substr(1), parentNode.parent())
-		}
-		else {
-			let matches = /^(?:([A-Za-z0-9](?:[A-Za-z0-9._]*[A-Za-z0-9])?):)?([<>0-9.^]+?)([,)]|$)/.exec(locationString)
-			//                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^     ^^^^^^^^^^^  ^^^^^^
-			//                  1. optional accession                         2. location  3. end character
-			if (!matches)
-				return
-
-			let totalMatchLength = matches[0].length,
-				accession = matches[1],
-				locationText = matches[2],
-				endCharacter = matches[3],
-				remainingLocationString = locationString.substr(totalMatchLength),
-				location = this.parseLocation_(locationText, accession)
-
-			if (!location)
-				throw new Error()
-
-			parentNode.push(new LocationNode(location))
-
-			// parentNode.addLocation(location)
-			if (endCharacter === ')')
-				this.recursivelyParse_(remainingLocationString, parentNode.parent())
-			else if (endCharacter === ',')
-				this.recursivelyParse_(remainingLocationString, parentNode)
-		}
-	}
-
-	parseLocation_(locationText, optAccession) {
-		let parts = locationText.split('..'),
-			startLocationPoint = this.parseLocationPoint_(parts[0]),
-			stopLocationPoint = parts.length > 1 ? this.parseLocationPoint_(parts[1]) : startLocationPoint
-
-		if (startLocationPoint && stopLocationPoint)
-			return new Location(startLocationPoint, stopLocationPoint, optAccession)
-
-		return null
-	}
-
-	parseLocationPoint_(locationPointText) {
-		// Single base location: 345
-		if (/^\d+$/.test(locationPointText))
-			return new LocationPoint(parseInt(locationPointText))
-
-		// 102.110 or 123^124
-		if (/^\d+[.^]\d+/.test(locationPointText)) {
-			let isBetween = locationPointText.indexOf('^') >= 0,
-				positions = locationPointText.split(/[.^]/)
-
-			positions[0] = parseInt(positions[0])
-			positions[1] = parseInt(positions[1])
-
-			return isBetween
-				? new BetweenLocationPoint(positions[0], positions[1])
-				: new BoundedLocationPoint(positions[0], positions[1])
-		}
-
-		// <123 or >123
-		if (locationPointText[0] === '>' || locationPointText[0] === '<')
-			return new FuzzyLocationPoint(locationPointText[0], parseInt(locationPointText.substr(1)))
-
-		return null
-	}
-}
-
 // --------------------------------------------------------
-/**
- * Private classes for supporting the parse process. Note these are not exported.
- */
-
+// --------------------------------------------------------
+// Private helper classes - these are not exported
 /**
  * Generic tree node.
  */
@@ -220,5 +118,107 @@ class LocationNode extends Node {
 
 	location() {
 		return this.location_
+	}
+}
+// --------------------------------------------------------
+// --------------------------------------------------------
+
+module.exports =
+class LocationStringParser {
+	/**
+	 * @param {string} locationString string representation of a location (e.g. 'join(12..34)')
+	 * @returns {AbstractLocation} root location node
+	 */
+	parse(locationString) {
+		let root = new Node('root')
+		this.recursivelyParse_(locationString, root)
+		return root.location()
+	}
+
+	// ----------------------------------------------------
+	// Private methods
+	recursivelyParse_(locationString, parentNode) {
+		if (/^complement\(/.test(locationString)) {
+			let node = new ComplementNode()
+			parentNode.push(node)
+			this.recursivelyParse_(locationString.substr('complement('.length), node)
+		}
+		else if (/^join\(/.test(locationString)) {
+			let node = new JoinNode()
+			parentNode.push(node)
+			this.recursivelyParse_(locationString.substr('join('.length), node)
+		}
+		else if (/^order\(/.test(locationString)) {
+			let node = new OrderNode()
+			parentNode.push(node)
+			this.recursivelyParse_(locationString.substr('join('.length), node)
+		}
+		else if (locationString[0] === ',') {
+			this.recursivelyParse_(locationString.substr(1), parentNode)
+		}
+		else if (locationString[0] === ')') {
+			this.recursivelyParse_(locationString.substr(1), parentNode.parent())
+		}
+		else {
+			let matches = /^(?:([A-Za-z0-9](?:[A-Za-z0-9._]*[A-Za-z0-9])?):)?([<>0-9.^]+?)([,)]|$)/.exec(locationString)
+			//                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^     ^^^^^^^^^^^  ^^^^^^
+			//                  1. optional accession                         2. location  3. end character
+			if (!matches)
+				return
+
+			let totalMatchLength = matches[0].length,
+				accession = matches[1],
+				locationText = matches[2],
+				endCharacter = matches[3],
+				remainingLocationString = locationString.substr(totalMatchLength),
+				location = this.parseLocation_(locationText, accession)
+
+			if (!location)
+				throw new Error()
+
+			parentNode.push(new LocationNode(location))
+
+			// parentNode.addLocation(location)
+			if (endCharacter === ')')
+				this.recursivelyParse_(remainingLocationString, parentNode.parent())
+			else if (endCharacter === ',')
+				this.recursivelyParse_(remainingLocationString, parentNode)
+		}
+	}
+
+	parseLocation_(locationText, optAccession) {
+		let parts = locationText.split('..'),
+			startLocationPoint = this.parseLocationPoint_(parts[0]),
+			stopLocationPoint = parts.length > 1 ? this.parseLocationPoint_(parts[1]) : startLocationPoint
+
+		if (startLocationPoint && stopLocationPoint)
+			return new Location(startLocationPoint, stopLocationPoint, optAccession)
+
+		return null
+	}
+
+	parseLocationPoint_(locationPointText) {
+		// Single base location: 345
+		if (/^\d+$/.test(locationPointText))
+			return new LocationPoint(parseInt(locationPointText))
+
+		// 102.110 or 123^124
+		if (/^\d+[.^]\d+/.test(locationPointText)) {
+			let isBetween = locationPointText.indexOf('^') >= 0,
+				positions = locationPointText.split(/[.^]/)
+
+			positions[0] = parseInt(positions[0])
+			positions[1] = parseInt(positions[1])
+
+			return isBetween ?
+				new BetweenLocationPoint(positions[0], positions[1]) :
+				new BoundedLocationPoint(positions[0], positions[1])
+		}
+
+		// <123 or >123
+		if (locationPointText[0] === '>' || locationPointText[0] === '<')
+			return new FuzzyLocationPoint(locationPointText[0], parseInt(locationPointText.substr(1)))
+
+		return null
 	}
 }

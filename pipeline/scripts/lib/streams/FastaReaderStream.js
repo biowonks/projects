@@ -3,7 +3,7 @@
 // Core node libraries
 let assert = require('assert'),
 	StringDecoder = require('string_decoder').StringDecoder,
-	Transform = require('stream').Transform;
+	Transform = require('stream').Transform
 
 // Local includes
 let FastaSeq = require('../bio/FastaSeq')
@@ -25,8 +25,10 @@ class FastaReaderStream extends Transform {
 	// Private methods
 	_flush(done) {
 		// Allow empty files
-		if (!this.buffer_.length)
-			return done()
+		if (!this.buffer_.length) {
+			done()
+			return
+		}
 
 		if (this.buffer_[0] !== '>')
 			this.throwMissingCaret_()
@@ -34,7 +36,7 @@ class FastaReaderStream extends Transform {
 		let header = '',
 			sequence = '',
 			headerTo = this.buffer_.indexOf('\n')
-		if (headerTo !== -1) {  // A newline (and consequently header text is present) was found within the buffer
+		if (headerTo >= 0) {  // A newline (and consequently header text is present) was found within the buffer
 			header = this.buffer_.substr(1, headerTo - 1)
 			if (headerTo !== this.buffer_.length - 1)
 				sequence = this.buffer_.substr(headerTo + 1)
@@ -85,11 +87,13 @@ class FastaReaderStream extends Transform {
 		assert(/\S/.test(header), 'fasta header must not be empty')
 
 		let fastaSeq = new FastaSeq(header, sequence)
-		if (fastaSeq.length())
-			return this.push(fastaSeq)
+		if (fastaSeq.length()) {
+			this.push(fastaSeq)
+			return
+		}
 
 		if (!this.skipEmptySequence_)
-			throw new Error('fasta sequence is unexpectedly empty (' + header + ')')
+			throw new Error(`fasta sequence is unexpectedly empty ${header})`)
 	}
 
 	throwMissingCaret_() {

@@ -15,7 +15,7 @@
  * purposes and avoids premature work.
  */
 
-'use strict';
+'use strict'
 
 // Core node libraries
 let fs = require('fs'),
@@ -68,11 +68,9 @@ class Enqueuer {
 
 			return this.createTemporaryDirectory_()
 		})
-		.then(() => {
-			return this.enqueueNewAssemblies_()
-		})
+		.then(() => this.enqueueNewAssemblies_())
 		.catch((error) => {
-			this.logger_.error({error: error, stack: error.stack}, 'Unexpected error');
+			this.logger_.error({error, stack: error.stack}, 'Unexpected error')
 		})
 	}
 
@@ -89,11 +87,8 @@ class Enqueuer {
 	enqueueNewAssemblies_() {
 		return Promise.each(config.ncbi.ftp.assemblySummaryLinks, (assemblyLink) => {
 			return this.downloadAssemblySummary_(assemblyLink)
-				.then((assemblySummaryFile) => {
-					// Read through file and parse
-					return this.processSummaryFile(assemblySummaryFile)
-				})
-		});
+				.then((assemblySummaryFile) => this.processSummaryFile(assemblySummaryFile))
+		})
 	}
 
 	downloadAssemblySummary_(link) {
@@ -101,11 +96,11 @@ class Enqueuer {
 		return mutil.pathIsYoungerThan(destFile, this.config_.summaryDuration)
 			.then((isYounger) => {
 				if (isYounger) {
-					this.logger_.info({path: destFile}, 'Summary file already exists and is younger than ' + this.config_.summaryDuration.humanize())
+					this.logger_.info({path: destFile}, `Summary file already exists and is younger than ${this.config_.summaryDuration.humanize()}`)
 					return destFile
 				}
 
-				this.logger_.info({path: destFile}, 'Downloading assembly summary: ' + link.filename)
+				this.logger_.info({path: destFile}, `Downloading assembly summary: ${link.filename}`)
 				return mutil.download(link.url, destFile)
 					.then((downloadResult) => {
 						this.logger_.info('Download finished')
@@ -115,7 +110,7 @@ class Enqueuer {
 	}
 
 	processSummaryFile(file) {
-		this.logger_.info({file: file}, 'Processing summary file')
+		this.logger_.info({file}, 'Processing summary file')
 		return new Promise((resolve, reject) => {
 			let parser = parse({
 				columns: true,
@@ -133,9 +128,8 @@ class Enqueuer {
 				stream.pause()
 				this.insertGenome_(this.genomeDataFromRow_(row))
 				.then((genome) => {
-					if (genome) {
+					if (genome)
 						this.logger_.info({'genome.name': genome.name, refseq_assembly_accession: genome.refseq_assembly_accession}, 'Enqueued new genome')
-					}
 
 					stream.resume()
 				})
@@ -172,16 +166,17 @@ class Enqueuer {
 			ftp_path: row.ftp_path
 		}
 
-		for (let key in genome)
+		for (let key in genome) {
 			if (!genome[key])
 				genome[key] = null
+		}
 
 		return genome
 	}
 
 	extractStrain_(infraSpecificName) {
 		let matches = /strain=(\S+)/.exec(infraSpecificName)
-		return !!matches ? matches[1] : null
+		return matches ? matches[1] : null
 	}
 
 	insertGenome_(genome) {
@@ -192,25 +187,25 @@ class Enqueuer {
 			])
 			.spread((existsInGenomes, alreadyQueued) => {
 				if (existsInGenomes || alreadyQueued)
-					return
+					return null
 
 				return this.models_.GenomeQueue.create(genome)
 			})
 		})
 	}
 
-	existsInGenomes_(refseq_assembly_accession, t) {
+	existsInGenomes_(refseqAssemblyAccession, t) {
 		return this.models_.Genome.find({
 			where: {
-				refseq_assembly_accession: refseq_assembly_accession
+				refseq_assembly_accession: refseqAssemblyAccession
 			}
 		})
 	}
 
-	alreadyQueued_(refseq_assembly_accession, t) {
+	alreadyQueued_(refseqAssemblyAccession, t) {
 		return this.models_.GenomeQueue.find({
 			where: {
-				refseq_assembly_accession: refseq_assembly_accession
+				refseq_assembly_accession: refseqAssemblyAccession
 			}
 		})
 	}

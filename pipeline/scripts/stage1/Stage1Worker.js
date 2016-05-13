@@ -66,7 +66,7 @@ class Stage1Worker {
 			if (genomeNotFound) {
 				this.logger_.warn({refseq_assembly_accession: this.refseqAssemblyAccession_}, 'RefSeq Assembly Accession not found in the database. Ignoring this request')
 				process.send('done')
-				process.exit();
+				process.exit()
 				return
 			}
 

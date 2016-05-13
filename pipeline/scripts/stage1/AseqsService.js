@@ -6,9 +6,9 @@
 
 module.exports =
 class AseqsService {
-	constructor(AseqModel) {
+	// constructor(AseqModel) {
 
-	}
+	// }
 
 	aseqIdFor(sequence) {
 

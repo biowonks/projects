@@ -14,6 +14,7 @@ class JoinLocation extends AbstractLocation {
 		assert(locations instanceof Array, 'locations argument must be an array')
 		assert(locations.length > 0, 'locations array must not be empty')
 		if (locations.length === 1)
+			// eslint-disable-next-line no-console
 			console.warn('JoinLocation::constructor() - constructed with only one location')
 		this.locations_ = locations
 	}
@@ -21,10 +22,8 @@ class JoinLocation extends AbstractLocation {
 	// Overlaps are permitted
 	transcriptFrom(seq) {
 		assert(seq instanceof Seq, 'seq is not a valid Seq instance')
-		let seqStrings = this.locations_.map((location) => {
-			return location.transcriptFrom(seq).sequence()
-		})
+		let seqStrings = this.locations_.map((location) => location.transcriptFrom(seq).sequence())
 
-		return new Seq(seqStrings.join(''), true /* don't clean */)
+		return new Seq(seqStrings.join(''))
 	}
 }

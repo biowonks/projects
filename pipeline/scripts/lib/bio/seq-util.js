@@ -13,8 +13,8 @@
  *
  * An empty array is returned if no regions of 'x's exist.
  *
- * @param {string} maskedSequence
- * @returns {Array.<Array>}
+ * @param {string} maskedSequence sequence containing masked regions as lowercase x's
+ * @returns {Array.<Array>} array of ranges that are masked
  */
 exports.parseMaskedRegions = function(maskedSequence) {
 	let maskedRegions = [],
@@ -41,5 +41,4 @@ exports.parseMaskedRegions = function(maskedSequence) {
 	}
 
 	return maskedRegions
-};
-
+}

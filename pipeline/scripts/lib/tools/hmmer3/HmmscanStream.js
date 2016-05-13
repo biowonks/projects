@@ -1,7 +1,7 @@
 'use strict'
 
 // Core node libraries
-let child_process = require('child_process'),
+let	child_process = require('child_process'), // eslint-disable-line camelcase
 	path = require('path'),
 	Transform = require('stream').Transform
 
@@ -43,6 +43,6 @@ class HmmscanStream extends Transform {
 
 	_transform(result, encoding, done) {
 		this.push(result)
-		done();
+		done()
 	}
 }

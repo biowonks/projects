@@ -35,6 +35,8 @@ class LocationPoint {
 	 * The reason these became necessary originated with the Location::transcriptFrom(Seq)
 	 * method, which needed a mechanism for dealing with invalid locations such as:
 	 * >10..<15.
+	 *
+	 * @returns {boolean} always true for this base class implementation
 	 */
 	hasDefiniteStart() {
 		return true
@@ -42,6 +44,7 @@ class LocationPoint {
 
 	/**
 	 * @see hasDefiniteStart() for details.
+	 * @returns {boolean} always true for this base class implementation
 	 */
 	hasDefiniteStop() {
 		return true

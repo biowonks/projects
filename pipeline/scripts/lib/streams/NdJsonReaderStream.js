@@ -10,23 +10,23 @@ module.exports =
 class NdJsonReaderStream extends Transform {
 	/**
 	 * Stream for parsing newline delimited (nd) JSON.
-	 * 
-	 * @constructor  
+	 *
+	 * @constructor
 	 */
 	constructor() {
 		super({objectMode: true})
-		
-		this.lineStream_ = new LineStream();
-		this.lineStream_.pipe(this);
+
+		this.lineStream_ = new LineStream()
+		this.lineStream_.pipe(this)
 
 		this.on('pipe', (src) => {
-			src.unpipe(this);
-			src.pipe(this.lineStream_);
-		});
+			src.unpipe(this)
+			src.pipe(this.lineStream_)
+		})
 	}
 
 	// ----------------------------------------------------
-	// Private methods	
+	// Private methods
 	_transform(line, encoding, done) {
 		if (line)
 			this.push(JSON.parse(line.toString()))
