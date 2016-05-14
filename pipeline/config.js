@@ -53,6 +53,11 @@ module.exports = {
 		}
 	},
 
+	agfam: {
+		version: '2.0',
+		basePath: path.resolve(paths.data, 'agfam', '2.0')
+	},
+
 	database: globalConfig.database,
 	migrations: globalConfig.migrations,
 

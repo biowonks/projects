@@ -132,4 +132,4 @@ Download -> add into genomes table where assembly accession is not found with st
 
 
 Taxonomy retrieval
-http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=taxonomy&id=476210&retmode=text&rettype=xml
+http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=taxonomy&retmode=text&rettype=xml&id=476210
