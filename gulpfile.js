@@ -6,6 +6,7 @@ let path = require('path'),
 
 // 3rd party includes
 let gulp = require('gulp'),
+	gulpIstanbul = require('gulp-istanbul'),
 	gulpMocha = require('gulp-mocha'),
 	gutil = require('gulp-util'),
 	eslint = require('gulp-eslint')
@@ -33,8 +34,17 @@ let kTestFiles = [
 	'pipeline/scripts/**/*.tests.js'
 ]
 
-gulp.task('test', function(done) {
-	gulp.src(kTestFiles)
+let kRunTimeFiles = [
+	'pipeline/scripts/lib/**/*.js',
+	'**/!*.tests.js'
+]
+
+gulp.task('test', test)
+gulp.task('instrument', instrument)
+gulp.task('coverage', gulp.series(instrument, coverage))
+
+function test(done) {
+	return gulp.src(kTestFiles)
 		.pipe(gulpMocha({
 			timeout: 30000,
 			log: false,
@@ -43,7 +53,30 @@ gulp.task('test', function(done) {
 			]
 		}))
 		.on('end', () => (done ? done() : null))
-})
+}
+
+function instrument() {
+	return gulp.src(kRunTimeFiles)
+		// Covering files
+		.pipe(gulpIstanbul({
+			includeUntested: true
+		}))
+		// Force `require` to return covered files
+		.pipe(gulpIstanbul.hookRequire());
+}
+
+function coverage(done) {
+	return test()
+		.pipe(gulpIstanbul.writeReports({
+			dir: './testing/coverage',
+			reporters: [
+				'lcov',
+				'html'
+			]
+		}))
+		// .on('end', endProcess.bind(null, done)); // call `done` & then exit
+}
+
 
 gulp.task('install-hmmer3', function(done) {
 	let installScript = path.resolve(__dirname, 'pipeline', 'scripts', 'install-hmmer3.sh'),

@@ -11,6 +11,7 @@ let child_process = require('child_process'),
 
 // 3rd-party libraries
 let Promise = require('bluebird'),
+	mkdirp = require('mkdirp'),
 	moment = require('moment')
 
 // Local includes
@@ -188,11 +189,19 @@ exports.durationFromInterval = function(interval) {
  */
 exports.gunzip = function(gzFile, optDestFile) {
 	return new Promise((resolve, reject) => {
+<<<<<<< HEAD
 		let gunzipDomain = domain.create()
 		gunzipDomain.on('error', (error) => {
 			reject(error)
 		})
 		gunzipDomain.run(() => {
+=======
+		let domain = domain.create()
+		domain.on('error', (error) => {
+			reject(error)
+		})
+		domain.run(() => {
+>>>>>>> 8172f9782b7180fa37efb208b0f33fff8425522c
 			let gzFileStream = fs.createReadStream(gzFile),
 				gunzipStream = zlib.createGunzip(),
 				destFile = optDestFile ? optDestFile : exports.basename(gzFile),
@@ -211,6 +220,7 @@ exports.gunzip = function(gzFile, optDestFile) {
 	})
 }
 
+<<<<<<< HEAD
 exports.readFile = function(file) {
 	return new Promise((resolve, reject) => {
 		fs.readFile(file, 'utf8', (err, data) => {
@@ -224,6 +234,10 @@ exports.readFile = function(file) {
 
 exports.stat = function(queryPath) {
 	return new Promise((resolve, reject) => {
+=======
+exports.pathStat = function(queryPath) {
+	return new Promise(function(resolve, reject) {
+>>>>>>> 8172f9782b7180fa37efb208b0f33fff8425522c
 		fs.stat(queryPath, function(error, stats) {
 			if (error)
 				return reject(error);
@@ -252,6 +266,17 @@ exports.basename = function(fileName) {
 	return path.basename(fileName, path.extname(fileName))
 }
 
+exports.directoryExists = function(directory) {
+	return new Promise((resolve) => {
+		fs.stat(directory, (error, stats) => {
+			if (error)
+				return resolve(false)
+
+		resolve(stats.isDirectory())
+		})
+	})
+};
+
 exports.fileExists = function(file, optNotZero) {
 	return new Promise((resolve) => {
 		fs.stat(file, (error, stats) => {
@@ -269,12 +294,19 @@ exports.fileNotEmpty = function(file) {
 }
 
 /**
+<<<<<<< HEAD
  * Renames ${srcFile} to ${destFile}. It is the caller's responsibility to ensure that
  * the parent directory for ${destFile} already exists.
  * 
  * @param {string} srcFile
  */
 exports.rename = function(srcFile, destFile) {
+=======
+ * @param {string} directory
+ * @returns {Promise}
+ */
+exports.mkdir = function(directory) {
+>>>>>>> 8172f9782b7180fa37efb208b0f33fff8425522c
 	return new Promise((resolve, reject) => {
 		fs.rename(srcFile, destFile, function(error) {
 			if (error)
@@ -286,6 +318,27 @@ exports.rename = function(srcFile, destFile) {
 			})
 		})
 	})
+}
+
+/**
+ * @param {string} directory
+ * @returns {Promise}
+ */
+exports.mkdirp = function(directory) {
+	return exports.directoryExists(directory)
+		.then((directoryExists) => {
+			if (directoryExists)
+				return {created: false, directory: directory}
+
+			return new Promise((resolve, reject) => {
+				mkdirp(directory, (error) => {
+					if (error)
+						return reject(error)
+
+					resolve({created: true, directory: directory})
+				})
+			})
+		})
 }
 
 exports.unlink = function(file) {

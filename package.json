@@ -26,8 +26,10 @@
     "liner": "^0.3.3",
     "lodash": "3.x",
     "moment": "2.x",
+    "node-mkdirp": "0.0.1",
     "pg": "4.x",
     "pg-hstore": "2.x",
+    "request-promise": "^3.0.0",
     "sequelize": "3.x",
     "shelljs": "^0.6.0",
     "umzug": "1.x",
@@ -44,13 +46,14 @@
     "eslint": "0.22.x",
     "gulp": "git://github.com/gulpjs/gulp.git#4.0",
     "gulp-eslint": "0.12.x",
+    "gulp-istanbul": "^0.10.3",
     "gulp-mocha": "^2.2.0",
     "gulp-util": "3.x",
     "mocha": "^2.3.4",
     "moment": "^2.11.1",
+    "nock": "^8.0.0",
     "sinon": "^1.14.1",
     "supertest": "1.x",
-    "supertest-as-promised": "2.x",
     "temp": "^0.8.3"
   }
 }
