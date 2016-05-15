@@ -230,7 +230,7 @@ module.exports = {
 		'prefer-reflect': 2,
 		'prefer-rest-params': 2,
 		'prefer-spread': 2,
-		'prefer-template': 2,
+		'prefer-template': 0,
 		'require-yield': 1,
 		'sort-imports': 0,
 		'template-curly-spacing': [2, 'never'],

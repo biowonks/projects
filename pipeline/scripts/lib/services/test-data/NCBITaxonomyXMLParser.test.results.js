@@ -1,3 +1,7 @@
+'use strict'
+/* eslint-disable */
+
+
 module.exports = {
 	sampleXMLFileResults1:	{
 		taxid: 476210,
@@ -14,6 +18,7 @@ module.exports = {
 		species: 'Borreliella burgdorferi',
 		strain: '118a'
 	},
+
 	sampleXMLFileResults2:	{
 		taxid: 41253,
 		organism: 'Dothideaceae',
@@ -28,6 +33,6 @@ module.exports = {
 		genus: null,
 		species: null,
 		strain: null
-	},
+	}
 
 }

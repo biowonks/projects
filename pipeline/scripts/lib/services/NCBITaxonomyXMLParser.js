@@ -1,11 +1,6 @@
 'use strict'
 
-let xml2js = require('xml2js'),
-	fs = require('fs'),
-	path = require('path'),
-	assert = require('assert'),
-	mutil = require('../mutil'),
-	Promise = require('bluebird')
+let mutil = require('../mutil')
 
 module.exports =
 class NCBITaxonomyXMLParser {
@@ -49,24 +44,28 @@ class NCBITaxonomyXMLParser {
 				genus: null,
 				species: null,
 				strain: null
-				},
-			taxon = jsonTaxonomy['TaxaSet']['Taxon'][0],
-			rankObjects = taxon['LineageEx'][0]['Taxon']
+			},
+			taxon = jsonTaxonomy.TaxaSet.Taxon[0],
+			rankObjects = taxon.LineageEx[0].Taxon
 
-		taxonomyObject.taxid = parseInt(taxon['TaxId'][0])
-		taxonomyObject.organism = taxon['ScientificName'][0]
+		taxonomyObject.taxid = parseInt(taxon.TaxId[0])
+		taxonomyObject.organism = taxon.ScientificName[0]
 
 		rankObjects.forEach((rankObject) => {
-			let rankName = rankObject['ScientificName'][0],
-				rank = rankObject['Rank'][0]
+			let rankName = rankObject.ScientificName[0],
+				rank = rankObject.Rank[0]
 			taxonomyObject.lineage.push(rankName)
-			taxonomyObject.lineageTaxonomyIds.push(parseInt(rankObject['TaxId'][0]))
+			taxonomyObject.lineageTaxonomyIds.push(parseInt(rankObject.TaxId[0]))
 			if (taxonomyObject[rank] === null)
-				taxonomyObject[rank]= rankName
+				taxonomyObject[rank] = rankName
 		})
 
-		if (taxonomyObject.species !== null)
-			taxonomyObject.strain = taxonomyObject.organism.split(/\s+/g).slice(2).join(' ').trim()
+		let numberOfWordsInSpecies = 2
+		if (taxonomyObject.species !== null) {
+			taxonomyObject.strain = taxonomyObject.organism.split(/\s+/g).slice(numberOfWordsInSpecies)
+			.join(' ')
+			.trim()
+		}
 
 		return taxonomyObject
 	}

@@ -8,8 +8,7 @@ let expect = require('chai').expect
 let mutil = require('./mutil')
 
 describe('mutil', function() {
-	describe('gunzip', function() {
-		
+	describe('gunzip', function() {	
 	})
 
 	describe('pathIsYoungerThan', function() {
@@ -22,6 +21,7 @@ describe('mutil', function() {
 		})
 
 		it('test file should be younger than library file', function(done) {
+			let timeOutTime = 50
 			setTimeout(function() {
 				mutil.pathIsYoungerThan(testFile, mutil.durationFromInterval('1 day'))
 					.then(function(result) {
@@ -33,14 +33,15 @@ describe('mutil', function() {
 						done()
 					})
 					.catch(done)
-			}, 50);
+			}, timeOutTime)
 		})
 
 		it('non-existent file returns false', function() {
-			return mutil.pathIsYoungerThan('this-file-does-not-exist', 4500)
+			let msNumberOfMiliseconds = 4500
+			return mutil.pathIsYoungerThan('this-file-does-not-exist', msNumberOfMiliseconds)
 				.then(function(result) {
 					expect(result).false
-				});
+				})
 		})
 	})
 })

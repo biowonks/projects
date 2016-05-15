@@ -18,11 +18,11 @@ class TaxonomyService {
 	constructor() {
 		this.taxonomyXMLParser_ = new NCBITaxonomyXMLParser()
 	}
-	
+
 	eutilUrl(taxonomyId) {
 		return kNCBIPartialTaxonomyUrl + taxonomyId
 	}
-	
+
 	/**
 	 * @param {number} taxonomyId
 	 * @return {Promise} resolves with a taxonomy object

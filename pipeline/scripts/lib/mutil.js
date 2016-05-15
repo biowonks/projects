@@ -80,10 +80,15 @@ exports.shellCommand = function(command, optVerbose) {
 			console.info(command) // eslint-disable-line no-console
 
 		child_process.exec(command, (error, stdout, stderr) => {
-			if (error)
+			if (error) {
 				reject(error)
-			else
-				resolve({stdout, stderr})
+			}
+			else {
+				resolve({
+					stdout,
+					stderr
+				})
+			}
 		})
 	})
 }
@@ -220,10 +225,9 @@ exports.xmlFile2json = function(file) {
 		.then((xmlData) => {
 			let parser = new xml2js.Parser()
 			parser.parseString(xmlData, function(err, result) {
-				if (err) {
+				if (err)
 					return reject(err)
-				}
-				resolve(result)
+				return resolve(result)
 			})
 		})
 		.catch(function(error) {
