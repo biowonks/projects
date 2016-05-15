@@ -1,73 +1,3 @@
-'use strict'
-
-// 3rd party includes
-let nock = require('nock')
-
-// Local includes
-let TaxonomyService = require('./TaxonomyService')
-
-describe.skip('Services', function() {
-	describe('TaxonomyService', function() {
-		let taxonomyService = new TaxonomyService()
-		
-		describe('eutilUrl', function() {
-			it('returns taxonomyId appended', function() {
-				expect(/123$/.test(taxonomyService.eutilUrl(123))).true
-			})
-		})
-		
-		describe('fetch', function() {
-			it('undefined taxonomicId throws error', function() {
-				expect(() => {
-					taxonomyService.fetch()
-				}).throw(Error)
-			})
-
-			it('invalid numeric taxonomicId throws error', function() {
-				expect(() => {
-					taxonomyService.fetch('ab123')
-				}).throw(Error)
-			})
-
-			let fixtures = ['41253', 41253]
-			fixtures.forEach((fixture) => {
-				it(fixture + ' (' + typeof fixture + ') works', function() {
-					let taxonomyId = fixture,
-						eutilUrl = taxonomyService.eutilUrl(taxonomyId),
-						nockEutilRequest = nock(eutilUrl)
-					
-					nockEutilRequest.reply(200, kSampleTaxonomyXml)
-					
-					return taxonomyService.fetch(taxonomyId)
-						.then((taxonomyResult) => {
-							nockEutilRequest.done()
-							expect(taxonomyResult.lineage).deep.equal([
-								'cellular organisms',
-								'Eukaryota',
-								'Opisthokonta',
-								'Fungi',
-								'Dikarya',
-								'Ascomycota',
-								'saccharomyceta',
-								'Pezizomycotina',
-								'leotiomyceta',
-								'dothideomyceta',
-								'Dothideomycetes',
-								'Dothideomycetidae',
-								'Dothideales'
-							])
-						})
-				})
-			})
-		})
-
-		describe('taxonomicGroup', function() {
-
-		})
-	})
-})
-
-let kSampleTaxonomyXml = `
 <?xml version="1.0"?>
 <!DOCTYPE TaxaSet PUBLIC "-//NLM//DTD Taxon, 14th January 2002//EN" "http://www.ncbi.nlm.nih.gov/entrez/query/DTD/taxon.dtd">
 <TaxaSet><Taxon>
@@ -157,4 +87,4 @@ let kSampleTaxonomyXml = `
     <PubDate>1996/03/02 00:00:00</PubDate>
 </Taxon>
 
-</TaxaSet>`
+</TaxaSet>

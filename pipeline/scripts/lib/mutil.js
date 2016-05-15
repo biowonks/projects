@@ -7,6 +7,7 @@ let child_process = require('child_process'), // eslint-disable-line camelcase
 	fs = require('fs'),
 	path = require('path'),
 	zlib = require('zlib'),
+	xml2js = require('xml2js'),
 	mv = require('mv')
 
 // 3rd-party libraries
@@ -209,6 +210,24 @@ exports.readFile = function(file) {
 				reject(error)
 			else
 				resolve(data)
+		})
+	})
+}
+
+exports.xmlFile2json = function(file) {
+	return new Promise((resolve, reject) => {
+		exports.readFile(file)
+		.then((xmlData) => {
+			let parser = new xml2js.Parser()
+			parser.parseString(xmlData, function(err, result) {
+				if (err) {
+					return reject(err)
+				}
+				resolve(result)
+			})
+		})
+		.catch(function(error) {
+			reject(error)
 		})
 	})
 }

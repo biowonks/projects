@@ -47,7 +47,7 @@ class TaxonomyService {
 	 * @param {string} class
 	 * @return {string}
 	 */
-	taxonomicGroup(phylum, class) {
+	taxonomicGroup(phylum, classs) {
 		throw new Error('Not yet implemented')
 	}
 }
