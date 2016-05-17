@@ -24,18 +24,30 @@
 			"outDir": null
 		},
 		{
-			"name": "Unit tests",
+			"name": "Unit tests (local)",
 			"type": "node",
 			"request": "launch",
 			"program": "${workspaceRoot}/node_modules/.bin/_mocha",
 			"stopOnEntry": false,
 			"cwd": "${workspaceRoot}",
 			"args": [
-				"--timeout", "30000",
 				"--require", "pipeline/scripts/test-setup.js",
 				"pipeline/scripts/**/*.tests.js"
 			],
 			"runtimeExecutable": null
+		},
+		{
+			"name": "Unit tests (docker)",
+			"type": "node",
+			"request": "attach",
+			"port": 5858,
+			"preLaunchTask": "runMochaInDocker",
+			"address": "localhost",
+			"restart": false,
+			"sourceMaps": false,
+			"outDir": null,
+			"localRoot": "${workspaceRoot}/",
+			"remoteRoot": "/home/mist3/api/"
 		}
 	]
 }

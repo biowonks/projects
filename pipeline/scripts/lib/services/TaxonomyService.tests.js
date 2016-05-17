@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-expressions */
+
 'use strict'
 
 // 3rd party includes

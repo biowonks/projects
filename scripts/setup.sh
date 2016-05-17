@@ -5,6 +5,8 @@
 DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 cd $DIR/..
+
 npm install
-ln -sf node_modules/gulp/bin/gulp.js gulp
-ln -sf node_modules/mocha/bin/mocha mocha
+
+./node_modules/.bin/gulp install-hmmer3
+# ./gulp install-pfam

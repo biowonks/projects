@@ -37,6 +37,10 @@ class HmmscanStream extends Transform {
 		let hmmscanResultReaderStream = new HmmscanResultReaderStream(),
 			hmmscanProcess = child_process.spawn(kHmmscanPath, hmmscanArgs)
 
+		hmmscanProcess.on('error', (error) => {
+			this.emit('error', error)
+		})
+
 		hmmscanResultReaderStream.pipe(this)
 		hmmscanProcess.stdout.pipe(hmmscanResultReaderStream)
 	}
