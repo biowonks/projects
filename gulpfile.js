@@ -77,6 +77,12 @@ function coverage(done) {
 }
 
 
+gulp.task('clean-vendor', function(done) {
+	let cleanScript = path.resolve(pipelineConfig.paths.vendor, 'clean.sh')
+	// eslint-disable-next-line no-undefined
+	shellCommandHelper(cleanScript, null, undefined, done)
+})
+
 gulp.task('install-coils', function(done) {
 	let installScript = path.resolve(pipelineConfig.paths.vendor, 'install-coils.sh')
 

@@ -7,5 +7,5 @@ cd $DIR/coils
 set -e
 
 echo "Compiling"
-rm ncoils
+rm -f ncoils
 cc -O2 -I. -o ncoils ncoils.c read_matrix.c -lm
