@@ -10,7 +10,7 @@ let config = require('../../../../config'),
 	HmmscanResultReaderStream = require('./HmmscanResultReaderStream')
 
 // Constants
-let kHmmscanPath = path.resolve(config.vendor.hmmer3.binPath, 'hmmscan')
+const kHmmscanPath = path.resolve(config.vendor.hmmer3.binPath, 'hmmscan')
 
 /**
  * HmmscanStream executes HMMER3 for a given HMM database and FASTA file. The results

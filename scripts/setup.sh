@@ -8,5 +8,7 @@ cd $DIR/..
 
 npm install
 
-./node_modules/.bin/gulp install-hmmer3
-# ./gulp install-pfam
+GULP=./node_modules/.bin/gulp
+$GULP install-coils
+$GULP install-hmmer3
+$GULP install-pfam

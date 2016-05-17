@@ -1,10 +1,10 @@
-'use strict';
+'use strict'
 
-var _ = require('lodash'),
+let _ = require('lodash'),
 	os = require('os'),
-	path = require('path');
+	path = require('path')
 
-var packageJSON = require('./package.json');
+let packageJSON = require('./package.json')
 
 /**
  * Environment names are based on the NODE_ENV environment variable.
@@ -28,9 +28,9 @@ var packageJSON = require('./package.json');
  * Finally, if any configuration is set via environment variables (e.g. DATABASE_URL),
  * that takes precedence over any configuration.
  */
-var environmentName = process.env.NODE_ENV || 'develop';
+const environmentName = process.env.NODE_ENV || 'develop'
 
-var config = {
+let config = {
 	analytics: {
 		gaTrackingId: null,
 		beaconImageFile: path.resolve(__dirname, 'assets', 'img', 'beacon.gif')
@@ -104,7 +104,7 @@ var config = {
 
 	server: {
 		host: process.env.HOST || '127.0.0.1',
-		port: process.env.PORT || 7001,
+		port: process.env.PORT || 7001, // eslint-disable-line no-magic-numbers
 		cpus: os.cpus().length,
 		restartOnCrash: true,
 		restartGraceMs: 10000,		// Milliseconds to wait for open connections to finish before forcefully
@@ -128,67 +128,70 @@ var config = {
 			}
 		}
 	}
-};
+}
 
 // --------------------------------------------------------
-mergeOptionalConfigFile('config.' + environmentName);
-mergeOptionalConfigFile('config.local');
+mergeOptionalConfigFile('config.' + environmentName)
+mergeOptionalConfigFile('config.local')
 
 function mergeOptionalConfigFile(configFile) {
 	try {
-		_.merge(config, require('./' + configFile));
-		// console.log('[Merged configuration]', configFile);	// eslint-disable-line no-console
+		// eslint-disable-next-line global-require
+		_.merge(config, require('./' + configFile))
+		// console.log('[Merged configuration]', configFile)	// eslint-disable-line no-console
 	}
-	catch(error) {
+	catch (error) {
 		if (error.code === 'MODULE_NOT_FOUND')
-			return;
+			return
 
-		// Configuration file exists; however, node encountered an error while attempting
+		// Configuration file exists however, node encountered an error while attempting
 		// to process it.
-		throw error;
+		throw error
 	}
 }
 
 // --------------------------------------------------------
-(function deriveApiBaseUrl() {
+function deriveApiBaseUrl() {
 	if (!config.server.protocol)
-		config.server.protocol = config.routing.ssl ? 'https' : 'http';
+		config.server.protocol = config.routing.ssl ? 'https' : 'http'
 
 	if (!config.server.baseUrl) {
-		var baseUrl = config.server.protocol + '://' + config.server.host;
+		let baseUrl = config.server.protocol + '://' + config.server.host
 		if (config.server.port)
-			baseUrl += ':' + config.server.port;
+			baseUrl += ':' + config.server.port
 		if (config.routing.prefix)
-			baseUrl += config.routing.prefix;
+			baseUrl += config.routing.prefix
 
-		config.server.baseUrl = baseUrl;
+		config.server.baseUrl = baseUrl
 	}
-})();
+}
+deriveApiBaseUrl()
 
 // --------------------------------------------------------
-(function parseDatabaseUrl() {
+function parseDatabaseUrl() {
 	if (!config.database.enabled)
-		return;
+		return
 
-	var dbUrl = process.env.DATABASE_URL;
+	let dbUrl = process.env.DATABASE_URL
 	if (dbUrl) {
 		// e.g. postgres://qwldzjjyuomgwv:xtCz9RZ4kFs7oGTEPAsPXtlvhY@ec2-54-225-124-205.compute-1.amazonaws.com:5432
 		// /dchdh8q9npvppn
 		//                 1------------| 2------------------------| 3----------------------------------------| 4--|
 		// 5------------|
-		var matches = dbUrl.match(/^postgres:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/);
+		let matches = dbUrl.match(/^postgres:\/\/([^:]+):([^@]+)@([^:]+):(\d+)\/(.+)/)
 		if (matches) {
-			config.database.user = matches[1];
-			config.database.password = matches[2];
-			config.database.sequelizeOptions.host = matches[3];
-			config.database.sequelizeOptions.port = matches[4];
-			config.database.name = matches[5];
+			config.database.user = matches[1]
+			config.database.password = matches[2]
+			config.database.sequelizeOptions.host = matches[3]
+			config.database.sequelizeOptions.port = matches[4]
+			config.database.name = matches[5]
 		}
 		else {
-			throw new Error('FATAL: Unable to parse environment variable, DATABASE_URL: ' + dbUrl);
+			throw new Error('FATAL: Unable to parse environment variable, DATABASE_URL: ' + dbUrl)
 		}
 	}
-})();
+}
+parseDatabaseUrl()
 
 // --------------------------------------------------------
-module.exports = config;
+module.exports = config
