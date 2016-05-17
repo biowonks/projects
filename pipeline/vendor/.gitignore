@@ -2,6 +2,7 @@
 coils/ncoils
 hmmer3
 seg/seg
+seg/genwin.o
 
 # Databases
 pfam
