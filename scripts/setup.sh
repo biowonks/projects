@@ -11,4 +11,6 @@ npm install
 GULP=./node_modules/.bin/gulp
 $GULP install-coils
 $GULP install-hmmer3
+$GULP install-seg
+
 $GULP install-pfam

@@ -94,6 +94,14 @@ gulp.task('install-hmmer3', function(done) {
 	shellCommandHelper(installScript, [hmmer3Config.version, hmmer3Config.basePath], undefined, done)
 })
 
+gulp.task('install-seg', function(done) {
+	let installScript = path.resolve(pipelineConfig.paths.vendor, 'install-seg.sh')
+
+	gutil.log('Installing seg')
+	// eslint-disable-next-line no-undefined
+	shellCommandHelper(installScript, null, undefined, done)
+})
+
 gulp.task('install-pfam', gulp.series('install-hmmer3', installPfamHelper))
 function installPfamHelper(done) {
 	let installScript = path.resolve(pipelineConfig.paths.vendor, 'install-pfam.sh'),
