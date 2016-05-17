@@ -24,8 +24,8 @@ class TaxonomyService {
 	}
 
 	/**
-	 * @param {number} taxonomyId
-	 * @return {Promise} resolves with a taxonomy object
+	 * @param {number} taxonomyId numeric identifier
+	 * @returns {Promise} resolves with an object describing the taxonomy
 	 */
 	fetch(taxonomyId) {
 		if (!/^\d+$/.test(taxonomyId))
@@ -43,9 +43,9 @@ class TaxonomyService {
 	 * is proteobacteria (case insensitive) because the proteobacteria phylum is so
 	 * large and diverse.
 	 *
-	 * @param {string} phylum
-	 * @param {string} class
-	 * @return {string}
+	 * @param {string} phylum organism's phylum
+	 * @param {string} classs organism's class (intentionally mispelled to avoid keyword)
+	 * @returns {string} the major taxnomic group
 	 */
 	taxonomicGroup(phylum, classs) {
 		throw new Error('Not yet implemented')

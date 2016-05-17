@@ -16,6 +16,8 @@ describe('HmmscanStream', function() {
 			expectedResults = require('./test-data/hmmscan-results'), // eslint-disable-line global-require
 			results = []
 
+		hmmscanStream.on('error', done)
+
 		hmmscanStream
 		.on('data', (result) => {
 			results.push(result)

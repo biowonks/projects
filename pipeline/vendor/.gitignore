@@ -1,7 +1,8 @@
-# Ignore everything in this directory
-*
-# Except this file
-!.gitignore# Ignore everything in this directory
-*
-# Except this file
-!.gitignore
+# Tools
+coils/ncoils
+hmmer3
+seg/seg
+seg/genwin.o
+
+# Databases
+pfam

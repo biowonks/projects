@@ -226,13 +226,12 @@ exports.xmlFile2json = function(file) {
 			let parser = new xml2js.Parser()
 			parser.parseString(xmlData, function(err, result) {
 				if (err)
-					return reject(err)
-				return resolve(result)
+					reject(err)
+				else
+					resolve(result)
 			})
 		})
-		.catch(function(error) {
-			reject(error)
-		})
+		.catch(reject)
 	})
 }
 

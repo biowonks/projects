@@ -30,7 +30,6 @@ tar zxvf $TARBALL_FILENAME
 cd $TARBALL_BASENAME
 ./configure --prefix $TARGET_DIR
 make
-make check
 make install
 echo "Cleaning up"
 cd /tmp

@@ -163,7 +163,8 @@ module.exports = {
 		'max-nested-callbacks': 0,
 		'max-params': 0,
 		'max-statements': 0,
-		'max-statements-per-line': [2, {max: 1}],
+		// TODO: change to max: 1 when eslint fixes this bug
+		'max-statements-per-line': [2, {max: 2}],
 		'new-cap': [2, {newIsCap: true, capIsNew: true}],
 		'new-parens': 2,
 		'newline-after-var': 0,

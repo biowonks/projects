@@ -1,0 +1,18 @@
+{
+	"version": "0.1.0",
+	"isShellCommand": true,
+	"command": "bash",
+	"args": [
+		"-c"
+	],
+	"tasks": [
+		{
+			"taskName": "runMochaInDocker",
+			"showOutput": "always",
+			"suppressTaskName": true,
+			"args": [
+				"docker exec -i api bash -c './node_modules/.bin/mocha --debug-brk --require pipeline/scripts/test-setup.js \"pipeline/scripts/**/*.tests.js\"'"
+			]
+		}
+	]
+}

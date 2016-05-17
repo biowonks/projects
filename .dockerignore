@@ -1,0 +1,17 @@
+.git/
+.vscode/
+node_modules/
+pipeline/vendor/
+
+.gitignore
+
+.dockerignore
+docker-compose.*
+Dockerfile.*
+
+npm-debug.log
+
+jsconfig.json
+tasks.json
+
+*.md

@@ -21,7 +21,7 @@ let paths = {
 }
 
 module.exports = {
-	paths: paths,
+	paths,
 
 	ncbi: {
 		ftp: {
@@ -37,15 +37,22 @@ module.exports = {
 				}
 			]
 		}
-	},	
+	},
 
 	vendor: {
 		// Tools
+		coils: {
+			basePath: path.resolve(paths.vendor, 'coils')
+		},
 		hmmer3: {
 			version: '3.1b2',
 			basePath: path.resolve(paths.vendor, 'hmmer3', '3.1b2'),
 			binPath: path.resolve(paths.vendor, 'hmmer3', '3.1b2', 'bin')
 		},
+		seg: {
+			basePath: path.resolve(paths.vendor, 'seg')
+		},
+
 		// Databases
 		pfam: {
 			version: '29.0',

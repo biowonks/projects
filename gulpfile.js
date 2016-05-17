@@ -77,8 +77,22 @@ function coverage(done) {
 }
 
 
+gulp.task('clean-vendor', function(done) {
+	let cleanScript = path.resolve(pipelineConfig.paths.vendor, 'clean.sh')
+	// eslint-disable-next-line no-undefined
+	shellCommandHelper(cleanScript, null, undefined, done)
+})
+
+gulp.task('install-coils', function(done) {
+	let installScript = path.resolve(pipelineConfig.paths.vendor, 'install-coils.sh')
+
+	gutil.log('Installing coils')
+	// eslint-disable-next-line no-undefined
+	shellCommandHelper(installScript, null, undefined, done)
+})
+
 gulp.task('install-hmmer3', function(done) {
-	let installScript = path.resolve(__dirname, 'pipeline', 'scripts', 'install-hmmer3.sh'),
+	let installScript = path.resolve(pipelineConfig.paths.vendor, 'install-hmmer3.sh'),
 		hmmer3Config = pipelineConfig.vendor.hmmer3
 
 	gutil.log(`Installing HMMER3 version ${hmmer3Config.version}`)
@@ -86,9 +100,17 @@ gulp.task('install-hmmer3', function(done) {
 	shellCommandHelper(installScript, [hmmer3Config.version, hmmer3Config.basePath], undefined, done)
 })
 
+gulp.task('install-seg', function(done) {
+	let installScript = path.resolve(pipelineConfig.paths.vendor, 'install-seg.sh')
+
+	gutil.log('Installing seg')
+	// eslint-disable-next-line no-undefined
+	shellCommandHelper(installScript, null, undefined, done)
+})
+
 gulp.task('install-pfam', gulp.series('install-hmmer3', installPfamHelper))
 function installPfamHelper(done) {
-	let installScript = path.resolve(__dirname, 'pipeline', 'scripts', 'install-pfam.sh'),
+	let installScript = path.resolve(pipelineConfig.paths.vendor, 'install-pfam.sh'),
 		pfamConfig = pipelineConfig.vendor.pfam,
 		env = Object.create(process.env)
 
@@ -122,7 +144,7 @@ gulp.task('server', function() {
 // --------------------------------------------------------
 // Private helper methods
 function shellCommandHelper(command, args, options, done) {
-	let child = spawn(command, args, options)
+	let child = spawn(command, args || [], options)
 
 	function toConsole(data) {
 		gutil.log(data.toString())

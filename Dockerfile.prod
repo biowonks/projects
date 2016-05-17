@@ -1,0 +1,16 @@
+FROM mhart/alpine-node:6.1
+
+MAINTAINER Luke Ulrich <ulrich.luke+ulritech@gmail.com>
+
+ENV HOME=/home/mist3
+
+RUN apk add --update bash build-base git && \
+	addgroup mist3 && \
+	adduser -S -G mist3 -s /bin/false mist3 && \
+	mkdir -p $HOME/api/node_modules && \
+	chown -R mist3:mist3 $HOME/*
+
+USER mist3
+COPY package.json $HOME/api
+WORKDIR $HOME/api
+RUN npm install

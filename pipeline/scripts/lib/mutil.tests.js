@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-expressions */
+
 'use strict'
 
 let fs = require('fs'),
@@ -8,7 +10,7 @@ let expect = require('chai').expect
 let mutil = require('./mutil')
 
 describe('mutil', function() {
-	describe('gunzip', function() {	
+	describe('gunzip', function() {
 	})
 
 	describe('pathIsYoungerThan', function() {
