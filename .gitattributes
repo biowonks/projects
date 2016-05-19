@@ -1,2 +1,14 @@
 # Set all files to have line endings that end in line feeds
 * text eol=lf
+
+# Explicit declarations
+*.js text
+*.json text
+*.md text
+*.sh text
+*.sql text
+
+# Denote all files that are truly binary and should not be modified.
+*.png binary
+*.jpg binary
+*.gif binary
