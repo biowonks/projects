@@ -10,7 +10,7 @@ cd $DIR/..
 
 npm install
 
-GULP=./node_modules/.bin/gulp
+GULP=./node_modules/gulp/bin/gulp.js
 $GULP install-coils
 $GULP install-hmmer3
 $GULP install-seg
