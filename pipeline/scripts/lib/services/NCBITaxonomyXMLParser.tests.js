@@ -1,12 +1,14 @@
 /* eslint-disable no-unused-expressions */
-
 'use strict'
 
+// Core includes
+let path = require('path')
+
+// Local includes
 let NCBITaxonomyXMLParser = require('./NCBITaxonomyXMLParser'),
-	NCBITaxonomyXMLParserResults = require('./test-data/NCBITaxonomyXMLParser.test.results'),
-	path = require('path')
+	NCBITaxonomyXMLParserResults = require('./test-data/NCBITaxonomyXMLParser.test.results')
 
-
+// Constants
 const kSampleXMLFile1 = path.resolve(__dirname, 'test-data', 'NCBITaxonomyXMLParser.test.1.xml'),
 	kSampleXMLFile2 = path.resolve(__dirname, 'test-data', 'NCBITaxonomyXMLParser.test.2.xml'),
 	kInvalidSampleXMLFile1 = path.resolve(__dirname, 'test-data', 'NCBITaxonomyXMLParser.test.1.invalid.xml'),

@@ -12,3 +12,8 @@
 *.png binary
 *.jpg binary
 *.gif binary
+
+# HMMER3 files
+*.h3f binary
+*.h3m binary
+*.h3p binary
