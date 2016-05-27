@@ -54,15 +54,14 @@ module.exports = {
 		},
 
 		// Databases
+		agfam: {
+			version: '2.0',
+			basePath: path.resolve(paths.vendor, 'agfam', '2.0')
+		},
 		pfam: {
 			version: '29.0',
 			basePath: path.resolve(paths.vendor, 'pfam', '29.0')
 		}
-	},
-
-	agfam: {
-		version: '2.0',
-		basePath: path.resolve(paths.data, 'agfam', '2.0')
 	},
 
 	database: globalConfig.database,

@@ -32,11 +32,11 @@ class FileNameMapper {
 		if (!this.genome_)
 			throw new Error('Genome has not been set. Please call setGenome first')
 
-		return `${this.genome_.refseq_assembly_accession}_${this.genome_.assembly_name}`
+		return `${this.genome_.refseq_assembly_accession}_${this.genome_.assembly_name.replace(/ /g, '_')}`
 	}
 
 	ftpSourceDirectory() {
-		return `${this.config_.ncbi.ftp.genomeDataRootUrl}/${this.corePrefix()}`
+		return this.genome_.ftp_path
 	}
 
 	urlFor(sourceType) {
