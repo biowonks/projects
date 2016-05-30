@@ -103,6 +103,8 @@ describe('Streams', function() {
 			return parseThrowsError('LOCUS       NC_019563            1494183 bp    DNA     circular CON 30-JUL-2015')
 		})
 
+		// ------------------------------------------------
+		// ------------------------------------------------
 		describe('LOCUS', function() {
 			for (let i = 0; i <= 10; i++) {
 				if (i === 7)
@@ -151,8 +153,10 @@ describe('Streams', function() {
 			})
 		}) // LOCUS
 
+		// ------------------------------------------------
+		// ------------------------------------------------
 		describe('DEFINITION', function() {
-			it('emits error with empty definition', function() {
+			it('emits error with empty value', function() {
 				return parseThrowsError(closeInput('DEFINITION  '))
 			})
 
@@ -160,7 +164,7 @@ describe('Streams', function() {
 				return parseThrowsError(closeInput('DEFINITION  Escherichia coli'))
 			})
 
-			it('period works', function() {
+			it('period', function() {
 				return parseSingle(closeInput('DEFINITION  .'))
 				.then((result) => {
 					expect(result.definition).equals('.')
@@ -172,6 +176,94 @@ describe('Streams', function() {
 				.then((result) => {
 					expect(result.definition).equals('.')
 				})
+			})
+
+			it('normal definition', function() {
+				return parseSingle(closeInput('DEFINITION  complete genome.'))
+				.then((result) => {
+					expect(result.definition).equals('complete genome.')
+				})
+			})
+
+			it('multi-line definition', function() {
+				return parseSingle(closeInput('DEFINITION  Line 1\n            Line 2.'))
+				.then((result) => {
+					expect(result.definition).equals('Line 1 Line 2.')
+				})
+			})
+		}) // DEFINITION
+
+		// ------------------------------------------------
+		// ------------------------------------------------
+		describe('ACCESSION', function() {
+			it('emits error with empty value', function() {
+				return parseThrowsError(closeInput('ACCESSION   '))
+			})
+
+			it('emits error with spaces', function() {
+				return parseThrowsError(closeInput('ACCESSION     '))
+			})
+
+			it('only primary accession', function() {
+				return parseSingle(closeInput('ACCESSION   NC_019565'))
+				.then((result) => {
+					expect(result.accession).deep.equal({
+						primary: 'NC_019565',
+						secondary: null
+					})
+				})
+			})
+
+			it('single secondary accession', function() {
+				return parseSingle(closeInput('ACCESSION   NC_019565 CP_123456'))
+				.then((result) => {
+					expect(result.accession).deep.equal({
+						primary: 'NC_019565',
+						secondary: ['CP_123456']
+					})
+				})
+			})
+
+			it('multi-line secondary accessions with range', function() {
+				return parseSingle(closeInput('ACCESSION   NC_019565 CP_123456\n' +
+					'            AB_987654-CD_321098 EF76'))
+				.then((result) => {
+					expect(result.accession).deep.equal({
+						primary: 'NC_019565',
+						secondary: [
+							'CP_123456',
+							'AB_987654-CD_321098',
+							'EF76'
+						]
+					})
+				})
+			})
+		})
+
+		// ------------------------------------------------
+		// ------------------------------------------------
+		describe('composite records', function() {
+			it('composite #1', function() {
+				return parseSingle(closeInput('LOCUS       NC_019565               1634 bp    DNA     circular CON 30-JUL-2015\n' +
+					'DEFINITION  Helicobacter pylori Aklavik86 plasmid p2HPAKL86, complete sequence.\n' +
+					'ACCESSION   NC_019565'))
+					.then((result) => {
+						expect(result.locus).deep.equal({
+							name: 'NC_019565',
+							bp: 1634,
+							moleculeType: 'DNA',
+							topology: 'circular',
+							divisionCode: 'CON',
+							date: '30-JUL-2015'
+						})
+
+						expect(result.definition).equal('Helicobacter pylori Aklavik86 plasmid p2HPAKL86, complete sequence.')
+
+						expect(result.accession).deep.equal({
+							primary: 'NC_019565',
+							secondary: null
+						})
+					})
 			})
 		})
 	})

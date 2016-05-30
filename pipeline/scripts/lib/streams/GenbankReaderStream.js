@@ -83,6 +83,17 @@ const kKeywordInformationOffset = 12,
  *
  * Feature table specification: http://www.insdc.org/files/feature_table.html
  *
+ * Resulting Genbank PODs look like the following (assuming all fields are present):
+ *
+ * {
+ *   locus
+ *   definition
+ *   accession: {
+ *     primary
+ *     secondary: [...] (null if none are provided, may contain a range XXX-YYYY)
+ *   }
+ * }
+ *
  * Notes:
  * - Old GenBank formats (e.g. those predating 2004) are not supported
  */
@@ -156,7 +167,8 @@ class GenbankReaderStream extends LineStream {
 	blankEntry_() {
 		return {
 			locus: null,
-			definition: null
+			definition: null,
+			accession: null
 		}
 	}
 
@@ -173,9 +185,7 @@ class GenbankReaderStream extends LineStream {
 
 			this.handlePreviousKeyword_()
 
-			let isDuplicateRootKeyword = kSingleValueRootKeywords.has(keyword) &&
-				!!this.entry_[kRootKeywordMap[keyword]]
-			if (isDuplicateRootKeyword)
+			if (this.isDuplicateRootKeyword_(keyword))
 				throw new Error(`Record contains multiple ${keyword} lines`)
 		}
 
@@ -185,7 +195,8 @@ class GenbankReaderStream extends LineStream {
 				break
 
 			case 'DEFINITION':
-				this.keywordStack_.push('DEFINITION')
+			case 'ACCESSION':
+				this.keywordStack_.push(keyword)
 				this.currentLines_ = [keywordInfo]
 				break
 		}
@@ -199,12 +210,24 @@ class GenbankReaderStream extends LineStream {
 			case 'DEFINITION':
 				this.entry_.definition = this.parseDefinition_(this.currentLines_)
 				break
+			case 'ACCESSION':
+				this.entry_.accession = this.parseAccession_(this.currentLines_)
+				break
 
 			default:
 				assert(false, 'Unexpected root keyword missing from kRootKeywordMap')
 		}
 
 		this.keywordStack_.length = 0
+		this.currentLines_ = null
+	}
+
+	isDuplicateRootKeyword_(keyword) {
+		switch (keyword) {
+			default:
+				return kSingleValueRootKeywords.has(keyword) &&
+					!!this.entry_[kRootKeywordMap[keyword]]
+		}
 	}
 
 	isKeywordContinuationLine_(line) {
@@ -269,5 +292,18 @@ class GenbankReaderStream extends LineStream {
 			throw new Error('DEFINITION must end with a period')
 
 		return definition
+	}
+
+	parseAccession_(lines) {
+		let accessions = lines.join(' ').split(/\s+/),
+			primaryAccession = accessions.shift()
+
+		if (!primaryAccession)
+			throw new Error('ACCESSION value is required')
+
+		return {
+			primary: primaryAccession,
+			secondary: accessions.length ? accessions : null
+		}
 	}
 }
