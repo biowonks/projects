@@ -6,7 +6,7 @@
 let Promise = require('bluebird')
 
 // Local
-let GenBankReaderStream = require('./GenBankReaderStream'),
+let GenbankReaderStream = require('./GenbankReaderStream'),
 	StringStream = require('./StringStream')
 
 /**
@@ -17,7 +17,7 @@ let GenBankReaderStream = require('./GenBankReaderStream'),
  */
 function parse(input) {
 	return new Promise((resolve, reject) => {
-		let genbankReaderStream = new GenBankReaderStream(),
+		let genbankReaderStream = new GenbankReaderStream(),
 			stringStream = new StringStream(input),
 			results = []
 
@@ -92,6 +92,13 @@ describe('Streams', function() {
 			})
 		})
 
+		it('multiple record separators returns right number of genbank records', function() {
+			return parse('//\n//')
+			.then((results) => {
+				expect(results.length).equal(2)
+			})
+		})
+
 		it('no record terminator // emits error', function() {
 			return parseThrowsError('LOCUS       NC_019563            1494183 bp    DNA     circular CON 30-JUL-2015')
 		})
@@ -102,7 +109,7 @@ describe('Streams', function() {
 					continue
 
 				it(`emits error with ${i} space separated values`, function() {
-					let input = 'LOCUS ' + ('x'.repeat(i)
+					let input = 'LOCUS       ' + ('x'.repeat(i)
 						.split('')
 						.join(' '))
 
@@ -135,6 +142,35 @@ describe('Streams', function() {
 						divisionCode: 'CON',
 						date: '30-JUL-2015'
 					})
+				})
+			})
+
+			it('multiple LOCUS lines emits error', function() {
+				return parseThrowsError(closeInput('LOCUS       NC_019563            1494183 bp    DNA     circular CON 30-JUL-2015\n' +
+					'LOCUS       NC_019563            1494183 bp    DNA     circular CON 30-JUL-2015'))
+			})
+		}) // LOCUS
+
+		describe('DEFINITION', function() {
+			it('emits error with empty definition', function() {
+				return parseThrowsError(closeInput('DEFINITION  '))
+			})
+
+			it('emits error without terminal period', function() {
+				return parseThrowsError(closeInput('DEFINITION  Escherichia coli'))
+			})
+
+			it('period works', function() {
+				return parseSingle(closeInput('DEFINITION  .'))
+				.then((result) => {
+					expect(result.definition).equals('.')
+				})
+			})
+
+			it('prefixed spaces are removed', function() {
+				return parseSingle(closeInput('DEFINITION   .'))
+				.then((result) => {
+					expect(result.definition).equals('.')
 				})
 			})
 		})

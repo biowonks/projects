@@ -19,10 +19,18 @@ let byline = require('byline')
 
 module.exports =
 class LineStream extends stream.Transform {
-	constructor() {
+	/**
+	 * @constructor
+	 * @param {object?} options byline stream options; defaults to encoding: utf8
+	 */
+	constructor(options) {
 		super({objectMode: true})
 
-		this.byLineStream_ = new byline.LineStream({encoding: 'utf8'})
+		let bylineOptions = options || {}
+		if (!bylineOptions.encoding)
+			bylineOptions.encoding = 'utf8'
+
+		this.byLineStream_ = new byline.LineStream(bylineOptions)
 		this.byLineStream_.pipe(this)
 
 		this.on('pipe', (src) => {
