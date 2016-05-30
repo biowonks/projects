@@ -103,6 +103,9 @@ const kKeywordInformationOffset = 12,
  * - Old GenBank formats (e.g. those predating 2004) are not supported
  *
  * - Because GI numbers are being phased out, these are not parsed from the VERSION line
+ *
+ * - Merges all keywords into a single array regardless if they are separated on multiple period
+ *   separated entries.
  */
 module.exports =
 class GenbankReaderStream extends LineStream {
@@ -177,7 +180,8 @@ class GenbankReaderStream extends LineStream {
 			definition: null,
 			accession: null,
 			version: null,
-			dbLink: null
+			dbLink: null,
+			keywords: null
 		}
 	}
 
@@ -206,6 +210,7 @@ class GenbankReaderStream extends LineStream {
 			case 'DEFINITION':
 			case 'ACCESSION':
 			case 'DBLINK':
+			case 'KEYWORDS':
 				this.keywordStack_.push(keyword)
 				this.currentLines_ = [keywordInfo]
 				break
@@ -229,6 +234,9 @@ class GenbankReaderStream extends LineStream {
 				break
 			case 'DBLINK':
 				this.entry_.dbLink = this.parseDbLink_(this.currentLines_)
+				break
+			case 'KEYWORDS':
+				this.entry_.keywords = this.parseKeywords_(this.currentLines_)
 				break
 
 			default:
@@ -305,7 +313,7 @@ class GenbankReaderStream extends LineStream {
 		if (!definition)
 			throw new Error('DEFINITION value is required')
 
-		if (definition[definition.length - 1] !== '.')
+		if (!definition.endsWith('.'))
 			throw new Error('DEFINITION must end with a period')
 
 		return definition
@@ -351,9 +359,6 @@ class GenbankReaderStream extends LineStream {
 	 * @returns {object} map of the associated resource and their associated identifiers
 	 */
 	parseDbLink_(lines) {
-		if (!lines.length)
-			throw new Error('DBLINK value is required')
-
 		let result = {},
 			currentResource = null,
 			currentIdString = null,
@@ -412,5 +417,28 @@ class GenbankReaderStream extends LineStream {
 		if (matches)
 			matches[2] = matches[2].trim()
 		return matches
+	}
+
+	parseKeywords_(lines) {
+		if (!lines.length)
+			throw new Error('KEYWORDS value is required')
+
+		let keywordString = lines.join(' ')
+		if (!keywordString)
+			throw new Error('KEYWORDS value is required')
+
+		if (!keywordString.endsWith('.'))
+			throw new Error('KEYWORDS must end with a period')
+
+		let keywords = keywordString.substr(0, keywordString.length - 1)
+			.replace('.', ';')
+			.split(/\s*;\s*/)
+
+		keywords.forEach((keyword) => {
+			if (!keyword)
+				throw new Error('KEYWORDS contains empty keyword')
+		})
+
+		return keywords
 	}
 }

@@ -418,6 +418,28 @@ describe('Streams', function() {
 
 		// ------------------------------------------------
 		// ------------------------------------------------
+		// KEYWORDS
+		describe('KEYWORDS', function() {
+			it('multi line keywords', function() {
+				let input = 'KEYWORDS    chemoreceptor; chemotaxis; galactose binding protein; membrane \n' +
+					'            protein; transducer; trg gene.'
+
+				return parseSingle(closeInput(input))
+					.then((result) => {
+						expect(result.keywords).deep.equal([
+							'chemoreceptor',
+							'chemotaxis',
+							'galactose binding protein',
+							'membrane protein',
+							'transducer',
+							'trg gene'
+						])
+					})
+			})
+		})
+
+		// ------------------------------------------------
+		// ------------------------------------------------
 		describe('composite records', function() {
 			it.only('composite #1', function() {
 				return parseSingle(closeInput('LOCUS       NC_019565               1634 bp    DNA     circular CON 30-JUL-2015\n' +
