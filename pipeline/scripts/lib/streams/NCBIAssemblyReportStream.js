@@ -21,7 +21,7 @@ let LineStream = require('./LineStream')
 module.exports =
 class NCBIAssemblyReportStream extends LineStream {
 	constructor() {
-		super({objectMode: true})
+		super()
 
 		this.lastLine_ = null
 		this.headerFields_ = null
