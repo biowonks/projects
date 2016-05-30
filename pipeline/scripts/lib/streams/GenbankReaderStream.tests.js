@@ -151,6 +151,11 @@ describe('Streams', function() {
 				return parseThrowsError(closeInput('LOCUS       NC_019563            1494183 bp    DNA     circular CON 30-JUL-2015\n' +
 					'LOCUS       NC_019563            1494183 bp    DNA     circular CON 30-JUL-2015'))
 			})
+
+			it('emits error if value spread across multiple lines', function() {
+				return parseThrowsError(closeInput('LOCUS       NC_019563            1494183 bp    DNA     circular CON 30-JUL-2015\n' +
+					'            NC_019563            1494183 bp    DNA     circular CON 30-JUL-2015'))
+			})
 		}) // LOCUS
 
 		// ------------------------------------------------
@@ -224,9 +229,9 @@ describe('Streams', function() {
 				})
 			})
 
-			it('multi-line secondary accessions with range', function() {
+			it('multi-line secondary accessions with range and multiple separating spaces', function() {
 				return parseSingle(closeInput('ACCESSION   NC_019565 CP_123456\n' +
-					'            AB_987654-CD_321098 EF76'))
+					'            AB_987654-CD_321098   EF76'))
 				.then((result) => {
 					expect(result.accession).deep.equal({
 						primary: 'NC_019565',
@@ -238,6 +243,51 @@ describe('Streams', function() {
 					})
 				})
 			})
+		}) // ACCESSION
+
+		// ------------------------------------------------
+		// ------------------------------------------------
+		// VERSION
+		describe('VERSION', function() {
+			it('emits error with empty value', function() {
+				return parseThrowsError(closeInput('VERSION   '))
+			})
+
+			it('emits error with spaces', function() {
+				return parseThrowsError(closeInput('VERSION     '))
+			})
+
+			let invalidVersions = [
+				'AF181452',
+				'AF181452.',
+				'.',
+				'.1',
+				'AF181452.0'
+			]
+			invalidVersions.forEach((invalidVersion) => {
+				it(`emits error with invalid primary accession value: ${invalidVersion}`, function() {
+					return parseThrowsError(closeInput(`VERSION     ${invalidVersion}`))
+				})
+			})
+
+			it('valid primary accession', function() {
+				return parseSingle(closeInput('VERSION     NC_019565.1'))
+				.then((result) => {
+					expect(result.version).equal('NC_019565.1')
+				})
+			})
+
+			it('ignores everything beyond the primary accession', function() {
+				return parseSingle(closeInput('VERSION     NC_019565.1  GI:123456'))
+				.then((result) => {
+					expect(result.version).equal('NC_019565.1')
+				})
+			})
+
+			it('emits error if value spread across multiple lines', function() {
+				return parseThrowsError(closeInput('VERSION     NC_019565.1\n' +
+					'            NC_019565.1'))
+			})
 		})
 
 		// ------------------------------------------------
@@ -246,7 +296,8 @@ describe('Streams', function() {
 			it('composite #1', function() {
 				return parseSingle(closeInput('LOCUS       NC_019565               1634 bp    DNA     circular CON 30-JUL-2015\n' +
 					'DEFINITION  Helicobacter pylori Aklavik86 plasmid p2HPAKL86, complete sequence.\n' +
-					'ACCESSION   NC_019565'))
+					'ACCESSION   NC_019565\n' +
+					'VERSION     NC_019565.1  GI:425791567'))
 					.then((result) => {
 						expect(result.locus).deep.equal({
 							name: 'NC_019565',
@@ -263,6 +314,8 @@ describe('Streams', function() {
 							primary: 'NC_019565',
 							secondary: null
 						})
+
+						expect(result.version).equal('NC_019565.1')
 					})
 			})
 		})

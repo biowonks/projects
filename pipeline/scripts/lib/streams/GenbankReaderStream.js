@@ -96,6 +96,8 @@ const kKeywordInformationOffset = 12,
  *
  * Notes:
  * - Old GenBank formats (e.g. those predating 2004) are not supported
+ *
+ * - Because GI numbers are being phased out, these are not parsed from the VERSION line
  */
 module.exports =
 class GenbankReaderStream extends LineStream {
@@ -168,7 +170,8 @@ class GenbankReaderStream extends LineStream {
 		return {
 			locus: null,
 			definition: null,
-			accession: null
+			accession: null,
+			version: null
 		}
 	}
 
@@ -198,6 +201,10 @@ class GenbankReaderStream extends LineStream {
 			case 'ACCESSION':
 				this.keywordStack_.push(keyword)
 				this.currentLines_ = [keywordInfo]
+				break
+
+			case 'VERSION':
+				this.entry_.version = this.parseVersion_(keywordInfo)
 				break
 		}
 	}
@@ -305,5 +312,16 @@ class GenbankReaderStream extends LineStream {
 			primary: primaryAccession,
 			secondary: accessions.length ? accessions : null
 		}
+	}
+
+	parseVersion_(version) {
+		if (!version)
+			throw new Error('VERSION value is required')
+
+		let matches = /^(\w+\.[1-9]\d*)/.exec(version)
+		if (!matches)
+			throw new Error('VERSION value must contain a compound accession with the primary accession and its corresponding version separated by a period')
+
+		return matches[1]
 	}
 }
