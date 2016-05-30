@@ -12,10 +12,10 @@
  */
 'use strict'
 
-// Core includes
+// Core
 let StringDecoder = require('string_decoder').StringDecoder
 
-// Local includes
+// Local
 let LineStream = require('./LineStream')
 
 module.exports =

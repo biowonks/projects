@@ -27,10 +27,11 @@
 			"name": "Unit tests (local)",
 			"type": "node",
 			"request": "launch",
-			"program": "${workspaceRoot}/node_modules/.bin/mocha",
+			"program": "${workspaceRoot}/node_modules/.bin/_mocha",
 			"stopOnEntry": false,
 			"cwd": "${workspaceRoot}",
 			"args": [
+				"--no-timeouts",
 				"--require", "pipeline/scripts/test-setup.js",
 				"pipeline/scripts/**/*.tests.js"
 			],
