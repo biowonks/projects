@@ -249,15 +249,9 @@ describe('Streams', function() {
 		// ------------------------------------------------
 		// VERSION
 		describe('VERSION', function() {
-			it('emits error with empty value', function() {
-				return parseThrowsError(closeInput('VERSION   '))
-			})
-
-			it('emits error with spaces', function() {
-				return parseThrowsError(closeInput('VERSION     '))
-			})
-
 			let invalidVersions = [
+				'',
+				'  ',
 				'AF181452',
 				'AF181452.',
 				'.',
@@ -292,12 +286,148 @@ describe('Streams', function() {
 
 		// ------------------------------------------------
 		// ------------------------------------------------
+		// DBLINK
+		describe('DBLINK', function() {
+			let invalidDbLinks = [
+				'',
+				'  ',
+				':',
+				'BioProject',
+				'BioProject:',
+				':12345',
+				':12345,23435',
+				'BioProject :12345',
+				'BioProject:12345 ,',
+				'BioProject:12345,'
+			]
+			invalidDbLinks.forEach((invalidDbLink) => {
+				it(`emits error with invalid dblink value: ${invalidDbLink}`, function() {
+					return parseThrowsError(closeInput(`DBLINK      ${invalidDbLink}`))
+				})
+			})
+
+			it('single resource and identifier', function() {
+				return parseSingle(closeInput('DBLINK      BioProject:12345'))
+				.then((result) => {
+					expect(result.dbLink).deep.equal({
+						BioProject: [
+							12345
+						]
+					})
+				})
+			})
+
+			it('single resource with space before identifier', function() {
+				return parseSingle(closeInput('DBLINK      BioProject: 12345'))
+				.then((result) => {
+					expect(result.dbLink).deep.equal({
+						BioProject: [
+							12345
+						]
+					})
+				})
+			})
+
+			it('single resource and multiple identifiers', function() {
+				return parseSingle(closeInput('DBLINK      BioProject:12345,AB12345'))
+				.then((result) => {
+					expect(result.dbLink).deep.equal({
+						BioProject: [
+							12345,
+							'AB12345'
+						]
+					})
+				})
+			})
+
+			it('multiple resources', function() {
+				return parseSingle(closeInput('DBLINK      BioProject:12345,AB12345\n' +
+					'            Assembly:GCF_000317875.1'))
+				.then((result) => {
+					expect(result.dbLink).deep.equal({
+						BioProject: [
+							12345,
+							'AB12345'
+						],
+						Assembly: [
+							'GCF_000317875.1'
+						]
+					})
+				})
+			})
+
+			it('colon on continuation line throws error', function() {
+				return parseThrowsError(closeInput('DBLINK      BioProject:1234\n' +
+					'            12345,Sample:AB1234'))
+			})
+
+			let commaLines = [
+				'DBLINK      BioProject:1234\n' +
+					'            567',
+				'DBLINK      BioProject:1234,\n' +
+					'            567',
+				'DBLINK      BioProject:1234\n' +
+					'            ,567',
+				'DBLINK      BioProject:1234,\n' +
+					'            ,567'
+			]
+			commaLines.forEach((commaLine, i) => {
+				it(`multiline identifiers comma variant ${i + 1}`, function() {
+					return parseSingle(closeInput(commaLine))
+						.then((result) => {
+							expect(result.dbLink).deep.equal({
+								BioProject: [
+									1234,
+									567
+								]
+							})
+						})
+				})
+			})
+
+			it('multiple resources with one spanning multiple lines', function() {
+				let input = 'DBLINK      BioProject:AB1234.5\n' +
+					'            12345\n' +
+					'            Assembly:GCF_000317875.1'
+				return parseSingle(closeInput(input))
+						.then((result) => {
+							expect(result.dbLink).deep.equal({
+								BioProject: [
+									'AB1234.5',
+									12345
+								],
+								Assembly: [
+									'GCF_000317875.1'
+								]
+							})
+						})
+			})
+
+			it('resource name with space', function() {
+				let input = 'DBLINK      Trace Assembly Archive:AB1234.5'
+				return parseSingle(closeInput(input))
+						.then((result) => {
+							expect(result.dbLink).deep.equal({
+								'Trace Assembly Archive': [
+									'AB1234.5'
+								]
+							})
+						})
+			})
+		})
+
+		// ------------------------------------------------
+		// ------------------------------------------------
 		describe('composite records', function() {
-			it('composite #1', function() {
+			it.only('composite #1', function() {
 				return parseSingle(closeInput('LOCUS       NC_019565               1634 bp    DNA     circular CON 30-JUL-2015\n' +
 					'DEFINITION  Helicobacter pylori Aklavik86 plasmid p2HPAKL86, complete sequence.\n' +
 					'ACCESSION   NC_019565\n' +
-					'VERSION     NC_019565.1  GI:425791567'))
+					'VERSION     NC_019565.1  GI:425791567\n' +
+					'DBLINK      BioProject: PRJNA224116\n' +
+					'            Assembly: GCF_000317875.1\n' +
+					'            BioSample: SAMN02604324')
+					)
 					.then((result) => {
 						expect(result.locus).deep.equal({
 							name: 'NC_019565',
@@ -316,6 +446,18 @@ describe('Streams', function() {
 						})
 
 						expect(result.version).equal('NC_019565.1')
+
+						expect(result.dbLink).deep.equal({
+							BioProject: [
+								'PRJNA224116'
+							],
+							Assembly: [
+								'GCF_000317875.1'
+							],
+							BioSample: [
+								'SAMN02604324'
+							]
+						})
 					})
 			})
 		})

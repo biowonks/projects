@@ -92,6 +92,11 @@ const kKeywordInformationOffset = 12,
  *     primary
  *     secondary: [...] (null if none are provided, may contain a range XXX-YYYY)
  *   }
+ *   version
+ *   dbLink: {
+ *     <resource>: [...]
+ *     ...
+ *   }
  * }
  *
  * Notes:
@@ -171,7 +176,8 @@ class GenbankReaderStream extends LineStream {
 			locus: null,
 			definition: null,
 			accession: null,
-			version: null
+			version: null,
+			dbLink: null
 		}
 	}
 
@@ -199,6 +205,7 @@ class GenbankReaderStream extends LineStream {
 
 			case 'DEFINITION':
 			case 'ACCESSION':
+			case 'DBLINK':
 				this.keywordStack_.push(keyword)
 				this.currentLines_ = [keywordInfo]
 				break
@@ -219,6 +226,9 @@ class GenbankReaderStream extends LineStream {
 				break
 			case 'ACCESSION':
 				this.entry_.accession = this.parseAccession_(this.currentLines_)
+				break
+			case 'DBLINK':
+				this.entry_.dbLink = this.parseDbLink_(this.currentLines_)
 				break
 
 			default:
@@ -323,5 +333,84 @@ class GenbankReaderStream extends LineStream {
 			throw new Error('VERSION value must contain a compound accession with the primary accession and its corresponding version separated by a period')
 
 		return matches[1]
+	}
+
+	/**
+	 * The specification does not indicate if the values for a given resource may span multiple
+	 * lines; however, this seems like a likely probability and thus is handled here.
+	 *
+	 * Because there may be multiple identifiers associated with a specific resource, the value
+	 * for each resource is encapsulated in an array.
+	 *
+	 * As of April 2013, the supported DBLINK cross-reference types are "Project" (predecessor of
+	 * BioProject), "BioProject", "BioSample", "Trace Assembly Archive", Sequence Read Archive",
+	 * and "Assembly". But rather than just support this set, generically parses all resources
+	 * that adhere to the format '<resource name>:<csv list of identifiers>'.
+	 *
+	 * @param {Array.<string>} lines associated keywordInfo lines
+	 * @returns {object} map of the associated resource and their associated identifiers
+	 */
+	parseDbLink_(lines) {
+		if (!lines.length)
+			throw new Error('DBLINK value is required')
+
+		let result = {},
+			currentResource = null,
+			currentIdString = null,
+			firstLine = lines.shift(),
+			matches = this.parseDbLinkResource_(firstLine)
+
+		if (!matches)
+			throw new Error('DBLINK invalid value; expected format <resource name>:<id[,id...]>')
+
+		currentResource = matches[1]
+		currentIdString = matches[2]
+
+		lines.forEach((line) => {
+			let resourceMatches = this.parseDbLinkResource_(line)
+			if (resourceMatches) {
+				result[currentResource] = currentIdString.split(',')
+				currentResource = resourceMatches[1]
+				currentIdString = resourceMatches[2]
+			}
+			else {
+				// This means that the ids carried on to the next line
+				if (line.indexOf(':') >= 0)
+					throw new Error('DBLINK continuation line has unexpected colon character; resource name must begin the line and immediately be followed by a colon')
+
+				// Flexibly handle cases where identifiers span multiple lines and have inconsistent commas
+				let currentEndsWithComma = currentIdString.endsWith(','),
+					lineStartsWithComma = line.startsWith(',')
+				if (currentEndsWithComma && lineStartsWithComma)
+					currentIdString += line.substr(1)
+				else if (!currentEndsWithComma && !lineStartsWithComma)
+					currentIdString += ',' + line
+				else
+					currentIdString += line
+			}
+		})
+
+		result[currentResource] = currentIdString.split(',')
+
+		// Check that there are no invalid identifiers
+		for (let resource in result) {
+			result[resource].forEach((identifier, i) => {
+				let isInvalidIdentifier = !identifier || /\s/.test(identifier)
+				if (isInvalidIdentifier)
+					throw new Error(`DBLINK identifier cannot contain whitespace or be empty; associated resource: ${resource}`)
+
+				if (/^\d+$/.test(identifier))
+					result[resource][i] = Number(identifier)
+			})
+		}
+
+		return result
+	}
+
+	parseDbLinkResource_(line) {
+		let matches = /^([\w-. ]+\w):\s*(\S.*)/.exec(line)
+		if (matches)
+			matches[2] = matches[2].trim()
+		return matches
 	}
 }
