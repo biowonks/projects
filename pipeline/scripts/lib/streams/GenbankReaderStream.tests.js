@@ -536,6 +536,33 @@ describe('Streams', function() {
 
 		// ------------------------------------------------
 		// ------------------------------------------------
+		// SEGMENT
+		describe('SEGMENT', function() {
+			it('emits error if empty value', function() {
+				return parseThrowsError(closeInput('SEGMENT     '))
+			})
+
+			it('emits error if invalid format', function() {
+				return parseThrowsError(closeInput('SEGMENT     1 of three'))
+			})
+
+			it('emits error if invalid format', function() {
+				return parseThrowsError(closeInput('SEGMENT     one of 3'))
+			})
+
+			it('correct format', function() {
+				return parseSingle(closeInput('SEGMENT     1 of 3'))
+				.then((result) => {
+					expect(result.segment).deep.equal({
+						number: 1,
+						total: 3
+					})
+				})
+			})
+		})
+
+		// ------------------------------------------------
+		// ------------------------------------------------
 		describe('composite records', function() {
 			it('composite #1', function() {
 				return parseSingle(closeInput('LOCUS       NC_019565               1634 bp    DNA     circular CON 30-JUL-2015\n' +
@@ -544,39 +571,56 @@ describe('Streams', function() {
 					'VERSION     NC_019565.1  GI:425791567\n' +
 					'DBLINK      BioProject: PRJNA224116\n' +
 					'            Assembly: GCF_000317875.1\n' +
-					'            BioSample: SAMN02604324')
-					)
-					.then((result) => {
-						expect(result.locus).deep.equal({
-							name: 'NC_019565',
-							bp: 1634,
-							moleculeType: 'DNA',
-							topology: 'circular',
-							divisionCode: 'CON',
-							date: '30-JUL-2015'
-						})
-
-						expect(result.definition).equal('Helicobacter pylori Aklavik86 plasmid p2HPAKL86, complete sequence.')
-
-						expect(result.accession).deep.equal({
-							primary: 'NC_019565',
-							secondary: null
-						})
-
-						expect(result.version).equal('NC_019565.1')
-
-						expect(result.dbLink).deep.equal({
-							BioProject: [
-								'PRJNA224116'
-							],
-							Assembly: [
-								'GCF_000317875.1'
-							],
-							BioSample: [
-								'SAMN02604324'
-							]
-						})
+					'            BioSample: SAMN02604324\n' +
+					'KEYWORDS    chemoreceptor; chemotaxis; galactose binding protein; membrane \n' +
+					'            protein; transducer; trg gene.\n' +
+					'SEGMENT     2 of 4')
+				)
+				.then((result) => {
+					expect(result.locus).deep.equal({
+						name: 'NC_019565',
+						bp: 1634,
+						moleculeType: 'DNA',
+						topology: 'circular',
+						divisionCode: 'CON',
+						date: '30-JUL-2015'
 					})
+
+					expect(result.definition).equal('Helicobacter pylori Aklavik86 plasmid p2HPAKL86, complete sequence.')
+
+					expect(result.accession).deep.equal({
+						primary: 'NC_019565',
+						secondary: null
+					})
+
+					expect(result.version).equal('NC_019565.1')
+
+					expect(result.dbLink).deep.equal({
+						BioProject: [
+							'PRJNA224116'
+						],
+						Assembly: [
+							'GCF_000317875.1'
+						],
+						BioSample: [
+							'SAMN02604324'
+						]
+					})
+
+					expect(result.keywords).deep.equal([
+						'chemoreceptor',
+						'chemotaxis',
+						'galactose binding protein',
+						'membrane protein',
+						'transducer',
+						'trg gene'
+					])
+
+					expect(result.segment).deep.equal({
+						number: 2,
+						total: 4
+					})
+				})
 			})
 		})
 	})

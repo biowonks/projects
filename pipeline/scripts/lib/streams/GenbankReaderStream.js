@@ -181,7 +181,8 @@ class GenbankReaderStream extends LineStream {
 			accession: null,
 			version: null,
 			dbLink: null,
-			keywords: null
+			keywords: null,
+			segment: null
 		}
 	}
 
@@ -217,6 +218,10 @@ class GenbankReaderStream extends LineStream {
 
 			case 'VERSION':
 				this.entry_.version = this.parseVersion_(keywordInfo)
+				break
+
+			case 'SEGMENT':
+				this.entry_.segment = this.parseSegment_(keywordInfo)
 				break
 		}
 	}
@@ -444,5 +449,16 @@ class GenbankReaderStream extends LineStream {
 			uniqueKeywords = [...new Set(truthyKeywords)]
 
 		return uniqueKeywords
+	}
+
+	parseSegment_(keywordInfo) {
+		let matches = /^([1-9]\d*) of ([1-9]\d*)/.exec(keywordInfo)
+		if (!matches)
+			throw new Error('SEGMENT must adhere to the format: <digits> of <digits')
+
+		return {
+			number: Number(matches[1]),
+			total: Number(matches[2])
+		}
 	}
 }
