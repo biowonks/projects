@@ -419,6 +419,12 @@ class GenbankReaderStream extends LineStream {
 		return matches
 	}
 
+	/**
+	 * Ignores empty values and removes duplicates.
+	 *
+	 * @param {Array.<string>} lines input keyword lines
+	 * @returns {Array.<string>} unique, non-empty keyword result
+	 */
 	parseKeywords_(lines) {
 		if (!lines.length)
 			throw new Error('KEYWORDS value is required')
@@ -431,14 +437,12 @@ class GenbankReaderStream extends LineStream {
 			throw new Error('KEYWORDS must end with a period')
 
 		let keywords = keywordString.substr(0, keywordString.length - 1)
-			.replace('.', ';')
-			.split(/\s*;\s*/)
+			.trim()
+			.replace(/\./g, ';')
+			.split(/\s*;\s*/),
+			truthyKeywords = keywords.filter((keyword) => !!keyword),
+			uniqueKeywords = [...new Set(truthyKeywords)]
 
-		keywords.forEach((keyword) => {
-			if (!keyword)
-				throw new Error('KEYWORDS contains empty keyword')
-		})
-
-		return keywords
+		return uniqueKeywords
 	}
 }

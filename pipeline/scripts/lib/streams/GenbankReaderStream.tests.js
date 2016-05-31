@@ -196,6 +196,12 @@ describe('Streams', function() {
 					expect(result.definition).equals('Line 1 Line 2.')
 				})
 			})
+
+			it('multiple DEFINITION emits error', function() {
+				let input = 'DEFINITION  plasmid.\n' +
+					'DEFINITION  chromosome'
+				return parseThrowsError(closeInput(input))
+			})
 		}) // DEFINITION
 
 		// ------------------------------------------------
@@ -243,6 +249,12 @@ describe('Streams', function() {
 					})
 				})
 			})
+
+			it('multiple ACCESSION sections emits error', function() {
+				let input = 'ACCESSION   NC_019565\n' +
+					'ACCESSION   NC_019566'
+				return parseThrowsError(closeInput(input))
+			})
 		}) // ACCESSION
 
 		// ------------------------------------------------
@@ -281,6 +293,12 @@ describe('Streams', function() {
 			it('emits error if value spread across multiple lines', function() {
 				return parseThrowsError(closeInput('VERSION     NC_019565.1\n' +
 					'            NC_019565.1'))
+			})
+
+			it('multiple VERSION sections emits error', function() {
+				let input = 'VERSION     NC_019565.1\n' +
+					'VERSION     NC_019565.2'
+				return parseThrowsError(closeInput(input))
 			})
 		})
 
@@ -374,14 +392,14 @@ describe('Streams', function() {
 			commaLines.forEach((commaLine, i) => {
 				it(`multiline identifiers comma variant ${i + 1}`, function() {
 					return parseSingle(closeInput(commaLine))
-						.then((result) => {
-							expect(result.dbLink).deep.equal({
-								BioProject: [
-									1234,
-									567
-								]
-							})
+					.then((result) => {
+						expect(result.dbLink).deep.equal({
+							BioProject: [
+								1234,
+								567
+							]
 						})
+					})
 				})
 			})
 
@@ -390,29 +408,35 @@ describe('Streams', function() {
 					'            12345\n' +
 					'            Assembly:GCF_000317875.1'
 				return parseSingle(closeInput(input))
-						.then((result) => {
-							expect(result.dbLink).deep.equal({
-								BioProject: [
-									'AB1234.5',
-									12345
-								],
-								Assembly: [
-									'GCF_000317875.1'
-								]
-							})
-						})
+				.then((result) => {
+					expect(result.dbLink).deep.equal({
+						BioProject: [
+							'AB1234.5',
+							12345
+						],
+						Assembly: [
+							'GCF_000317875.1'
+						]
+					})
+				})
 			})
 
 			it('resource name with space', function() {
 				let input = 'DBLINK      Trace Assembly Archive:AB1234.5'
 				return parseSingle(closeInput(input))
-						.then((result) => {
-							expect(result.dbLink).deep.equal({
-								'Trace Assembly Archive': [
-									'AB1234.5'
-								]
-							})
-						})
+				.then((result) => {
+					expect(result.dbLink).deep.equal({
+						'Trace Assembly Archive': [
+							'AB1234.5'
+						]
+					})
+				})
+			})
+
+			it('multiple DBLINK sections emits error', function() {
+				let input = 'DBLINK      resource:123\n' +
+					'DBLINK      resource2:345'
+				return parseThrowsError(closeInput(input))
 			})
 		})
 
@@ -420,28 +444,100 @@ describe('Streams', function() {
 		// ------------------------------------------------
 		// KEYWORDS
 		describe('KEYWORDS', function() {
+			it('emits error if missing terminal period', function() {
+				return parseThrowsError(closeInput('KEYWORDS    chemoreceptor'))
+			})
+
+			it('multiple KEYWORDS sections emits error', function() {
+				let input = 'KEYWORDS    chemoreceptor.\n' +
+					'KEYWORDS    chemotaxis.'
+				return parseThrowsError(closeInput(input))
+			})
+
+			it('ignores empty values', function() {
+				let input = 'KEYWORDS    ;.'
+				return parseSingle(closeInput(input))
+				.then((result) => {
+					expect(result.keywords).deep.equal([])
+				})
+			})
+
+			it('trims superfluous spaces around single entry', function() {
+				let input = 'KEYWORDS     chemoreceptor .'
+				return parseSingle(closeInput(input))
+				.then((result) => {
+					expect(result.keywords).deep.equal([
+						'chemoreceptor'
+					])
+				})
+			})
+
+			it('trims superfluous spaces around middle entry', function() {
+				let input = 'KEYWORDS    chemoreceptor; transducer ; trg gene.'
+				return parseSingle(closeInput(input))
+				.then((result) => {
+					expect(result.keywords).deep.equal([
+						'chemoreceptor',
+						'transducer',
+						'trg gene'
+					])
+				})
+			})
+
+			it('isolated period', function() {
+				return parseSingle(closeInput('KEYWORDS    .'))
+				.then((result) => {
+					expect(result.keywords).deep.equal([])
+				})
+			})
+
+			it('multiple lines with periods', function() {
+				let input = 'KEYWORDS    chemoreceptor; transducer ; trg gene.\n' +
+					'            membrane protein.'
+				return parseSingle(closeInput(input))
+				.then((result) => {
+					expect(result.keywords).deep.equal([
+						'chemoreceptor',
+						'transducer',
+						'trg gene',
+						'membrane protein'
+					])
+				})
+			})
+
+			it('removes duplicates', function() {
+				let input = 'KEYWORDS    chemoreceptor; transducer ; chemoreceptor.'
+				return parseSingle(closeInput(input))
+				.then((result) => {
+					expect(result.keywords).deep.equal([
+						'chemoreceptor',
+						'transducer'
+					])
+				})
+			})
+
 			it('multi line keywords', function() {
 				let input = 'KEYWORDS    chemoreceptor; chemotaxis; galactose binding protein; membrane \n' +
 					'            protein; transducer; trg gene.'
 
 				return parseSingle(closeInput(input))
-					.then((result) => {
-						expect(result.keywords).deep.equal([
-							'chemoreceptor',
-							'chemotaxis',
-							'galactose binding protein',
-							'membrane protein',
-							'transducer',
-							'trg gene'
-						])
-					})
+				.then((result) => {
+					expect(result.keywords).deep.equal([
+						'chemoreceptor',
+						'chemotaxis',
+						'galactose binding protein',
+						'membrane protein',
+						'transducer',
+						'trg gene'
+					])
+				})
 			})
 		})
 
 		// ------------------------------------------------
 		// ------------------------------------------------
 		describe('composite records', function() {
-			it.only('composite #1', function() {
+			it('composite #1', function() {
 				return parseSingle(closeInput('LOCUS       NC_019565               1634 bp    DNA     circular CON 30-JUL-2015\n' +
 					'DEFINITION  Helicobacter pylori Aklavik86 plasmid p2HPAKL86, complete sequence.\n' +
 					'ACCESSION   NC_019565\n' +
