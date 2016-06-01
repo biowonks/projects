@@ -6,26 +6,55 @@ let assert = require('assert')
 // Local
 let LineStream = require('./LineStream')
 
-
 class KeywordNode {
-	constructor(keyword) {
+	constructor(keyword, optLine) {
 		this.keyword_ = keyword
 		this.parent_ = null
 		this.children_ = new Map()
+		this.lines_ = []
+		if (optLine)
+			this.lines_.push(optLine)
+	}
+
+	lines() {
+		return this.lines_
+	}
+
+	level() {
+		if (this.keyword_[0] !== ' ')
+			return 0
+		if (this.keyword_.startsWith('  '))
+			return 1
+		if (this.keyword_.startsWith('   '))
+			return 2 // eslint-disable-line no-magic-numbers
+
+		throw new Error(`Keyword ${this.keyword_} must begin with 0, 2, or 3 spaces`)
+	}
+
+	keyword() {
+		return this.keyword_
 	}
 
 	parent() {
 		return this.parent_
 	}
 
-	setChild(keyword, child) {
-		assert(child !== this)
-		child.parent_ = this
-		this.children_.set(keyword, child)
+	pushLine(line) {
+		this.lines_.push(line)
+	}
+
+	child(keyword) {
+		return this.children_.get(keyword)
 	}
 
 	hasChildren() {
 		return this.children_.size > 0
+	}
+
+	addChild(child) {
+		assert(child !== this)
+		child.parent_ = this
+		this.children_.set(child.keyword_, child)
 	}
 
 	isLeaf() {
@@ -44,56 +73,13 @@ class KeywordNode {
 
 // Constants
 const kKeywordInformationOffset = 12,
-	kNumLocusFields = 7,
-	kIgnoredKeywords = new Set([
-		'NID',
-		'PROJECT',
-		'MEDLINE',
-		'BASE COUNT'
-	]),
-	kRootKeywordMap = {
-		LOCUS: 'locus',
-		DEFINITION: 'definition',
-		ACCESSION: 'accession',
-		VERSION: 'version',
-		DBLINK: 'dbLink',
-		KEYWORDS: 'keywords',
-		SEGMENT: 'segment',
-		SOURCE: 'source',
-		REFERENCE: 'references',
-		COMMENT: 'comment',
-		FEATURES: 'features',
-		CONTIG: 'contig',
-		ORIGIN: 'origin'
-	},
-	kSingleValueRootKeywords = new Set([
-		'LOCUS',
-		'DEFINITION',
-		'ACCESSION',
-		'VERSION',
-		'DBLINK',
-		'KEYWORDS',
-		'SEGMENT',
-		'SOURCE',
-		'COMMENT',
-		'CONTIG',
-		'ORIGIN'
-	]),
-	kParsedKeywords = new Set([
-		...Object.keys(kRootKeywordMap),
-		'  ORGANISM',
-		'  AUTHORS',
-		'  CONSRTM',
-		'  TITLE',
-		'  JOUNRAL',
-		'   PUBMED',
-		'  REMARK'
-	]),
-
-	kValidKeywordPaths = new Set([
-		...Object.keys(kRootKeywordMap),
-		'SOURCE  ORGANISM'
-	])
+	kNumLocusFields = 7
+	// kIgnoredKeywords = new Set([
+	// 	'NID',
+	// 	'PROJECT',
+	// 	'MEDLINE',
+	// 	'BASE COUNT'
+	// ])
 	// kDivisionCodes = new Set([
 	// 	'PRI', // primate
 	// 	'ROD', // rodent
@@ -163,6 +149,17 @@ const kKeywordInformationOffset = 12,
  *
  * - Merges all keywords into a single array regardless if they are separated on multiple period
  *   separated entries.
+ *
+ * - Processes each root keyword section one by one and only after the entire root keyword and
+ *   any sub-keyword lines have been read.
+ *
+ * - Generically parses any and all keywords / subkeywords as though each may span multiple lines;
+ *   however, only recognized keywords are processed and streamed. Unrecognized keywords do not
+ *   have any constraints (apart from the base GenBank format). Recognized keywords and their
+ *   associated subkeywords though, are streamed and loosely validated (e.g. DEFINITION is not
+ *   allowed to have any subkeywords, SOURCE must have an ORGANISM subkeyword).
+ *
+ * - No root keyword may occur multiple times per entry.
  */
 module.exports =
 class GenbankReaderStream extends LineStream {
@@ -171,7 +168,9 @@ class GenbankReaderStream extends LineStream {
 		//     ^^^^^^^^^^^^^^ For cases such as the COMMENT keyword
 		this.entry_ = null
 
-		this.keywordStack_ = []
+		this.observedRootKeywords_ = new Set()
+		this.rootKeywordNode_ = null
+		this.currentKeywordNode_ = null
 	}
 
 	// ----------------------------------------------------
@@ -184,10 +183,10 @@ class GenbankReaderStream extends LineStream {
 
 			// --------------------------------------------
 			if (this.isKeywordContinuationLine_(line)) {
-				if (!this.keywordStack_.length)
+				if (!this.currentKeywordNode_)
 					throw new Error('Keyword continuation line found without associated keyword')
 
-				this.lastKeyword_().lines.push(this.extractKeywordInfo_(line))
+				this.currentKeywordNode_.pushLine(this.extractKeywordInfo_(line))
 				done()
 				return
 			}
@@ -203,7 +202,7 @@ class GenbankReaderStream extends LineStream {
 			// --------------------------------------------
 			let isTerminator = line[0] === '/' && line[1] === '/'
 			if (isTerminator) {
-				this.handlePreviousRootKeyword_()
+				this.processRootKeywordNode_()
 				this.push(this.entry_)
 				this.entry_ = null
 				done()
@@ -247,87 +246,88 @@ class GenbankReaderStream extends LineStream {
 	}
 
 	handleKeywordLine_(keyword, keywordInfo) {
-		let isRootKeyword = keyword[0] !== ' '
+		let keywordNode = new KeywordNode(keyword, keywordInfo),
+			keywordLevel = keywordNode.level()
+
+		let isRootKeyword = keywordLevel === 0
 		if (isRootKeyword) {
-			// let invalidRootKeyword = !(keyword in kRootKeywordMap)
-			// if (invalidRootKeyword)
-			// 	throw new Error(`Invalid root keyword: ${keyword}`)
-			this.handlePreviousRootKeyword_()
+			this.processRootKeywordNode_()
 
-			if (this.isDuplicateRootKeyword_(keyword))
+			if (this.observedRootKeywords_.has(keyword))
 				throw new Error(`Record contains multiple ${keyword} lines`)
+			this.observedRootKeywords_.add(keyword)
+
+			this.rootKeywordNode_ =	this.currentKeywordNode_ = keywordNode
+			return
 		}
 
-		switch (keyword) {
-			case 'LOCUS':
-				this.entry_.locus = this.parseLocus_(keywordInfo)
-				break
+		let parentNode = this.currentKeywordNode_
 
-			case 'DEFINITION':
-			case 'ACCESSION':
-			case 'DBLINK':
-			case 'KEYWORDS':
-			case 'SOURCE':
-				this.keywordStack_.push({
-					keyword,
-					lines: [keywordInfo]
-				})
-				break
-
-
-			case 'VERSION':
-				this.entry_.version = this.parseVersion_(keywordInfo)
-				break
-
-			case 'SEGMENT':
-				this.entry_.segment = this.parseSegment_(keywordInfo)
-				break
+		// (current) root -> Level 1 (keywordNode)
+		if (this.currentKeywordNode_.isRoot()) {
+			assert(keywordNode.level() !== keywordLevel + 1, 'invalid sublevel keyword')
 		}
+		// Sibling
+		// (current) level 1 -> level 1 (keywordNode) OR
+		// (current) level 2 -> level 2 (keywordNode)
+		else if (keywordLevel === keywordNode.level()) {
+			parentNode = this.currentKeywordNode_.parent()
+		}
+		// (current) level 1 -> level 2 (keywordNode)
+		else if (keywordNode.level() === keywordLevel + 1) {
+			// this.currentKeywordNode_.addChild(keywordNode)
+		}
+		// Level 2 -> Level 1 (keywordNode)
+		else if (keywordNode.level() === keywordLevel - 1) {
+			parentNode = this.currentKeywordNode_.parent().parent()
+		}
+
+		if (parentNode.level() + 1 !== keywordLevel)
+			throw new Error(`invalid sublevel for keyword: ${keyword}`)
+
+		parentNode.addChild(keywordNode)
+		this.currentKeywordNode_ = keywordNode
 	}
 
-	keywordStackPath_() {
-		return this.keywordStack_
-			.map((x) => x.keyword)
-			.join('')
-	}
-
-	handlePreviousRootKeyword_() {
-		if (!this.keywordStack_.length)
+	processRootKeywordNode_() {
+		let rootNode = this.rootKeywordNode_
+		if (!rootNode)
 			return
 
-		let {keyword, lines} = this.keywordStack_[0]
-
-		switch (keyword) {
+		switch (rootNode.keyword()) {
+			case 'LOCUS':
+				this.entry_.locus = this.parseLocus_(rootNode)
+				break
 			case 'DEFINITION':
-				this.entry_.definition = this.parseDefinition_(lines)
+				this.entry_.definition = this.parseDefinition_(rootNode)
 				break
 			case 'ACCESSION':
-				this.entry_.accession = this.parseAccession_(lines)
+				this.entry_.accession = this.parseAccession_(rootNode)
+				break
+			case 'VERSION':
+				this.entry_.version = this.parseVersion_(rootNode)
+				break
+			case 'SEGMENT':
+				this.entry_.segment = this.parseSegment_(rootNode)
 				break
 			case 'DBLINK':
-				this.entry_.dbLink = this.parseDbLink_(lines)
+				this.entry_.dbLink = this.parseDbLink_(rootNode)
 				break
 			case 'KEYWORDS':
-				this.entry_.keywords = this.parseKeywords_(lines)
+				this.entry_.keywords = this.parseKeywords_(rootNode)
 				break
 			case 'SOURCE':
-				// this.entry_.source = this.parseSource_(lines, )
+				this.entry_.source = this.parseSource_(rootNode)
 				break
 			case 'REFERENCE':
 				break
 
 			default:
-				this.emit('warning', `unhandled root keyword: ${keyword}`)
+				this.emit('warning', `unhandled root keyword: ${rootNode.keyword()}`)
 				break
-				// assert(false, 'Unexpected root keyword missing from kRootKeywordMap')
 		}
 
-		this.keywordStack_.length = 0
-	}
-
-	isDuplicateRootKeyword_(keyword) {
-		return kSingleValueRootKeywords.has(keyword) &&
-			!!this.entry_[kRootKeywordMap[keyword]]
+		this.rootKeywordNode_ = this.currentKeywordNode_ = null
 	}
 
 	isKeywordContinuationLine_(line) {
@@ -348,20 +348,21 @@ class GenbankReaderStream extends LineStream {
 		return matches ? matches[1] : null
 	}
 
-	lastKeyword_() {
-		return this.keywordStack_[this.keywordStack_.length - 1]
-	}
-
 	/**
 	 * The LOCUS line is structured with values in specific position ranges; however, it is recommended
 	 * to use a token based approach for parsing and not rely on actual positions in case this changes
 	 * in the future.
 	 *
-	 * @param {string} keywordInfo contains the expected locus fields without 'LOCUS'
+	 * @param {string} locusNode contains the expected locus fields without 'LOCUS'
 	 * @returns {object} parsed locus values
 	 */
-	parseLocus_(keywordInfo) {
-		let parts = keywordInfo.split(/\s+/),
+	parseLocus_(locusNode) {
+		let lines = locusNode.lines()
+		if (lines.length > 1)
+			throw new Error('LOCUS may not span multiple lines')
+
+		let keywordInfo = lines[0],
+			parts = keywordInfo.split(/\s+/),
 			hasRightNumFields = parts.length === kNumLocusFields
 		if (!hasRightNumFields)
 			throw new Error(`LOCUS line does not have ${kNumLocusFields} fields: ${keywordInfo}`)
@@ -383,8 +384,8 @@ class GenbankReaderStream extends LineStream {
 		/* eslint-enable no-magic-numbers */
 	}
 
-	parseDefinition_(lines) {
-		let definition = lines.join(' ')
+	parseDefinition_(definitionNode) {
+		let definition = definitionNode.lines().join(' ')
 		if (!definition)
 			throw new Error('DEFINITION value is required')
 
@@ -394,8 +395,10 @@ class GenbankReaderStream extends LineStream {
 		return definition
 	}
 
-	parseAccession_(lines) {
-		let accessions = lines.join(' ').split(/\s+/),
+	parseAccession_(accessionNode) {
+		let accessions = accessionNode.lines()
+				.join(' ')
+				.split(/\s+/),
 			primaryAccession = accessions.shift()
 
 		if (!primaryAccession)
@@ -407,7 +410,12 @@ class GenbankReaderStream extends LineStream {
 		}
 	}
 
-	parseVersion_(version) {
+	parseVersion_(versionNode) {
+		let lines = versionNode.lines(),
+			version = lines[0]
+		if (lines.length > 1)
+			throw new Error('VERSION may not span multiple lines')
+
 		if (!version)
 			throw new Error('VERSION value is required')
 
@@ -430,13 +438,14 @@ class GenbankReaderStream extends LineStream {
 	 * and "Assembly". But rather than just support this set, generically parses all resources
 	 * that adhere to the format '<resource name>:<csv list of identifiers>'.
 	 *
-	 * @param {Array.<string>} lines associated keywordInfo lines
+	 * @param {KeywordNode} dbLinkNode associated keywordInfo lines
 	 * @returns {object} map of the associated resource and their associated identifiers
 	 */
-	parseDbLink_(lines) {
+	parseDbLink_(dbLinkNode) {
 		let result = {},
 			currentResource = null,
 			currentIdString = null,
+			lines = dbLinkNode.lines(),
 			firstLine = lines.shift(),
 			matches = this.parseDbLinkResource_(firstLine)
 
@@ -497,14 +506,11 @@ class GenbankReaderStream extends LineStream {
 	/**
 	 * Ignores empty values and removes duplicates.
 	 *
-	 * @param {Array.<string>} lines input keyword lines
+	 * @param {KeywordNode} keywordNode input keyword lines
 	 * @returns {Array.<string>} unique, non-empty keyword result
 	 */
-	parseKeywords_(lines) {
-		if (!lines.length)
-			throw new Error('KEYWORDS value is required')
-
-		let keywordString = lines.join(' ')
+	parseKeywords_(keywordNode) {
+		let keywordString = keywordNode.lines().join(' ')
 		if (!keywordString)
 			throw new Error('KEYWORDS value is required')
 
@@ -521,8 +527,11 @@ class GenbankReaderStream extends LineStream {
 		return uniqueKeywords
 	}
 
-	parseSegment_(keywordInfo) {
-		let matches = /^([1-9]\d*) of ([1-9]\d*)/.exec(keywordInfo)
+	parseSegment_(segmentNode) {
+		if (segmentNode.lines().length > 1)
+			throw new Error('SEGMENT may not span multiple lines')
+
+		let matches = /^([1-9]\d*) of ([1-9]\d*)/.exec(segmentNode.lines()[0])
 		if (!matches)
 			throw new Error('SEGMENT must adhere to the format: <digits> of <digits')
 
@@ -532,11 +541,62 @@ class GenbankReaderStream extends LineStream {
 		}
 	}
 
-	parseSourceValue_(lines) {
-		let source = lines.join(' ')
-		if (!source)
+	/**
+	 * The first line of the ORGANISM sub-keyword contains the formal scientific name; however,
+	 * due to names exceeding 68 characters (80 - 13 + 1), this value may span multiple lines.
+	 * Thus, to distinguish when the formal name completes and the taxonomic classification
+	 * begins, it is necessary to look for semicolons to determine the first taxonomic line.
+	 * Obviously if the first taxonomic value is greater than 68 characters, this will be
+	 * erroneously considered part of the common name.
+	 *
+	 * @param {KeywordNode} sourceNode root node containing SOURCE information
+	 * @returns {object} parsed information
+	 */
+	parseSource_(sourceNode) {
+		let result = {
+			commonName: sourceNode.lines().join(' '),
+			formalName: null,
+			taxonomicRanks: null
+		}
+
+		if (!result.commonName)
 			throw new Error('SOURCE value is required')
 
-		return source
+		let organismNode = sourceNode.child('  ORGANISM')
+		if (!organismNode)
+			return result
+
+		let organismLines = organismNode.lines(),
+			taxonomy = '',
+			ontoTaxonomy = false
+		result.formalName = organismLines[0]
+		if (result.formalName.indexOf(';') >= 0)
+			throw new Error('  ORGANISM formal name (first line) may not contain a semicolon')
+		for (let i = 1; i < organismLines.length; i++) {
+			let line = organismLines[i]
+			if (ontoTaxonomy) {
+				taxonomy += ` ${line}`
+			}
+			else if (line.indexOf(';') >= 0) {
+				ontoTaxonomy = true
+				taxonomy = line
+			}
+			else {
+				result.formalName += ` ${line}`
+			}
+		}
+
+		if (!result.formalName)
+			throw new Error('  ORGANISM value may not be empty')
+
+		if (!taxonomy)
+			throw new Error('  ORGANISM taxonomic classification is missing')
+
+		if (taxonomy.endsWith('.'))
+			taxonomy = taxonomy.substr(0, taxonomy.length - 1)
+
+		result.taxonomicRanks = taxonomy.split(/;\s*/)
+
+		return result
 	}
 }

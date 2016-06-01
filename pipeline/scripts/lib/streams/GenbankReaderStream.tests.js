@@ -550,6 +550,11 @@ describe('Streams', function() {
 				return parseThrowsError(closeInput('SEGMENT     one of 3'))
 			})
 
+			it('emits error if spread across multiple lines', function() {
+				return parseThrowsError(closeInput('SEGMENT     1 of 2\n' +
+					'           2 of 2'))
+			})
+
 			it('correct format', function() {
 				return parseSingle(closeInput('SEGMENT     1 of 3'))
 				.then((result) => {
@@ -571,7 +576,79 @@ describe('Streams', function() {
 		// ------------------------------------------------
 		// SOURCE
 		describe('SOURCE', function() {
+			it('emits error if empty value', function() {
+				return parseThrowsError(closeInput('SOURCE      '))
+			})
 
+			it('common name on single line', function() {
+				return parseSingle(closeInput('SOURCE      Helicobacter pylori A45'))
+					.then((result) => {
+						expect(result.source).deep.equal({
+							commonName: 'Helicobacter pylori A45',
+							formalName: null,
+							taxonomicRanks: null
+						})
+					})
+			})
+
+			it('common name on multiple lines', function() {
+				return parseSingle(closeInput('SOURCE      Line 1\n' +
+					'            Line 2'))
+					.then((result) => {
+						expect(result.source).deep.equal({
+							commonName: 'Line 1 Line 2',
+							formalName: null,
+							taxonomicRanks: null
+						})
+					})
+			})
+
+			it('emits error on empty formal name', function() {
+				let input = 'SOURCE      Helicobacter pylori A45\n' +
+					'  ORGANISM  '
+				return parseThrowsError(closeInput(input))
+			})
+
+			it('emits error if missing taxonomy', function() {
+				let input = 'SOURCE      Helicobacter pylori A45\n' +
+					'  ORGANISM  Helicobacter pylori A45'
+				return parseThrowsError(closeInput(input))
+			})
+
+			it('emits error if formal name contains semicolon', function() {
+				let input = 'SOURCE      Helicobacter pylori A45\n' +
+					'  ORGANISM  Helicobacter pylori A45;'
+				return parseThrowsError(closeInput(input))
+			})
+
+			it('multiple line formal line with taxonomy', function() {
+				let input = 'SOURCE      Helicobacter pylori A45\n' +
+					'  ORGANISM  Helicobacter pylori\n' +
+					'            A45\n' +
+					'            Bacteria; Proteobacteria; Epsilonproteobacteria; Campylobacterales;\n' +
+					'            Helicobacteraceae; Helicobacter.'
+				return parseSingle(closeInput(input))
+					.then((result) => {
+						expect(result.source).deep.equal({
+							commonName: 'Helicobacter pylori A45',
+							formalName: 'Helicobacter pylori A45',
+							taxonomicRanks: [
+								'Bacteria',
+								'Proteobacteria',
+								'Epsilonproteobacteria',
+								'Campylobacterales',
+								'Helicobacteraceae',
+								'Helicobacter'
+							]
+						})
+					})
+			})
+
+			it('multiple SOURCE sections emits error', function() {
+				let input = 'SOURCE      Helicobacter pylori A45\n' +
+					'SOURCE      Helicobacter pylori A45'
+				return parseThrowsError(closeInput(input))
+			})
 		})
 
 		// ------------------------------------------------
