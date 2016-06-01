@@ -6,9 +6,51 @@ let assert = require('assert')
 // Local
 let LineStream = require('./LineStream')
 
+
+class KeywordNode {
+	constructor(keyword) {
+		this.keyword_ = keyword
+		this.parent_ = null
+		this.children_ = new Map()
+	}
+
+	parent() {
+		return this.parent_
+	}
+
+	setChild(keyword, child) {
+		assert(child !== this)
+		child.parent_ = this
+		this.children_.set(keyword, child)
+	}
+
+	hasChildren() {
+		return this.children_.size > 0
+	}
+
+	isLeaf() {
+		return !this.hasChildren()
+	}
+
+	isRoot() {
+		return this.parent_ === null
+	}
+
+	children() {
+		return this.children_
+	}
+}
+
+
 // Constants
 const kKeywordInformationOffset = 12,
 	kNumLocusFields = 7,
+	kIgnoredKeywords = new Set([
+		'NID',
+		'PROJECT',
+		'MEDLINE',
+		'BASE COUNT'
+	]),
 	kRootKeywordMap = {
 		LOCUS: 'locus',
 		DEFINITION: 'definition',
@@ -36,6 +78,21 @@ const kKeywordInformationOffset = 12,
 		'COMMENT',
 		'CONTIG',
 		'ORIGIN'
+	]),
+	kParsedKeywords = new Set([
+		...Object.keys(kRootKeywordMap),
+		'  ORGANISM',
+		'  AUTHORS',
+		'  CONSRTM',
+		'  TITLE',
+		'  JOUNRAL',
+		'   PUBMED',
+		'  REMARK'
+	]),
+
+	kValidKeywordPaths = new Set([
+		...Object.keys(kRootKeywordMap),
+		'SOURCE  ORGANISM'
 	])
 	// kDivisionCodes = new Set([
 	// 	'PRI', // primate
@@ -115,8 +172,6 @@ class GenbankReaderStream extends LineStream {
 		this.entry_ = null
 
 		this.keywordStack_ = []
-		// this.currentKeyword_ = null
-		this.currentLines_ = null
 	}
 
 	// ----------------------------------------------------
@@ -132,7 +187,7 @@ class GenbankReaderStream extends LineStream {
 				if (!this.keywordStack_.length)
 					throw new Error('Keyword continuation line found without associated keyword')
 
-				this.currentLines_.push(this.extractKeywordInfo_(line))
+				this.lastKeyword_().lines.push(this.extractKeywordInfo_(line))
 				done()
 				return
 			}
@@ -148,7 +203,7 @@ class GenbankReaderStream extends LineStream {
 			// --------------------------------------------
 			let isTerminator = line[0] === '/' && line[1] === '/'
 			if (isTerminator) {
-				this.handlePreviousKeyword_()
+				this.handlePreviousRootKeyword_()
 				this.push(this.entry_)
 				this.entry_ = null
 				done()
@@ -182,7 +237,8 @@ class GenbankReaderStream extends LineStream {
 			version: null,
 			dbLink: null,
 			keywords: null,
-			segment: null
+			segment: null,
+			source: null
 		}
 	}
 
@@ -193,11 +249,10 @@ class GenbankReaderStream extends LineStream {
 	handleKeywordLine_(keyword, keywordInfo) {
 		let isRootKeyword = keyword[0] !== ' '
 		if (isRootKeyword) {
-			let invalidRootKeyword = !(keyword in kRootKeywordMap)
-			if (invalidRootKeyword)
-				throw new Error(`Invalid root keyword: ${keyword}`)
-
-			this.handlePreviousKeyword_()
+			// let invalidRootKeyword = !(keyword in kRootKeywordMap)
+			// if (invalidRootKeyword)
+			// 	throw new Error(`Invalid root keyword: ${keyword}`)
+			this.handlePreviousRootKeyword_()
 
 			if (this.isDuplicateRootKeyword_(keyword))
 				throw new Error(`Record contains multiple ${keyword} lines`)
@@ -212,9 +267,13 @@ class GenbankReaderStream extends LineStream {
 			case 'ACCESSION':
 			case 'DBLINK':
 			case 'KEYWORDS':
-				this.keywordStack_.push(keyword)
-				this.currentLines_ = [keywordInfo]
+			case 'SOURCE':
+				this.keywordStack_.push({
+					keyword,
+					lines: [keywordInfo]
+				})
 				break
+
 
 			case 'VERSION':
 				this.entry_.version = this.parseVersion_(keywordInfo)
@@ -226,38 +285,49 @@ class GenbankReaderStream extends LineStream {
 		}
 	}
 
-	handlePreviousKeyword_() {
+	keywordStackPath_() {
+		return this.keywordStack_
+			.map((x) => x.keyword)
+			.join('')
+	}
+
+	handlePreviousRootKeyword_() {
 		if (!this.keywordStack_.length)
 			return
 
-		switch (this.keywordStack_[0]) {
+		let {keyword, lines} = this.keywordStack_[0]
+
+		switch (keyword) {
 			case 'DEFINITION':
-				this.entry_.definition = this.parseDefinition_(this.currentLines_)
+				this.entry_.definition = this.parseDefinition_(lines)
 				break
 			case 'ACCESSION':
-				this.entry_.accession = this.parseAccession_(this.currentLines_)
+				this.entry_.accession = this.parseAccession_(lines)
 				break
 			case 'DBLINK':
-				this.entry_.dbLink = this.parseDbLink_(this.currentLines_)
+				this.entry_.dbLink = this.parseDbLink_(lines)
 				break
 			case 'KEYWORDS':
-				this.entry_.keywords = this.parseKeywords_(this.currentLines_)
+				this.entry_.keywords = this.parseKeywords_(lines)
+				break
+			case 'SOURCE':
+				// this.entry_.source = this.parseSource_(lines, )
+				break
+			case 'REFERENCE':
 				break
 
 			default:
-				assert(false, 'Unexpected root keyword missing from kRootKeywordMap')
+				this.emit('warning', `unhandled root keyword: ${keyword}`)
+				break
+				// assert(false, 'Unexpected root keyword missing from kRootKeywordMap')
 		}
 
 		this.keywordStack_.length = 0
-		this.currentLines_ = null
 	}
 
 	isDuplicateRootKeyword_(keyword) {
-		switch (keyword) {
-			default:
-				return kSingleValueRootKeywords.has(keyword) &&
-					!!this.entry_[kRootKeywordMap[keyword]]
-		}
+		return kSingleValueRootKeywords.has(keyword) &&
+			!!this.entry_[kRootKeywordMap[keyword]]
 	}
 
 	isKeywordContinuationLine_(line) {
@@ -460,5 +530,13 @@ class GenbankReaderStream extends LineStream {
 			number: Number(matches[1]),
 			total: Number(matches[2])
 		}
+	}
+
+	parseSourceValue_(lines) {
+		let source = lines.join(' ')
+		if (!source)
+			throw new Error('SOURCE value is required')
+
+		return source
 	}
 }

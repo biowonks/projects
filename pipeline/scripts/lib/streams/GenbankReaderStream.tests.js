@@ -559,6 +559,19 @@ describe('Streams', function() {
 					})
 				})
 			})
+
+			it('multiple SEGMENT sections emits error', function() {
+				let input = 'SEGMENT     1 of 3\n' +
+					'SEGMENT     2 of 3'
+				return parseThrowsError(closeInput(input))
+			})
+		})
+
+		// ------------------------------------------------
+		// ------------------------------------------------
+		// SOURCE
+		describe('SOURCE', function() {
+
 		})
 
 		// ------------------------------------------------
