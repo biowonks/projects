@@ -76,7 +76,7 @@ function parseSingle(input) {
 }
 
 describe('Streams', function() {
-	describe.only('GenBankReaderStream', function() {
+	describe('GenBankReaderStream', function() {
 		it('empty input does not return any records', function() {
 			return parse('')
 			.then((results) => {
@@ -653,6 +653,13 @@ describe('Streams', function() {
 
 		// ------------------------------------------------
 		// ------------------------------------------------
+		// REFERENCE
+		describe.only('REFERENCE', function() {
+
+		})
+
+		// ------------------------------------------------
+		// ------------------------------------------------
 		describe('composite records', function() {
 			it('composite #1', function() {
 				return parseSingle(closeInput('LOCUS       NC_019565               1634 bp    DNA     circular CON 30-JUL-2015\n' +
@@ -664,7 +671,11 @@ describe('Streams', function() {
 					'            BioSample: SAMN02604324\n' +
 					'KEYWORDS    chemoreceptor; chemotaxis; galactose binding protein; membrane \n' +
 					'            protein; transducer; trg gene.\n' +
-					'SEGMENT     2 of 4')
+					'SEGMENT     2 of 4\n' +
+					'SOURCE      Helicobacter pylori A45\n' +
+					'  ORGANISM  Helicobacter pylori A45\n' +
+					'            Bacteria; Proteobacteria; Epsilonproteobacteria; Campylobacterales;\n' +
+					'            Helicobacteraceae; Helicobacter.')
 				)
 				.then((result) => {
 					expect(result.locus).deep.equal({
@@ -709,6 +720,19 @@ describe('Streams', function() {
 					expect(result.segment).deep.equal({
 						number: 2,
 						total: 4
+					})
+
+					expect(result.source).deep.equal({
+						commonName: 'Helicobacter pylori A45',
+						formalName: 'Helicobacter pylori A45',
+						taxonomicRanks: [
+							'Bacteria',
+							'Proteobacteria',
+							'Epsilonproteobacteria',
+							'Campylobacterales',
+							'Helicobacteraceae',
+							'Helicobacter'
+						]
 					})
 				})
 			})

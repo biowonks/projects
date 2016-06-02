@@ -16,8 +16,34 @@ class KeywordNode {
 			this.lines_.push(optLine)
 	}
 
-	lines() {
-		return this.lines_
+	addChild(child) {
+		assert(child !== this)
+		child.parent_ = this
+		this.children_.set(child.keyword_, child)
+	}
+
+	child(keyword) {
+		return this.children_.get(keyword)
+	}
+
+	children() {
+		return this.children_
+	}
+
+	hasChildren() {
+		return this.children_.size > 0
+	}
+
+	isLeaf() {
+		return !this.hasChildren()
+	}
+
+	isRoot() {
+		return this.parent_ === null
+	}
+
+	keyword() {
+		return this.keyword_
 	}
 
 	level() {
@@ -31,8 +57,8 @@ class KeywordNode {
 		throw new Error(`Keyword ${this.keyword_} must begin with 0, 2, or 3 spaces`)
 	}
 
-	keyword() {
-		return this.keyword_
+	lines() {
+		return this.lines_
 	}
 
 	parent() {
@@ -42,34 +68,7 @@ class KeywordNode {
 	pushLine(line) {
 		this.lines_.push(line)
 	}
-
-	child(keyword) {
-		return this.children_.get(keyword)
-	}
-
-	hasChildren() {
-		return this.children_.size > 0
-	}
-
-	addChild(child) {
-		assert(child !== this)
-		child.parent_ = this
-		this.children_.set(child.keyword_, child)
-	}
-
-	isLeaf() {
-		return !this.hasChildren()
-	}
-
-	isRoot() {
-		return this.parent_ === null
-	}
-
-	children() {
-		return this.children_
-	}
 }
-
 
 // Constants
 const kKeywordInformationOffset = 12,
@@ -237,7 +236,8 @@ class GenbankReaderStream extends LineStream {
 			dbLink: null,
 			keywords: null,
 			segment: null,
-			source: null
+			source: null,
+			references: []
 		}
 	}
 
@@ -320,6 +320,7 @@ class GenbankReaderStream extends LineStream {
 				this.entry_.source = this.parseSource_(rootNode)
 				break
 			case 'REFERENCE':
+				this.entry_.references.push(this.parseReference_(rootNode))
 				break
 
 			default:
@@ -587,16 +588,77 @@ class GenbankReaderStream extends LineStream {
 		}
 
 		if (!result.formalName)
-			throw new Error('  ORGANISM value may not be empty')
+			throw new Error('  ORGANISM value (formal name) is required')
 
 		if (!taxonomy)
 			throw new Error('  ORGANISM taxonomic classification is missing')
 
 		if (taxonomy.endsWith('.'))
-			taxonomy = taxonomy.substr(0, taxonomy.length - 1)
+			taxonomy = taxonomy.slice(0, -1)
 
 		result.taxonomicRanks = taxonomy.split(/;\s*/)
 
 		return result
+	}
+
+	parseReference_(referenceNode) {
+		let value = referenceNode.lines().join(' ')
+		if (!value)
+			throw new Error('REFERENCE value is required')
+
+		let matches = /([1-9]\d*)\s+(.*)/.exec(value)
+		if (!matches)
+			throw new Error('REFERENCE must adhere to the format <number> <notes>')
+
+		let journalNode = referenceNode.child('  JOURNAL')
+
+		return {
+			number: Number(matches[1]),
+			notes: matches[2].trimRight(),
+			authors: this.parseReferenceAuthors_(referenceNode.child('  AUTHORS')),
+			consortium: this.parseReferenceConsortium_(referenceNode.child('  CONSRTM')),
+			title: this.parseReferenceTitle_(referenceNode.child('  TITLE')),
+			journal: this.parseReferenceJournal_(journalNode),
+			pubmed: journalNode ? this.parseReferencePubmed_(journalNode.child('   PUBMED')) : null,
+			medline: this.parseReferenceMedline_(referenceNode.child('  MEDLINE')),
+			remark: this.parseReferenceRemark_(referenceNode.child('  REMARK'))
+		}
+	}
+
+	parseReferenceAuthors_(authorsNode) {
+		if (!authorsNode)
+			throw new Error('  AUTHORS is a required sub-keyword of REFERENCE')
+
+		let authorsString = authorsNode.lines().join(' ')
+		if (authorsString.endsWith('.'))
+			authorsString = authorsString.slice(0, -1)
+
+		return authorsString
+	}
+
+	parseReferenceConsortium_(consortiumNode) {
+
+	}
+
+	parseReferenceTitle_(titleNode) {
+		// if (!titleNode)
+		// 	return null
+	}
+
+	parseReferenceJournal_(journalNode) {
+		if (!journalNode)
+			throw new Error('  JOURNAL is a required sub-keyword of REFERENCE')
+	}
+
+	parseReferencePubmed_(pubmedNode) {
+
+	}
+
+	parseReferenceMedline_(medlineNode) {
+
+	}
+
+	parseReferenceRemark_(remarkNode) {
+
 	}
 }
