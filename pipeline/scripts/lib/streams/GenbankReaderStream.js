@@ -81,7 +81,6 @@ const kKeywordInformationOffset = 12,
 	// kIgnoredKeywords = new Set([
 	// 	'NID',
 	// 	'PROJECT',
-	// 	'MEDLINE',
 	// 	'BASE COUNT'
 	// ])
 	// kDivisionCodes = new Set([
@@ -165,8 +164,30 @@ const kKeywordInformationOffset = 12,
  *
  * - No root keyword may occur multiple times per entry.
  *
- * TODO:
- *   Test that empty lines inside comments are treated as continuation lines
+ * Feature table parsing notes
+ * - Key names are limited to 15 characters
+ * - Qualifier names are limited to 20 characters
+ * - Key and qualifier names must have at least one letter and may contain any of:
+ *   A-Z, a-z, 0-9, _, -, ', *
+ * - Each feature key has a location that may span multiple lines. If there are any qualifiers,
+ *   these begin immediately after the location line.
+ * - qualifier values belong to one of 4 classes:
+ *   1) Free text: enclosed in double quotes, if double quotes are used internally, these are
+ *      escaped by using a second quotation mark immediately before the first one.
+ *   2) Enumerated values: case insensitive
+ *   3) Citation / reference numbers: unsigned integer enclosed in square brackets
+ *   4) Sequences: illegal since 1998 (therefore ignored)
+ *
+ * - Column positions
+ *   1-5 blank
+ *   6-20 feature key name
+ *   21 blank
+ *   22-80 location
+ *
+ * - No spaces are permitted between the qualifier name and the preceding / or =
+ * - Location operators may not have a space between its name and the opening parenthesis
+ * - Valid boolean values are yes and no
+ * - <integer> refers to unsigned integer values
  */
 module.exports =
 class GenbankReaderStream extends LineStream {
@@ -178,12 +199,28 @@ class GenbankReaderStream extends LineStream {
 		this.observedRootKeywords_ = new Set()
 		this.rootKeywordNode_ = null
 		this.currentKeywordNode_ = null
+
+		// Because the feature table is so large, it utilizes slightly different parsing
+		// logic than the other keywords. This flag simplifies checking that we are in
+		// the feature table section.
+		this.parsingFeatures_ = false
 	}
 
 	// ----------------------------------------------------
 	// Overrided methods
 	_transform(line, encoding, done) {
 		try {
+			if (this.parsingFeatures_) {
+				let anotherFeatureLine = line[0] === ' '
+				if (anotherFeatureLine) {
+					this.handleFeatureLine_(line)
+					done()
+					return
+				}
+
+				this.parsingFeatures_ = false
+			}
+
 			// --------------------------------------------
 			if (!this.entry_)
 				this.entry_ = this.blankEntry_()
@@ -255,6 +292,7 @@ class GenbankReaderStream extends LineStream {
 			source: null,
 			references: [],
 			comment: null,
+			features: [],
 			contig: null,
 			origin: null
 		}
@@ -278,6 +316,10 @@ class GenbankReaderStream extends LineStream {
 			this.observedRootKeywords_.add(keyword)
 
 			this.rootKeywordNode_ =	this.currentKeywordNode_ = keywordNode
+
+			if (keyword === 'FEATURES')
+				this.parsingFeatures_ = true
+
 			return
 		}
 
@@ -309,6 +351,35 @@ class GenbankReaderStream extends LineStream {
 		this.currentKeywordNode_ = keywordNode
 	}
 
+	isKeywordContinuationLine_(line) {
+		return /^ {10}/.test(line) || (
+			this.currentKeywordNode_ &&
+			this.currentKeywordNode_.keyword() === 'ORIGIN' &&
+			/^\s*\d+ $/.test(line.substr(0, kOriginSequenceOffset))
+		)
+	}
+
+	/**
+	 * Based on the specification, looks for the following cases:
+	 * 1) Keyword beginning at the first column up to a maximum of 10 characters
+	 * 2) Subkeyword beginning in column 3 and up to 8 characters long
+	 * 3) Subkeyword beginning in column 4 and up to 7 characters long
+	 *
+	 * @param {string} line the input line to inspect
+	 * @returns {string} any matching keyword or subkeyword (with prefixed spacing); null otherwise
+	 */
+	keywordFromLine_(line) {
+		let keyword = null,
+			matches = /^([A-Z ]{1,10}| {2}[A-Z ]{1,8}| {3}[A-Z ]{1,7}) {2}/.exec(line)
+		if (matches)
+			keyword = matches[1].trimRight()
+		return keyword || null
+	}
+
+	/**
+	 * Features are parsed and handled separately
+	 * @returns {undefined}
+	 */
 	processRootKeywordNode_() {
 		let rootNode = this.rootKeywordNode_
 		if (!rootNode)
@@ -358,31 +429,6 @@ class GenbankReaderStream extends LineStream {
 		}
 
 		this.rootKeywordNode_ = this.currentKeywordNode_ = null
-	}
-
-	isKeywordContinuationLine_(line) {
-		return /^ {10}/.test(line) || (
-			this.currentKeywordNode_ &&
-			this.currentKeywordNode_.keyword() === 'ORIGIN' &&
-			/^\s*\d+ $/.test(line.substr(0, kOriginSequenceOffset))
-		)
-	}
-
-	/**
-	 * Based on the specification, looks for the following cases:
-	 * 1) Keyword beginning at the first column up to a maximum of 10 characters
-	 * 2) Subkeyword beginning in column 3 and up to 8 characters long
-	 * 3) Subkeyword beginning in column 4 and up to 7 characters long
-	 *
-	 * @param {string} line the input line to inspect
-	 * @returns {string} any matching keyword or subkeyword (with prefixed spacing); null otherwise
-	 */
-	keywordFromLine_(line) {
-		let keyword = null,
-			matches = /^([A-Z ]{1,10}| {2}[A-Z ]{1,8}| {3}[A-Z ]{1,7}) {2}/.exec(line)
-		if (matches)
-			keyword = matches[1].trimRight()
-		return keyword || null
 	}
 
 	/**
@@ -703,5 +749,9 @@ class GenbankReaderStream extends LineStream {
 		return sequenceLines
 			.join('')
 			.replace(/ /g, '')
+	}
+
+	handleFeatureLine_(line) {
+
 	}
 }
