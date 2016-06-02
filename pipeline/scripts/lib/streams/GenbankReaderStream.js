@@ -244,7 +244,8 @@ class GenbankReaderStream extends LineStream {
 			keywords: null,
 			segment: null,
 			source: null,
-			references: []
+			references: [],
+			comment: null
 		}
 	}
 
@@ -329,6 +330,9 @@ class GenbankReaderStream extends LineStream {
 				break
 			case 'REFERENCE':
 				this.entry_.references.push(this.parseReference_(rootNode))
+				break
+			case 'COMMENT':
+				this.entry_.comment = this.parseComment_(rootNode)
 				break
 
 			default:
@@ -647,5 +651,13 @@ class GenbankReaderStream extends LineStream {
 			throw new Error(`${keywordNode.keyword()} value is not a valid unsigned integer`)
 
 		return Number(value)
+	}
+
+	parseComment_(keywordNode) {
+		let value = keywordNode.lines().join('\n')
+		if (!value)
+			throw new Error('COMMENT value may not be empty')
+
+		return value.trimRight()
 	}
 }

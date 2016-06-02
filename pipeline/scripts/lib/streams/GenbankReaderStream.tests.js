@@ -824,6 +824,27 @@ describe('Streams', function() {
 
 		// ------------------------------------------------
 		// ------------------------------------------------
+		// COMMENT
+		describe('COMMENT', function() {
+			it('emits error if empty value', function() {
+				return parseThrowsError(closeInput('COMMENT     '))
+			})
+
+			it('works as expected', function() {
+				let input = 'COMMENT     line 1\n' +
+					'            \n' +
+					'            line 2\n' +
+					'            '
+
+				return parseSingle(closeInput(input))
+				.then((result) => {
+					expect(result.comment).equal('line 1\n\nline 2')
+				})
+			})
+		})
+
+		// ------------------------------------------------
+		// ------------------------------------------------
 		describe('composite records', function() {
 			it('composite #1', function() {
 				return parseSingle(closeInput('LOCUS       NC_019565               1634 bp    DNA     circular CON 30-JUL-2015\n' +
