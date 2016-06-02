@@ -77,6 +77,7 @@ class KeywordNode {
 // Constants
 const kKeywordInformationOffset = 12,
 	kOriginSequenceOffset = 10,
+	kFeatureInformationOffset = 21,
 	kNumLocusFields = 7
 	// kIgnoredKeywords = new Set([
 	// 	'NID',
@@ -204,6 +205,9 @@ class GenbankReaderStream extends LineStream {
 		// logic than the other keywords. This flag simplifies checking that we are in
 		// the feature table section.
 		this.parsingFeatures_ = false
+		this.currentFeature_ = null
+		this.currentQualifierName_ = null
+		this.currentQualifierValue_ = null
 	}
 
 	// ----------------------------------------------------
@@ -211,11 +215,18 @@ class GenbankReaderStream extends LineStream {
 	_transform(line, encoding, done) {
 		try {
 			if (this.parsingFeatures_) {
+				// Hackish way of checking for another keyword without the full check
 				let anotherFeatureLine = line[0] === ' '
 				if (anotherFeatureLine) {
 					this.handleFeatureLine_(line)
 					done()
 					return
+				}
+
+				this.handleCurrentQualifier_()
+				if (this.currentFeature_) {
+					this.entry_.features.push(this.currentFeature_)
+					this.currentFeature_ = null
 				}
 
 				this.parsingFeatures_ = false
@@ -751,7 +762,122 @@ class GenbankReaderStream extends LineStream {
 			.replace(/ /g, '')
 	}
 
+	// ----------------------------------------------------
+	// Feature table parsing
+	/**
+	 * Handles the parsing of all lines contained within the feature table section. There are
+	 * two cases that must be considered:
+	 * 1) The line begins a new feature
+	 * 2) The line is a continuation line of an existing feature
+	 *
+	 * @param {string} line input line belonging to feature table
+	 */
 	handleFeatureLine_(line) {
+		// Case 2: continuation line
+		// Continuation line logic before new feature lines because there will be more continuation
+		// lines than new feature lines
+		if (this.isFeatureContinuationLine_(line)) {
+			this.handleFeatureContinuationLine_(line)
+			return
+		}
 
+		// Case 1: a new feature is beginning
+		let feature = this.featureFromLine_(line)
+		if (feature) {
+			if (!feature.location)
+				throw new Error(`feature ${feature.name} does not have a location`)
+
+			if (this.currentFeature_) {
+				this.handleCurrentQualifier_()
+				this.entry.features_.push(this.currentFeature_)
+			}
+
+			this.currentFeature_ = feature
+		}
+
+		throw new Error('Internal error: unexpected feature table line: ' + line)
+	}
+
+	handleFeatureContinuationLine_(line) {
+		if (!this.currentFeature_)
+			throw new Error('Feature continuation line found without associated feature key')
+
+		// Three cases:
+		// 1) Continuation of the feature location
+		// 2) Beginning of a qualifier
+		// 3) Continuation of an existing qualifier
+
+		let featureInfo = this.extractFeatureInfo_(line),
+			isQualifier = featureInfo.startsWith('/')
+
+		if (!featureInfo)
+			throw new Error('Blank feature lines are not allowed')
+
+		// Case 2: start of another qualifier
+		if (isQualifier) {
+			let qualifier = this.parseQualifier_(featureInfo)
+
+			this.handleCurrentQualifier_()
+
+			this.currentQualifierName_ = qualifier.name
+			this.currentQualifierValue_ = qualifier.value
+			return
+		}
+
+		// Case 1: location spans multiple lines
+		let isLocationContinuation = !isQualifier && !this.currentQualifierName_
+		if (isLocationContinuation) {
+			this.currentFeature_.location += featureInfo
+			return
+		}
+
+		// Case 3: qualifier continuation line
+		assert(this.currentQualifierName_, 'Feature qualifier continuation line is not associated qualifier name')
+		if (!this.currentQualifierValue_)
+			throw new Error('Feature qualifier continuation line is missing initial value')
+
+		this.currentQualifierValue_ += ` ${featureInfo}`
+	}
+
+	featureFromLine_(line) {
+		let matches = /^ {6}([\w_\-'*]{1,15}) /.exec(line)
+		if (matches) {
+			return {
+				key: matches[1],
+				location: this.extractFeatureInfo_(line)
+			}
+		}
+
+		return null
+	}
+
+	isFeatureContinuationLine_(line) {
+		return /^ {21}\S/.test(line)
+	}
+
+	extractFeatureInfo_(line) {
+		return line.substr(kFeatureInformationOffset).trim()
+	}
+
+	parseQualifier_(featureInfo) {
+		let matches = /^\/([\w_\-'*]{1,20})(?:=(.+))?/.exec(featureInfo)
+		if (!matches)
+			throw new Error('Invalid feature qualifier line')
+
+		return {
+			name: matches[1],
+			value: matches[2]
+		}
+	}
+
+	handleCurrentQualifier_() {
+		if (!this.currentQualifierName_)
+			return
+
+		// TODO: deal with the specific qualifier values and possibilities
+		// TODO: if free form text, decode (i.e. escaped quotes, etc.)
+
+		this.currentQualifierName_ = null
+		this.currentQualifierValue_ = null
 	}
 }
