@@ -76,6 +76,7 @@ function parseSingle(input) {
 }
 
 describe('Streams', function() {
+	// describe('GenBankReaderStream', function() {
 	describe.only('GenBankReaderStream', function() {
 		it('empty input does not return any records', function() {
 			return parse('')
@@ -101,6 +102,14 @@ describe('Streams', function() {
 
 		it('no record terminator // emits error', function() {
 			return parseThrowsError('LOCUS       NC_019563            1494183 bp    DNA     circular CON 30-JUL-2015')
+		})
+
+		it('ignores BASE COUNT keyword', function() {
+			return parseSingle(closeInput('BASE COUNT  a 322'))
+		})
+
+		it('custom keywords', function() {
+			return parseSingle(closeInput('DUMMY       value'))
 		})
 
 		// ------------------------------------------------
@@ -830,7 +839,7 @@ describe('Streams', function() {
 				return parseThrowsError(closeInput('COMMENT     '))
 			})
 
-			it('works as expected', function() {
+			it('multiline comment with blank lines', function() {
 				let input = 'COMMENT     line 1\n' +
 					'            \n' +
 					'            line 2\n' +
@@ -840,6 +849,42 @@ describe('Streams', function() {
 				.then((result) => {
 					expect(result.comment).equal('line 1\n\nline 2')
 				})
+			})
+
+			it('multiple COMMENT sections emits error', function() {
+				let input = 'COMMENT     line 1\n' +
+					'COMMENT     line 2'
+				return parseThrowsError(closeInput(input))
+			})
+		})
+
+		// ------------------------------------------------
+		// ------------------------------------------------
+		// CONTIG
+		describe('CONTIG', function() {
+			it('emits error if empty value', function() {
+				return parseThrowsError(closeInput('CONTIG      '))
+			})
+
+			it('single line', function() {
+				return parseSingle(closeInput('CONTIG      join(CP003478.1:1..1634)'))
+				.then((result) => {
+					expect(result.contig).equal('join(CP003478.1:1..1634)')
+				})
+			})
+
+			it('multiple lines', function() {
+				return parseSingle(closeInput('CONTIG      join(CP003478.1:1..1634\n' +
+					'            )'))
+				.then((result) => {
+					expect(result.contig).equal('join(CP003478.1:1..1634)')
+				})
+			})
+
+			it('multiple CONTIG sections emits error', function() {
+				let input = 'CONTIG     line 1\n' +
+					'CONTIG     line 2'
+				return parseThrowsError(closeInput(input))
 			})
 		})
 
@@ -868,7 +913,10 @@ describe('Streams', function() {
 					'            Canadian Arctic Aboriginal Community\n' +
 					'  JOURNAL   Genome Announc 3 (2) (2015)\n' +
 					'   PUBMED   25883278\n' +
-					'  REMARK    Publication Status: Online-Only'
+					'  REMARK    Publication Status: Online-Only\n' +
+					'COMMENT     REFSEQ INFORMATION: The reference sequence was derived from\n' +
+					'            CP003478.\n' +
+					'CONTIG      join(CP003478.1:1..1634)'
 				))
 				.then((result) => {
 					expect(result.locus).deep.equal({
@@ -943,6 +991,10 @@ describe('Streams', function() {
 							remark: 'Publication Status: Online-Only'
 						}
 					])
+
+					expect(result.comment).equal('REFSEQ INFORMATION: The reference sequence was derived from\nCP003478.')
+
+					expect(result.contig).equal('join(CP003478.1:1..1634)')
 				})
 			})
 		})

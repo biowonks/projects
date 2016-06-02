@@ -245,7 +245,8 @@ class GenbankReaderStream extends LineStream {
 			segment: null,
 			source: null,
 			references: [],
-			comment: null
+			comment: null,
+			contig: null
 		}
 	}
 
@@ -334,6 +335,9 @@ class GenbankReaderStream extends LineStream {
 			case 'COMMENT':
 				this.entry_.comment = this.parseComment_(rootNode)
 				break
+			case 'CONTIG':
+				this.entry_.contig = this.parseContig_(rootNode)
+				break
 
 			default:
 				this.emit('warning', `unhandled root keyword: ${rootNode.keyword()}`)
@@ -357,8 +361,11 @@ class GenbankReaderStream extends LineStream {
 	 * @returns {string} any matching keyword or subkeyword (with prefixed spacing); null otherwise
 	 */
 	keywordFromLine_(line) {
-		let matches = /^([A-Z]{1,10}| {2}[A-Z]{1,8}| {3}[A-Z]{1,7}) {2}/.exec(line)
-		return matches ? matches[1] : null
+		let keyword = null,
+			matches = /^([A-Z ]{1,10}| {2}[A-Z ]{1,8}| {3}[A-Z ]{1,7}) {2}/.exec(line)
+		if (matches)
+			keyword = matches[1].trimRight()
+		return keyword || null
 	}
 
 	/**
@@ -659,5 +666,16 @@ class GenbankReaderStream extends LineStream {
 			throw new Error('COMMENT value may not be empty')
 
 		return value.trimRight()
+	}
+
+	parseContig_(contigNode) {
+		let value = contigNode.lines()
+			.join('')
+			.trim()
+
+		if (!value)
+			throw new Error('CONTIG value may not be empty')
+
+		return value
 	}
 }
