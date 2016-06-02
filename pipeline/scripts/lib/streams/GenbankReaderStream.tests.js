@@ -112,6 +112,10 @@ describe('Streams', function() {
 			return parseSingle(closeInput('DUMMY       value'))
 		})
 
+		it('emits error on keyword without necessary padding', function() {
+			return parseThrowsError(closeInput('ORIGIN'))
+		})
+
 		// ------------------------------------------------
 		// ------------------------------------------------
 		describe('LOCUS', function() {
@@ -890,6 +894,49 @@ describe('Streams', function() {
 
 		// ------------------------------------------------
 		// ------------------------------------------------
+		// ORIGIN
+		describe('ORIGIN', function() {
+			it('does not emit error on empty value', function() {
+				return parseSingle(closeInput('ORIGIN      '))
+				.then((result) => {
+					expect(result.origin).equal('')
+				})
+			})
+
+			it('ignores text on same line as ORIGIN', function() {
+				return parseSingle(closeInput('ORIGIN      abc\n' +
+					'        1 g'))
+				.then((result) => {
+					expect(result.origin).equal('g')
+				})
+			})
+
+			it('single character sequence', function() {
+				return parseSingle(closeInput('ORIGIN      \n' +
+					'        1 g'))
+				.then((result) => {
+					expect(result.origin).equal('g')
+				})
+			})
+
+			it('multiline sequence', function() {
+				return parseSingle(closeInput('ORIGIN      \n' +
+					'        1 gcccttagat aagcttacta gaaagcttgt aagaattagc agacaactga gtaaaaaaat\n' +
+					'       61 ccacccaaaa accaaagggg ataaaaccaa gaaatctaat aattacttaa agcattctaa'))
+				.then((result) => {
+					expect(result.origin).equal('gcccttagataagcttactagaaagcttgtaagaattagcagacaactgagtaaaaaaatccacccaaaaaccaaaggggataaaaccaagaaatctaataattacttaaagcattctaa')
+				})
+			})
+
+			it('multiple ORIGIN sections emits error', function() {
+				let input = 'ORIGIN      \n' +
+					'ORIGIN      \n'
+				return parseThrowsError(closeInput(input))
+			})
+		})
+
+		// ------------------------------------------------
+		// ------------------------------------------------
 		describe('composite records', function() {
 			it('composite #1', function() {
 				return parseSingle(closeInput('LOCUS       NC_019565               1634 bp    DNA     circular CON 30-JUL-2015\n' +
@@ -916,7 +963,12 @@ describe('Streams', function() {
 					'  REMARK    Publication Status: Online-Only\n' +
 					'COMMENT     REFSEQ INFORMATION: The reference sequence was derived from\n' +
 					'            CP003478.\n' +
-					'CONTIG      join(CP003478.1:1..1634)'
+					'CONTIG      join(CP003478.1:1..1634)\n' +
+					'ORIGIN      \n' +
+					'        1 gcccttagat aagcttacta gaaagcttgt aagaattagc agacaactga gtaaaaaaat\n' +
+					'       61 ccacccaaaa accaaagggg ataaaaccaa gaaatctaat aattacttaa agcattctaa\n' +
+					'      121 aaagcttacc cacttgcatg aaaaaatcgc taacatcaga cttgattttt tacacaagct\n' +
+					'      181 cacaagctct cttataagac actc'
 				))
 				.then((result) => {
 					expect(result.locus).deep.equal({
@@ -995,6 +1047,13 @@ describe('Streams', function() {
 					expect(result.comment).equal('REFSEQ INFORMATION: The reference sequence was derived from\nCP003478.')
 
 					expect(result.contig).equal('join(CP003478.1:1..1634)')
+
+					expect(result.origin).equal(
+						'gcccttagataagcttactagaaagcttgtaagaattagcagacaactgagtaaaaaaat' +
+						'ccacccaaaaaccaaaggggataaaaccaagaaatctaataattacttaaagcattctaa' +
+						'aaagcttacccacttgcatgaaaaaatcgctaacatcagacttgattttttacacaagct' +
+						'cacaagctctcttataagacactc'
+					)
 				})
 			})
 		})

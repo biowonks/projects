@@ -12,7 +12,7 @@ class KeywordNode {
 		this.parent_ = null
 		this.children_ = new Map()
 		this.lines_ = []
-		if (optLine)
+		if (typeof optLine === 'string')
 			this.lines_.push(optLine)
 	}
 
@@ -76,6 +76,7 @@ class KeywordNode {
 
 // Constants
 const kKeywordInformationOffset = 12,
+	kOriginSequenceOffset = 10,
 	kNumLocusFields = 7
 	// kIgnoredKeywords = new Set([
 	// 	'NID',
@@ -192,7 +193,15 @@ class GenbankReaderStream extends LineStream {
 				if (!this.currentKeywordNode_)
 					throw new Error('Keyword continuation line found without associated keyword')
 
-				this.currentKeywordNode_.pushLine(this.extractKeywordInfo_(line))
+				// Special handling of different
+				let keywordInfoOffset = null
+				switch (this.currentKeywordNode_.keyword()) {
+					case 'ORIGIN':
+						keywordInfoOffset = kOriginSequenceOffset
+						break
+				}
+
+				this.currentKeywordNode_.pushLine(this.extractKeywordInfo_(line, keywordInfoOffset))
 				done()
 				return
 			}
@@ -246,12 +255,13 @@ class GenbankReaderStream extends LineStream {
 			source: null,
 			references: [],
 			comment: null,
-			contig: null
+			contig: null,
+			origin: null
 		}
 	}
 
-	extractKeywordInfo_(line) {
-		return line.substr(kKeywordInformationOffset).trim()
+	extractKeywordInfo_(line, optOffset) {
+		return line.substr(optOffset || kKeywordInformationOffset).trim()
 	}
 
 	handleKeywordLine_(keyword, keywordInfo) {
@@ -338,6 +348,9 @@ class GenbankReaderStream extends LineStream {
 			case 'CONTIG':
 				this.entry_.contig = this.parseContig_(rootNode)
 				break
+			case 'ORIGIN':
+				this.entry_.origin = this.parseOrigin_(rootNode)
+				break
 
 			default:
 				this.emit('warning', `unhandled root keyword: ${rootNode.keyword()}`)
@@ -348,7 +361,11 @@ class GenbankReaderStream extends LineStream {
 	}
 
 	isKeywordContinuationLine_(line) {
-		return /^ {10}/.test(line)
+		return /^ {10}/.test(line) || (
+			this.currentKeywordNode_ &&
+			this.currentKeywordNode_.keyword() === 'ORIGIN' &&
+			/^\s*\d+ $/.test(line.substr(0, kOriginSequenceOffset))
+		)
 	}
 
 	/**
@@ -677,5 +694,14 @@ class GenbankReaderStream extends LineStream {
 			throw new Error('CONTIG value may not be empty')
 
 		return value
+	}
+
+	parseOrigin_(originNode) {
+		let sequenceLines = originNode.lines()
+		sequenceLines.shift() // Ignore first line
+
+		return sequenceLines
+			.join('')
+			.replace(/ /g, '')
 	}
 }
