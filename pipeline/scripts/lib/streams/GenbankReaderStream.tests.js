@@ -76,7 +76,7 @@ function parseSingle(input) {
 }
 
 describe('Streams', function() {
-	describe('GenBankReaderStream', function() {
+	describe.only('GenBankReaderStream', function() {
 		it('empty input does not return any records', function() {
 			return parse('')
 			.then((results) => {
@@ -163,10 +163,6 @@ describe('Streams', function() {
 		describe('DEFINITION', function() {
 			it('emits error with empty value', function() {
 				return parseThrowsError(closeInput('DEFINITION  '))
-			})
-
-			it('emits error without terminal period', function() {
-				return parseThrowsError(closeInput('DEFINITION  Escherichia coli'))
 			})
 
 			it('period', function() {
@@ -444,10 +440,6 @@ describe('Streams', function() {
 		// ------------------------------------------------
 		// KEYWORDS
 		describe('KEYWORDS', function() {
-			it('emits error if missing terminal period', function() {
-				return parseThrowsError(closeInput('KEYWORDS    chemoreceptor'))
-			})
-
 			it('multiple KEYWORDS sections emits error', function() {
 				let input = 'KEYWORDS    chemoreceptor.\n' +
 					'KEYWORDS    chemotaxis.'
@@ -582,25 +574,25 @@ describe('Streams', function() {
 
 			it('common name on single line', function() {
 				return parseSingle(closeInput('SOURCE      Helicobacter pylori A45'))
-					.then((result) => {
-						expect(result.source).deep.equal({
-							commonName: 'Helicobacter pylori A45',
-							formalName: null,
-							taxonomicRanks: null
-						})
+				.then((result) => {
+					expect(result.source).deep.equal({
+						commonName: 'Helicobacter pylori A45',
+						formalName: null,
+						taxonomicRanks: null
 					})
+				})
 			})
 
 			it('common name on multiple lines', function() {
 				return parseSingle(closeInput('SOURCE      Line 1\n' +
 					'            Line 2'))
-					.then((result) => {
-						expect(result.source).deep.equal({
-							commonName: 'Line 1 Line 2',
-							formalName: null,
-							taxonomicRanks: null
-						})
+				.then((result) => {
+					expect(result.source).deep.equal({
+						commonName: 'Line 1 Line 2',
+						formalName: null,
+						taxonomicRanks: null
 					})
+				})
 			})
 
 			it('emits error on empty formal name', function() {
@@ -628,20 +620,20 @@ describe('Streams', function() {
 					'            Bacteria; Proteobacteria; Epsilonproteobacteria; Campylobacterales;\n' +
 					'            Helicobacteraceae; Helicobacter.'
 				return parseSingle(closeInput(input))
-					.then((result) => {
-						expect(result.source).deep.equal({
-							commonName: 'Helicobacter pylori A45',
-							formalName: 'Helicobacter pylori A45',
-							taxonomicRanks: [
-								'Bacteria',
-								'Proteobacteria',
-								'Epsilonproteobacteria',
-								'Campylobacterales',
-								'Helicobacteraceae',
-								'Helicobacter'
-							]
-						})
+				.then((result) => {
+					expect(result.source).deep.equal({
+						commonName: 'Helicobacter pylori A45',
+						formalName: 'Helicobacter pylori A45',
+						taxonomicRanks: [
+							'Bacteria',
+							'Proteobacteria',
+							'Epsilonproteobacteria',
+							'Campylobacterales',
+							'Helicobacteraceae',
+							'Helicobacter'
+						]
 					})
+				})
 			})
 
 			it('multiple SOURCE sections emits error', function() {
@@ -654,8 +646,180 @@ describe('Streams', function() {
 		// ------------------------------------------------
 		// ------------------------------------------------
 		// REFERENCE
-		describe.only('REFERENCE', function() {
+		describe('REFERENCE', function() {
+			it('emits error if empty value', function() {
+				return parseThrowsError(closeInput('REFERENCE   '))
+			})
 
+			it('emits error if does not begin with positive integer value', function() {
+				return parseThrowsError(closeInput('REFERENCE   0'))
+			})
+
+			it('emits error if no separating space between reference number and notes', function() {
+				return parseThrowsError(closeInput('REFERENCE   1(bases)'))
+			})
+
+			it('requires only positive reference number', function() {
+				return parseSingle(closeInput('REFERENCE   1'))
+				.then((result) => {
+					expect(result.references).deep.equal([
+						{
+							number: 1,
+							notes: null,
+							authors: null,
+							consortium: null,
+							title: null,
+							journal: null,
+							pubmed: null,
+							medline: null,
+							remark: null
+						}
+					])
+				})
+			})
+
+			it('number and notes', function() {
+				return parseSingle(closeInput('REFERENCE   2  (bases 1 to 1634)'))
+				.then((result) => {
+					let ref = result.references[0]
+					expect(ref.number).equal(2)
+					expect(ref.notes).equal('(bases 1 to 1634)')
+				})
+			})
+
+			it('notes may span multiple lines', function() {
+				return parseSingle(closeInput('REFERENCE   2  (bases 1 to\n' +
+					'            1634)'))
+				.then((result) => {
+					let ref = result.references[0]
+					expect(ref.number).equal(2)
+					expect(ref.notes).equal('(bases 1 to 1634)')
+				})
+			})
+
+			let optionalsButNotEmpty = [
+				{subKeyword: '  AUTHORS   ', resultField: 'authors'},
+				{subKeyword: '  CONSRTM   ', resultField: 'consortium'},
+				{subKeyword: '  TITLE     ', resultField: 'title'},
+				{subKeyword: '  JOURNAL   ', resultField: 'journal'},
+				{subKeyword: '  REMARK    ', resultField: 'remark'}
+			]
+			optionalsButNotEmpty.forEach((optionalButNotEmpty) => {
+				let {subKeyword, resultField} = optionalButNotEmpty,
+					friendlySubKeyword = subKeyword.trim()
+
+				it(`emits error if empty value for ${friendlySubKeyword}`, function() {
+					let input = 'REFERENCE   1\n' +
+						`${subKeyword}`
+					return parseThrowsError(closeInput(input))
+				})
+
+				it(`single line value for ${friendlySubKeyword}`, function() {
+					let input = 'REFERENCE   1\n' +
+						`${subKeyword}the first line`
+					return parseSingle(closeInput(input))
+					.then((result) => {
+						let ref = result.references[0]
+						expect(ref[resultField]).equal('the first line')
+					})
+				})
+
+				it(`multiple line value for ${friendlySubKeyword}`, function() {
+					let input = 'REFERENCE   1\n' +
+						`${subKeyword}the first line\n` +
+						'            and the second line'
+					return parseSingle(closeInput(input))
+					.then((result) => {
+						let ref = result.references[0]
+						expect(ref[resultField]).equal('the first line and the second line')
+					})
+				})
+			})
+
+			it('emits error if PUBMED exists without JOURNAL parent', function() {
+				return parseThrowsError(closeInput('REFERENCE   1\n' +
+					'   PUBMED   1234'))
+			})
+
+			// let numberSubKeywords = ['  MEDLINE   ', '   PUBMED   ']
+			let numberSubKeywords = ['   PUBMED   ']
+			numberSubKeywords.forEach((numberSubKeyword) => {
+				let friendlySubKeyword = numberSubKeyword.trim(),
+					resultField = friendlySubKeyword.toLowerCase()
+				it(`emits error if ${friendlySubKeyword} value spans multiple lines`, function() {
+					let input = 'REFERENCE   1\n' +
+						'  JOURNAL   Genome Announc 3 (2) (2015)\n' +
+						`${friendlySubKeyword}12345\n` +
+						'            6789'
+					return parseThrowsError(closeInput(input))
+				})
+
+				it(`emits error if empty value for ${friendlySubKeyword}`, function() {
+					let input = 'REFERENCE   1\n' +
+						'  JOURNAL   Genome Announc 3 (2) (2015)\n' +
+						`${numberSubKeyword}`
+					return parseThrowsError(closeInput(input))
+				})
+
+				it('emits error if contains more than a single positive integer', function() {
+					let input = 'REFERENCE   1\n' +
+						'  JOURNAL   Genome Announc 3 (2) (2015)\n' +
+						`${numberSubKeyword}1 2`
+					return parseThrowsError(closeInput(input))
+				})
+
+				it(`parses integer correctly for ${friendlySubKeyword}`, function() {
+					let input = 'REFERENCE   1\n' +
+						'  JOURNAL   Genome Announc 3 (2) (2015)\n' +
+						`${numberSubKeyword}122`
+
+					return parseSingle(closeInput(input))
+					.then((result) => {
+						let ref = result.references[0]
+						expect(ref[resultField]).equal(122)
+					})
+				})
+			})
+
+			it('multiple references', function() {
+				let input = 'REFERENCE   1\n' +
+					'REFERENCE   2'
+				return parseSingle(closeInput(input))
+				.then((result) => {
+					expect(result.references.length).equal(2)
+					expect(result.references[0].number).equal(1)
+					expect(result.references[1].number).equal(2)
+				})
+			})
+
+			it('complete reference', function() {
+				let input = 'REFERENCE   1  (bases 1 to 1634)\n' +
+					'  AUTHORS   Kersulyte,D., Bertoli,M.T., Tamma,S., Keelan,M., Munday,R.,\n' +
+					'            Geary,J., Veldhuyzen van Zanten,S., Goodman,K.J. and Berg,D.E.\n' +
+					'  TITLE     Complete Genome Sequences of Two Helicobacter pylori Strains from a\n' +
+					'            Canadian Arctic Aboriginal Community\n' +
+					'  JOURNAL   Genome Announc 3 (2) (2015)\n' +
+					'   PUBMED   25883278\n' +
+					'  REMARK    Publication Status: Online-Only'
+				return parseSingle(closeInput(input))
+				.then((result) => {
+					expect(result.references).deep.equal([
+						{
+							number: 1,
+							notes: '(bases 1 to 1634)',
+							authors: 'Kersulyte,D., Bertoli,M.T., Tamma,S., Keelan,M., Munday,R., ' +
+								'Geary,J., Veldhuyzen van Zanten,S., Goodman,K.J. and Berg,D.E.',
+							consortium: null,
+							title: 'Complete Genome Sequences of Two Helicobacter pylori Strains from a ' +
+								'Canadian Arctic Aboriginal Community',
+							journal: 'Genome Announc 3 (2) (2015)',
+							pubmed: 25883278,
+							medline: null,
+							remark: 'Publication Status: Online-Only'
+						}
+					])
+				})
+			})
 		})
 
 		// ------------------------------------------------
@@ -675,8 +839,16 @@ describe('Streams', function() {
 					'SOURCE      Helicobacter pylori A45\n' +
 					'  ORGANISM  Helicobacter pylori A45\n' +
 					'            Bacteria; Proteobacteria; Epsilonproteobacteria; Campylobacterales;\n' +
-					'            Helicobacteraceae; Helicobacter.')
-				)
+					'            Helicobacteraceae; Helicobacter.\n' +
+					'REFERENCE   1  (bases 1 to 1634)\n' +
+					'  AUTHORS   Kersulyte,D., Bertoli,M.T., Tamma,S., Keelan,M., Munday,R.,\n' +
+					'            Geary,J., Veldhuyzen van Zanten,S., Goodman,K.J. and Berg,D.E.\n' +
+					'  TITLE     Complete Genome Sequences of Two Helicobacter pylori Strains from a\n' +
+					'            Canadian Arctic Aboriginal Community\n' +
+					'  JOURNAL   Genome Announc 3 (2) (2015)\n' +
+					'   PUBMED   25883278\n' +
+					'  REMARK    Publication Status: Online-Only'
+				))
 				.then((result) => {
 					expect(result.locus).deep.equal({
 						name: 'NC_019565',
@@ -734,6 +906,22 @@ describe('Streams', function() {
 							'Helicobacter'
 						]
 					})
+
+					expect(result.references).deep.equal([
+						{
+							number: 1,
+							notes: '(bases 1 to 1634)',
+							authors: 'Kersulyte,D., Bertoli,M.T., Tamma,S., Keelan,M., Munday,R., ' +
+								'Geary,J., Veldhuyzen van Zanten,S., Goodman,K.J. and Berg,D.E.',
+							consortium: null,
+							title: 'Complete Genome Sequences of Two Helicobacter pylori Strains from a ' +
+								'Canadian Arctic Aboriginal Community',
+							journal: 'Genome Announc 3 (2) (2015)',
+							pubmed: 25883278,
+							medline: null,
+							remark: 'Publication Status: Online-Only'
+						}
+					])
 				})
 			})
 		})

@@ -42,6 +42,10 @@ class KeywordNode {
 		return this.parent_ === null
 	}
 
+	joinedLines() {
+		return this.lines_.join(' ')
+	}
+
 	keyword() {
 		return this.keyword_
 	}
@@ -49,10 +53,10 @@ class KeywordNode {
 	level() {
 		if (this.keyword_[0] !== ' ')
 			return 0
-		if (this.keyword_.startsWith('  '))
-			return 1
 		if (this.keyword_.startsWith('   '))
 			return 2 // eslint-disable-line no-magic-numbers
+		if (this.keyword_.startsWith('  '))
+			return 1
 
 		throw new Error(`Keyword ${this.keyword_} must begin with 0, 2, or 3 spaces`)
 	}
@@ -155,10 +159,13 @@ const kKeywordInformationOffset = 12,
  * - Generically parses any and all keywords / subkeywords as though each may span multiple lines;
  *   however, only recognized keywords are processed and streamed. Unrecognized keywords do not
  *   have any constraints (apart from the base GenBank format). Recognized keywords and their
- *   associated subkeywords though, are streamed and loosely validated (e.g. DEFINITION is not
- *   allowed to have any subkeywords, SOURCE must have an ORGANISM subkeyword).
+ *   associated subkeywords though, are streamed and loosely validated (e.g. DEFINITION does not
+ *   have to end with a period, SOURCE must have an ORGANISM subkeyword).
  *
  * - No root keyword may occur multiple times per entry.
+ *
+ * TODO:
+ *   Test that empty lines inside comments are treated as continuation lines
  */
 module.exports =
 class GenbankReaderStream extends LineStream {
@@ -253,7 +260,8 @@ class GenbankReaderStream extends LineStream {
 		if (isRootKeyword) {
 			this.processRootKeywordNode_()
 
-			if (this.observedRootKeywords_.has(keyword))
+			// Special case: REFERENCE may occur multiple times
+			if (keyword !== 'REFERENCE' && this.observedRootKeywords_.has(keyword))
 				throw new Error(`Record contains multiple ${keyword} lines`)
 			this.observedRootKeywords_.add(keyword)
 
@@ -270,15 +278,15 @@ class GenbankReaderStream extends LineStream {
 		// Sibling
 		// (current) level 1 -> level 1 (keywordNode) OR
 		// (current) level 2 -> level 2 (keywordNode)
-		else if (keywordLevel === keywordNode.level()) {
+		else if (keywordLevel === this.currentKeywordNode_.level()) {
 			parentNode = this.currentKeywordNode_.parent()
 		}
 		// (current) level 1 -> level 2 (keywordNode)
-		else if (keywordNode.level() === keywordLevel + 1) {
+		else if (keywordLevel - 1 === this.currentKeywordNode_.level()) {
 			// this.currentKeywordNode_.addChild(keywordNode)
 		}
 		// Level 2 -> Level 1 (keywordNode)
-		else if (keywordNode.level() === keywordLevel - 1) {
+		else if (keywordLevel + 1 === this.currentKeywordNode_.level()) {
 			parentNode = this.currentKeywordNode_.parent().parent()
 		}
 
@@ -299,7 +307,7 @@ class GenbankReaderStream extends LineStream {
 				this.entry_.locus = this.parseLocus_(rootNode)
 				break
 			case 'DEFINITION':
-				this.entry_.definition = this.parseDefinition_(rootNode)
+				this.entry_.definition = this.parseNodeValue_(rootNode)
 				break
 			case 'ACCESSION':
 				this.entry_.accession = this.parseAccession_(rootNode)
@@ -385,21 +393,8 @@ class GenbankReaderStream extends LineStream {
 		/* eslint-enable no-magic-numbers */
 	}
 
-	parseDefinition_(definitionNode) {
-		let definition = definitionNode.lines().join(' ')
-		if (!definition)
-			throw new Error('DEFINITION value is required')
-
-		if (!definition.endsWith('.'))
-			throw new Error('DEFINITION must end with a period')
-
-		return definition
-	}
-
 	parseAccession_(accessionNode) {
-		let accessions = accessionNode.lines()
-				.join(' ')
-				.split(/\s+/),
+		let accessions = accessionNode.joinedLines().split(/\s+/),
 			primaryAccession = accessions.shift()
 
 		if (!primaryAccession)
@@ -511,12 +506,9 @@ class GenbankReaderStream extends LineStream {
 	 * @returns {Array.<string>} unique, non-empty keyword result
 	 */
 	parseKeywords_(keywordNode) {
-		let keywordString = keywordNode.lines().join(' ')
+		let keywordString = keywordNode.joinedLines()
 		if (!keywordString)
 			throw new Error('KEYWORDS value is required')
-
-		if (!keywordString.endsWith('.'))
-			throw new Error('KEYWORDS must end with a period')
 
 		let keywords = keywordString.substr(0, keywordString.length - 1)
 			.trim()
@@ -555,7 +547,7 @@ class GenbankReaderStream extends LineStream {
 	 */
 	parseSource_(sourceNode) {
 		let result = {
-			commonName: sourceNode.lines().join(' '),
+			commonName: sourceNode.joinedLines(),
 			formalName: null,
 			taxonomicRanks: null
 		}
@@ -602,63 +594,58 @@ class GenbankReaderStream extends LineStream {
 	}
 
 	parseReference_(referenceNode) {
-		let value = referenceNode.lines().join(' ')
+		let value = referenceNode.joinedLines()
 		if (!value)
 			throw new Error('REFERENCE value is required')
 
-		let matches = /([1-9]\d*)\s+(.*)/.exec(value)
+		let matches = /^([1-9]\d*)/.exec(value)
 		if (!matches)
-			throw new Error('REFERENCE must adhere to the format <number> <notes>')
+			throw new Error('REFERENCE must adhere to the format <number>[ <notes>]')
 
-		let journalNode = referenceNode.child('  JOURNAL')
+		let journalNode = referenceNode.child('  JOURNAL'),
+			remainingValue = value.substr(matches[1].length)
+
+		if (remainingValue && remainingValue[0] !== ' ')
+			throw new Error('REFERENCE must adhere to the format <number>[ <notes>]')
 
 		return {
 			number: Number(matches[1]),
-			notes: matches[2].trimRight(),
-			authors: this.parseReferenceAuthors_(referenceNode.child('  AUTHORS')),
-			consortium: this.parseReferenceConsortium_(referenceNode.child('  CONSRTM')),
-			title: this.parseReferenceTitle_(referenceNode.child('  TITLE')),
-			journal: this.parseReferenceJournal_(journalNode),
-			pubmed: journalNode ? this.parseReferencePubmed_(journalNode.child('   PUBMED')) : null,
-			medline: this.parseReferenceMedline_(referenceNode.child('  MEDLINE')),
-			remark: this.parseReferenceRemark_(referenceNode.child('  REMARK'))
+			notes: remainingValue.trim() || null,
+			authors: this.parseNodeValue_(referenceNode.child('  AUTHORS')),
+			consortium: this.parseNodeValue_(referenceNode.child('  CONSRTM')),
+			title: this.parseNodeValue_(referenceNode.child('  TITLE')),
+			journal: this.parseNodeValue_(journalNode),
+			pubmed: journalNode ? this.parseNumber_(journalNode.child('   PUBMED')) : null,
+			medline: this.parseNumber_(referenceNode.child('  MEDLINE')),
+			remark: this.parseNodeValue_(referenceNode.child('  REMARK'))
 		}
 	}
 
-	parseReferenceAuthors_(authorsNode) {
-		if (!authorsNode)
-			throw new Error('  AUTHORS is a required sub-keyword of REFERENCE')
+	parseNodeValue_(keywordNode) {
+		if (!keywordNode)
+			return null
 
-		let authorsString = authorsNode.lines().join(' ')
-		if (authorsString.endsWith('.'))
-			authorsString = authorsString.slice(0, -1)
+		let result = keywordNode.joinedLines()
+		if (!result)
+			throw new Error(`${keywordNode.keyword()} value may not be empty`)
 
-		return authorsString
+		return result
 	}
 
-	parseReferenceConsortium_(consortiumNode) {
+	parseNumber_(keywordNode) {
+		if (!keywordNode)
+			return null
 
-	}
+		let value = keywordNode.lines()[0]
+		if (!value)
+			throw new Error(`${keywordNode.keyword()} value may not be empty`)
 
-	parseReferenceTitle_(titleNode) {
-		// if (!titleNode)
-		// 	return null
-	}
+		if (keywordNode.lines().length > 1)
+			throw new Error(`${keywordNode.keyword()} value may not span multiple lines`)
 
-	parseReferenceJournal_(journalNode) {
-		if (!journalNode)
-			throw new Error('  JOURNAL is a required sub-keyword of REFERENCE')
-	}
+		if (!/^\d*$/.test(value))
+			throw new Error(`${keywordNode.keyword()} value is not a valid unsigned integer`)
 
-	parseReferencePubmed_(pubmedNode) {
-
-	}
-
-	parseReferenceMedline_(medlineNode) {
-
-	}
-
-	parseReferenceRemark_(remarkNode) {
-
+		return Number(value)
 	}
 }
