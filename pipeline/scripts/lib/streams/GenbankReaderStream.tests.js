@@ -1035,6 +1035,109 @@ describe('Streams', function() {
 					}
 				])
 			})
+
+			it('empty free-form text is preserved as empty string', function() {
+				let input = featureWrapper(
+					'     source          1..204\n' +
+					'                     /name=""'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'source',
+						location: '1..204',
+						name: ''
+					}
+				])
+			})
+
+			it('free-form double quotes are converted to single quotes', function() {
+				let input = featureWrapper(
+					'     source          1..204\n' +
+					'                     /name="here is a ""quote""'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'source',
+						location: '1..204',
+						name: 'here is a "quote"'
+					}
+				])
+			})
+
+			it('literally parses controlled vocabularly without quotes', function() {
+				let input = featureWrapper(
+					'     gene            1..204\n' +
+					'                     /direction=leFt'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'gene',
+						location: '1..204',
+						direction: 'leFt'
+					}
+				])
+			})
+
+			it('values are trimmed', function() {
+				let input = featureWrapper(
+					'     gene            1..204\n' +
+					'                     /direction= leFt '
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'gene',
+						location: '1..204',
+						direction: 'leFt'
+					}
+				])
+			})
+
+			it('values inside free form quotes are not trimmed', function() {
+				let input = featureWrapper(
+					'     gene            1..204\n' +
+					'                     /description= " transmutase "'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'gene',
+						location: '1..204',
+						description: ' transmutase '
+					}
+				])
+			})
+
+			let numbers = [0, 1, 2., 2.3, 0., 0.59]
+			numbers.forEach((number) => {
+				it(`numeric value ${number} is interpreted as number`, function() {
+					let input = featureWrapper(
+						'     gene            1..204\n' +
+						'                     /saturation=' + number
+					)
+					return parseAndExpect(input, [
+						{
+							key: 'gene',
+							location: '1..204',
+							saturation: number
+						}
+					])
+				})
+			})
+
+			it('multiple features', function() {
+				let input = featureWrapper(
+					'     gene            1..204\n' +
+					'                     /description="transmutase"\n' +
+					'                     /saturation=5'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'gene',
+						location: '1..204',
+						description: 'transmutase',
+						saturation: 5
+					}
+				])
+			})
 		})
 
 		// ------------------------------------------------

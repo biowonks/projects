@@ -871,8 +871,8 @@ class GenbankReaderStream extends LineStream {
 
 		return {
 			name: matches[1],
-			value: typeof matches[2] === 'string' ? matches[2] : true
-			// qualifiers without any value are given value of   ^^^^
+			value: typeof matches[2] === 'string' ? matches[2].trim() : true
+			// qualifiers without any value are given value of          ^^^^
 			// true. For example, the pseudo qualifier. This facilitates
 			// testing for this value in the resulting object.
 		}
@@ -892,7 +892,7 @@ class GenbankReaderStream extends LineStream {
 			else if (freeFormText)
 				// Remove the leading and trailing quotes, and decode double quotes
 				value = value.slice(1, -1).replace(/""/g, '"')
-			else if (/^-?\d+(.\d+)?$/.test(value))
+			else if (/^-?\d+(\.\d*)?$/.test(value))
 				value = Number(value)
 		}
 
