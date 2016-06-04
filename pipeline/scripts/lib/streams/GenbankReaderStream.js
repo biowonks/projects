@@ -214,6 +214,11 @@ class GenbankReaderStream extends LineStream {
 	// Overrided methods
 	_transform(line, encoding, done) {
 		try {
+			// --------------------------------------------
+			if (!this.entry_)
+				this.entry_ = this.blankEntry_()
+
+			// --------------------------------------------
 			if (this.parsingFeatures_) {
 				// Hackish way of checking for another keyword without the full check
 				let anotherFeatureLine = line[0] === ' '
@@ -231,10 +236,6 @@ class GenbankReaderStream extends LineStream {
 
 				this.parsingFeatures_ = false
 			}
-
-			// --------------------------------------------
-			if (!this.entry_)
-				this.entry_ = this.blankEntry_()
 
 			// --------------------------------------------
 			if (this.isKeywordContinuationLine_(line)) {
@@ -771,6 +772,7 @@ class GenbankReaderStream extends LineStream {
 	 * 2) The line is a continuation line of an existing feature
 	 *
 	 * @param {string} line input line belonging to feature table
+	 * @returns {undefined}
 	 */
 	handleFeatureLine_(line) {
 		// Case 2: continuation line
@@ -793,6 +795,7 @@ class GenbankReaderStream extends LineStream {
 			}
 
 			this.currentFeature_ = feature
+			return
 		}
 
 		throw new Error('Internal error: unexpected feature table line: ' + line)
@@ -816,6 +819,8 @@ class GenbankReaderStream extends LineStream {
 		// Case 2: start of another qualifier
 		if (isQualifier) {
 			let qualifier = this.parseQualifier_(featureInfo)
+			if (qualifier.name === 'key' || qualifier.name === 'location')
+				throw new Error('qualifier name must not be "key" or "location"')
 
 			this.handleCurrentQualifier_()
 
@@ -840,7 +845,7 @@ class GenbankReaderStream extends LineStream {
 	}
 
 	featureFromLine_(line) {
-		let matches = /^ {6}([\w_\-'*]{1,15}) /.exec(line)
+		let matches = /^ {5}([\w_\-'*]{1,15}) /.exec(line)
 		if (matches) {
 			return {
 				key: matches[1],
@@ -866,7 +871,10 @@ class GenbankReaderStream extends LineStream {
 
 		return {
 			name: matches[1],
-			value: matches[2]
+			value: typeof matches[2] === 'string' ? matches[2] : true
+			// qualifiers without any value are given value of   ^^^^
+			// true. For example, the pseudo qualifier. This facilitates
+			// testing for this value in the resulting object.
 		}
 	}
 
@@ -874,8 +882,23 @@ class GenbankReaderStream extends LineStream {
 		if (!this.currentQualifierName_)
 			return
 
+		let value = this.currentQualifierValue_
+		if (typeof value === 'string') {
+			let startsWithQuote = value.startsWith('"'),
+				endsWithQuote = value.endsWith('"'),
+				freeFormText = startsWithQuote || endsWithQuote
+			if (startsWithQuote && !endsWithQuote || !startsWithQuote && endsWithQuote)
+				throw new Error(`Invalid qualifier free-form text for qualifier, ${this.currentQualifierName_}: missing beginning / end quotes`)
+			else if (freeFormText)
+				// Remove the leading and trailing quotes, and decode double quotes
+				value = value.slice(1, -1).replace(/""/g, '"')
+			else if (/^-?\d+(.\d+)?$/.test(value))
+				value = Number(value)
+		}
+
+		this.currentFeature_[this.currentQualifierName_] = value
+
 		// TODO: deal with the specific qualifier values and possibilities
-		// TODO: if free form text, decode (i.e. escaped quotes, etc.)
 
 		this.currentQualifierName_ = null
 		this.currentQualifierValue_ = null

@@ -76,8 +76,8 @@ function parseSingle(input) {
 }
 
 describe('Streams', function() {
-	// describe('GenBankReaderStream', function() {
-	describe.only('GenBankReaderStream', function() {
+	describe('GenBankReaderStream', function() {
+	// describe.only('GenBankReaderStream', function() {
 		it('empty input does not return any records', function() {
 			return parse('')
 			.then((results) => {
@@ -932,6 +932,108 @@ describe('Streams', function() {
 				let input = 'ORIGIN      \n' +
 					'ORIGIN      \n'
 				return parseThrowsError(closeInput(input))
+			})
+		})
+
+		// ------------------------------------------------
+		// ------------------------------------------------
+		// Feature table
+		describe.only('FEATURES', function() {
+			function featureWrapper(value) {
+				return closeInput('FEATURES    \n' + value)
+			}
+
+			function parseAndExpect(input, expected) {
+				return parseSingle(input)
+				.then((result) => {
+					expect(result.features).deep.equal(expected)
+				})
+			}
+
+			it('no features returns empty array', function() {
+				return parseSingle(closeInput('FEATURES    '))
+				.then((result) => {
+					expect(result.features).deep.equal([])
+				})
+			})
+
+			it('multiple FEATURES sections emits error', function() {
+				let input = 'FEATURES    \n' +
+					'FEATURES    '
+				return parseThrowsError(closeInput(input))
+			})
+
+			it('emits error if continuation line without associated feature key', function() {
+				let input = 'FEATURES    \n' +
+					'                     /pseudo'
+				return parseThrowsError(closeInput(input))
+			})
+
+			it('emits error if qualifier name is "key"', function() {
+				let input = 'FEATURES    \n' +
+					'     source          1..204\n' +
+					'                     /key'
+				return parseThrowsError(closeInput(input))
+			})
+
+			it('emits error if qualifier name is "key"', function() {
+				let input = 'FEATURES    \n' +
+					'     source          1..204\n' +
+					'                     /location'
+				return parseThrowsError(closeInput(input))
+			})
+
+			it('solely location', function() {
+				let input = featureWrapper('     source          1..204')
+				return parseAndExpect(input, [
+					{
+						key: 'source',
+						location: '1..204'
+					}
+				])
+			})
+
+			it('location spans multiple lines', function() {
+				let input = featureWrapper(
+					'     source          1..\n' +
+					'                     204\n' +
+					'                     /pseudo'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'source',
+						location: '1..204',
+						pseudo: true
+					}
+				])
+			})
+
+			it('valueless qualifier', function() {
+				let input = featureWrapper(
+					'     source          1..204\n' +
+					'                     /pseudo'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'source',
+						location: '1..204',
+						pseudo: true
+					}
+				])
+			})
+
+			it('empty free-form text is preserved as empty string', function() {
+				let input = featureWrapper(
+					'     source          1..204\n' +
+					'                     /name=""'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'source',
+						location: '1..204',
+						name: ''
+					}
+				])
 			})
 		})
 
