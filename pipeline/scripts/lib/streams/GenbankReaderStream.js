@@ -189,6 +189,17 @@ const kKeywordInformationOffset = 12,
  * - Location operators may not have a space between its name and the opening parenthesis
  * - Valid boolean values are yes and no
  * - <integer> refers to unsigned integer values
+ *
+ * - Unfortunately, the INSDC does not document which qualifiers may have multiple
+ *   values (which are formatted with repeating qualifier names). I presume this is
+ *   to make it more extensible and simpler to augment by 3rd parties. To this end,
+ *   all qualifier values are wrapped inside an array (which will usually only have
+ *   one element). The only exception to this rule are valueless qualifiers (e.g.
+ *   /pseudo) which are assigned true.
+ *
+ *   The resulting data structure is harder to read and more bulky; however, it
+ *   provides a reliable output for consumers as well as supporting future qualifiers
+ *   with multiple values without having to modify the code.
  */
 module.exports =
 class GenbankReaderStream extends LineStream {
@@ -791,7 +802,7 @@ class GenbankReaderStream extends LineStream {
 
 			if (this.currentFeature_) {
 				this.handleCurrentQualifier_()
-				this.entry.features_.push(this.currentFeature_)
+				this.entry_.features_.push(this.currentFeature_)
 			}
 
 			this.currentFeature_ = feature
@@ -864,6 +875,13 @@ class GenbankReaderStream extends LineStream {
 		return line.substr(kFeatureInformationOffset).trim()
 	}
 
+	/**
+	 * Any processing of the qualifier value should be postponed to when all lines of the qualifier
+	 * have been parsed (::handleCurrentQualifier_()) and not in this function.
+	 *
+	 * @param {string} featureInfo the first line (and perhaps the only line) of the qualifier value
+	 * @return {object} initial qualifier name and value
+	 */
 	parseQualifier_(featureInfo) {
 		let matches = /^\/([\w_\-'*]{1,20})(?:=(.+))?/.exec(featureInfo)
 		if (!matches)
@@ -896,9 +914,28 @@ class GenbankReaderStream extends LineStream {
 				value = Number(value)
 		}
 
-		this.currentFeature_[this.currentQualifierName_] = value
+		// ---------------------------------------
+		// All lines have been parsed for this qualifier. Perform any relevant processing
+		// before pushing onto the current feature.
+		switch (this.currentQualifierName_) {
+			case 'translation':
+				value = value.replace(/\s+/g, '')
+				break
+		}
 
-		// TODO: deal with the specific qualifier values and possibilities
+		let hasValue = value !== true
+		if (hasValue) {
+			// All qualifier values are stored inside arrays to accommodate multiple
+			// values with the same qualifier name
+			if (!this.currentFeature_[this.currentQualifierName_])
+				this.currentFeature_[this.currentQualifierName_] = [value]
+			else
+				this.currentFeature_[this.currentQualifierName_].push(value)
+		}
+		else {
+			// e.g. /pseudo
+			this.currentFeature_[this.currentQualifierName_] = value
+		}
 
 		this.currentQualifierName_ = null
 		this.currentQualifierValue_ = null

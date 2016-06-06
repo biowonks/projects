@@ -938,7 +938,7 @@ describe('Streams', function() {
 		// ------------------------------------------------
 		// ------------------------------------------------
 		// Feature table
-		describe.only('FEATURES', function() {
+		describe('FEATURES', function() {
 			function featureWrapper(value) {
 				return closeInput('FEATURES    \n' + value)
 			}
@@ -1031,7 +1031,7 @@ describe('Streams', function() {
 					{
 						key: 'source',
 						location: '1..204',
-						name: ''
+						name: ['']
 					}
 				])
 			})
@@ -1045,7 +1045,7 @@ describe('Streams', function() {
 					{
 						key: 'source',
 						location: '1..204',
-						name: ''
+						name: ['']
 					}
 				])
 			})
@@ -1059,7 +1059,7 @@ describe('Streams', function() {
 					{
 						key: 'source',
 						location: '1..204',
-						name: 'here is a "quote"'
+						name: ['here is a "quote"']
 					}
 				])
 			})
@@ -1073,7 +1073,7 @@ describe('Streams', function() {
 					{
 						key: 'gene',
 						location: '1..204',
-						direction: 'leFt'
+						direction: ['leFt']
 					}
 				])
 			})
@@ -1087,7 +1087,7 @@ describe('Streams', function() {
 					{
 						key: 'gene',
 						location: '1..204',
-						direction: 'leFt'
+						direction: ['leFt']
 					}
 				])
 			})
@@ -1101,7 +1101,7 @@ describe('Streams', function() {
 					{
 						key: 'gene',
 						location: '1..204',
-						description: ' transmutase '
+						description: [' transmutase ']
 					}
 				])
 			})
@@ -1117,7 +1117,7 @@ describe('Streams', function() {
 						{
 							key: 'gene',
 							location: '1..204',
-							saturation: number
+							saturation: [number]
 						}
 					])
 				})
@@ -1127,14 +1127,56 @@ describe('Streams', function() {
 				let input = featureWrapper(
 					'     gene            1..204\n' +
 					'                     /description="transmutase"\n' +
+					'                     /citation=[2]\n' +
 					'                     /saturation=5'
 				)
 				return parseAndExpect(input, [
 					{
 						key: 'gene',
 						location: '1..204',
-						description: 'transmutase',
-						saturation: 5
+						description: ['transmutase'],
+						citation: ['[2]'],
+						saturation: [5]
+					}
+				])
+			})
+
+			it('qualifier with multiple values', function() {
+				let input = featureWrapper(
+					'     gene            1..204\n' +
+					'                     /saturation=5\n' +
+					'                     /saturation=6'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'gene',
+						location: '1..204',
+						saturation: [5, 6]
+					}
+				])
+			})
+
+			it('translated sequences do not have whitespace', function() {
+				let input = featureWrapper(
+					'     CDS             1..204\n' +
+					'                     /translation="MQFQKALFPLPLLFLSYCIAEENGAYASVGFEYSISHAVEHNNP\n' +
+					'                     FLNQERIQIISNAQNKIYKLNQVKNEITNMPNTFAYINNALKNNSKLTPTEMQAEQYY\n' +
+					'                     LQSTF"\n' +
+					'                     /inference="EXISTENCE: similar to AA\n' +
+					'                     sequence:RefSeq:WP_001169510.1"'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'CDS',
+						location: '1..204',
+						translation: [
+							'MQFQKALFPLPLLFLSYCIAEENGAYASVGFEYSISHAVEHNNP' +
+							'FLNQERIQIISNAQNKIYKLNQVKNEITNMPNTFAYINNALKNNSKLTPTEMQAEQYY' +
+							'LQSTF'
+						],
+						inference: [
+							'EXISTENCE: similar to AA sequence:RefSeq:WP_001169510.1'
+						]
 					}
 				])
 			})
@@ -1143,7 +1185,7 @@ describe('Streams', function() {
 		// ------------------------------------------------
 		// ------------------------------------------------
 		describe('composite records', function() {
-			it('composite #1', function() {
+			it.only('composite #1', function() {
 				return parseSingle(closeInput('LOCUS       NC_019565               1634 bp    DNA     circular CON 30-JUL-2015\n' +
 					'DEFINITION  Helicobacter pylori Aklavik86 plasmid p2HPAKL86, complete sequence.\n' +
 					'ACCESSION   NC_019565\n' +
@@ -1168,6 +1210,32 @@ describe('Streams', function() {
 					'  REMARK    Publication Status: Online-Only\n' +
 					'COMMENT     REFSEQ INFORMATION: The reference sequence was derived from\n' +
 					'            CP003478.\n' +
+					'FEATURES             Location/Qualifiers\n' +
+					'     source          1..1494183\n' +
+					'                     /organism="Helicobacter pylori Aklavik86"\n' +
+					'                     /mol_type="genomic DNA"\n' +
+					'                     /strain="Aklavik86"\n' +
+					'                     /host="Homo sapiens"\n' +
+					'                     /db_xref="taxon:1055532"\n' +
+					'                     /country="Canada: Aklavik village, Northwest Territories"\n' +
+					'     gene            complement(11..427)\n' +
+					'                     /locus_tag="HPAKL86_RS00005"\n' +
+					'                     /old_locus_tag="HPAKL86_00005"\n' +
+					'     CDS             complement(11..427)\n' +
+					'                     /locus_tag="HPAKL86_RS00005"\n' +
+					'                     /old_locus_tag="HPAKL86_00005"\n' +
+					'                     /inference="EXISTENCE: similar to AA\n' +
+					'                     sequence:RefSeq:WP_015086508.1"\n' +
+					'                     /note="Derived by automated computational analysis using\n' +
+					'                     gene prediction method: Protein Homology."\n' +
+					'                     /codon_start=1\n' +
+					'                     /transl_table=11\n' +
+					'                     /product="transcription antitermination protein NusB"\n' +
+					'                     /protein_id="WP_015086508.1"\n' +
+					'                     /db_xref="GI:504899406"\n' +
+					'                     /translation="MATRTQARGAVVELLYAFESGNEEIKKIASSMLEEKKIKNNQLA\n' +
+					'                     FALSLFNGVLEKINEIDALIEPHLKDWDFKRLGSMEKAILRLGAYEIGFTPTQNPIII\n' +
+					'                     NECIELGKLYAEPNTPKFLNAILDSLSKKLAQKSLN"\n' +
 					'CONTIG      join(CP003478.1:1..1634)\n' +
 					'ORIGIN      \n' +
 					'        1 gcccttagat aagcttacta gaaagcttgt aagaattagc agacaactga gtaaaaaaat\n' +
@@ -1250,6 +1318,39 @@ describe('Streams', function() {
 					])
 
 					expect(result.comment).equal('REFSEQ INFORMATION: The reference sequence was derived from\nCP003478.')
+
+					expect(result.features).deep.equal([
+						{
+							key: 'source',
+							location: '1..1494183',
+							organism: ['Helicobacter pylori Aklavik86'],
+							mol_type: ['genomic DNA'],
+							strain: ['Aklavik86'],
+							host: ['Homo sapiens'],
+							db_xref: ['taxon:1055532'],
+							country: ['Canada: Aklavik village, Northwest Territories']
+						},
+						{
+							key: 'gene',
+							location: 'complement(11..427)',
+							locus_tag: ['HPAKL86_RS00005'],
+							old_locus_tag: ['HPAKL86_00005']
+						},
+						{
+							key: 'CDS',
+							location: 'complement(11..427)',
+							locus_tag: ['HPAKL86_RS00005'],
+							old_locus_tag: ['HPAKL86_00005'],
+							inference: ['EXISTENCE: similar to AA sequence:RefSeq:WP_015086508.1'],
+							note: ['Derived by automated computational analysis using gene prediction method: Protein Homology.'],
+							codon_start: [1],
+							transl_table: [11],
+							product: ['transcription antitermination protein NusB'],
+							protein_id: ['WP_015086508.1'],
+							db_xref: ['GI:504899406'],
+							translation: ['MATRTQARGAVVELLYAFESGNEEIKKIASSMLEEKKIKNNQLAFALSLFNGVLEKINEIDALIEPHLKDWDFKRLGSMEKAILRLGAYEIGFTPTQNPIIINECIELGKLYAEPNTPKFLNAILDSLSKKLAQKSLN']
+						}
+					])
 
 					expect(result.contig).equal('join(CP003478.1:1..1634)')
 
