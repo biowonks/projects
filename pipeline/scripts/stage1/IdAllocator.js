@@ -36,7 +36,7 @@ class IdAllocator {
 	 *
 	 * @param {string} sequenceName name of sequence in database
 	 * @param {number} amount number of ids to allocate
-	 * @return {Array.<number>} 2-element array denoting the range of ids that have been allocated
+	 * @returns {Array.<number>} 2-element array denoting the range of ids that have been allocated
 	 */
 	reserve(sequenceName, amount) {
 		assert(typeof amount === 'number' && amount > 0, 'amount must be a positive integer')
