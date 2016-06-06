@@ -154,7 +154,7 @@ exports.download = function(url, optDestFile) {
  *
  * @param {string} url URL
  * @param {string?} optDestFile see above for details
- * @return {string} absolute path to the computed destFile
+ * @returns {string} absolute path to the computed destFile
  */
 function determineDestFile_(url, optDestFile) {
 	if (!optDestFile)

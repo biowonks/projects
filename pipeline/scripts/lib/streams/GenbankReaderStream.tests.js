@@ -76,8 +76,7 @@ function parseSingle(input) {
 }
 
 describe('Streams', function() {
-	// describe('GenBankReaderStream', function() {
-	describe.only('GenBankReaderStream', function() {
+	describe('GenBankReaderStream', function() {
 		it('empty input does not return any records', function() {
 			return parse('')
 			.then((results) => {

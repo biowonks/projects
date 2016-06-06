@@ -44,7 +44,7 @@ class FastaSeq extends Seq {
 
 	/**
 	 * @param {number} charsPerLine number of sequence characters per line
-	 * @return {string} FASTA sequence portion
+	 * @returns {string} FASTA sequence portion
 	 */
 	spliceNewlines_(charsPerLine) {
 		assert(charsPerLine >= 0, 'charsPerLine must be 0 or a positive integer')

@@ -4,75 +4,8 @@
 let assert = require('assert')
 
 // Local
-let LineStream = require('./LineStream')
-
-class KeywordNode {
-	constructor(keyword, optLine) {
-		this.keyword_ = keyword
-		this.parent_ = null
-		this.children_ = new Map()
-		this.lines_ = []
-		if (typeof optLine === 'string')
-			this.lines_.push(optLine)
-	}
-
-	addChild(child) {
-		assert(child !== this)
-		child.parent_ = this
-		this.children_.set(child.keyword_, child)
-	}
-
-	child(keyword) {
-		return this.children_.get(keyword)
-	}
-
-	children() {
-		return this.children_
-	}
-
-	hasChildren() {
-		return this.children_.size > 0
-	}
-
-	isLeaf() {
-		return !this.hasChildren()
-	}
-
-	isRoot() {
-		return this.parent_ === null
-	}
-
-	joinedLines() {
-		return this.lines_.join(' ')
-	}
-
-	keyword() {
-		return this.keyword_
-	}
-
-	level() {
-		if (this.keyword_[0] !== ' ')
-			return 0
-		if (this.keyword_.startsWith('   '))
-			return 2 // eslint-disable-line no-magic-numbers
-		if (this.keyword_.startsWith('  '))
-			return 1
-
-		throw new Error(`Keyword ${this.keyword_} must begin with 0, 2, or 3 spaces`)
-	}
-
-	lines() {
-		return this.lines_
-	}
-
-	parent() {
-		return this.parent_
-	}
-
-	pushLine(line) {
-		this.lines_.push(line)
-	}
-}
+let GenbankKeywordNode = require('../bio/GenbankKeywordNode'),
+	LineStream = require('./LineStream')
 
 // Constants
 const kKeywordInformationOffset = 12,
@@ -326,7 +259,7 @@ class GenbankReaderStream extends LineStream {
 	}
 
 	handleKeywordLine_(keyword, keywordInfo) {
-		let keywordNode = new KeywordNode(keyword, keywordInfo),
+		let keywordNode = new GenbankKeywordNode(keyword, keywordInfo),
 			keywordLevel = keywordNode.level()
 
 		let isRootKeyword = keywordLevel === 0
@@ -346,26 +279,19 @@ class GenbankReaderStream extends LineStream {
 			return
 		}
 
+		// Child of the current keyword node
+		// (current) root -> Level 1 (keywordNode) OR
+		// (current) level 1 -> level 2 (keywordNode)
 		let parentNode = this.currentKeywordNode_
 
-		// (current) root -> Level 1 (keywordNode)
-		if (this.currentKeywordNode_.isRoot()) {
-			assert(keywordNode.level() !== keywordLevel + 1, 'invalid sublevel keyword')
-		}
 		// Sibling
 		// (current) level 1 -> level 1 (keywordNode) OR
 		// (current) level 2 -> level 2 (keywordNode)
-		else if (keywordLevel === this.currentKeywordNode_.level()) {
+		if (keywordLevel === this.currentKeywordNode_.level())
 			parentNode = this.currentKeywordNode_.parent()
-		}
-		// (current) level 1 -> level 2 (keywordNode)
-		else if (keywordLevel - 1 === this.currentKeywordNode_.level()) {
-			// this.currentKeywordNode_.addChild(keywordNode)
-		}
 		// Level 2 -> Level 1 (keywordNode)
-		else if (keywordLevel + 1 === this.currentKeywordNode_.level()) {
+		else if (keywordLevel + 1 === this.currentKeywordNode_.level())
 			parentNode = this.currentKeywordNode_.parent().parent()
-		}
 
 		if (parentNode.level() + 1 !== keywordLevel)
 			throw new Error(`invalid sublevel for keyword: ${keyword}`)
@@ -531,7 +457,7 @@ class GenbankReaderStream extends LineStream {
 	 * and "Assembly". But rather than just support this set, generically parses all resources
 	 * that adhere to the format '<resource name>:<csv list of identifiers>'.
 	 *
-	 * @param {KeywordNode} dbLinkNode associated keywordInfo lines
+	 * @param {GenbankKeywordNode} dbLinkNode associated keywordInfo lines
 	 * @returns {object} map of the associated resource and their associated identifiers
 	 */
 	parseDbLink_(dbLinkNode) {
@@ -599,7 +525,7 @@ class GenbankReaderStream extends LineStream {
 	/**
 	 * Ignores empty values and removes duplicates.
 	 *
-	 * @param {KeywordNode} keywordNode input keyword lines
+	 * @param {GenbankKeywordNode} keywordNode input keyword lines
 	 * @returns {Array.<string>} unique, non-empty keyword result
 	 */
 	parseKeywords_(keywordNode) {
@@ -639,7 +565,7 @@ class GenbankReaderStream extends LineStream {
 	 * Obviously if the first taxonomic value is greater than 68 characters, this will be
 	 * erroneously considered part of the common name.
 	 *
-	 * @param {KeywordNode} sourceNode root node containing SOURCE information
+	 * @param {GenbankKeywordNode} sourceNode root node containing SOURCE information
 	 * @returns {object} parsed information
 	 */
 	parseSource_(sourceNode) {
@@ -880,7 +806,7 @@ class GenbankReaderStream extends LineStream {
 	 * have been parsed (::handleCurrentQualifier_()) and not in this function.
 	 *
 	 * @param {string} featureInfo the first line (and perhaps the only line) of the qualifier value
-	 * @return {object} initial qualifier name and value
+	 * @returns {object} initial qualifier name and value
 	 */
 	parseQualifier_(featureInfo) {
 		let matches = /^\/([\w_\-'*]{1,20})(?:=(.+))?/.exec(featureInfo)

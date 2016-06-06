@@ -49,5 +49,7 @@ class TaxonomyService {
 	 */
 	taxonomicGroup(phylum, classs) {
 		throw new Error('Not yet implemented')
+
+		return null
 	}
 }

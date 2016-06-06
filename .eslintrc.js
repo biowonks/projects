@@ -32,14 +32,21 @@ module.exports = {
 		'no-invalid-regexp': 2,
 		'no-irregular-whitespace': 2,
 		'no-negated-in-lhs': 2,
-		'no-obj-calls': 1,        
+		'no-obj-calls': 1,
 		'no-regex-spaces': 1,
 		'no-sparse-arrays': 2,
 		'no-unexpected-multiline': 2,
 		'no-unreachable': 1,
 		'no-unsafe-finally': 2,
 		'use-isnan': 2,
-		'valid-jsdoc': 1,
+		'valid-jsdoc': [1, {
+			prefer: {
+				return: 'returns'
+			},
+			requireParamDescription: false,
+			requireReturn: false,
+			requireReturnDescription: false
+		}],
 		'valid-typeof': 2,
 
 		// Best practices
