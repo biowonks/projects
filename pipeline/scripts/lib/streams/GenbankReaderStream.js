@@ -802,7 +802,7 @@ class GenbankReaderStream extends LineStream {
 
 			if (this.currentFeature_) {
 				this.handleCurrentQualifier_()
-				this.entry_.features_.push(this.currentFeature_)
+				this.entry_.features.push(this.currentFeature_)
 			}
 
 			this.currentFeature_ = feature

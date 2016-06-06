@@ -76,8 +76,8 @@ function parseSingle(input) {
 }
 
 describe('Streams', function() {
-	describe('GenBankReaderStream', function() {
-	// describe.only('GenBankReaderStream', function() {
+	// describe('GenBankReaderStream', function() {
+	describe.only('GenBankReaderStream', function() {
 		it('empty input does not return any records', function() {
 			return parse('')
 			.then((results) => {
@@ -1185,7 +1185,7 @@ describe('Streams', function() {
 		// ------------------------------------------------
 		// ------------------------------------------------
 		describe('composite records', function() {
-			it.only('composite #1', function() {
+			it('composite #1', function() {
 				return parseSingle(closeInput('LOCUS       NC_019565               1634 bp    DNA     circular CON 30-JUL-2015\n' +
 					'DEFINITION  Helicobacter pylori Aklavik86 plasmid p2HPAKL86, complete sequence.\n' +
 					'ACCESSION   NC_019565\n' +
