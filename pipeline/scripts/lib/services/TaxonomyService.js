@@ -34,7 +34,6 @@ class TaxonomyService {
 		})
 	}
 
-	// eslint-disable-next-line
 	/**
 	 * Given the phylum and class, return the major taxonomic group. In most cases,
 	 * this is simply the phlum; however, the class should be returned if the phylum
@@ -46,6 +45,6 @@ class TaxonomyService {
 	 * @returns {string} the major taxnomic group
 	 */
 	taxonomicGroup(phylum, classs) {
-		throw new Error('Not yet implemented')
+		return phylum.toLowerCase() === 'proteobacteria' ? classs : phylum
 	}
 }

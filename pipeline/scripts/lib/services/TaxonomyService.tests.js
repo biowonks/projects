@@ -80,7 +80,17 @@ describe('Services', function() {
 		})
 
 		describe('taxonomicGroup', function() {
+			it('non-proteobacteria phylum returns phylum', function() {
+				expect(taxonomyService.taxonomicGroup('Chlorobi', 'Chlorobia')).equal('Chlorobi')
+			})
 
+			it('Proteobacteria phylum returns class', function() {
+				expect(taxonomyService.taxonomicGroup('Proteobacteria', 'Zetaproteobacteria')).equal('Zetaproteobacteria')
+			})
+
+			it('prOteobacteriA case returns class', function() {
+				expect(taxonomyService.taxonomicGroup('prOteobacteriA', 'Zetaproteobacteria')).equal('Zetaproteobacteria')
+			})
 		})
 	})
 })
