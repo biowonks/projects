@@ -219,19 +219,14 @@ exports.readFile = function(file) {
 	})
 }
 
-exports.xmlFile2json = function(file) {
+exports.xmlToJs = function(xml) {
 	return new Promise((resolve, reject) => {
-		exports.readFile(file)
-		.then((xmlData) => {
-			let parser = new xml2js.Parser()
-			parser.parseString(xmlData, function(err, result) {
-				if (err)
-					reject(err)
-				else
-					resolve(result)
-			})
+		xml2js.parseString(xml, {trim: true}, (error, result) => {
+			if (error)
+				reject(error)
+			else
+				resolve(result)
 		})
-		.catch(reject)
 	})
 }
 

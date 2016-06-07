@@ -1,5 +1,6 @@
 'use strict'
 
+// Local
 let mutil = require('../mutil')
 
 module.exports =
@@ -8,30 +9,40 @@ class NCBITaxonomyXMLParser {
 	 * Parses NCBI Taxonomy XML for a specific organism into the following structure:
 	 *
 	 * {
-	 *		lineage: ['cellular organisms', 'bacteria', ...] // Full taxonomy string with each taxonomic rank separated by semicolon, no spaces before/after semicolon
-	 *		lineageTaxonomyId: [131567, 2, 203691, 203692, 136 ...] // Full taxonomy string with each taxonomy id separated by a semicolon
-	 *		superkingdom
-	 *		kingdom
-	 *		phylum
-	 *		class
-	 *		order
-	 *		family
-	 *		genus
-	 *		species
-	 *		strain
+	 *   taxonomyId
+	 *   organism
+	 *   lineage: ['cellular organisms', 'bacteria', ...]
+	 *   lineageTaxonomyIds: [131567, 2, 203691, 203692, 136 ...]
+	 *   superkingdom
+	 *   kingdom
+	 *   phylum
+	 *   class
+	 *   order
+	 *   family
+	 *   genus
+	 *   species
+	 *   strain
 	 *	}
 	 *
 	 * The source XML expected by this parse function is that returned by the NCBI E-Utils service.
 	 *
 	 * Throws an error if the XML is invalid or something otherwise did not work as expected.
-	 *d
+	 *
 	 * @param {string} xml
-	 * @return {Object}
+	 * @returns {Promise} resolves to the parsed taxonomy result
 	 */
+	parse(xml) {
+		return mutil.xmlToJs(xml)
+		.then(this.parseRawTaxonomy_.bind(this))
+	}
 
-	parse_(jsonTaxonomy) {
-		let taxonomyObject = {
-				taxid: null,
+	/**
+	 * @param {object} rawTaxonomy
+	 * @returns {Object}
+	 */
+	parseRawTaxonomy_(rawTaxonomy) {
+		let result = {
+				taxonomyId: null,
 				organism: null,
 				lineage: [],
 				lineageTaxonomyIds: [],
@@ -45,36 +56,36 @@ class NCBITaxonomyXMLParser {
 				species: null,
 				strain: null
 			},
-			taxon = jsonTaxonomy.TaxaSet.Taxon[0],
+			taxon = rawTaxonomy.TaxaSet.Taxon[0],
 			rankObjects = taxon.LineageEx[0].Taxon
 
-		taxonomyObject.taxid = parseInt(taxon.TaxId[0])
-		taxonomyObject.organism = taxon.ScientificName[0]
+		result.taxonomyId = Number(taxon.TaxId[0])
+		result.organism = taxon.ScientificName[0]
 
 		rankObjects.forEach((rankObject) => {
 			let rankName = rankObject.ScientificName[0],
 				rank = rankObject.Rank[0]
-			taxonomyObject.lineage.push(rankName)
-			taxonomyObject.lineageTaxonomyIds.push(parseInt(rankObject.TaxId[0]))
-			if (taxonomyObject[rank] === null)
-				taxonomyObject[rank] = rankName
+			result.lineage.push(rankName)
+			result.lineageTaxonomyIds.push(Number(rankObject.TaxId[0]))
+			if (result[rank] === null)
+				result[rank] = rankName
 		})
 
-		let numberOfWordsInSpecies = 2
-		if (taxonomyObject.species !== null) {
-			taxonomyObject.strain = taxonomyObject.organism.split(/\s+/g).slice(numberOfWordsInSpecies)
-			.join(' ')
-			.trim()
-		}
+		if (result.species !== null)
+			result.strain = this.strainFromOrganism_(result.organism)
 
-		return taxonomyObject
+		return result
 	}
 
-	getTaxonomy(xmlFile) {
-		return mutil.xmlFile2json(xmlFile)
-			.then((jsonTaxonomy) => {
-				return this.parse_(jsonTaxonomy)
-			})
+	/**
+	 * An organism name contains the strain if it consists of 3 or more space separated words.
+	 *
+	 * @param {string} organism
+	 * @returns {string}
+	 */
+	strainFromOrganism_(organism) {
+		let matches = /^\S+\s+\S+\s+(.+)/.exec(organism)
+		return matches ? matches[1].trim() : null
 	}
 }
 

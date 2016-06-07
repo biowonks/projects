@@ -10,9 +10,6 @@ let NCBITaxonomyXMLParser = require('./NCBITaxonomyXMLParser')
 // Constants
 const kNCBIPartialTaxonomyUrl = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=taxonomy&retmode=text&rettype=xml&id='
 
-/**
- * @constructor
- */
 module.exports =
 class TaxonomyService {
 	constructor() {
@@ -32,11 +29,12 @@ class TaxonomyService {
 			return Promise.reject(new Error('Invalid taxonomy id - must be all digits'))
 
 		return requestPromise(this.eutilUrl(taxonomyId))
-			.then((xmlResponse) => {
-				return this.taxonomyXMLParser_.parse(xmlResponse)
-			})
+		.then((xmlResponse) => {
+			return this.taxonomyXMLParser_.parse(xmlResponse)
+		})
 	}
 
+	// eslint-disable-next-line
 	/**
 	 * Given the phylum and class, return the major taxonomic group. In most cases,
 	 * this is simply the phlum; however, the class should be returned if the phylum
@@ -49,7 +47,5 @@ class TaxonomyService {
 	 */
 	taxonomicGroup(phylum, classs) {
 		throw new Error('Not yet implemented')
-
-		return null
 	}
 }

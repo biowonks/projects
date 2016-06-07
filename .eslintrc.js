@@ -5,7 +5,8 @@ module.exports = {
 		es6: true
 	},
 	globals: {
-		expect: true
+		expect: true,
+		expectRejection: true
 	},
 	parserOptions: {
 		ecmaVersion: 6
