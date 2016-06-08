@@ -11,7 +11,7 @@
 			"showOutput": "always",
 			"suppressTaskName": true,
 			"args": [
-				"docker exec -i api bash -c './node_modules/.bin/mocha --debug-brk --require pipeline/scripts/test-setup.js \"pipeline/scripts/**/*.tests.js\"'"
+				"docker exec -i api ./node_modules/.bin/mocha --debug-brk --require pipeline/scripts/test-setup.js \"pipeline/scripts/**/*.tests.js\""
 			]
 		}
 	]
