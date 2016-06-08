@@ -43,7 +43,7 @@ module.exports = function(config, logger) {
 	.then(function() {
 		logger.info('Successfully connected to database')
 
-		let options = config.migrations.umzug
+		let options = config.database.migrations.umzug
 
 		// Assign sequelize instance to the umzug engine if relevant
 		if (options.storage === 'sequelize') {

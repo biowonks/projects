@@ -73,7 +73,8 @@ module.exports = {
 		logging: {
 			errFile: path.resolve(__dirname, 'logs', 'enqueuer.err')
 		},
-		summaryDuration: moment.duration(1, 'day')
+		summaryDuration: moment.duration(1, 'day'),
+		maxGenomesPerDay: 5
 	},
 
 	stage1: {
