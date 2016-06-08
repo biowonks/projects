@@ -2,25 +2,24 @@ FROM mhart/alpine-node:6.2
 
 MAINTAINER Luke Ulrich <ulrich.luke+ulritech@gmail.com>
 
-ENV HOME=/home/mist3
-ENV GOSU_VERSION 1.9
+ENV HOME=/home/mist
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 
 # shadow: needed for usermod
 # git: needed by some npm packages
-# build-base: used to compile hmmer3, etc
+# build-base: used to compile hmmer3, seg, etc
 # wget: used by node source
-
+# su-exec: provides ability to run command as different user
+# postgresql-client: so we can use psql from the api container
 RUN echo http://nl.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
-	apk --update --no-cache add bash git build-base shadow wget su-exec && \
+	apk --update --no-cache add bash git build-base shadow wget su-exec postgresql-client && \
 
 	# Entrypoint configuration
 	chmod +x /usr/local/bin/entrypoint.sh && \
-	addgroup mist3 && \
-	adduser -S -G mist3 -s /bin/false mist3 && \
-	usermod -u 1000 mist3
-#	groupmod -g 50 mist3
+	addgroup mist && \
+	adduser -S -G mist -s /bin/false mist && \
+	usermod -u 1000 mist
 
 ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 

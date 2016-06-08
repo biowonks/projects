@@ -1,5 +1,5 @@
 #!/bin/bash
 
-chown mist3:mist3 $HOME/api/node_modules
+chown mist:mist $HOME/api/node_modules
 
-exec su-exec mist3 "$@"
+exec su-exec mist "$@"
