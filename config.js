@@ -67,6 +67,22 @@ let config = {
 				maxConnections: 10,
 				maxIdleTime: 1000
 			}
+		},
+
+		migrations: {
+			sqlPath: path.resolve(__dirname, 'db', 'migrations', 'sql'),
+
+			// For all umzug options, see:
+			// https://github.com/sequelize/umzug (configuration)
+			umzug: {
+				storage: 'sequelize',
+				storageOptions: {
+					modelName: 'migrations_meta'
+				},
+				migrations: {
+					path: path.resolve(__dirname, 'db', 'migrations', 'js')
+				}
+			}
 		}
 	},
 
@@ -113,20 +129,6 @@ let config = {
 		// The following are derived automatically unless otherwise specified
 		protocol: null,
 		baseUrl: null
-	},
-
-	migrations: {
-		// For all umzug options, see:
-		// https://github.com/sequelize/umzug (configuration)
-		umzug: {
-			storage: 'sequelize',
-			storageOptions: {
-				modelName: 'sequelize_meta'
-			},
-			migrations: {
-				path: path.resolve(__dirname, 'db', 'migrations')
-			}
-		}
 	}
 }
 

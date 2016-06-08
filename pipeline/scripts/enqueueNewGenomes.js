@@ -17,22 +17,22 @@
 
 'use strict'
 
-// Core node libraries
+// Core
 let fs = require('fs'),
 	path = require('path')
 
-// 3rd-party libraries
+// Vendor
 let bunyan = require('bunyan'),
 	program = require('commander'),
 	parse = require('csv-parse'),
 	Promise = require('bluebird')
 
-// Local includes
+// Local
 let config = require('../config'),
 	mutil = require('./lib/mutil')
 
 program
-.description('Enqueues new microbial genomes located at NCBI for integration into MiST3')
+.description('Enqueues new microbial genomes located at NCBI for integration into the MiST database')
 .parse(process.argv)
 
 // --------------------------------------------------------
