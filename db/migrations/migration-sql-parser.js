@@ -1,32 +1,31 @@
-// This file should be placed in the same directory as the resulting
-// migrations
+// This file should be placed in the same directory as the resulting migrations
 
-'use strict';
+'use strict'
 
-module.exports = {
-	parse: function(migrationSql, optDelimiter) {
-		if (!migrationSql)
-			throw new Error('Must have valid migration sql');
+exports.kDefaultDelimiter = '\n-- DOWN\n'
 
-		if (typeof migrationSql !== 'string')
-			throw new Error('Migration SQL must be string; got ' + typeof migrationSql + ' instead');
+exports.parse = function(migrationSql, optDelimiter) {
+	if (!migrationSql)
+		throw new Error('Missing / empty migration SQL argument')
 
-		var delimiter = optDelimiter || '\n-- DOWN\n',
-			delimiterPosition = migrationSql.indexOf(delimiter),
-			upSql = null,
-			downSql = null;
+	if (typeof migrationSql !== 'string')
+		throw new Error(`migration SQL must be string; got ${typeof migrationSql} instead`)
 
-		if (delimiterPosition >= 0) {
-			upSql = migrationSql.substr(0, delimiterPosition);
-			downSql = migrationSql.substr(delimiterPosition);
-		}
-		else {
-			upSql = migrationSql;
-		}
+	let delimiter = optDelimiter || exports.kDefaultDelimiter,
+		delimiterPosition = migrationSql.indexOf(delimiter),
+		upSql = null,
+		downSql = null
 
-		return {
-			up: upSql,
-			down: downSql
-		};
+	if (delimiterPosition >= 0) {
+		upSql = migrationSql.substr(0, delimiterPosition)
+		downSql = migrationSql.substr(delimiterPosition)
 	}
-};
+	else {
+		upSql = migrationSql
+	}
+
+	return {
+		up: upSql,
+		down: downSql
+	}
+}
