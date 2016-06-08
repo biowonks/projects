@@ -41,9 +41,15 @@ if (sqlFileInWrongDirectory) {
 	process.exit(1)
 }
 
+let invalidFormat = !/^\d{4}_[\w-_]+.sql$/.test(baseSqlFileName)
+if (invalidFormat) {
+	console.error('SQL file name must begin with 4 digits and an underscore, contain no whitespace, consist of one or more alphanumeric characters, and end with .sql')
+	process.exit(1)
+}
+
 let migrationJs = `module.exports = require('../sql-file-to-migration')('${baseSqlFileName}')\n`,
 	migrationFileName = moment().format('YYYYMMDDHHmmss') + '_' + baseSqlFileName + '.js',
 	migrationFile = path.resolve(kMigrationDirectory, migrationFileName)
 
 fs.writeFileSync(migrationFile, migrationJs)
-console.log('Created migration', migrationFile)
+console.log('New migration created:', migrationFileName)
