@@ -1,3 +1,6 @@
+# References:
+# https://denibertovic.com/posts/handling-permissions-with-docker-volumes/ (used su-exec instead of gosu)
+
 FROM mhart/alpine-node:6.2
 
 MAINTAINER Luke Ulrich <ulrich.luke+ulritech@gmail.com>
