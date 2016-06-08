@@ -38,6 +38,15 @@
 			"runtimeExecutable": null
 		},
 		{
+			"name": "Enqueue Genomes",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/pipeline/scripts/enqueueNewGenomes.js",
+			"stopOnEntry": false,
+			"cwd": "${workspaceRoot}",
+			"runtimeExecutable": null
+		},
+		{
 			"name": "Unit tests (docker)",
 			"type": "node",
 			"request": "attach",

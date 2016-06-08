@@ -47,8 +47,8 @@ module.exports = function(config, logger) {
 
 		// Assign sequelize instance to the umzug engine if relevant
 		if (options.storage === 'sequelize') {
-			let DataTypes = sequelize.constructor,
-				queryInterface = sequelize.getQueryInterface()
+			let queryInterface = sequelize.getQueryInterface(),
+				DataTypes = sequelize.constructor
 
 			options.storageOptions.sequelize = sequelize
 			options.migrations.params = [queryInterface, DataTypes]

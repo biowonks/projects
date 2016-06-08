@@ -18,42 +18,47 @@
  * All models are initially loaded and then all associations defined in _associations
  * are configured.
  */
+'use strict'
 
-'use strict';
+// Core
+let fs = require('fs'),
+	path = require('path')
 
-var fs = require('fs'),
-	path = require('path');
-
-var _ = require('lodash'),
+// Vendor
+let _ = require('lodash'),
 	inflection = require('inflection'),
-	Sequelize = require('sequelize');
+	Sequelize = require('sequelize')
+
+// Local
+let setupAssociations = require('./_associations')
 
 module.exports = function(sequelize, logger) {
-	var models = loadModels(sequelize, logger);
-	require(path.resolve(__dirname, '_associations'))(models, logger);
-	return models;
-};
+	let models = loadModels(sequelize, logger)
+	setupAssociations(models, logger)
+	return models
+}
 
 // ----------------------------------------------------------------------------
 function loadModels(sequelize, logger) {
-	var models = {};
+	let models = {}
 
-	logger.info('Loading models');
+	logger.info('Loading models')
 
 	getModelFileNames()
 	.forEach(function(modelFileName) {
-		var definition = require('./' + modelFileName)(Sequelize, models),
-			modelName = nameForDefinition(definition, modelFileName);
-		setupDefinition(definition, modelName);
+		// eslint-disable-next-line global-require
+		let definition = require('./' + modelFileName)(Sequelize, models),
+			modelName = nameForDefinition(definition, modelFileName)
+		setupDefinition(definition, modelName)
 
-		// injectGlobalModelMethods(definition, modelName, sequelize);
+		// injectGlobalModelMethods(definition, modelName, sequelize)
 
-		var model = models[modelName] = sequelize.define(modelName, definition.fields, definition.params);
+		models[modelName] = sequelize.define(modelName, definition.fields, definition.params)
 
-		logger.info('Loaded model:', modelName, '(' + definition.params.tableName + ')');
-	});
+		logger.info('Loaded model:', modelName, '(' + definition.params.tableName + ')')
+	})
 
-	return models;
+	return models
 }
 
 function getModelFileNames() {
@@ -61,55 +66,55 @@ function getModelFileNames() {
 	.filter(function(modelFileName) {
 		return modelFileName !== 'index.js' &&
 			modelFileName[0] !== '.' &&
-			modelFileName[0] !== '_';
+			modelFileName[0] !== '_'
 	})
-	.sort();
+	.sort()
 }
 
 function nameForDefinition(definition, modelFileName) {
-	return 'name' in definition ? definition.name : nameFromFileName(modelFileName);
+	return 'name' in definition ? definition.name : nameFromFileName(modelFileName)
 }
 
 function nameFromFileName(modelFileName) {
-	var extname = path.extname(modelFileName),
-		basename = path.basename(modelFileName, extname);
+	let extname = path.extname(modelFileName),
+		basename = path.basename(modelFileName, extname)
 
-	return basename.split('-')
+	return basename.split('_')
 	.map(function(namePart) {
-		return inflection.capitalize(inflection.singularize(namePart).toLowerCase());
+		return inflection.capitalize(inflection.singularize(namePart).toLowerCase())
 	})
-	.join('');
+	.join('')
 }
 
 function setupDefinition(definition, modelName) {
-	var defaultParams = {
+	let defaultParams = {
 		tableName: defaultTableName(modelName),
 		classMethods: {
 			fieldNames: Object.keys(definition.fields)
 		}
-	};
+	}
 
 	if (!definition.params)
-		definition.params = defaultParams;
+		definition.params = defaultParams
 	else
-		_.defaultsDeep(definition.params, defaultParams);
+		_.defaultsDeep(definition.params, defaultParams)
 }
 
 function defaultTableName(modelName) {
-	return inflection.underscore(inflection.pluralize(modelName));
+	return inflection.underscore(inflection.pluralize(modelName))
 }
 
 // function injectGlobalModelMethods(definition, modelName, sequelize) {
 // 	if (!definition.params)
-// 		definition.params = {};
+// 		definition.params = {}
 // 	if (!definition.params.classMethods)
-// 		definition.params.classMethods = {};
+// 		definition.params.classMethods = {}
 
 // 	if ('sequelize' in definition.params.classMethods)
 // 		throw new Error(`${modelName} definition error: classMethods.sequelize is a reserved global method name`)
 
 // 	// TODO: Rename this!
 // 	definition.params.classMethods.sequelize = function() {
-// 		return sequelize;
-// 	};
+// 		return sequelize
+// 	}
 // }

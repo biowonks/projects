@@ -33,6 +33,7 @@
     "pg-hstore": "2.x",
     "request-promise": "^3.0.0",
     "sequelize": "3.x",
+    "through2": "^2.0.1",
     "umzug": "1.x",
     "universal-analytics": "0.3.x",
     "xml2js": "^0.4.16"

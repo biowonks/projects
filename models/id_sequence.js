@@ -1,7 +1,7 @@
 'use strict'
 
 module.exports = function(Sequelize, models) {
-	var fields = {
+	let fields = {
 		name: {
 			primaryKey: true,
 			type: Sequelize.TEXT,
@@ -20,7 +20,7 @@ module.exports = function(Sequelize, models) {
 	}
 
 	return {
-		fields: fields,
+		fields,
 		params: {
 			tableName: 'id_sequences',
 			timestamps: false

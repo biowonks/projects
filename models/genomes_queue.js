@@ -1,7 +1,7 @@
 'use strict'
 
 module.exports = function(Sequelize, models) {
-	var fields = {
+	let fields = {
 		refseq_assembly_accession: {
 			primaryKey: true,
 			type: Sequelize.TEXT,
@@ -57,16 +57,11 @@ module.exports = function(Sequelize, models) {
 		},
 		name: {
 			type: Sequelize.TEXT
-		},
-		locked: {
-			type: Sequelize.BOOLEAN,
-			allowNull: false,
-			defaultValue: false
 		}
 	}
 
 	return {
-		fields: fields,
+		fields,
 		params: {
 			tableName: 'genomes_queue',
 			instanceMethods: {

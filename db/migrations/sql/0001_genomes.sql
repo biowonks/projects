@@ -1,7 +1,5 @@
 begin;
 
------------------------------------------------------------
--- Core MiST database tables
 create table genomes_queue (
 	refseq_assembly_accession text not null primary key,
 	genbank_assembly_accession text,
@@ -27,7 +25,7 @@ create table genomes_queue (
 
 	unique(refseq_assembly_accession)
 );
-comment on table genomes_queue is 'Assembly reports yet to be processed';
+comment on table genomes_queue is 'Genome assemblies yet to be processed';
 
 create table genomes (
 	id integer primary key,

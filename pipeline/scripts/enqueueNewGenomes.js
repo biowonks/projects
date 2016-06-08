@@ -25,11 +25,14 @@ let fs = require('fs'),
 let bunyan = require('bunyan'),
 	program = require('commander'),
 	parse = require('csv-parse'),
-	Promise = require('bluebird')
+	through2 = require('through2'),
+	Promise = require('bluebird'),
+	sequelize = require('sequelize')
 
 // Local
 let config = require('../config'),
-	mutil = require('./lib/mutil')
+	mutil = require('./lib/mutil'),
+	LineStream = require('./lib/streams/LineStream')
 
 program
 .description('Enqueues new microbial genomes located at NCBI for integration into the MiST database')
@@ -56,6 +59,7 @@ class Enqueuer {
 		})
 		this.sequelize_ = null
 		this.models_ = null
+		this.numGenomesQueued_ = 0
 	}
 
 	main() {
@@ -69,13 +73,16 @@ class Enqueuer {
 			return this.createTemporaryDirectory_()
 		})
 		.then(() => this.enqueueNewAssemblies_())
+		.catch(sequelize.DatabaseError, (error) => {
+			this.logger_.error({name: error.name, sql: error.sql}, error.message)
+		})
 		.catch((error) => {
 			this.logger_.error({error, stack: error.stack}, 'Unexpected error')
 		})
 	}
 
 	// ----------------------------------------------------
-	// Private helper methods
+	// Private methods
 	createTemporaryDirectory_() {
 		return mutil.mkdir(this.tempDir_)
 		.then((result) => {
@@ -86,9 +93,17 @@ class Enqueuer {
 
 	enqueueNewAssemblies_() {
 		return Promise.each(config.ncbi.ftp.assemblySummaryLinks, (assemblyLink) => {
+			if (this.maximumGenomesQueued_())
+				return null
+
 			return this.downloadAssemblySummary_(assemblyLink)
-				.then((assemblySummaryFile) => this.processSummaryFile(assemblySummaryFile))
+			.then(this.processSummaryFile.bind(this))
 		})
+	}
+
+	maximumGenomesQueued_() {
+		return this.config_.maxNewGenomesToQueuePerRun &&
+			this.numGenomesQueued_ >= this.config_.maxNewGenomesToQueuePerRun
 	}
 
 	downloadAssemblySummary_(link) {
@@ -121,20 +136,52 @@ class Enqueuer {
 				auto_parse: true
 			})
 
-			let stream = fs.createReadStream(file)
+			let stream = fs.createReadStream(file),
+				lineStream = new LineStream(),
+				skippedFirstLine = false
+
+			stream
+			.pipe(lineStream)
+			// The assembly summary files have two header lines the first of which is merely descriptive; however,
+			// it causes csv-parse to choke because it is looking for the header line. Thus, this through stream
+			// skips the first line as well as re-appends the newline character that is stripped by LineStream.
+			.pipe(through2({objectMode: true}, function(line, encoding, done) {
+				let lineWithLF = line + '\n'
+				if (skippedFirstLine)
+					this.push(lineWithLF) // eslint-disable-line no-invalid-this
+				else
+					skippedFirstLine = true
+				done()
+			}))
 			.pipe(parser)
 			.on('error', reject)
 			.on('data', (row) => {
-				stream.pause()
-				this.insertGenome_(this.genomeDataFromRow_(row))
+				let genomeData = this.genomeDataFromRow_(row)
+				if (genomeData.refseq_category !== 'representative genome' && genomeData.refseq_category !== 'reference genome')
+					return
+
+				// Counterintuitvely, pausing the fs stream does not actually pause; however, pausing the lienStream
+				// does. Here we pause to process this genome into the database.
+				lineStream.pause()
+
+				this.insertGenome_(genomeData)
 				.then((genome) => {
-					if (genome)
+					if (genome) {
 						this.logger_.info({'genome.name': genome.name, refseq_assembly_accession: genome.refseq_assembly_accession}, 'Enqueued new genome')
 
-					stream.resume()
+						this.numGenomesQueued_++
+						if (this.maximumGenomesQueued_()) {
+							this.logger_.info({numGenomesQueued: this.numGenomesQueued_}, 'Maximum number of genomes queued')
+							stream.destroy()
+							resolve()
+							return
+						}
+					}
+
+					lineStream.resume()
 				})
 				.catch((error) => {
-					stream.end()
+					stream.destroy()
 					reject(error)
 				})
 			})

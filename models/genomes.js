@@ -1,7 +1,7 @@
 'use strict'
 
 module.exports = function(Sequelize, models) {
-	var fields = {
+	let fields = {
 		refseq_assembly_accession: {
 			type: Sequelize.TEXT,
 			allowNull: false,
@@ -93,7 +93,7 @@ module.exports = function(Sequelize, models) {
 	}
 
 	return {
-		fields: fields,
+		fields,
 		params: {
 			classMethods: {
 				sequenceName: function() {

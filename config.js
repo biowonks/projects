@@ -80,7 +80,12 @@ let config = {
 					modelName: 'migrations_meta'
 				},
 				migrations: {
-					path: path.resolve(__dirname, 'db', 'migrations', 'js')
+					path: path.resolve(__dirname, 'db', 'migrations', 'js'),
+					// Pattern is conceptualized into the following:
+					// First 14 digits = timestamp (YYYYMMDDHHmmss)
+					// Next 4 digits is a pseudo-serial number indicating the rough order of SQL migrations
+					// This is followed by a couple of descriptive words
+					pattern: /^\d{14}_\d{4}_[\w-_]+\.js$/
 				}
 			}
 		}

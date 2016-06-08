@@ -47,8 +47,9 @@ if (invalidFormat) {
 	process.exit(1)
 }
 
-let migrationJs = `module.exports = require('../sql-file-to-migration')('${baseSqlFileName}')\n`,
-	migrationFileName = moment().format('YYYYMMDDHHmmss') + '_' + baseSqlFileName + '.js',
+let migrationJs = `'use strict'\n\nmodule.exports = require('../sql-file-to-migration')('${baseSqlFileName}')\n`,
+	baseSqlFileNameWithoutExt = path.basename(baseSqlFileName, path.extname(baseSqlFileName)),
+	migrationFileName = moment().format('YYYYMMDDHHmmss') + '_' + baseSqlFileNameWithoutExt + '.js',
 	migrationFile = path.resolve(kMigrationDirectory, migrationFileName)
 
 fs.writeFileSync(migrationFile, migrationJs)
