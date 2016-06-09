@@ -6,6 +6,8 @@
  *
  * On the other hand, eslint requires that each file declare 'use strict'. This is an
  * exception here, so thus the above eslint-disable clause.
+ *
+ * TODO: look into strongloop clustering
  */
 
 // Core
@@ -29,9 +31,13 @@ if (cluster.isMaster) {
 	let bootStrapper = new BootStrapper(),
 		config = BootStrapper.config,
 		logger = bootStrapper.logger(),
-		restartDelayMs = 0
+		restartDelayMs = 0,
+		shuttingDown = false
 
 	function startWorker() {
+		if (shuttingDown)
+			return
+
 		let nWorkers = Object.keys(cluster.workers).length
 		if (nWorkers === config.server.cpus)
 			return
@@ -71,6 +77,13 @@ if (cluster.isMaster) {
 				process.exit(kAppExitCode)
 			})
 		}
+	})
+
+	// Gracefully handle shutting down
+	process.on('SIGTERM', () => {
+		// Signal each worker to stop receiving connections and gracefully shutdown
+		for (let id in cluster.workers)
+			cluster.workers[id].send('sigterm')
 	})
 }
 
