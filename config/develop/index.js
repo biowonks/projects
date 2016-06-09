@@ -1,5 +1,11 @@
 'use strict'
 
+// Core
+let os = require('os')
+
+// Constants
+const kMaxCpus = 2
+
 module.exports = {
 	// The following parameters are for the local, dockerized postgresql database
 	database: {
@@ -10,5 +16,9 @@ module.exports = {
 		sequelizeOptions: {
 			host: 'db'
 		}
+	},
+
+	server: {
+		cpus: Math.min(kMaxCpus, os.cpus().length)
 	}
 }

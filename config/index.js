@@ -1,11 +1,15 @@
+/* eslint-disable global-require */
 'use strict'
 
+// Core
 let _ = require('lodash'),
-	os = require('os'),
+	fs = require('fs'),
 	path = require('path')
 
-let packageJSON = require('./package.json')
+// Local
+let packageJSON = require('../package.json')
 
+// Constants
 /**
  * Environment names are based on the NODE_ENV environment variable.
  *
@@ -15,80 +19,24 @@ let packageJSON = require('./package.json')
  * 3. staging (evaluation before pushing to production)
  * 4. production
  *
- * Following the recommended names is not required and may be set to whatever
- * names are desired.
+ * Following the recommended names is not required and may be set to whatever names are desired.
  *
- * Several configuration files may co-exist side by side and are merged in
- * the following order (precedence given to the modules loaded later):
+ * Several configuration files may co-exist side by side and are merged in the following order
+ * (precedence given to the modules loaded later):
  *
- * config.js
- * config.${environment name}.js
- * config.local.js (not saved into the repository)
+ * index.js
+ * ${environment name}/index.js
+ * local/index.js (not part of the repository)
  *
  * Finally, if any configuration is set via environment variables (e.g. DATABASE_URL),
  * that takes precedence over any configuration.
  */
-const environmentName = process.env.NODE_ENV || 'develop'
+const kEnvironmentName = process.env.NODE_ENV || 'develop',
+	kRootPath = path.resolve(__dirname, '..')
 
 let config = {
-	analytics: {
-		gaTrackingId: null,
-		beaconImageFile: path.resolve(__dirname, 'assets', 'img', 'beacon.gif')
-	},
-
 	cors: {
 		enabled: false
-	},
-
-	database: {
-		enabled: true,
-
-		// NOTE: The DATABASE_URL environment variable if defined will override
-		// these values.
-		name: '',
-		user: '',
-		password: '',
-
-		sequelizeOptions: {
-			protocol: 'postgres',
-			dialect: 'postgres',
-			port: 5432,
-			host: 'localhost',
-			dialectOptions: {
-				application_name: packageJSON.name,
-				ssl: true
-			},
-			logging: false,
-			define: {
-				underscored: true,
-				timestamps: true
-			},
-			pool: {
-				maxConnections: 10,
-				maxIdleTime: 1000
-			}
-		},
-
-		migrations: {
-			sqlPath: path.resolve(__dirname, 'db', 'migrations', 'sql'),
-
-			// For all umzug options, see:
-			// https://github.com/sequelize/umzug (configuration)
-			umzug: {
-				storage: 'sequelize',
-				storageOptions: {
-					modelName: 'migrations_meta'
-				},
-				migrations: {
-					path: path.resolve(__dirname, 'db', 'migrations', 'js'),
-					// Pattern is conceptualized into the following:
-					// First 14 digits = timestamp (YYYYMMDDHHmmss)
-					// Next 4 digits is a pseudo-serial number indicating the rough order of SQL migrations
-					// This is followed by a couple of descriptive words
-					pattern: /^\d{14}_\d{4}_[\w-_]+\.js$/
-				}
-			}
-		}
 	},
 
 	debug: {
@@ -100,7 +48,7 @@ let config = {
 	},
 
 	environment: {
-		name: environmentName
+		name: kEnvironmentName
 	},
 
 	headerNames: {
@@ -121,31 +69,39 @@ let config = {
 	routing: {
 		ssl: false,
 		prefix: '/api/v1'
-	},
-
-	server: {
-		host: process.env.HOST || '127.0.0.1',
-		port: process.env.PORT || 7001, // eslint-disable-line no-magic-numbers
-		cpus: os.cpus().length,
-		restartOnCrash: true,
-		restartGraceMs: 10000,		// Milliseconds to wait for open connections to finish before forcefully
-									// closing them down
-
-		// The following are derived automatically unless otherwise specified
-		protocol: null,
-		baseUrl: null
 	}
 }
 
 // --------------------------------------------------------
-mergeOptionalConfigFile('config.' + environmentName)
-mergeOptionalConfigFile('config.local')
+function getConfigFileNames() {
+	return fs.readdirSync(__dirname)
+	.filter(function(configFileName) {
+		return configFileName !== 'index.js' &&
+			configFileName.endsWith('.js')
+	})
+	.sort()
+}
+getConfigFileNames()
+.forEach((configFileName) => {
+	let baseName = path.basename(configFileName, '.js')
+	try {
+		config[baseName] = require(`./${configFileName}`)(kRootPath, packageJSON)
+	}
+	catch (error) {
+		// eslint-disable-next-line no-console
+		console.error(`FATAL: Error loading configuration file, ${configFileName},`, error)
+		process.exit(1)
+	}
+})
+
+// --------------------------------------------------------
+mergeOptionalConfigFile(`./${kEnvironmentName}`)
+mergeOptionalConfigFile('./local')
 
 function mergeOptionalConfigFile(configFile) {
 	try {
 		// eslint-disable-next-line global-require
 		_.merge(config, require('./' + configFile))
-		// console.log('[Merged configuration]', configFile)	// eslint-disable-line no-console
 	}
 	catch (error) {
 		if (error.code === 'MODULE_NOT_FOUND')

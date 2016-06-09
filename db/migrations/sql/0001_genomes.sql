@@ -90,3 +90,11 @@ comment on column genomes.taxonomic_group is 'Phylum; if proteobacteria, then it
 comment on column genomes.orderr is 'Intentional typo because order is a reserved word';
 
 commit;
+
+-- MIGRATION DOWN SQL
+begin;
+
+drop table genomes;
+drop table genomes_queue;
+
+commit;
