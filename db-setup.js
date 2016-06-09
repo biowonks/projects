@@ -1,8 +1,12 @@
 'use strict'
 
-let Umzug = require('umzug'),
-	Promise = require('bluebird'),
+// Vendor
+// let Umzug = require('umzug'),
+let Promise = require('bluebird'),
 	Sequelize = require('sequelize')
+
+// Local
+let Migrator = require('./services/Migrator')
 
 module.exports = function(config, logger) {
 	if (!config)
@@ -25,8 +29,7 @@ module.exports = function(config, logger) {
 		return Promise.reject(new Error('Database enabled, but missing configuration (name)'))
 	}
 
-	let sequelize = null,
-		umzug = null
+	let sequelize = null
 
 	try {
 		sequelize = new Sequelize(dbConfig.name, dbConfig.user, dbConfig.password, dbConfig.sequelizeOptions)
@@ -36,46 +39,17 @@ module.exports = function(config, logger) {
 	}
 
 	return sequelize.authenticate()
-	.catch(function(error) {
+	.catch((error) => {
 		logger.fatal('Unable to authenticate with database: ' + error.message)
 		throw error
 	})
-	.then(function() {
+	.then(() => {
 		logger.info('Successfully connected to database')
 
-		let options = config.database.migrations.umzug
-
-		// Assign sequelize instance to the umzug engine if relevant
-		if (options.storage === 'sequelize') {
-			let queryInterface = sequelize.getQueryInterface(),
-				DataTypes = sequelize.constructor
-
-			options.storageOptions.sequelize = sequelize
-			options.migrations.params = [queryInterface, DataTypes]
-		}
-
-		umzug = new Umzug(options)
-		return umzug.pending()
+		let migrator = new Migrator(sequelize, config.database.migrations.umzug, logger)
+		return migrator.up()
 	})
-	.then(function(migrations) {
-		if (!migrations.length)
-			return sequelize
-
-		logger.info('Running migrations')
-
-		return umzug.up()
-		.then(function(finishedMigrations) {
-			finishedMigrations.forEach(function(migration) {
-				logger.info({sqlFile: migration.file}, '  >> ' + migration.file)
-			})
-
-			logger.info('Migrations complete')
-
-			return sequelize
-		})
-		.catch(function(error) {
-			logger.fatal('Unable to perform migrations: ' + error.message)
-			throw error
-		})
+	.then(() => {
+		return sequelize
 	})
 }
