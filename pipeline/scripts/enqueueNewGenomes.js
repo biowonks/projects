@@ -22,16 +22,14 @@ let fs = require('fs'),
 	path = require('path')
 
 // Vendor
-let bunyan = require('bunyan'),
-	program = require('commander'),
+let program = require('commander'),
 	parse = require('csv-parse'),
 	through2 = require('through2'),
-	Promise = require('bluebird'),
-	sequelize = require('sequelize')
+	Promise = require('bluebird')
 
 // Local
-let config = require('../config'),
-	mutil = require('./lib/mutil'),
+let mutil = require('./lib/mutil'),
+	BootStrapper = require('../../services/BootStrapper'),
 	LineStream = require('./lib/streams/LineStream')
 
 program
@@ -42,21 +40,25 @@ program
 // Main logic encapsulated in class
 class Enqueuer {
 	constructor() {
-		this.tempDir_ = path.resolve(config.paths.tmp, 'enqueuer')
-		this.config_ = config.enqueuer
-		this.logger_ = bunyan.createLogger({
-			name: 'enqueuer',
-			streams: [
-				{
-					level: 'info',
-					stream: process.stdout
-				},
-				{
-					level: 'error',
-					path: this.config_.logging.errFile
-				}
-			]
+		let config = BootStrapper.config
+		this.pipelineConfig_ = config.pipeline
+		this.bootStrapper_ = new BootStrapper({
+			logger: {
+				name: 'enqueuer',
+				streams: [
+					{
+						level: 'info',
+						stream: process.stdout
+					},
+					{
+						level: 'error',
+						path: this.pipelineConfig_.enqueuer.logging.errFile
+					}
+				]
+			}
 		})
+		this.tempDir_ = path.resolve(this.pipelineConfig_.paths.tmp, 'enqueuer')
+		this.logger_ = this.bootStrapper_.logger()
 		this.sequelize_ = null
 		this.models_ = null
 		this.numGenomesQueued_ = 0
@@ -65,19 +67,19 @@ class Enqueuer {
 	main() {
 		this.logger_.info('Start')
 
-		mutil.initORM(config, this.logger_)
-		.then((result) => {
-			this.sequelize_ = result.sequelize
-			this.models_ = result.models
+		this.bootStrapper_.setup()
+		.then(() => {
+			this.sequelize_ = this.bootStrapper_.sequelize()
+			this.models_ = this.bootStrapper_.models()
 
 			return this.createTemporaryDirectory_()
 		})
-		.then(() => this.enqueueNewAssemblies_())
-		.catch(sequelize.DatabaseError, (error) => {
-			this.logger_.error({name: error.name, sql: error.sql}, error.message)
-		})
+		.then(this.enqueueNewAssemblies_.bind(this))
 		.catch((error) => {
-			this.logger_.error({error, stack: error.stack}, 'Unexpected error')
+			if (error instanceof this.sequelize_.DatabaseError)
+				this.logger_.error({name: error.name, sql: error.sql}, error.message)
+			else
+				this.logger_.error({error, stack: error.stack}, 'Unexpected error')
 		})
 	}
 
@@ -92,7 +94,7 @@ class Enqueuer {
 	}
 
 	enqueueNewAssemblies_() {
-		return Promise.each(config.ncbi.ftp.assemblySummaryLinks, (assemblyLink) => {
+		return Promise.each(this.pipelineConfig_.ncbi.ftp.assemblySummaryLinks, (assemblyLink) => {
 			if (this.maximumGenomesQueued_())
 				return null
 
@@ -102,16 +104,16 @@ class Enqueuer {
 	}
 
 	maximumGenomesQueued_() {
-		return this.config_.maxNewGenomesToQueuePerRun &&
-			this.numGenomesQueued_ >= this.config_.maxNewGenomesToQueuePerRun
+		return this.pipelineConfig_.enqueuer.maxNewGenomesToQueuePerRun &&
+			this.numGenomesQueued_ >= this.pipelineConfig_.enqueuer.maxNewGenomesToQueuePerRun
 	}
 
 	downloadAssemblySummary_(link) {
 		let destFile = path.resolve(this.tempDir_, link.filename)
-		return mutil.pathIsYoungerThan(destFile, this.config_.summaryDuration)
+		return mutil.pathIsYoungerThan(destFile, this.pipelineConfig_.summaryDuration)
 			.then((isYounger) => {
 				if (isYounger) {
-					this.logger_.info({path: destFile}, `Summary file already exists and is younger than ${this.config_.summaryDuration.humanize()}`)
+					this.logger_.info({path: destFile}, `Summary file already exists and is younger than ${this.pipelineConfig_.summaryDuration.humanize()}`)
 					return destFile
 				}
 

@@ -2,7 +2,7 @@
 
 'use strict'
 
-exports.kDefaultDelimiter = '\n-- DOWN\n'
+exports.kDefaultDelimiter = '\n-- MIGRATION DOWN SQL\n'
 
 exports.parse = function(migrationSql, optDelimiter) {
 	if (!migrationSql)
@@ -22,6 +22,8 @@ exports.parse = function(migrationSql, optDelimiter) {
 	}
 	else {
 		upSql = migrationSql
+
+		console.warn('No down SQL found in migration') // eslint-disable-line no-console
 	}
 
 	return {
