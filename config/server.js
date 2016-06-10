@@ -8,7 +8,7 @@ module.exports = function() {
 		host: process.env.HOST || '127.0.0.1',
 		port: process.env.PORT || 7001, // eslint-disable-line no-magic-numbers
 		cpus: os.cpus().length,
-		restartOnCrash: true,
+		restartAutomatically: true,
 		restartGraceMs: 10000,		// Milliseconds to wait for open connections to finish before forcefully
 									// closing them down
 

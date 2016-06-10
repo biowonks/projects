@@ -26,9 +26,15 @@ module.exports = function() {
 	// middleware references it.
 	let server = null,
 		bootStrapper = new BootStrapper(),
-		logger = bootStrapper.logger(),
+		logger = bootStrapper.logger().child({workerId: cluster.worker.id}),
 		config = BootStrapper.config,
+		sigTermSignalReceived = false,
 		failedSetup = false
+
+	process.on('message', (message) => {
+		if (message === 'SIGTERM')
+			onSigTerm()
+	})
 
 	return bootStrapper.setup()
 	.catch(function(error) {
@@ -72,15 +78,38 @@ module.exports = function() {
 		app.use(handleUncaughtErrors)
 		app.use(errorHandler(app))
 
-		server = app.listen(config.server.port, function() {
+		server = app.listen(config.server.port, () => {
 			logger.info({port: config.server.port}, 'Listening for connections')
-		})
 
-		// Tell master that we are alive and well
-		process.send('success')
+			// Tell master that we are ready to go
+			process.send('ready')
+		})
 
 		return app
 	})
+
+	// --------------------------------------------------------
+	function onSigTerm() {
+		// Prevent multiple calls to
+		if (sigTermSignalReceived)
+			return
+
+		sigTermSignalReceived = true
+		logger.info('Received SIGTERM signal from master, gracefully shutting down')
+		if (server) {
+			server.close(() => {
+				logger.info('All connections done, exiting normally')
+				exitNormally()
+			})
+		}
+		else {
+			exitNormally()
+		}
+	}
+
+	function exitNormally() {
+		process.exit(0)
+	}
 
 	// --------------------------------------------------------
 	// Middlewares

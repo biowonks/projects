@@ -20,8 +20,10 @@ let BootStrapper = require('./services/BootStrapper')
 const kAppExitCode = 2,
 	kMinRestartDelayMs = 100,
 	kMaxRestartDelayMs = 30000, // 30 seconds
+	kShutdownGraceMs = 30000, // 30 seconds
 	kRestartDelayFactor = 2 // Double each crash
 
+// --------------------------------------------------------
 // --------------------------------------------------------
 if (cluster.isMaster) {
 	// Here, the boot strapper is really not doing much besides providing a common and consistent
@@ -30,63 +32,130 @@ if (cluster.isMaster) {
 	// scripts.
 	let bootStrapper = new BootStrapper(),
 		config = BootStrapper.config,
-		logger = bootStrapper.logger(),
+		logger = bootStrapper.logger().child({module: 'cluster-master'}),
 		restartDelayMs = 0,
-		shuttingDown = false
+		numShutDownRequests = 0,
+		restartTimer = null
 
-	function startWorker() {
-		if (shuttingDown)
+	process.on('SIGTERM', shutdown)
+	process.on('SIGINT', shutdown)
+
+	startWorker()
+
+	// ----------------------------------------------------
+	cluster.on('exit', (worker, code, signal) => {
+		let isNormalExit = code === 0,
+			context = {pid: worker.process.pid, code, signal}
+
+		if (isNormalExit)
+			logger.info(context, 'Worker exited normally')
+		else
+			logger.fatal(context, 'Worker died')
+
+		if (numShutDownRequests) {
+			if (numWorkers() === 0) {
+				logger.info('All workers have exited')
+				disconnectAndExit()
+			}
+		}
+		else if (config.server.restartAutomatically) {
+			let newDelayMs = Math.min(kMaxRestartDelayMs, Math.max(kMinRestartDelayMs, restartDelayMs * kRestartDelayFactor))
+			startWorker(newDelayMs)
+		}
+		else {
+			disconnectAndExit(kAppExitCode)
+		}
+	})
+
+	function startWorker(optDelayMs = 0) {
+		if (restartTimer)
 			return
 
-		let nWorkers = Object.keys(cluster.workers).length
-		if (nWorkers === config.server.cpus)
-			return
+		restartDelayMs = optDelayMs
+		if (restartDelayMs)
+			logger.info({restartDelayMs}, `Restarting in ${restartDelayMs} ms`)
 
-		// Start one worker at a time and wait for the worker to signal it has been successfully
-		// started. Because each worker connects to the database at startup, this avoids overloading
-		// the database when scaling out N number of workers.
-		setTimeout(() => {
+		// Serially start workers one at a time. Wait for the worker to signal it has
+		// successfully started before starting the next one. Because each worker connects to the
+		// database at startup, this avoids overloading the database when scaling out N number of
+		// workers.
+		restartTimer = setTimeout(() => {
+			restartTimer = null
+
+			if (numShutDownRequests || numWorkers() >= config.server.cpus)
+				return
+
 			let worker = cluster.fork()
 			worker.on('message', (message) => {
 				if (message === 'error db') {
-					cluster.disconnect(() => {
-						logger.fatal('Database initialization error. Please check the logs and restart the application')
-						process.exit(kAppExitCode)
-					})
-					return
+					logger.fatal('Database initialization error. Please check the logs and restart the application')
+					disconnectAndExit(kAppExitCode)
 				}
-
-				if (message === 'success')
-					restartDelayMs = 0
-				startWorker()
+				else if (message === 'ready') {
+					logger.info('Worker is ready')
+					startWorker()
+				}
+				else {
+					logger.info(`Unhandled message from worker: ${message}`)
+				}
 			})
+
+			logger.info({totalWorkers: numWorkers()}, 'Started worker')
 		}, restartDelayMs)
 	}
-	startWorker()
 
-	cluster.on('exit', (worker, code, signal) => {
-		logger.fatal({pid: worker.process.pid, code, signal}, 'Worker instance died')
+	function numWorkers() {
+		return Object.keys(cluster.workers).length
+	}
 
-		if (config.server.restartOnCrash) {
-			restartDelayMs = Math.min(kMaxRestartDelayMs, Math.max(kMinRestartDelayMs, restartDelayMs * kRestartDelayFactor))
-			logger.info({restartDelayMs}, `Restarting in ${restartDelayMs} ms`)
-			startWorker()
+	function shutdown() {
+		logger.info('Shutdown request received')
+
+		clearTimeout(restartTimer)
+		restartTimer = null
+
+		if (numWorkers() === 0) {
+			disconnectAndExit()
+			return
 		}
-		else {
-			cluster.disconnect(() => {
-				process.exit(kAppExitCode)
-			})
-		}
-	})
 
-	// Gracefully handle shutting down
-	process.on('SIGTERM', () => {
+		++numShutDownRequests
+		if (numShutDownRequests > 1) {
+			logger.fatal('Another shutdown request received. Forcefully shutting down.')
+			forcefulShutdown()
+		}
+
 		// Signal each worker to stop receiving connections and gracefully shutdown
 		for (let id in cluster.workers)
-			cluster.workers[id].send('sigterm')
-	})
+			cluster.workers[id].send('SIGTERM')
+
+		let shutdownTimer = setTimeout(() => {
+			logger.fatal('Workers did not exit within the grace period, forcefully exiting.')
+			forcefulShutdown()
+		}, kShutdownGraceMs)
+
+		shutdownTimer.unref()
+	}
+
+	function disconnectAndExit(exitCode = 0) {
+		cluster.disconnect(() => {
+			process.exit(exitCode)
+		})
+	}
+
+	function forcefulShutdown() {
+		process.exit(kAppExitCode)
+	}
 }
 
 // --------------------------------------------------------
-if (cluster.isWorker)
+// --------------------------------------------------------
+if (cluster.isWorker) {
+	// Swallow the interrupt and terminate signals; shutting down the child processes is handled
+	// by message passing from the master.
+	let noop = () => {}
+	process.on('SIGINT', noop)
+	process.on('SIGTERM', noop)
+
 	require('./app')() // eslint-disable-line global-require
+}
