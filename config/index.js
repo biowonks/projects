@@ -56,14 +56,6 @@ let config = {
 		version: 'x-' + packageJSON.name + '-api-version'
 	},
 
-	logger: {
-		options: {
-			name: packageJSON.name,
-			stream: process.stdout,
-			level: process.env.LOG_LEVEL || 'info'
-		}
-	},
-
 	package: packageJSON,
 
 	routing: {

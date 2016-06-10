@@ -140,10 +140,11 @@ class BootStrapper {
 		return this.migrator_.up()
 	}
 
-	createLogger_(options) {
-		let loggerOptions = _.defaultsDeep({}, config.logger.options, options)
-		if (loggerOptions.stream && loggerOptions.streams)
-			Reflect.deleteProperty(loggerOptions, 'stream')
+	createLogger_(options = {}) {
+		let loggerOptions = _.defaults(config.logger.options, options)
+
+		if (Reflect.has(loggerOptions, 'stream'))
+			throw new Error('Stream property is not an allowed logger option. Please convert to use the streams array property. See: https://github.com/trentm/node-bunyan#streams')
 
 		return bunyan.createLogger(loggerOptions)
 	}

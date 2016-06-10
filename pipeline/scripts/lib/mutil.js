@@ -15,27 +15,6 @@ let Promise = require('bluebird'),
 	mkdirp = require('mkdirp'),
 	moment = require('moment')
 
-// Local includes
-let dbSetup = require('../../../db-setup'),
-	dbModels = require('../../../models')
-
-exports.initORM = function(config, logger) {
-	let result = {
-		sequelize: null,
-		models: null
-	}
-
-	return dbSetup(config, logger)
-		.then((sequelize) => {
-			result.sequelize = sequelize
-			return dbModels(sequelize, logger)
-		})
-		.then((models) => {
-			result.models = models
-			return result
-		})
-}
-
 /**
  * Creates the directory ${directory} if it does not already exist. Note, the immediate
  * parent directory must already exist for this to succeed.
