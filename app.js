@@ -22,13 +22,22 @@ let	errorHandler = require('./lib/error-handler'),
 const kMsPerSecond = 1000
 
 module.exports = function() {
-	// This letable is initialized before returning. Listed here for clarity since the handleUncaughtErrors
-	// middleware references it.
+	// Maintain reference to server variable because the handleUncaughtErrors middleware references it.
 	let server = null,
-		bootStrapper = new BootStrapper(),
+		bootStrapper = new BootStrapper({
+			logger: {
+				workerId: cluster.worker.id
+			}
+		}),
 		logger = bootStrapper.logger(),
 		config = BootStrapper.config,
+		sigTermSignalReceived = false,
 		failedSetup = false
+
+	process.on('message', (message) => {
+		if (message === 'SIGTERM')
+			onSigTerm()
+	})
 
 	return bootStrapper.setup()
 	.catch(function(error) {
@@ -72,15 +81,49 @@ module.exports = function() {
 		app.use(handleUncaughtErrors)
 		app.use(errorHandler(app))
 
-		server = app.listen(config.server.port, function() {
+		server = app.listen(config.server.port, () => {
 			logger.info({port: config.server.port}, 'Listening for connections')
-		})
 
-		// Tell master that we are alive and well
-		process.send('success')
+			// Tell master that we are ready to go
+			process.send('ready')
+		})
 
 		return app
 	})
+
+	// --------------------------------------------------------
+	function onSigTerm() {
+		// Prevent multiple calls to
+		if (sigTermSignalReceived)
+			return
+
+		// Close down any keep-alive connections
+		// https://github.com/nodejs/node-v0.x-archive/issues/9066
+		server.setTimeout(1)
+
+		sigTermSignalReceived = true
+		logger.info(`Received SIGTERM signal from master. Waiting ${config.server.workerExitGraceMs / kMsPerSecond} seconds for open connections to complete`)
+		if (server) {
+			server.close(() => {
+				logger.info('All connections done, exiting normally')
+				exit()
+			})
+
+			let failSafeTimer = setTimeout(() => {
+				logger.fatal('Timed out waiting for open connections to close normally, forcefully exiting')
+				exit(1)
+			}, config.server.workerExitGraceMs)
+
+			failSafeTimer.unref()
+		}
+		else {
+			exit()
+		}
+	}
+
+	function exit(optCode = 0) {
+		process.exit(optCode)
+	}
 
 	// --------------------------------------------------------
 	// Middlewares
