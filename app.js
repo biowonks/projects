@@ -25,8 +25,12 @@ module.exports = function() {
 	// This letable is initialized before returning. Listed here for clarity since the handleUncaughtErrors
 	// middleware references it.
 	let server = null,
-		bootStrapper = new BootStrapper(),
-		logger = bootStrapper.logger().child({workerId: cluster.worker.id}),
+		bootStrapper = new BootStrapper({
+			logger: {
+				workerId: cluster.worker.id
+			}
+		}),
+		logger = bootStrapper.logger(),
 		config = BootStrapper.config,
 		sigTermSignalReceived = false,
 		failedSetup = false
@@ -95,20 +99,27 @@ module.exports = function() {
 			return
 
 		sigTermSignalReceived = true
-		logger.info('Received SIGTERM signal from master, gracefully shutting down')
+		logger.info(`Received SIGTERM signal from master. Waiting ${config.server.workerExitGraceMs / kMsPerSecond} seconds for open connections to complete`)
 		if (server) {
 			server.close(() => {
 				logger.info('All connections done, exiting normally')
-				exitNormally()
+				exit()
 			})
+
+			let failSafeTimer = setTimeout(() => {
+				logger.fatal('Timed out waiting for open connections to close normally, forcefully exiting')
+				exit(1)
+			}, config.server.workerExitGraceMs)
+
+			failSafeTimer.unref()
 		}
 		else {
-			exitNormally()
+			exit()
 		}
 	}
 
-	function exitNormally() {
-		process.exit(0)
+	function exit(optCode = 0) {
+		process.exit(optCode)
 	}
 
 	// --------------------------------------------------------

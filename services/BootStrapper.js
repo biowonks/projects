@@ -1,7 +1,8 @@
 'use strict'
 
 // Vendor
-let bunyan = require('bunyan'),
+let _ = require('lodash'),
+	bunyan = require('bunyan'),
 	Promise = require('bluebird'),
 	Sequelize = require('sequelize')
 
@@ -27,8 +28,8 @@ class BootStrapper {
 	 * @param {object} options defaults to an empty object
 	 */
 	constructor(options = {}) {
-		this.logger_ = bunyan.createLogger(options.logger || config.logger.options)
-		this.bootStrapLogger_ = this.logger_.child({module: 'BootStrapper'})
+		this.logger_ = this.createLogger_(options.logger)
+		this.bootStrapLogger_ = this.logger_.child({module: 'bootStrapper'})
 		this.sequelize_ = null
 		this.migrator_ = null
 		this.models_ = null
@@ -137,6 +138,14 @@ class BootStrapper {
 	// Private methods
 	runPendingMigrations_() {
 		return this.migrator_.up()
+	}
+
+	createLogger_(options) {
+		let loggerOptions = _.defaultsDeep({}, config.logger.options, options)
+		if (loggerOptions.stream && loggerOptions.streams)
+			Reflect.deleteProperty(loggerOptions, 'stream')
+
+		return bunyan.createLogger(loggerOptions)
 	}
 }
 

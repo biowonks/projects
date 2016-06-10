@@ -17,11 +17,7 @@ let cluster = require('cluster')
 let BootStrapper = require('./services/BootStrapper')
 
 // Constants
-const kAppExitCode = 2,
-	kMinRestartDelayMs = 100,
-	kMaxRestartDelayMs = 30000, // 30 seconds
-	kShutdownGraceMs = 30000, // 30 seconds
-	kRestartDelayFactor = 2 // Double each crash
+const kAppExitCode = 2
 
 // --------------------------------------------------------
 // --------------------------------------------------------
@@ -32,7 +28,7 @@ if (cluster.isMaster) {
 	// scripts.
 	let bootStrapper = new BootStrapper(),
 		config = BootStrapper.config,
-		logger = bootStrapper.logger().child({module: 'cluster-master'}),
+		logger = bootStrapper.logger().child({module: 'clusterMaster'}),
 		restartDelayMs = 0,
 		numShutDownRequests = 0,
 		restartTimer = null
@@ -44,25 +40,32 @@ if (cluster.isMaster) {
 
 	// ----------------------------------------------------
 	cluster.on('exit', (worker, code, signal) => {
+		// Log the exit status
 		let isNormalExit = code === 0,
 			context = {pid: worker.process.pid, code, signal}
-
 		if (isNormalExit)
 			logger.info(context, 'Worker exited normally')
 		else
 			logger.fatal(context, 'Worker died')
 
+		// 3 cases:
+		// 1) Shutdown request has been received: disconnect and exit if no more workers are
+		//    outstanding
+		// 2) Restart automatically is true, scale the restart delay and restart
+		// 3) No automatic restart, exit abnormally if no more workers remain
 		if (numShutDownRequests) {
+			// Case 1
 			if (numWorkers() === 0) {
 				logger.info('All workers have exited')
 				disconnectAndExit()
 			}
 		}
 		else if (config.server.restartAutomatically) {
-			let newDelayMs = Math.min(kMaxRestartDelayMs, Math.max(kMinRestartDelayMs, restartDelayMs * kRestartDelayFactor))
-			startWorker(newDelayMs)
+			// Case 2
+			startWorker(scaledRestartDelayMs())
 		}
-		else {
+		else if (numWorkers() === 0) {
+			// Case 3
 			disconnectAndExit(kAppExitCode)
 		}
 	})
@@ -121,7 +124,7 @@ if (cluster.isMaster) {
 
 		++numShutDownRequests
 		if (numShutDownRequests > 1) {
-			logger.fatal('Another shutdown request received. Forcefully shutting down.')
+			logger.fatal('Multiple shutdown requests received. Forcefully shutting down.')
 			forcefulShutdown()
 		}
 
@@ -129,12 +132,12 @@ if (cluster.isMaster) {
 		for (let id in cluster.workers)
 			cluster.workers[id].send('SIGTERM')
 
-		let shutdownTimer = setTimeout(() => {
+		let failSafeTimer = setTimeout(() => {
 			logger.fatal('Workers did not exit within the grace period, forcefully exiting.')
 			forcefulShutdown()
-		}, kShutdownGraceMs)
+		}, config.server.masterExitGraceMs)
 
-		shutdownTimer.unref()
+		failSafeTimer.unref()
 	}
 
 	function disconnectAndExit(exitCode = 0) {
@@ -145,6 +148,15 @@ if (cluster.isMaster) {
 
 	function forcefulShutdown() {
 		process.exit(kAppExitCode)
+	}
+
+	function scaledRestartDelayMs() {
+		let newDelayMs = restartDelayMs * config.server.restartDelayScaleFactor
+		return clamp(newDelayMs, config.server.minRestartDelayMs, config.server.maxRestartDelayMs)
+	}
+
+	function clamp(value, min, max) {
+		return Math.min(max, Math.max(value, min))
 	}
 }
 
