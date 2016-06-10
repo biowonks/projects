@@ -22,8 +22,7 @@ let	errorHandler = require('./lib/error-handler'),
 const kMsPerSecond = 1000
 
 module.exports = function() {
-	// This letable is initialized before returning. Listed here for clarity since the handleUncaughtErrors
-	// middleware references it.
+	// Maintain reference to server variable because the handleUncaughtErrors middleware references it.
 	let server = null,
 		bootStrapper = new BootStrapper({
 			logger: {
@@ -97,6 +96,10 @@ module.exports = function() {
 		// Prevent multiple calls to
 		if (sigTermSignalReceived)
 			return
+
+		// Close down any keep-alive connections
+		// https://github.com/nodejs/node-v0.x-archive/issues/9066
+		server.setTimeout(1)
 
 		sigTermSignalReceived = true
 		logger.info(`Received SIGTERM signal from master. Waiting ${config.server.workerExitGraceMs / kMsPerSecond} seconds for open connections to complete`)
