@@ -1,7 +1,7 @@
 {
-  "name": "boiler-node-api",
+  "name": "mist3-api",
   "version": "0.0.1",
-  "description": "API description",
+  "description": "The MiST computational pipeline and API",
   "private": true,
   "main": "index.js",
   "repository": {},
@@ -10,7 +10,9 @@
     "eslint": "node_modules/.bin/eslint 'pipeline/scripts/**/*.js'",
     "test": "node_modules/.bin/gulp test",
     "start": "node index.js | node_modules/.bin/bunyan",
-    "enqueueNewGenomes": "node pipeline/scripts/enqueueNewGenomes.js | node_modules/.bin/bunyan"
+    "enqueue-new-genomes": "node pipeline/scripts/enqueue-new-genomes.js | node_modules/.bin/bunyan",
+    "create-migration": "node db/create-migration.js",
+    "undo-migration": "node db/undo-migration.js | node_modules/.bin/bunyan"
   },
   "pre-commit": [
     "eslint"
