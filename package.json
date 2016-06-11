@@ -7,7 +7,7 @@
   "repository": {},
   "scripts": {
     "setup": "scripts/setup.sh",
-    "eslint": "node_modules/.bin/eslint 'pipeline/scripts/**/*.js'",
+    "eslint": "node_modules/.bin/eslint 'pipeline/**/*.js'",
     "test": "node_modules/.bin/gulp test",
     "start": "node index.js | node_modules/.bin/bunyan",
     "enqueue-new-genomes": "node pipeline/scripts/enqueue-new-genomes.js | node_modules/.bin/bunyan",

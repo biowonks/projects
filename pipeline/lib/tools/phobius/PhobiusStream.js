@@ -1,6 +1,7 @@
+/* eslint-disable */
 'use strict'
 
-//Core node libraries
+// Core node libraries
 let child_process = require('child_process'),
 	path = require('path'),
 	Transform = require('stream').Transform
@@ -22,7 +23,7 @@ class PhobiusStream extends Transform {
 		this.phobiusResultStream_.pipe(this)
 
 		let self = this
-		this.on('pipe',function(src) {
+		this.on('pipe', function(src) {
 			src.unpipe(self)
 
 			src.pipe(self.phobiusTool_.stdin)

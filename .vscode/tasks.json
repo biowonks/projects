@@ -11,7 +11,15 @@
 			"showOutput": "always",
 			"suppressTaskName": true,
 			"args": [
-				"docker exec -i api ./node_modules/.bin/mocha --debug-brk --require pipeline/scripts/test-setup.js \"pipeline/scripts/**/*.tests.js\""
+				"docker exec -i api node_modules/.bin/mocha --debug-brk --require testing/test-setup.js \"pipeline/**/*.tests.js\""
+			]
+		},
+		{
+			"taskName": "docker-misteco-up",
+			"showOutput": "always",
+			"suppressTaskName": true,
+			"args": [
+				"docker-compose up -d"
 			]
 		}
 	]

@@ -1,9 +1,10 @@
+/* eslint-disable */
 'use strict'
 
 // Core node libraries
 let assert = require('assert'),
 	StringDecoder = require('string_decoder').StringDecoder,
-	Transform = require('stream').Transform;
+	Transform = require('stream').Transform
 
 // Constants
 let kRecordSeparator = '\n'
@@ -115,7 +116,7 @@ class PhobiusReadStream extends Transform {
 		}
 
 		if (hasTransmembrane) {
-			let tmSegments = topology.replace(/[o,i]/g,' ').trim().split(/\s+/)
+			let tmSegments = topology.replace(/[o,i]/g, ' ').trim().split(/\s+/)
 			tmSegments.forEach((tmSegment) => {
 				let span = tmSegment.split('-')
 				tms.push([
@@ -129,7 +130,7 @@ class PhobiusReadStream extends Transform {
 			header: header,
 			sp: signalPeptide,
 			tms: tms
-		});
+		})
 	}
 
 	isHeader_(line) {

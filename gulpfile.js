@@ -12,7 +12,7 @@ let gulp = require('gulp'),
 	gutil = require('gulp-util')
 
 // Local includes
-let pipelineConfig = require('./pipeline/config')
+let pipelineConfig = require('./config').pipeline
 
 // Special variables :)
 let serverInstance = null
@@ -31,11 +31,11 @@ let kWatchPatterns = [
 // gulp.task('default', gulp.series(['server', 'watch'])
 
 let kTestFiles = [
-	'pipeline/scripts/**/*.tests.js'
+	'pipeline/**/*.tests.js'
 ]
 
 let kRunTimeFiles = [
-	'pipeline/scripts/lib/**/*.js',
+	'pipeline/**/*.js',
 	'**/!*.tests.js'
 ]
 
@@ -49,7 +49,7 @@ function test(done) {
 			timeout: 30000,
 			log: false,
 			require: [
-				'./pipeline/scripts/test-setup.js'
+				'./testing/test-setup.js'
 			]
 		}))
 		.on('end', () => (done ? done() : null))

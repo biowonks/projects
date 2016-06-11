@@ -28,9 +28,9 @@ let program = require('commander'),
 	Promise = require('bluebird')
 
 // Local
-let mutil = require('./lib/mutil'),
+let mutil = require('../lib/mutil'),
 	BootStrapper = require('../../services/BootStrapper'),
-	LineStream = require('./lib/streams/LineStream')
+	LineStream = require('../lib/streams/LineStream')
 
 program
 .description('Enqueues new microbial genomes located at NCBI for integration into the MiST database')

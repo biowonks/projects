@@ -12,7 +12,7 @@ let config = require('../../../../config'),
 	seqUtil = require('../../bio/seq-util')
 
 // Constants
-const kSegToolDir = config.vendor.seg.basePath,
+const kSegToolDir = config.pipeline.vendor.seg.basePath,
 	kSegToolFile = path.resolve(kSegToolDir, 'seg')
 
 module.exports =

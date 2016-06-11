@@ -1,13 +1,14 @@
+/* eslint-disable no-magic-numbers */
 'use strict'
 
-// Core node libraries
+// Core
 let fs = require('fs'),
 	path = require('path')
 
-// Local includes
+// Local
 let PhobiusStream = require('./PhobiusStream')
 
-describe('PhobiusStream', function() {
+describe.skip('PhobiusStream', function() {
 	it('streaming prediction of TM', function(done) {
 		let inputFile = path.resolve(__dirname, 'test.fa'),
 			inStream = fs.createReadStream(inputFile),
@@ -49,7 +50,7 @@ describe('PhobiusStream', function() {
 					tms: [
 						[155, 178]
 					]
-				}	
+				}
 			])
 			done()
 		})

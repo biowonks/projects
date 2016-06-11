@@ -11,7 +11,7 @@ let config = require('../../../../config'),
 	seqUtil = require('../../bio/seq-util')
 
 // Constants
-const kCoilsToolDir = config.vendor.coils.basePath,
+const kCoilsToolDir = config.pipeline.vendor.coils.basePath,
 	kCoilsToolFile = path.resolve(kCoilsToolDir, 'ncoils')
 
 module.exports =

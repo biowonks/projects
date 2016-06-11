@@ -8,12 +8,12 @@
  * Initializes running tests and common setup routines. This file should be required by the
  * mocha binary when running any tests:
  *
- *   $ ./mocha -r test-harness.js <test-file> ...
+ *   $ ./mocha -r test-setup.js <test-file> ...
  *
  * For convenience purposes, the following are placed on the global name space:
  *   expect
  *   sinon
- *   harness (instance of the Harness class below)
+ *   expectRejection
  *
  * For database tests, the same core database is used; however, all results are done within a
  * distinct schema (e.g. 'test') vs the default public schema. Instead of dropping and recreating
