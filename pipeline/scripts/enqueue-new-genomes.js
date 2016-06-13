@@ -148,9 +148,10 @@ class Enqueuer {
 			// it causes csv-parse to choke because it is looking for the header line. Thus, this through stream
 			// skips the first line as well as re-appends the newline character that is stripped by LineStream.
 			.pipe(through2({objectMode: true}, function(line, encoding, done) {
-				let lineWithLF = line + '\n'
 				if (skippedFirstLine)
-					this.push(lineWithLF) // eslint-disable-line no-invalid-this
+					// The CSV parser expects input with newlines. Here we add them back because the
+					// LineStream removes them.
+					this.push(line + '\n') // eslint-disable-line no-invalid-this
 				else
 					skippedFirstLine = true
 				done()
