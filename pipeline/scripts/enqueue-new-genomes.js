@@ -76,7 +76,7 @@ class Enqueuer {
 		})
 		.then(this.enqueueNewAssemblies_.bind(this))
 		.catch((error) => {
-			if (error instanceof this.sequelize_.DatabaseError)
+			if (error instanceof BootStrapper.Sequelize.DatabaseError)
 				this.logger_.error({name: error.name, sql: error.sql}, error.message)
 			else
 				this.logger_.error({error, stack: error.stack}, 'Unexpected error')

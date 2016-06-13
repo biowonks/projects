@@ -150,7 +150,9 @@ class BootStrapper {
 	}
 }
 
-// Expose the configuration directly on the BootStrapper class as a static property
+// Expose the configuration and Sequelize definition directly on the BootStrapper class as a static
+// property
 BootStrapper.config = config
+BootStrapper.Sequelize = Sequelize
 
 module.exports = BootStrapper
