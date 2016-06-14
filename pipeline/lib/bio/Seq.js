@@ -140,7 +140,7 @@ class Seq {
 	 * @returns {undefined}
 	 */
 	clean_() {
-		this.sequence_ = this.sequence_.replace(/[^A-Za-z.\-* ]/g, '@')
+		this.sequence_ = this.sequence_.replace(/[^A-Za-z.\-* ]/g, kInvalidSymbol)
 	}
 
 	/**

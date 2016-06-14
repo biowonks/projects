@@ -42,7 +42,8 @@ class BootStrapper {
 	 * 1) Configures sequelize
 	 * 2) Loads the models
 	 * 3) Checks the database connection
-	 * 4) Runs any pending migrations
+	 * 4) Sets up any defined schema
+	 * 5) Runs any pending migrations
 	 *
 	 * @returns {Promise}
 	 */
@@ -61,6 +62,7 @@ class BootStrapper {
 		}
 
 		return this.checkDatabaseConnection()
+		.then(this.setupDatabase.bind(this))
 		.then(this.runPendingMigrations_.bind(this))
 		.then(() => {
 			this.setupComplete_ = true
@@ -89,6 +91,14 @@ class BootStrapper {
 			this.migrator_ = new Migrator(this.sequelize_, config.database.migrations.umzug, this.bootStrapLogger_)
 	}
 
+	loadModels() {
+		if (!this.sequelize_)
+			throw new Error('Sequelize not initialized. Please call setupSequelize() first')
+
+		if (!this.models_)
+			this.models_ = loadModels(this.sequelize_, this.bootStrapLogger_)
+	}
+
 	/**
 	 * Checks that the database may be reached by sending an authentication request. Resolves
 	 * if this is successful.
@@ -110,12 +120,9 @@ class BootStrapper {
 		})
 	}
 
-	loadModels() {
-		if (!this.sequelize_)
-			throw new Error('Sequelize not initialized. Please call setupSequelize() first')
-
-		if (!this.models_)
-			this.models_ = loadModels(this.sequelize_, this.bootStrapLogger_)
+	setupDatabase() {
+		return this.setupSchema_()
+		.then(this.setupSearchPath_.bind(this))
 	}
 
 	logger() {
@@ -136,10 +143,6 @@ class BootStrapper {
 
 	// ----------------------------------------------------
 	// Private methods
-	runPendingMigrations_() {
-		return this.migrator_.up()
-	}
-
 	createLogger_(options = {}) {
 		let loggerOptions = _.defaults(config.logger.options, options)
 
@@ -148,6 +151,40 @@ class BootStrapper {
 
 		return bunyan.createLogger(loggerOptions)
 	}
+
+	setupSchema_() {
+		let schema = null
+		try {
+			schema = config.database.sequelizeOptions.define.schema
+		}
+		catch (error) {
+			// Noop
+		}
+		if (!schema)
+			return Promise.resolve()
+
+		let validSchemaName = /^[A-Za-z][\w_]*$/.test(schema)
+		if (!validSchemaName)
+			throw new Error('Schema name begin with a letter and consist only of alphanumeric characters or underscores')
+
+		this.bootStrapLogger_.info({schema}, `Creating schema, ${schema}, if it does not already exist`)
+
+		return this.sequelize_.query(`create schema if not exists ${schema}`, {raw: true})
+	}
+
+	setupSearchPath_() {
+		let searchPath = config.database.searchPath
+		if (!searchPath)
+			return Promise.resolve()
+
+		this.bootStrapLogger_.info({searchPath}, `Setting search_path to ${searchPath}`)
+		return this.sequelize_.query(`set search_path to ${searchPath}`, {raw: true})
+	}
+
+	runPendingMigrations_() {
+		return this.migrator_.up()
+	}
+
 }
 
 // Expose the configuration and Sequelize definition directly on the BootStrapper class as a static

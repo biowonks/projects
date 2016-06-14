@@ -52,6 +52,9 @@ function undoLastMigration() {
 	bootStrapper.setupSequelize()
 	bootStrapper.checkDatabaseConnection()
 	.then(() => {
+		return bootStrapper.setupDatabase()
+	})
+	.then(() => {
 		return bootStrapper.migrator().down()
 	})
 }

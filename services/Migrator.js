@@ -42,7 +42,7 @@ class Migrator {
 			if (!migrations.length)
 				return null
 
-			this.log_('info', `${migrations.length} migrations pending`)
+			this.log_('info', `${migrations.length} migration(s) pending`)
 
 			return this.umzug_.up()
 			.then((finishedMigrations) => {
