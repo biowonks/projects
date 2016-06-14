@@ -9,7 +9,7 @@ let readline = require('readline')
 let program = require('commander')
 
 // Local
-let BootStrapper = require('../services/BootStrapper')
+let BootService = require('../services/BootService')
 
 // --------------------------------------------------------
 // --------------------------------------------------------
@@ -43,18 +43,18 @@ function confirmUndo() {
 }
 
 function undoLastMigration() {
-	let bootStrapper = new BootStrapper({
+	let bootService = new BootService({
 		logger: {
 			name: 'undo-migration'
 		}
 	})
 
-	bootStrapper.setupSequelize()
-	bootStrapper.checkDatabaseConnection()
+	bootService.setupSequelize()
+	bootService.checkDatabaseConnection()
 	.then(() => {
-		return bootStrapper.setupDatabase()
+		return bootService.setupDatabase()
 	})
 	.then(() => {
-		return bootStrapper.migrator().down()
+		return bootService.migratorService().down()
 	})
 }

@@ -12,11 +12,12 @@
  *
  * Only the fields object is required.
  *
- * All files ending in .js are considered model files except for files beginning
- * with . or _ and of course, this file.
+ * All files ending in .model.js are considered model files and loaded automatically. After
+ * all models are loaded and then all associations setup in associations.js.
  *
- * All models are initially loaded and then all associations defined in _associations
- * are configured.
+ * Notes:
+ * - Why the .model.js suffix? This clearly distinguishes each file as a model definition vs
+ *   a class definition (the basename of which matches the class name exactly).
  */
 'use strict'
 
@@ -30,7 +31,10 @@ let _ = require('lodash'),
 	Sequelize = require('sequelize')
 
 // Local
-let setupAssociations = require('./_associations')
+let setupAssociations = require('./associations')
+
+// Constants
+let kModelFileNameSuffix = '.model.js' // All files ending with this are treated as models
 
 module.exports = function(sequelize, logger) {
 	let models = loadModels(sequelize, logger)
@@ -45,17 +49,18 @@ function loadModels(sequelize, logger) {
 	logger.info('Loading models')
 
 	getModelFileNames()
-	.forEach(function(modelFileName) {
+	.forEach((modelFileName) => {
 		// eslint-disable-next-line global-require
-		let definition = require('./' + modelFileName)(Sequelize, models),
-			modelName = nameForDefinition(definition, modelFileName)
-		setupDefinition(definition, modelName)
+		let definition = require('./' + modelFileName)(Sequelize, models)
+		if (!definition)
+			throw new Error(`Missing return value from model file, ${modelFileName}`)
 
-		// injectGlobalModelMethods(definition, modelName, sequelize)
+		let modelName = nameForDefinition(definition, modelFileName)
+		setupDefinition(definition, modelName)
 
 		models[modelName] = sequelize.define(modelName, definition.fields, definition.params)
 
-		logger.info('Loaded model:', modelName, '(' + definition.params.tableName + ')')
+		logger.info({modelName, table: definition.params.tableName}, `Loaded model: ${modelName} (${definition.params.tableName} table)`)
 	})
 
 	return models
@@ -63,11 +68,7 @@ function loadModels(sequelize, logger) {
 
 function getModelFileNames() {
 	return fs.readdirSync(__dirname)
-	.filter(function(modelFileName) {
-		return modelFileName !== 'index.js' &&
-			modelFileName[0] !== '.' &&
-			modelFileName[0] !== '_'
-	})
+	.filter((modelFileName) => modelFileName.endsWith(kModelFileNameSuffix))
 	.sort()
 }
 
@@ -76,14 +77,7 @@ function nameForDefinition(definition, modelFileName) {
 }
 
 function nameFromFileName(modelFileName) {
-	let extname = path.extname(modelFileName),
-		basename = path.basename(modelFileName, extname)
-
-	return basename.split('_')
-	.map(function(namePart) {
-		return inflection.capitalize(inflection.singularize(namePart).toLowerCase())
-	})
-	.join('')
+	return path.basename(modelFileName, kModelFileNameSuffix)
 }
 
 function setupDefinition(definition, modelName) {
@@ -103,18 +97,3 @@ function setupDefinition(definition, modelName) {
 function defaultTableName(modelName) {
 	return inflection.underscore(inflection.pluralize(modelName))
 }
-
-// function injectGlobalModelMethods(definition, modelName, sequelize) {
-// 	if (!definition.params)
-// 		definition.params = {}
-// 	if (!definition.params.classMethods)
-// 		definition.params.classMethods = {}
-
-// 	if ('sequelize' in definition.params.classMethods)
-// 		throw new Error(`${modelName} definition error: classMethods.sequelize is a reserved global method name`)
-
-// 	// TODO: Rename this!
-// 	definition.params.classMethods.sequelize = function() {
-// 		return sequelize
-// 	}
-// }

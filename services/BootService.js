@@ -9,17 +9,17 @@ let _ = require('lodash'),
 // Local
 let config = require('../config'),
 	loadModels = require('../models'),
-	Migrator = require('./Migrator')
+	MigratorService = require('./MigratorService')
 
 /**
- * Encapsulates a common configuration and all bootstrap-type methods. May be used to call
- * specific bootstrap activites (e.g. migrations) or using the setup() method, perform all
+ * Encapsulates a common configuration and all boot strapping methods. May be used to call
+ * specific bootstrap activites (e.g. migrations) or, using the setup() method, perform all
  * core responsibilities necessary to running the API.
  *
  * Because the configuration is not tied to any given instance, it is assigned as a static
- * property of the BootStrapper definition.
+ * property of the BootService definition.
  */
-class BootStrapper {
+class BootService {
 	/**
 	 * On instantiation, creates a logger with the options specified in ${options.logger}
 	 * or by default those defined in config.logger.
@@ -29,9 +29,9 @@ class BootStrapper {
 	 */
 	constructor(options = {}) {
 		this.logger_ = this.createLogger_(options.logger)
-		this.bootStrapLogger_ = this.logger_.child({module: 'bootStrapper'})
+		this.bootLogger_ = this.logger_.child({module: 'bootService'})
 		this.sequelize_ = null
-		this.migrator_ = null
+		this.migratorService_ = null
 		this.models_ = null
 		this.setupComplete_ = false
 	}
@@ -51,7 +51,7 @@ class BootStrapper {
 		if (this.setupComplete_)
 			return Promise.resolve()
 
-		this.bootStrapLogger_.info('Starting bootstrap process')
+		this.bootLogger_.info('Starting the bootstrap process')
 
 		try {
 			this.setupSequelize()
@@ -64,6 +64,10 @@ class BootStrapper {
 		return this.checkDatabaseConnection()
 		.then(this.setupDatabase.bind(this))
 		.then(this.runPendingMigrations_.bind(this))
+		.catch(this.sequelize_.DatabaseError, (databaseError) => {
+			this.bootLogger_.fatal({sql: databaseError.sql}, databaseError.message)
+			throw databaseError
+		})
 		.then(() => {
 			this.setupComplete_ = true
 		})
@@ -81,14 +85,14 @@ class BootStrapper {
 			return
 
 		if (!dbConfig.name) {
-			this.bootStrapLogger_.fatal('Invalid database configuration: missing database name')
+			this.bootLogger_.fatal('Invalid database configuration: missing database name')
 			throw new Error('Database enabled, but missing configuration (name)')
 		}
 
 		if (!this.sequelize_)
 			this.sequelize_ = new Sequelize(dbConfig.name, dbConfig.user, dbConfig.password, dbConfig.sequelizeOptions)
-		if (!this.migrator_)
-			this.migrator_ = new Migrator(this.sequelize_, config.database.migrations.umzug, this.bootStrapLogger_)
+		if (!this.migratorService_)
+			this.migratorService_ = new MigratorService(this.sequelize_, config.database.migrations.umzug, this.bootLogger_)
 	}
 
 	loadModels() {
@@ -96,7 +100,7 @@ class BootStrapper {
 			throw new Error('Sequelize not initialized. Please call setupSequelize() first')
 
 		if (!this.models_)
-			this.models_ = loadModels(this.sequelize_, this.bootStrapLogger_)
+			this.models_ = loadModels(this.sequelize_, this.bootLogger_)
 	}
 
 	/**
@@ -106,17 +110,17 @@ class BootStrapper {
 	 * @returns {Promise}
 	 */
 	checkDatabaseConnection() {
-		this.bootStrapLogger_.info('Checking database connection')
+		this.bootLogger_.info('Checking database connection')
 		if (!this.sequelize_)
 			return Promise.reject(new Error('Sequelize not initialized. Please call setupSequelize() first'))
 
 		return this.sequelize_.authenticate()
 		.catch((error) => {
-			this.bootStrapLogger_.fatal('Unable to authenticate with database: ' + error.message)
+			this.bootLogger_.fatal('Unable to authenticate with database: ' + error.message)
 			throw error
 		})
 		.then(() => {
-			this.bootStrapLogger_.info('Successfully connected to database')
+			this.bootLogger_.info('Successfully connected to database')
 		})
 	}
 
@@ -137,8 +141,8 @@ class BootStrapper {
 		return this.models_
 	}
 
-	migrator() {
-		return this.migrator_
+	migratorService() {
+		return this.migratorService_
 	}
 
 	// ----------------------------------------------------
@@ -167,7 +171,7 @@ class BootStrapper {
 		if (!validSchemaName)
 			throw new Error('Schema name begin with a letter and consist only of alphanumeric characters or underscores')
 
-		this.bootStrapLogger_.info({schema}, `Creating schema, ${schema}, if it does not already exist`)
+		this.bootLogger_.info({schema}, `Creating schema, ${schema}, if it does not already exist`)
 
 		return this.sequelize_.query(`create schema if not exists ${schema}`, {raw: true})
 	}
@@ -177,19 +181,19 @@ class BootStrapper {
 		if (!searchPath)
 			return Promise.resolve()
 
-		this.bootStrapLogger_.info({searchPath}, `Setting search_path to ${searchPath}`)
+		this.bootLogger_.info({searchPath}, `Setting search_path to ${searchPath}`)
 		return this.sequelize_.query(`set search_path to ${searchPath}`, {raw: true})
 	}
 
 	runPendingMigrations_() {
-		return this.migrator_.up()
+		return this.migratorService_.up()
 	}
 
 }
 
-// Expose the configuration and Sequelize definition directly on the BootStrapper class as a static
+// Expose the configuration and Sequelize definition directly on the BootService class as a static
 // property
-BootStrapper.config = config
-BootStrapper.Sequelize = Sequelize
+BootService.config = config
+BootService.Sequelize = Sequelize
 
-module.exports = BootStrapper
+module.exports = BootService

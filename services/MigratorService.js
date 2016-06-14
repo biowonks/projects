@@ -7,7 +7,7 @@ let Umzug = require('umzug')
  * Migrator facilitates running and reverting migrations.
  */
 module.exports =
-class Migrator {
+class MigratorService {
 	/**
 	 * If the umzug storage is 'sequelize', then configures the migration function calls
 	 * with the sequelize query interface and DataTypes arguments.

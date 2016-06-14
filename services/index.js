@@ -1,16 +1,18 @@
-'use strict';
+'use strict'
 
-var path = require('path');
+// Core
+let path = require('path')
 
-var AnalyticsService = require('./analytics-service');
+// Local
+let AnalyticsService = require('./AnalyticsService')
 
 module.exports = function(app) {
-	var config = app.get('config');
+	let config = app.get('config')
 
 	return {
 		analytics: new AnalyticsService(config.analytics.gaTrackingId, {
-				baseUrl: config.server.baseUrl,
-				beaconImageFile: path.resolve(__dirname, '..', 'assets', 'img', 'beacon.gif')
-			})
-	};
-};
+			baseUrl: config.server.baseUrl,
+			beaconImageFile: path.resolve(__dirname, '..', 'assets', 'img', 'beacon.gif')
+		})
+	}
+}

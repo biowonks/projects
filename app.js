@@ -15,7 +15,7 @@ let	errorHandler = require('./lib/error-handler'),
 	pathRoutify = require('./lib/path-routify'),
 	loadServices = require('./services'),
 	ApiError = require('./lib/errors/api-error'),
-	BootStrapper = require('./services/BootStrapper'),
+	BootService = require('./services/BootService'),
 	RestError = require('./lib/errors/rest-error')
 
 // Constants
@@ -24,13 +24,13 @@ const kMsPerSecond = 1000
 module.exports = function() {
 	// Maintain reference to server variable because the handleUncaughtErrors middleware references it.
 	let server = null,
-		bootStrapper = new BootStrapper({
+		bootService = new BootService({
 			logger: {
 				workerId: cluster.worker.id
 			}
 		}),
-		logger = bootStrapper.logger(),
-		config = BootStrapper.config,
+		logger = bootService.logger(),
+		config = BootService.config,
 		sigTermSignalReceived = false,
 		failedSetup = false
 
@@ -39,7 +39,7 @@ module.exports = function() {
 			onSigTerm()
 	})
 
-	return bootStrapper.setup()
+	return bootService.setup()
 	.catch(function(error) {
 		// If unable to connect to the database, then the app has failed. Tell the master to close
 		// it down.
@@ -58,8 +58,8 @@ module.exports = function() {
 		app.set('config', config)
 		app.set('logger', logger)
 		app.set('toolbag', toolbag)
-		app.set('sequelize', bootStrapper.sequelize())
-		app.set('models', bootStrapper.models)
+		app.set('sequelize', bootService.sequelize())
+		app.set('models', bootService.models)
 
 		if (config.routing.ssl) {
 			logger.info('Forcing all requests to use SSL')

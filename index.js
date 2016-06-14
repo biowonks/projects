@@ -14,7 +14,7 @@
 let cluster = require('cluster')
 
 // Local
-let BootStrapper = require('./services/BootStrapper')
+let BootService = require('./services/BootService')
 
 // Constants
 const kAppExitCode = 2
@@ -26,9 +26,9 @@ if (cluster.isMaster) {
 	// mechanism for obtaining the configuration and a logger instance. It's other functionality
 	// (e.g. connecting to the database) is leveraged inside the app.js and other external
 	// scripts.
-	let bootStrapper = new BootStrapper(),
-		config = BootStrapper.config,
-		logger = bootStrapper.logger().child({module: 'clusterMaster'}),
+	let bootService = new BootService(),
+		config = BootService.config,
+		logger = bootService.logger().child({module: 'clusterMaster'}),
 		restartDelayMs = 0,
 		numShutDownRequests = 0,
 		restartTimer = null
