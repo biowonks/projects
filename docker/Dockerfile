@@ -1,29 +1,20 @@
 # References:
-# https://denibertovic.com/posts/handling-permissions-with-docker-volumes/ (used su-exec instead of gosu)
+# https://denibertovic.com/posts/handling-permissions-with-docker-volumes/ (used su-exec instead
+# of gosu)
 
-FROM mhart/alpine-node:6.2
+FROM biowonks/base-image
 
 MAINTAINER Luke Ulrich <ulrich.luke+ulritech@gmail.com>
 
-ENV HOME=/home/mist
+ENV HOME=/home/biowonk
 
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+COPY child-entrypoint.sh /usr/local/bin/child-entrypoint.sh
 
-# shadow: needed for usermod
 # git: needed by some npm packages
 # build-base: used to compile hmmer3, seg, etc
 # wget: used by node source
-# su-exec: provides ability to run command as different user
 # postgresql-client: so we can use psql from the api container
-RUN echo http://nl.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
-	apk --update --no-cache add bash git build-base shadow wget su-exec postgresql-client && \
+RUN apk --no-cache add git build-base wget postgresql-client && \
+	chmod +x /usr/local/bin/child-entrypoint.sh
 
-	# Entrypoint configuration
-	chmod +x /usr/local/bin/entrypoint.sh && \
-	addgroup mist && \
-	adduser -S -G mist -s /bin/false mist && \
-	usermod -u 1000 mist
-
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-
-WORKDIR $HOME/api
+WORKDIR $HOME/mist-api
