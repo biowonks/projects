@@ -1,15 +1,18 @@
 'use strict'
 
 // Vendor
-let _ = require('lodash'),
+const _ = require('lodash'),
 	bunyan = require('bunyan'),
 	Promise = require('bluebird'),
 	Sequelize = require('sequelize')
 
 // Local
-let config = require('../config'),
+const config = require('../config'),
 	loadModels = require('../models'),
 	MigratorService = require('./MigratorService')
+
+// Vendor
+const publicIp = require('public-ip')
 
 /**
  * Encapsulates a common configuration and all boot strapping methods. May be used to call
@@ -34,6 +37,7 @@ class BootService {
 		this.migratorService_ = null
 		this.models_ = null
 		this.setupComplete_ = false
+		this.publicIP_ = null
 	}
 
 	/**
@@ -145,6 +149,17 @@ class BootService {
 		return this.migratorService_
 	}
 
+	publicIP() {
+		if (this.publicIP_)
+			return Promise.resolve(this.publicIP_)
+
+		return publicIp.v4()
+		.then((ip) => {
+			this.publicIP_ = ip
+			return ip
+		})
+	}
+
 	// ----------------------------------------------------
 	// Private methods
 	createLogger_(options = {}) {
@@ -188,7 +203,6 @@ class BootService {
 	runPendingMigrations_() {
 		return this.migratorService_.up()
 	}
-
 }
 
 // Expose the configuration and Sequelize definition directly on the BootService class as a static

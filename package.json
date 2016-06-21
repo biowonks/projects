@@ -35,6 +35,7 @@
     "nock": "^8.0.0",
     "pg": "4.x",
     "pg-hstore": "2.x",
+    "public-ip": "2.x",
     "request-promise": "^3.0.0",
     "sequelize": "3.x",
     "through2": "^2.0.1",

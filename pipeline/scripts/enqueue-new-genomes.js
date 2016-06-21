@@ -29,7 +29,7 @@ let program = require('commander'),
 
 // Local
 let mutil = require('../lib/mutil'),
-	BootStrapper = require('../../services/BootStrapper'),
+	BootService = require('../../services/BootService'),
 	LineStream = require('../lib/streams/LineStream')
 
 program
@@ -40,9 +40,9 @@ program
 // Main logic encapsulated in class
 class Enqueuer {
 	constructor() {
-		let config = BootStrapper.config
+		let config = BootService.config
 		this.pipelineConfig_ = config.pipeline
-		this.bootStrapper_ = new BootStrapper({
+		this.bootService_ = new BootService({
 			logger: {
 				name: 'enqueuer',
 				streams: [
@@ -58,7 +58,7 @@ class Enqueuer {
 			}
 		})
 		this.tempDir_ = path.resolve(this.pipelineConfig_.paths.tmp, 'enqueuer')
-		this.logger_ = this.bootStrapper_.logger()
+		this.logger_ = this.bootService_.logger()
 		this.sequelize_ = null
 		this.models_ = null
 		this.numGenomesQueued_ = 0
@@ -67,16 +67,16 @@ class Enqueuer {
 	main() {
 		this.logger_.info('Start')
 
-		this.bootStrapper_.setup()
+		this.bootService_.setup()
 		.then(() => {
-			this.sequelize_ = this.bootStrapper_.sequelize()
-			this.models_ = this.bootStrapper_.models()
+			this.sequelize_ = this.bootService_.sequelize()
+			this.models_ = this.bootService_.models()
 
 			return this.createTemporaryDirectory_()
 		})
 		.then(this.enqueueNewAssemblies_.bind(this))
 		.catch((error) => {
-			if (error instanceof BootStrapper.Sequelize.DatabaseError)
+			if (error instanceof BootService.Sequelize.DatabaseError)
 				this.logger_.error({name: error.name, sql: error.sql}, error.message)
 			else
 				this.logger_.error({error, stack: error.stack}, 'Unexpected error')
@@ -239,7 +239,7 @@ class Enqueuer {
 				if (existsInGenomes || alreadyQueued)
 					return null
 
-				return this.models_.GenomeQueue.create(genome)
+				return this.models_.GenomesQueue.create(genome)
 			})
 		})
 	}
@@ -253,7 +253,7 @@ class Enqueuer {
 	}
 
 	alreadyQueued_(refseqAssemblyAccession, t) {
-		return this.models_.GenomeQueue.find({
+		return this.models_.GenomesQueue.find({
 			where: {
 				refseq_assembly_accession: refseqAssemblyAccession
 			}
