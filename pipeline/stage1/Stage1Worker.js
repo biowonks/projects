@@ -11,6 +11,9 @@ const BaseWorker = require('./BaseWorker'),
 // Constants
 const kIsolationLevels = BootService.Sequelize.Transaction.ISOLATION_LEVELS
 
+// --------------------------------------------------------
+class NothingLeftToDoError extends Error {}
+
 module.exports =
 class Stage1Worker extends BaseWorker {
 	constructor() {
@@ -31,17 +34,9 @@ class Stage1Worker extends BaseWorker {
 	}
 
 	main() {
-		this.setup_()
+		return this.setup_()
 		.then(this.processNextGenome_.bind(this))
-		.catch((error) => {
-			let logger = this.logger()
-			if (error instanceof BootService.Sequelize.DatabaseError)
-				logger.error({name: error.name, sql: error.sql}, error.message)
-			else if (error instanceof BaseWorker.InterruptError)
-				logger.error('Process was interrupted')
-			else
-				logger.error({error, stack: error.stack}, `Unexpected error: ${error.message}`)
-		})
+		.catch(this.logError_.bind(this))
 		.finally(() => this.teardown_())
 	}
 
@@ -52,6 +47,24 @@ class Stage1Worker extends BaseWorker {
 	}
 
 	// ----------------------------------------------------
+	logError_(error) {
+		let logger = this.logger()
+		switch (error.constructor) {
+			case BootService.Sequelize.DatabaseError:
+				logger.error({name: error.name, sql: error.sql}, error.message)
+				break
+			case BaseWorker.InterruptError:
+				logger.error('Process was interrupted')
+				break
+			case NothingLeftToDoError:
+				logger.info('All outstanding genomes have been processed')
+				break
+			default:
+				logger.error({error, stack: error.stack}, `Unhandled error: ${error.message}`)
+				break
+		}
+	}
+
 	/**
 	 * @returns {Promise}
 	 */
@@ -107,30 +120,15 @@ class Stage1Worker extends BaseWorker {
 	}
 
 	processNextGenome_() {
-		this.interruptCheck()
-		this.subLogger_ = null
-
 		return this.acquireQueuedGenome_()
-		.then((queuedGenome) => {
-			this.queuedGenome_ = queuedGenome
-			if (!queuedGenome) {
-				this.logger().info('No outstanding genomes found in the database')
-				return null
-			}
-
-			this.interruptCheck()
-
-			this.subLogger_ = this.logger_.child({
-				refseqAssemblyAccession: queuedGenome.refseq_assembly_accession,
-				source: queuedGenome.name
-			})
-			this.subLogger_.info(`Processing queued genome: ${queuedGenome.name}`)
-
-			return this.teardown_()
-		})
+		.then(this.setupSubLogger_.bind(this))
+		.then(this.processNextGenome_.bind(this))
 	}
 
 	acquireQueuedGenome_() {
+		this.interruptCheck()
+		this.subLogger_ = null
+
 		return this.sequelize_.transaction({isolationLevel: kIsolationLevels.READ_COMMITTED},
 		(transaction) => {
 			return this.models_.GenomesQueue.findOne({
@@ -141,12 +139,22 @@ class Stage1Worker extends BaseWorker {
 				lock: transaction.LOCK.UPDATE
 			})
 			.then((queuedGenome) => {
+				this.queuedGenome_ = queuedGenome
 				if (!queuedGenome)
-					return null
+					throw new NothingLeftToDoError()
 
 				queuedGenome.worker_id = this.worker_.id
 				return queuedGenome.save({fields: ['worker_id']})
 			})
 		})
+	}
+
+	setupSubLogger_() {
+		this.interruptCheck()
+		this.subLogger_ = this.logger_.child({
+			refseqAssemblyAccession: this.queuedGenome_.refseq_assembly_accession,
+			source: this.queuedGenome_.name
+		})
+		this.subLogger_.info(`Processing queued genome: ${this.queuedGenome_.name}`)
 	}
 }
