@@ -1,7 +1,23 @@
-begin;
+create table workers (
+	id serial primary key,
+	hostname text,
+	pid integer not null,
+	public_ip text not null,
+	message text,
+	normal_exit boolean,
+	error_message text,
+	last_heartbeat_at timestamp with time zone not null default now(),
+	created_at timestamp with time zone not null default now(),
+	updated_at timestamp with time zone not null default now()
+);
+comment on table workers is 'Record of all worker processes';
+comment on column workers.pid is 'process id';
+comment on column workers.normal_exit is 'null indicates unknown; may be alive or dead';
 
 create table genomes_queue (
-	refseq_assembly_accession text not null primary key,
+	id serial primary key,
+	worker_id integer,
+	refseq_assembly_accession text not null,
 	genbank_assembly_accession text,
 	bioproject text,
 	biosample text,
@@ -23,9 +39,13 @@ create table genomes_queue (
 	created_at timestamp with time zone not null default now(),
 	updated_at timestamp with time zone not null default now(),
 
-	unique(refseq_assembly_accession)
+	unique(refseq_assembly_accession),
+	foreign key(worker_id) references workers on update cascade on delete set null
 );
 comment on table genomes_queue is 'Genome assemblies yet to be processed';
+comment on column genomes_queue.worker_id is 'Currently assigned worker processing this genome';
+
+create index on genomes_queue(worker_id);
 
 create table genomes (
 	id integer primary key,
@@ -89,12 +109,7 @@ comment on column genomes.assembly_name is 'Not necessarily different between ge
 comment on column genomes.taxonomic_group is 'Phylum; if proteobacteria, then its class';
 comment on column genomes.orderr is 'Intentional typo because order is a reserved word';
 
-commit;
-
 -- MIGRATION DOWN SQL
-begin;
-
 drop table genomes;
 drop table genomes_queue;
-
-commit;
+drop table workers;

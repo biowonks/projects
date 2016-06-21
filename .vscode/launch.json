@@ -21,6 +21,25 @@
 			"outDir": null
 		},
 		{
+			"name": "Stage 1",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/pipeline/stage1/worker.js",
+			"stopOnEntry": false,
+			"cwd": "${workspaceRoot}",
+			"preLaunchTask": null,
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "develop"
+			},
+			"externalConsole": false,
+			"sourceMaps": false,
+			"outDir": null
+		},
+		{
 			"name": "Unit tests (local)",
 			"type": "node",
 			"request": "launch",

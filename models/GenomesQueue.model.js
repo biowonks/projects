@@ -2,6 +2,14 @@
 
 module.exports = function(Sequelize, models) {
 	let fields = {
+		worker_id: {
+			type: Sequelize.INTEGER,
+			validate: {
+				notEmpty: true,
+				isInt: true,
+				min: 1
+			}
+		},
 		refseq_assembly_accession: {
 			primaryKey: true,
 			type: Sequelize.TEXT,
