@@ -1,42 +1,52 @@
 'use strict'
 
-// Core node libraries
+// Core
 let assert = require('assert'),
 	fs = require('fs')
 
-// 3rd-party libraries
+// Vendor
 let Promise = require('bluebird'),
 	byline = require('byline')
 
-// Local includes
+// Local
 let mutil = require('../lib/mutil')
 
 module.exports =
 class NCBIDataHelper {
-	constructor(fileNameMapper, logger) {
-		this.fileNameMapper_ = fileNameMapper
-		this.logger_ = logger.child({phase: 'download'})
+	constructor(fileMapper, logger) {
+		this.fileMapper_ = fileMapper
+		this.logger_ = logger
 
 		// {fileName: md5}
 		this.checksums_ = null
 	}
 
-	downloadAll() {
-		this.logger_.info('Initiating file download process from NCBI')
-		return this.getChecksums_()
+	// downloadAll() {
+	// 	this.logger_.info('Initiating file download process from NCBI')
+	// 	return this.getChecksums_()
+	// 	.then(() => {
+	// 		return Promise.each(this.fileMapper_.sourceTypes(), this.download_.bind(this))
+	// 	})
+	// }
+
+	isDownloaded(sourceType) {
+		return this.ensureChecksumsLoaded_()
 		.then(() => {
-			return Promise.each(this.fileNameMapper_.sourceTypes(), this.download_.bind(this))
+			if (sourceType === 'checksums')
+				return true
+
+			return this.verify_(sourceType)
 		})
 	}
 
-	download_(sourceType) {
+	download(sourceType) {
 		if (sourceType === 'checksums')
-			return Promise.resolve()
+			return this.ensureChecksumsLoaded_()
 
-		let destFile = this.fileNameMapper_.pathFor(sourceType)
+		let destFile = this.fileMapper_.pathFor(sourceType)
 		return mutil.fileNotEmpty(destFile)
-		.then((exists) => {
-			if (!exists)
+		.then((notEmpty) => {
+			if (!notEmpty)
 				return this.downloadAndVerify_(sourceType)
 
 			return this.verify_(sourceType)
@@ -58,17 +68,15 @@ class NCBIDataHelper {
 	downloadAndVerify_(sourceType) {
 		assert(!!this.checksums_, 'Expected checksums to be defined')
 
-		let url = this.fileNameMapper_.urlFor(sourceType),
-			destFile = this.fileNameMapper_.pathFor(sourceType)
+		let url = this.fileMapper_.ncbiUrlFor(sourceType),
+			destFile = this.fileMapper_.pathFor(sourceType)
 
 		this.logger_.info({sourceType, url, file: destFile}, `Downloading ${sourceType}`)
 		return mutil.download(url, destFile)
-		.then(() => {
-			return this.verify_(sourceType)
-		})
+		.then(() => this.verify_(sourceType))
 		.then((isComplete) => {
 			if (!isComplete) {
-				this.logger_.error({sourceType, url, file: destFile}, 'File contents are not valid')
+				this.logger_.error({sourceType, url, file: destFile}, 'Downloaded incomplete data file. Contents are not valid')
 				throw new Error(`Incomplete data for ${sourceType} from: ${url}`)
 			}
 		})
@@ -77,41 +85,46 @@ class NCBIDataHelper {
 	verify_(sourceType) {
 		assert(!!this.checksums_, 'Expected checksums to be defined')
 
-		let destFile = this.fileNameMapper_.pathFor(sourceType),
-			fileName = this.fileNameMapper_.fileNameFor(sourceType),
-			checksum = this.checksums_[fileName]
+		let destFile = this.fileMapper_.pathFor(sourceType)
+		return mutil.fileExists(destFile)
+		.then((fileExists) => {
+			if (!fileExists)
+				return false
 
-		if (checksum) {
-			this.logger_.info({sourceType}, 'Verifying file contents')
-			return mutil.checkFileMD5(destFile, checksum)
-		}
+			let fileName = this.fileMapper_.fileNameFor(sourceType),
+				checksum = this.checksums_[fileName]
+			if (checksum) {
+				this.logger_.info({fileName}, 'Verifying file contents')
+				return mutil.checkFileMD5(destFile, checksum)
+			}
 
-		// To my knowledge, only the assembly report lacks a checksum
-		// For now, assuming that wget would report error if only part of
-		// the file is retrieved...
-		this.logger_.info({file: destFile}, 'No checksum found, assuming file contents are valid')
-		return Promise.resolve(true)
+			// To my knowledge, only the assembly report lacks a checksum
+			// For now, assuming that wget would report error if only part of
+			// the file is retrieved...
+			this.logger_.info({fileName}, 'No checksum found, assuming file contents are valid')
+			return true
+		})
 	}
 
-	getChecksums_() {
+	ensureChecksumsLoaded_() {
+		// Case 1: checksums already loaded into memory
 		if (this.checksums_)
 			return Promise.resolve(this.checksums_)
 
-		let url = this.fileNameMapper_.urlFor('checksums'),
-			destFile = this.fileNameMapper_.pathFor('checksums')
-
-		return mutil.fileNotEmpty(destFile)
-		.then((exists) => {
-			if (!exists) {
-				this.logger_.info({url}, 'Downloading checksums')
-				return mutil.download(url, destFile)
-			}
-
-			return null
+		// Case 2: checksums exist on file system but are not yet in memory
+		return this.loadChecksums_()
+		.catch(() => {
+			// Case 3: they may or may not exist, but it was not possible to load them into
+			// memory. Re-download
+			return this.downloadChecksums_()
 		})
-		.then(() => this.readChecksumsFromFile_(destFile))
+	}
+
+	loadChecksums_() {
+		let checksumsFile = this.fileMapper_.pathFor('checksums')
+		return this.readChecksumsFromFile_(checksumsFile)
 		.catch((error) => {
-			return mutil.unlink(destFile)
+			return mutil.unlink(checksumsFile)
 			.finally(() => {
 				// Regardless of the success or failure of removing this file
 				// re-throw the parsing error
@@ -126,13 +139,26 @@ class NCBIDataHelper {
 		})
 	}
 
+	downloadChecksums_() {
+		let url = this.fileMapper_.ncbiUrlFor('checksums'),
+			destFile = this.fileMapper_.pathFor('checksums')
+
+		this.logger_.info({url, destFile}, 'Downloading checksums')
+		return mutil.download(url, destFile)
+		.then(this.loadChecksums_.bind(this))
+	}
+
 	readChecksumsFromFile_(file) {
 		return new Promise((resolve, reject) => {
-			let stream = byline.createStream(fs.createReadStream(file)),
+			let readStream = fs.createReadStream(file),
+				lineStream = byline.createStream(readStream),
 				checksums = {},
 				invalidChecksumLine = null
 
-			stream
+			readStream
+			.on('error', reject)
+
+			lineStream
 			.on('error', reject)
 			.on('data', (line) => {
 				let checksum = this.parseChecksumLine_(line)

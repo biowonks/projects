@@ -6,6 +6,7 @@ const Promise = require('bluebird')
 // Local
 const BaseWorker = require('./BaseWorker'),
 	BootService = require('../../services/BootService'),
+	FileMapper = require('./FileMapper'),
 	WorkerService = require('../../services/WorkerService'),
 	tasks = require('./tasks')
 
@@ -161,8 +162,7 @@ class Stage1Worker extends BaseWorker {
 
 	processNextGenome_() {
 		return this.acquireQueuedGenome_()
-		.then(this.buildContext_.bind(this))
-		// .then(this.runTasks_.bind(this))
+		.then(this.runTasks_.bind(this))
 		.then(this.processNextGenome_.bind(this))
 	}
 
@@ -190,9 +190,21 @@ class Stage1Worker extends BaseWorker {
 		})
 	}
 
-	buildContext_() {
+	runTasks_() {
 		this.interruptCheck()
 		this.setupSubLogger_()
+		this.subLogger_.info(`Processing queued genome: ${this.queuedGenome_.name}`)
+
+		let context = {
+			logger: this.subLogger_,
+			fileMapper: new FileMapper(this.config_.pipeline.paths.genomes, this.queuedGenome_),
+			config: this.config_,
+			models: this.models_,
+			sequelize: this.sequelize_,
+			interruptCheck: () => this.interruptCheck()
+		}
+
+		return tasks.run(this.queuedGenome_, context)
 	}
 
 	setupSubLogger_() {
@@ -200,10 +212,5 @@ class Stage1Worker extends BaseWorker {
 			refseqAssemblyAccession: this.queuedGenome_.refseq_assembly_accession,
 			source: this.queuedGenome_.name
 		})
-		this.subLogger_.info(`Processing queued genome: ${this.queuedGenome_.name}`)
-	}
-
-	runTasks_() {
-		return tasks.run(this.queuedGenome_, this.context_)
 	}
 }
