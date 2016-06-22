@@ -21,14 +21,6 @@ class NCBIDataHelper {
 		this.checksums_ = null
 	}
 
-	// downloadAll() {
-	// 	this.logger_.info('Initiating file download process from NCBI')
-	// 	return this.getChecksums_()
-	// 	.then(() => {
-	// 		return Promise.each(this.fileMapper_.sourceTypes(), this.download_.bind(this))
-	// 	})
-	// }
-
 	isDownloaded(sourceType) {
 		return this.ensureChecksumsLoaded_()
 		.then(() => {
