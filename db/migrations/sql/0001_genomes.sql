@@ -6,6 +6,7 @@ create table workers (
 	message text,
 	normal_exit boolean,
 	error_message text,
+	job jsonb not null default '{}',
 	last_heartbeat_at timestamp with time zone not null default now(),
 	created_at timestamp with time zone not null default now(),
 	updated_at timestamp with time zone not null default now()

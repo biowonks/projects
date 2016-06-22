@@ -6,7 +6,8 @@ const Promise = require('bluebird')
 // Local
 const BaseWorker = require('./BaseWorker'),
 	BootService = require('../../services/BootService'),
-	WorkerService = require('../../services/WorkerService')
+	WorkerService = require('../../services/WorkerService'),
+	tasks = require('./tasks')
 
 // Constants
 const kIsolationLevels = BootService.Sequelize.Transaction.ISOLATION_LEVELS
@@ -27,6 +28,7 @@ class Stage1Worker extends BaseWorker {
 		this.models_ = null
 		this.worker_ = null
 		this.queuedGenome_ = null
+		this.context_ = null
 	}
 
 	logger() {
@@ -36,17 +38,32 @@ class Stage1Worker extends BaseWorker {
 	main() {
 		return this.setup_()
 		.then(this.processNextGenome_.bind(this))
-		.catch(this.logError_.bind(this))
-		.finally(() => this.teardown_())
+		.catch(this.handleError_.bind(this))
+		.catch(this.logError_.bind(this)) // In case an error occurs while error handling
+		.finally(this.teardown_.bind(this))
+		.catch(this.logError_.bind(this)) // And in case an error occurs during teardown
 	}
 
 	// ----------------------------------------------------
 	// Protected event handlers
-	onTeardown_() {
-		return this.unregisterWorker_()
+	onTeardown_(error = null) {
+		return !error || error.constructor === NothingLeftToDoError ? this.unregisterWorker_() : Promise.resolve()
 	}
 
 	// ----------------------------------------------------
+	handleError_(error) {
+		this.logError_(error)
+
+		if (!this.sequelize_)
+			return Promise.resolve()
+
+		return this.sequelize_.transaction(() => {
+			return this.updateWorkerError_(error)
+			.then(this.releaseQueuedGenome_.bind(this))
+		})
+		.then(this.teardown_.bind(this, error))
+	}
+
 	logError_(error) {
 		let logger = this.logger()
 		switch (error.constructor) {
@@ -54,7 +71,7 @@ class Stage1Worker extends BaseWorker {
 				logger.error({name: error.name, sql: error.sql}, error.message)
 				break
 			case BaseWorker.InterruptError:
-				logger.error('Process was interrupted')
+				logger.error(error.message)
 				break
 			case NothingLeftToDoError:
 				logger.info('All outstanding genomes have been processed')
@@ -63,6 +80,18 @@ class Stage1Worker extends BaseWorker {
 				logger.error({error, stack: error.stack}, `Unhandled error: ${error.message}`)
 				break
 		}
+	}
+
+	updateWorkerError_(error) {
+		if (error.constructor === NothingLeftToDoError || !this.worker_)
+			return Promise.resolve()
+
+		this.logger().info('Updating worker database status')
+		this.worker_.normal_exit = false
+		this.worker_.error_message = error.message
+		if (this.queuedGenome_)
+			this.worker_.job.genomes_queue_id = this.queuedGenome_.id
+		return this.worker_.save({fields: ['normal_exit', 'error_message', 'job']})
 	}
 
 	/**
@@ -108,6 +137,17 @@ class Stage1Worker extends BaseWorker {
 		})
 	}
 
+	releaseQueuedGenome_() {
+		if (!this.worker_)
+			return Promise.resolve()
+
+		return this.models_.GenomesQueue.update({worker_id: null}, {
+			where: {
+				worker_id: this.worker_.id
+			}
+		})
+	}
+
 	unregisterWorker_() {
 		if (!this.worker_)
 			return Promise.resolve()
@@ -121,7 +161,8 @@ class Stage1Worker extends BaseWorker {
 
 	processNextGenome_() {
 		return this.acquireQueuedGenome_()
-		.then(this.setupSubLogger_.bind(this))
+		.then(this.buildContext_.bind(this))
+		// .then(this.runTasks_.bind(this))
 		.then(this.processNextGenome_.bind(this))
 	}
 
@@ -149,12 +190,20 @@ class Stage1Worker extends BaseWorker {
 		})
 	}
 
-	setupSubLogger_() {
+	buildContext_() {
 		this.interruptCheck()
+		this.setupSubLogger_()
+	}
+
+	setupSubLogger_() {
 		this.subLogger_ = this.logger_.child({
 			refseqAssemblyAccession: this.queuedGenome_.refseq_assembly_accession,
 			source: this.queuedGenome_.name
 		})
 		this.subLogger_.info(`Processing queued genome: ${this.queuedGenome_.name}`)
+	}
+
+	runTasks_() {
+		return tasks.run(this.queuedGenome_, this.context_)
 	}
 }

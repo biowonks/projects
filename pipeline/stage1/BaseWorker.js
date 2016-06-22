@@ -51,18 +51,22 @@ class BaseWorker {
 
 	// ----------------------------------------------------
 	// Protected methods
-	teardown_() {
+	teardown_(optError) {
 		if (this.tearingDown_)
-			return
+			return Promise.resolve()
 
 		this.logger().info('Tearing down')
 
 		this.tearingDown_ = true
-		this.onTeardown_()
+		return this.onTeardown_(optError)
 	}
 }
 
 BaseWorker.InterruptError =
-class InterruptError extends Error {}
+class InterruptError extends Error {
+	constructor(optMessage) {
+		super(optMessage || 'Process was interrupted')
+	}
+}
 
 module.exports = BaseWorker

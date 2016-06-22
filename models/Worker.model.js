@@ -30,6 +30,9 @@ module.exports = function(Sequelize, models) {
 		error_message: {
 			type: Sequelize.TEXT
 		},
+		job: {
+			type: Sequelize.JSONB
+		},
 		last_heartbeat_at: {
 			type: Sequelize.DATE
 		}

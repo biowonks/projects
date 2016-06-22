@@ -11,7 +11,6 @@ module.exports = function(Sequelize, models) {
 			}
 		},
 		refseq_assembly_accession: {
-			primaryKey: true,
 			type: Sequelize.TEXT,
 			allowNull: false,
 			validate: {
