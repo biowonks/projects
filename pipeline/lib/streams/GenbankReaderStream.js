@@ -159,8 +159,15 @@ class GenbankReaderStream extends LineStream {
 	_transform(line, encoding, done) {
 		try {
 			// --------------------------------------------
-			if (!this.entry_)
+			if (!this.entry_) {
+				// Ignore blank lines between records (or at the end of the file)
+				if (!line || /^\s*$/.test(line)) {
+					done()
+					return
+				}
+
 				this.entry_ = this.blankEntry_()
+			}
 
 			// --------------------------------------------
 			if (this.parsingFeatures_) {
@@ -212,7 +219,7 @@ class GenbankReaderStream extends LineStream {
 			if (isTerminator) {
 				this.processRootKeywordNode_()
 				this.push(this.entry_)
-				this.entry_ = null
+				this.resetForNextEntry_()
 				done()
 				return
 			}
@@ -233,6 +240,11 @@ class GenbankReaderStream extends LineStream {
 
 	// ----------------------------------------------------
 	// Private methods
+	resetForNextEntry_() {
+		this.entry_ = null
+		this.observedRootKeywords_.clear()
+	}
+
 	/**
 	 * @returns {object} blank result initialized with null values
 	 */
