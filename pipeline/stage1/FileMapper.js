@@ -28,20 +28,21 @@ class FileMapper {
 		let prefix = this.ncbiPrefix()
 
 		switch (sourceType) {
-			case 'checksums':		return 'md5checksums.txt'
-			case 'genomic-genbank':	return `${prefix}_genomic.gbff.gz`
-			case 'genomic-fasta':	return `${prefix}_genomic.fna.gz`
-			case 'protein-fasta':	return `${prefix}_protein.faa.gz`
-			case 'assembly-report':	return `${prefix}_assembly_report.txt`
-			case 'genes-gff':		return `${prefix}_genomic.gff.gz`
-			case 'feature-table':	return `${prefix}_feature_table.txt.gz`
+			case 'checksums':			return 'md5checksums.txt'
+			case 'genomic-genbank':		return `${prefix}_genomic.gbff.gz`
+			case 'genomic-fasta':		return `${prefix}_genomic.fna.gz`
+			case 'protein-fasta':		return `${prefix}_protein.faa.gz`
+			case 'assembly-report':		return `${prefix}_assembly_report.txt`
+			case 'genes-gff':			return `${prefix}_genomic.gff.gz`
+			case 'feature-table':		return `${prefix}_feature_table.txt.gz`
 
-			case 'core.genomes':	return 'genomes.ndjson'
-			case 'core.components':	return 'components.ndjson'
-			case 'core.genes':		return 'genes.ndjson'
-			case 'core.gseqs':		return 'gseqs.ndjson'
-			case 'core.aseqs-faa':	return 'aseqs.faa'
-			case 'core.aseqs':		return 'aseqs.ndjson'
+			case 'core.genomes':		return 'genomes.ndjson'
+			case 'core.components':		return 'components.ndjson'
+			case 'core.components-fna':	return 'components.fna'
+			case 'core.genes':			return 'genes.ndjson'
+			case 'core.gseqs':			return 'gseqs.ndjson'
+			case 'core.aseqs-faa':		return 'aseqs.faa'
+			case 'core.aseqs':			return 'aseqs.ndjson'
 
 			default:
 				throw new Error(`${sourceType} is not supported`)
