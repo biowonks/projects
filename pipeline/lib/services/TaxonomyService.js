@@ -5,11 +5,15 @@ let Promise = require('bluebird'),
 	requestPromise = require('request-promise')
 
 // Local includes
-let NCBITaxonomyXMLParser = require('./NCBITaxonomyXMLParser')
+let NCBITaxonomyXMLParser = require('./NCBITaxonomyXMLParser'),
+	BootService = require('../../services/BootService')
 
 // Constants
 const kNCBIPartialTaxonomyUrl = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=taxonomy&retmode=text&rettype=xml&id='
 
+/**
+ * @constructor
+ */
 module.exports =
 class TaxonomyService {
 	constructor() {
@@ -29,9 +33,9 @@ class TaxonomyService {
 			return Promise.reject(new Error('Invalid taxonomy id - must be all digits'))
 
 		return requestPromise(this.eutilUrl(taxonomyId))
-		.then((xmlResponse) => {
-			return this.taxonomyXMLParser_.parse(xmlResponse)
-		})
+			.then((xmlResponse) => {
+				return this.taxonomyXMLParser_.parse(xmlResponse)
+			})
 	}
 
 	/**
@@ -45,6 +49,57 @@ class TaxonomyService {
 	 * @returns {string} the major taxnomic group
 	 */
 	taxonomicGroup(phylum, classs) {
-		return phylum.toLowerCase() === 'proteobacteria' ? classs : phylum
+		throw new Error('Not yet implemented')
 	}
+	
+	 /**
+     * @param {number} taxonomyId numeric identifier
+     * @returns {boolean} true if the give node Taxonomy ID doesn't exist in the taxonomy table
+     */
+    nodeDoesNotExist_(taxonomyId) {
+		return this.bootService_.setup()
+		.then(() => {
+			this.sequelize_ = this.bootService_.sequelize()
+			this.models_ = this.bootService_.models()
+		})
+		.then(() => {
+			return this.models_.taxonomy.find({
+				where: {
+					id: taxonomyId
+				}
+        	})
+		})
+        .then((taxonomyRow) => {
+        	return !!taxonomyRow  
+        )}
+	}
+	
+	writeNodeToFile_(node) {
+		//TO DO
+	}
+	
+	updateTable(taxonomyId) {
+        return this.nodeDoesNotExist_()
+        .then((doesntExist) => {
+            this.fetch(taxonomyId)
+            .then((taxonomyObject) => {
+                for (let i = taxonomyObject.lineage.length(); i >= 0 ; i--) {
+                    let node = taxonomyObject.lineage[i]
+                    node.parentTaxonomyId = 1
+                    node.hasParent: (i !== 0)
+
+                    if (this.nodeDoesNotExist_(nodeTaxonomyId)) {
+                        if (node.hasParent) {
+                            node.parentTaxonomyId = taxonomyObject.lineage[i - 1].id
+                        }
+                        this.writeNodeToFile_(node)
+                    }
+                    else {
+                        break //No need iterate insertion check for parents. If the node already exists, its parents must exist as well.
+                    }
+                }
+            })
+        })
+    }
+
 }
