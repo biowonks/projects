@@ -8,14 +8,16 @@ const Promise = require('bluebird')
 
 // Local
 const DownloadGenomeTask = require('./DownloadGenomeTask'),
-	WorkDirectoryTask = require('./WorkDirectoryTask')
+	WorkDirectoryTask = require('./WorkDirectoryTask'),
+	ParseCoreDataTask = require('./ParseCoreDataTask')
 
 exports.run = function(queuedGenome, context) {
 	assert(queuedGenome)
 
 	let taskClasses = [
 		WorkDirectoryTask,
-		DownloadGenomeTask
+		DownloadGenomeTask,
+		ParseCoreDataTask
 	]
 
 	return Promise.coroutine(function *() {
@@ -25,9 +27,17 @@ exports.run = function(queuedGenome, context) {
 			let task = new TaskClass(queuedGenome, context)
 
 			yield task.setup()
-			if (yield task.isAlreadyDone())
-				continue
-			yield task.run()
+			if (!(yield task.isAlreadyDone())) {
+				// In the event that the task throws an error while running, give it an opportunity
+				// to clean up.
+				try {
+					yield task.run()
+				}
+				catch (error) {
+					yield task.teardown()
+					throw error
+				}
+			}
 			yield task.teardown()
 		}
 	})()

@@ -36,6 +36,13 @@ class FileMapper {
 			case 'genes-gff':		return `${prefix}_genomic.gff.gz`
 			case 'feature-table':	return `${prefix}_feature_table.txt.gz`
 
+			case 'core.genomes':	return 'genomes.ndjson'
+			case 'core.components':	return 'components.ndjson'
+			case 'core.genes':		return 'genes.ndjson'
+			case 'core.gseqs':		return 'gseqs.ndjson'
+			case 'core.aseqs-faa':	return 'aseqs.faa'
+			case 'core.aseqs':		return 'aseqs.ndjson'
+
 			default:
 				throw new Error(`${sourceType} is not supported`)
 		}

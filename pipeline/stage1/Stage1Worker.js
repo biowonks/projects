@@ -40,8 +40,10 @@ class Stage1Worker extends BaseWorker {
 		return this.setup_()
 		.then(this.processNextGenome_.bind(this))
 		.catch(this.handleError_.bind(this))
-		.catch(this.logError_.bind(this)) // In case an error occurs while error handling
-		.finally(this.teardown_.bind(this))
+		.catch((handleErrorError) => { // In case an error occurs while error handling
+			this.logError_(handleErrorError)
+			return this.teardown_(handleErrorError)
+		})
 		.catch(this.logError_.bind(this)) // And in case an error occurs during teardown
 	}
 
@@ -63,6 +65,7 @@ class Stage1Worker extends BaseWorker {
 			.then(this.releaseQueuedGenome_.bind(this))
 		})
 		.then(this.teardown_.bind(this, error))
+		.catch(this.logError_.bind(this))
 	}
 
 	logError_(error) {
@@ -93,6 +96,14 @@ class Stage1Worker extends BaseWorker {
 		if (this.queuedGenome_)
 			this.worker_.job.genomes_queue_id = this.queuedGenome_.id
 		return this.worker_.save({fields: ['normal_exit', 'error_message', 'job']})
+		.catch(BootService.Sequelize.DatabaseError, () => {
+			// When would this ever happen? One example is the GenbankReaderStream reading in
+			// compressed gzip data (vs the uncompressed raw text) and including in the error
+			// message the binary data line.
+			this.worker_.error_message = 'Error message could not be saved to the database. ' +
+				'Please check the logs for contextual details.'
+			return this.worker_.save({fields: ['normal_exit', 'error_message', 'job']})
+		})
 	}
 
 	/**
