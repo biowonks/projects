@@ -335,3 +335,14 @@ exports.checkFileMD5 = function(file, md5) {
 		stream.pipe(md5hash)
 	})
 }
+
+exports.createDeferred = function() {
+	let resolve = null,
+		reject = null,
+		promise = new Promise((...args) => {
+			resolve = args[0]
+			reject = args[1]
+		})
+
+	return {resolve, reject, promise}
+}

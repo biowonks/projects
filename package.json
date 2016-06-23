@@ -6,7 +6,7 @@
   "main": "index.js",
   "repository": {},
   "scripts": {
-    "setup": "scripts/setup.sh",
+    "setup": "scripts/setup-mist.sh",
     "eslint": "node_modules/.bin/eslint 'pipeline/**/*.js'",
     "test": "node_modules/.bin/gulp test",
     "start": "node index.js | node_modules/.bin/bunyan",
