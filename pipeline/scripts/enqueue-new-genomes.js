@@ -143,6 +143,7 @@ class Enqueuer {
 				skippedFirstLine = false
 
 			stream
+			.on('error', reject)
 			.pipe(lineStream)
 			// The assembly summary files have two header lines the first of which is merely descriptive; however,
 			// it causes csv-parse to choke because it is looking for the header line. Thus, this through stream
@@ -163,7 +164,7 @@ class Enqueuer {
 				if (genomeData.refseq_category !== 'representative genome' && genomeData.refseq_category !== 'reference genome')
 					return
 
-				// Counterintuitvely, pausing the fs stream does not actually pause; however, pausing the lienStream
+				// Counterintuitvely, pausing the fs stream does not actually pause; however, pausing the lineStream
 				// does. Here we pause to process this genome into the database.
 				lineStream.pause()
 
