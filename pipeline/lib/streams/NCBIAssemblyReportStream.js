@@ -22,11 +22,11 @@ class NCBIAssemblyReportStream extends LineStream {
 		this.headerFieldNameMap_ = {
 			'Sequence-Name': 'name',
 			'Sequence-Role': 'role',
-			'Assigned-Molecule': 'assigned_molecule',
+			'Assigned-Molecule': 'assignedMolecule',
 			'Assigned-Molecule-Location/Type': 'type',
-			'GenBank-Accn': 'genbank_accession',
-			Relationship: 'genbank_refseq_relationship',
-			'RefSeq-Accn': 'refseq_accession',
+			'GenBank-Accn': 'genbankAccession',
+			Relationship: 'genbankRefseqRelationship',
+			'RefSeq-Accn': 'refseqAccession',
 			'Assembly-Unit': 'unit'
 		}
 	}

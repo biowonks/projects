@@ -2,11 +2,15 @@
 
 'use strict'
 
+// Core
 let fs = require('fs'),
 	path = require('path')
 
-let expect = require('chai').expect
+// Vendor
+let expect = require('chai').expect,
+	Promise = require('bluebird')
 
+// Local
 let mutil = require('./mutil')
 
 describe('mutil', function() {
@@ -44,6 +48,42 @@ describe('mutil', function() {
 				.then(function(result) {
 					expect(result).false
 				})
+		})
+	})
+
+	describe.only('createDeferred', function() {
+		it('returns an object with resolve, reject, and the promise', function() {
+			let x = mutil.createDeferred()
+			expect(x).property('resolve')
+			expect(x).property('reject')
+			expect(x.promise).instanceof(Promise)
+		})
+
+		it('resolve resolves the promise', function() {
+			let x = mutil.createDeferred()
+			x.resolve(1)
+			return x.promise.then((result) => {
+				expect(result).equal(1)
+			})
+		})
+
+		it('reject rejects the promise', function() {
+			let x = mutil.createDeferred(),
+				catchValue = null,
+				succeeded = null
+			x.reject(-1)
+			return x.promise
+			.then((value) => {
+				succeeded = true
+			})
+			.catch((value) => {
+				succeeded = false
+				catchValue = value
+			})
+			.finally(() => {
+				expect(succeeded).false
+				expect(catchValue).equal(-1)
+			})
 		})
 	})
 })
