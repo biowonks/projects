@@ -51,7 +51,7 @@ describe('mutil', function() {
 		})
 	})
 
-	describe.only('createDeferred', function() {
+	describe('createDeferred', function() {
 		it('returns an object with resolve, reject, and the promise', function() {
 			let x = mutil.createDeferred()
 			expect(x).property('resolve')
