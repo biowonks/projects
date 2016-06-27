@@ -26,6 +26,7 @@
     "corser": "2.x",
     "debug": "2.x",
     "domain": "0.0.1",
+    "duplex-child-process": "0.0.x",
     "express": "4.x",
     "inflection": "^1.8.0",
     "lodash": "4.x",
@@ -36,12 +37,15 @@
     "pg": "4.x",
     "pg-hstore": "2.x",
     "public-ip": "2.x",
-    "request-promise": "^3.0.0",
+    "pump": "1.x",
+    "pumpify": "1.x",
+    "request-promise": "3.x",
     "sequelize": "3.x",
-    "through2": "^2.0.1",
+    "split": "1.x",
+    "through2": "2.x",
     "umzug": "1.x",
     "universal-analytics": "0.3.x",
-    "xml2js": "^0.4.16"
+    "xml2js": "0.4.x"
   },
   "devDependencies": {
     "bunyan": "1.x",

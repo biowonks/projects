@@ -1,38 +1,39 @@
 'use strict'
 
 // Core
-let fs = require('fs'),
+const fs = require('fs'),
 	path = require('path')
 
 // Local
-let NCBIAssemblyReportStream = require('./NCBIAssemblyReportStream.js')
+const ncbiAssemblyReportStream = require('./ncbi-assembly-report-stream')
 
 // Constants
-let kTestDataPath = path.resolve(__dirname, 'test-data')
+const kTestDataPath = path.resolve(__dirname, 'test-data')
 
-describe('Streams', function() {
-	describe('NCBIAssemblyReportStream', function() {
+describe('streams', function() {
+	describe('ncbi assembly report stream', function() {
 		it('throws error on missing info in file', function(done) {
 			let inputFile = path.resolve(kTestDataPath, 'assembly-report.broken.txt'),
 				inStream = fs.createReadStream(inputFile),
-				ncbiAssemblyReportStream = new NCBIAssemblyReportStream()
+				ncbiAssemblyReportReader = ncbiAssemblyReportStream(),
+				error = null
 
-			inStream.pipe(ncbiAssemblyReportStream)
-			.on('error', () => {
-				done()
+			inStream.pipe(ncbiAssemblyReportReader)
+			.on('error', (err) => {
+				error = err
 			})
 			.on('finish', () => {
-				done(new Error('expected error, but not was thrown'))
+				done(error ? null : new Error('expected error, but none was thrown'))
 			})
 		})
 
 		it('parses complete NCBI assembly reports', function(done) {
 			let inputFile = path.resolve(kTestDataPath, 'assembly-report.single.txt'),
 				inStream = fs.createReadStream(inputFile),
-				ncbiAssemblyReportStream = new NCBIAssemblyReportStream(),
+				ncbiAssemblyReportReader = ncbiAssemblyReportStream(),
 				results = []
 
-			inStream.pipe(ncbiAssemblyReportStream)
+			inStream.pipe(ncbiAssemblyReportReader)
 			.on('data', (info) => {
 				results.push(info)
 			})
@@ -56,10 +57,10 @@ describe('Streams', function() {
 		it('parses contig NCBI assembly reports', function(done) {
 			let inputFile = path.resolve(kTestDataPath, 'assembly-report.contig.txt'),
 				inStream = fs.createReadStream(inputFile),
-				ncbiAssemblyReportStream = new NCBIAssemblyReportStream(),
+				ncbiAssemblyReportReader = ncbiAssemblyReportStream(),
 				results = []
 
-			inStream.pipe(ncbiAssemblyReportStream)
+			inStream.pipe(ncbiAssemblyReportReader)
 			.on('data', (info) => {
 				results.push(info)
 			})
@@ -992,10 +993,10 @@ describe('Streams', function() {
 		it('streaming parser of Chromosome NCBI Assembly Reports', function(done) {
 			let inputFile = path.resolve(kTestDataPath, 'assembly-report.complete.txt'),
 				inStream = fs.createReadStream(inputFile),
-				ncbiAssemblyReportStream = new NCBIAssemblyReportStream(),
+				ncbiAssemblyReportReader = ncbiAssemblyReportStream(),
 				results = []
 
-			inStream.pipe(ncbiAssemblyReportStream)
+			inStream.pipe(ncbiAssemblyReportReader)
 			.on('data', (info) => {
 				results.push(info)
 			})
@@ -1039,10 +1040,10 @@ describe('Streams', function() {
 		it('streaming parser of Scaffold NCBI Assembly Reports', function(done) {
 			let inputFile = path.resolve(kTestDataPath, 'assembly-report.scaffold.txt'),
 				inStream = fs.createReadStream(inputFile),
-				ncbiAssemblyReportStream = new NCBIAssemblyReportStream(),
+				ncbiAssemblyReportReader = ncbiAssemblyReportStream(),
 				results = []
 
-			inStream.pipe(ncbiAssemblyReportStream)
+			inStream.pipe(ncbiAssemblyReportReader)
 			.on('data', (info) => {
 				results.push(info)
 			})

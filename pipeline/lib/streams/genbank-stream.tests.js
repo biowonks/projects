@@ -3,11 +3,11 @@
 'use strict'
 
 // Vendor
-let Promise = require('bluebird')
+const Promise = require('bluebird')
 
 // Local
-let GenbankReaderStream = require('./GenbankReaderStream'),
-	StringStream = require('./StringStream')
+const genbankStream = require('./genbank-stream'),
+	memoryStream = require('./memory-stream')
 
 /**
  * Promisifies the stream parsing of GenBank input strings.
@@ -17,15 +17,15 @@ let GenbankReaderStream = require('./GenbankReaderStream'),
  */
 function parse(input) {
 	return new Promise((resolve, reject) => {
-		let genbankReaderStream = new GenbankReaderStream(),
-			stringStream = new StringStream(input),
+		let genbankReader = genbankStream(),
+			inputReader = memoryStream(input),
 			results = []
 
-		stringStream
-		.pipe(genbankReaderStream)
+		inputReader
+		.pipe(genbankReader)
 		.on('error', reject)
-		.on('data', (genBank) => {
-			results.push(genBank)
+		.on('data', (record) => {
+			results.push(record)
 		})
 		.on('finish', () => {
 			resolve(results)
@@ -75,8 +75,8 @@ function parseSingle(input) {
 	})
 }
 
-describe('Streams', function() {
-	describe('GenBankReaderStream', function() {
+describe('streams', function() {
+	describe('genbank reader stream', function() {
 		it('empty input does not return any records', function() {
 			return parse('')
 			.then((results) => {
