@@ -1,14 +1,16 @@
 'use strict'
 
-// Core node libraries
-let assert = require('assert'),
+// Core
+const assert = require('assert'),
+	stream = require('stream'),
 	StringDecoder = require('string_decoder').StringDecoder
 
-// Local includes
-let LineStream = require('../../streams/LineStream')
+// Vendor
+const split = require('split'),
+	pumpify = require('pumpify')
 
 // Constants
-let kNumberOfDomainFields = 17
+const kNumberOfDomainFields = 17
 
 /**
  * HmmscanResultReaderStream parses the textual output from the HMMER3 hmmscan tool
@@ -17,10 +19,10 @@ let kNumberOfDomainFields = 17
  * By extending from LineStream, the input is processed line by line in a streaming
  * fashion for optimal performance.
  */
-module.exports =
-class HmmscanResultReaderStream extends LineStream {
-	constructor() {
-		super()
+class HmmscanResultStream extends stream.Transform {
+	constructor(options = {}) {
+		options.objectMode = true
+		super(options)
 		this.decoder_ = new StringDecoder('utf8')
 		this.reset_()
 	}
@@ -134,4 +136,8 @@ class HmmscanResultReaderStream extends LineStream {
 			return 0
 		})
 	}
+}
+
+module.exports = function(options) {
+	return pumpify.obj(split(), new HmmscanResultStream(options))
 }

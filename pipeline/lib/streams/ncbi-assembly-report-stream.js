@@ -8,13 +8,19 @@
  */
 'use strict'
 
-// Local
-let LineStream = require('./LineStream')
+// Core
+const stream = require('stream'),
+	StringDecoder = require('string_decoder').StringDecoder
 
-module.exports =
-class NCBIAssemblyReportStream extends LineStream {
-	constructor() {
-		super()
+// Vendor
+const split = require('split'),
+	pumpify = require('pumpify')
+
+class NCBIAssemblyReportStream extends stream.Transform {
+	constructor(options = {}) {
+		options.objectMode = true
+		super(options)
+		this.decoder_ = new StringDecoder('utf8')
 
 		this.lastLine_ = null
 		this.headerFields_ = null
@@ -33,7 +39,15 @@ class NCBIAssemblyReportStream extends LineStream {
 
 	//------------------------------------------
 	// Private methods
-	_transform(line, encoding, done) {
+	_transform(rawLine, encoding, done) {
+		let line = this.decoder_.write(rawLine)
+
+		// Skip empty lines
+		if (!line) {
+			done()
+			return
+		}
+
 		if (this.isMetadataLine_(line)) {
 			if (!this.processedHeader_) {
 				this.headerFields_ = this.parseAssemblyHeader_(this.lastLine_)
@@ -85,4 +99,8 @@ class NCBIAssemblyReportStream extends LineStream {
 			.replace(/\r|\n/gm, '')
 			.split('\t')
 	}
+}
+
+module.exports = function(options) {
+	return pumpify.obj(split(), new NCBIAssemblyReportStream(options))
 }

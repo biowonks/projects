@@ -1,18 +1,20 @@
 'use strict'
 
-// Core node libraries
-let assert = require('assert'),
+// Core
+const assert = require('assert'),
 	StringDecoder = require('string_decoder').StringDecoder,
 	Transform = require('stream').Transform
 
-// Local includes
-let FastaSeq = require('../bio/FastaSeq')
+// Vendor
+const through2 = require('through2')
+
+// Local
+const FastaSeq = require('../bio/FastaSeq')
 
 // Constants
-let kRecordSeparator = '\n>'
+const kRecordSeparator = '\n>'
 
-module.exports =
-class FastaReaderStream extends Transform {
+class FastaReadStream extends Transform {
 	constructor(optSkipEmptySequence) {
 		super({objectMode: true})
 
@@ -22,36 +24,7 @@ class FastaReaderStream extends Transform {
 	}
 
 	// ----------------------------------------------------
-	// Private methods
-	_flush(done) {
-		// Allow empty files
-		if (!this.buffer_.length) {
-			done()
-			return
-		}
-
-		if (this.buffer_[0] !== '>')
-			this.throwMissingCaret_()
-
-		let header = '',
-			sequence = '',
-			headerTo = this.buffer_.indexOf('\n')
-		if (headerTo >= 0) {  // A newline (and consequently header text is present) was found within the buffer
-			header = this.buffer_.substr(1, headerTo - 1)
-			if (headerTo !== this.buffer_.length - 1)
-				sequence = this.buffer_.substr(headerTo + 1)
-		}
-		else if (this.buffer_.length > 1) {
-			// There is no newline in the buffer. Thus, this record consists solely of a header
-			header = this.buffer_
-		}
-
-		this.processSequence_(header, sequence)
-		this.buffer_ = ''
-
-		done()
-	}
-
+	// Overrided methods
 	_transform(chunk, encoding, done) {
 		this.buffer_ += this.decoder_.write(chunk)
 
@@ -83,6 +56,37 @@ class FastaReaderStream extends Transform {
 		done()
 	}
 
+	_flush(done) {
+		// Allow empty files
+		if (!this.buffer_.length) {
+			done()
+			return
+		}
+
+		if (this.buffer_[0] !== '>')
+			this.throwMissingCaret_()
+
+		let header = '',
+			sequence = '',
+			headerTo = this.buffer_.indexOf('\n')
+		if (headerTo >= 0) {  // A newline (and consequently header text is present) was found within the buffer
+			header = this.buffer_.substr(1, headerTo - 1)
+			if (headerTo !== this.buffer_.length - 1)
+				sequence = this.buffer_.substr(headerTo + 1)
+		}
+		else if (this.buffer_.length > 1) {
+			// There is no newline in the buffer. Thus, this record consists solely of a header
+			header = this.buffer_
+		}
+
+		this.processSequence_(header, sequence)
+		this.buffer_ = ''
+
+		done()
+	}
+
+	// ----------------------------------------------------
+	// Private methods
 	processSequence_(header, sequence) {
 		assert(/\S/.test(header), 'fasta header must not be empty')
 
@@ -100,3 +104,17 @@ class FastaReaderStream extends Transform {
 		throw new Error('first character must be the > symbol')
 	}
 }
+
+function reader(options) {
+	return new FastaReadStream(options)
+}
+
+function writer(options = {}) {
+	return through2.obj(options, (fastaSeq, encoding, done) => {
+		done(null, fastaSeq.toString(options.charsPerLine))
+	})
+}
+
+module.exports = reader
+module.exports.reader = reader
+module.exports.writer = writer
