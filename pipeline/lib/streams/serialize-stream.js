@@ -10,7 +10,7 @@ const through2 = require('through2')
  * @param {Function?} serializeFn
  * @returns {Stream}
  */
-module.exports = function(options, serializeFn) {
+function serializeStream(options, serializeFn) {
 	let streamOptions = options,
 		serialize = serializeFn
 
@@ -33,4 +33,13 @@ module.exports = function(options, serializeFn) {
 
 		done(null, result)
 	})
+}
+
+function ndjson(object) {
+	return JSON.stringify(object) + '\n'
+}
+
+module.exports = serializeStream
+module.exports.ndjson = function(options) {
+	return serializeStream(options, ndjson)
 }
