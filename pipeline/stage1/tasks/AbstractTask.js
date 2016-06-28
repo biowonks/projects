@@ -20,6 +20,7 @@ class AbstractTask {
 		this.interruptCheck = context.interruptCheck
 		this.fileMapper_ = context.fileMapper
 		this.config_ = context.config
+		this.models_ = context.models
 		this.logger_ = context.logger
 	}
 

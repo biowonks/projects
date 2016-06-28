@@ -36,17 +36,11 @@ const AbstractTask = require('./AbstractTask'),
 	genbankStream = require('../../lib/streams/genbank-stream'),
 	mutil = require('../../lib/mutil'),
 	ncbiAssemblyReportStream = require('../../lib/streams/ncbi-assembly-report-stream'),
-	uniqueSeqStream = require('../../lib/streams/unique-seq-stream'),
+	uniqueStream = require('../../lib/streams/unique-stream'),
 	serializeStream = require('../../lib/streams/serialize-stream')
 
 // Constants
 const kDoneFileName = 'task.core-data.done'
-
-function *pseudoIdSequence() {
-	let index = 1
-	while (true) // eslint-disable-line no-constant-condition
-		yield index++
-}
 
 let streamEachPromise = Promise.promisify(streamEach)
 
@@ -67,8 +61,8 @@ class ParseCoreDataTask extends AbstractTask {
 		this.gseqIdSet_ = new Set()
 		this.aseqIdSet_ = new Set()
 
-		this.componentsIdSequence_ = pseudoIdSequence()
-		this.genesIdSequence_ = pseudoIdSequence()
+		this.componentsIdSequence_ = mutil.pseudoIdSequence()
+		this.genesIdSequence_ = mutil.pseudoIdSequence()
 
 		this.componentsFnaWriteStream_ = this.promiseWriteStream(this.fileMapper_.pathFor('core.components-fna'))
 		this.componentsWriteStream_ = this.promiseWriteStreamObj(
@@ -76,7 +70,7 @@ class ParseCoreDataTask extends AbstractTask {
 			this.fileMapper_.pathFor('core.components')
 		)
 		this.gseqsWriteStream_ = this.promiseWriteStreamObj(
-			uniqueSeqStream(),
+			uniqueStream('id'),
 			serializeStream.ndjson(),
 			this.fileMapper_.pathFor('core.gseqs')
 		)
@@ -228,10 +222,10 @@ class ParseCoreDataTask extends AbstractTask {
 		return Promise.each(features, (feature) => {
 			if (feature.key === 'gene') {
 				let location = this.locationStringParser_.parse(feature.location),
-					seq = location.transcriptFrom(component.$fastaSeq)
-					// fasta = `>${seq.seqId()}\n${seq.fastaSequence()}`
+					seq = location.transcriptFrom(component.$fastaSeq),
+					gseq = this.models_.Gseq.fromSeq(seq)
 
-				return this.gseqsWriteStream_.writePromise(seq)
+				return this.gseqsWriteStream_.writePromise(gseq)
 			}
 
 			return null

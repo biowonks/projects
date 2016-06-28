@@ -1,6 +1,40 @@
 'use strict'
 
 /**
+ * Determines the distribution of each character in ${rawSequence}.
+ *
+ * @param {String} rawSequence
+ * @returns {Object}
+ */
+exports.distribution = function(rawSequence = '') {
+	let distribution = {},
+		length = rawSequence.length
+
+	for (let i = 0; i < length; i++) {
+		let char = rawSequence[i]
+		if (!distribution[char])
+			distribution[char] = 1
+		else
+			++distribution[char]
+	}
+
+	return distribution
+}
+
+/**
+ * @param {String} rawSequence
+ * @returns {Number}
+ */
+exports.gcPercent = function(rawSequence = '') {
+	let distribution = exports.distribution(rawSequence),
+		length = rawSequence.length,
+		numG = (distribution.g || 0) + (distribution.G || 0),
+		numC = (distribution.c || 0) + (distribution.C || 0)
+
+	return (numG + numC) / length * 100. // eslint-disable-line no-magic-numbers
+}
+
+/**
  * Identifies regions within ${maskedSequence} that consist of 1 or more lower-case 'x's and
  * returns an array of arrays indicating the 1-based start / stop positions of each region.
  *

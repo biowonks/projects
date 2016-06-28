@@ -346,3 +346,9 @@ exports.createDeferred = function() {
 
 	return {resolve, reject, promise}
 }
+
+exports.pseudoIdSequence = function *() {
+	let index = 1
+	while (true) // eslint-disable-line no-constant-condition
+		yield index++
+}

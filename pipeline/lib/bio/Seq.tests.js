@@ -7,6 +7,10 @@ let Seq = require('./Seq')
 describe('Seq', function() {
 	let defaultSeq = new Seq()
 
+	describe('clone', function() {
+		it('creates an identical, yet distinct sequence')
+	})
+
 	describe('fastaSequence', function() {
 		let defaultCharsPerLine = Seq.kDefaultCharsPerLine,
 			sequence = 'AAAAATTTTTGGGGGCCCCC',
@@ -51,6 +55,10 @@ describe('Seq', function() {
 		it('charsPerLine < length splits it into lines as expected', function() {
 			expect(seq.fastaSequence(3)).equal('AAA\nAAT\nTTT\nTGG\nGGG\nCCC\nCC\n')
 		})
+	})
+
+	describe('gcPercent', function() {
+		it('returns the same results as seqUtil.gcPercent but using the Seq sequence')
 	})
 
 	describe('invalidSymbol', function() {

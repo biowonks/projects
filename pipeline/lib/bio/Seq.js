@@ -1,8 +1,11 @@
 'use strict'
 
-// Core node libraries
+// Core
 const assert = require('assert'),
 	crypto = require('crypto')
+
+// Local
+const seqUtil = require('./seq-util')
 
 // Constants
 const kComplementaryBases = {
@@ -35,12 +38,20 @@ for (let base in kComplementaryBases)
  * @param {string?} optSequence defauls to the empty string
  */
 class Seq {
-	constructor(optSequence) {
-		this.sequence_ = (optSequence || '').trim()
+	constructor(optSequence = '') {
+		this.sequence_ = optSequence.trim()
 		this.isCircular_ = false
 		this.isNormalized_ = false
 		this.removeNonSpaceWhitespace_()
 		this.clean_()
+	}
+
+	clone(otherSeq) {
+		let newSeq = new Seq()
+		newSeq.sequence_ = this.sequence_
+		newSeq.isCircular_ = this.isCircular_
+		newSeq.isNormalized_ = this.isNormalized_
+		return newSeq
 	}
 
 	complement(optReverse) {
@@ -65,6 +76,10 @@ class Seq {
 	fastaSequence(charsPerLine = Seq.kDefaultCharsPerLine) {
 		assert(typeof charsPerLine === 'number', 'charsPerLine must be a number')
 		return this.spliceNewlines_(charsPerLine)
+	}
+
+	gcPercent() {
+		return seqUtil.gcPercent(this.sequence_)
 	}
 
 	invalidSymbol() {
@@ -155,7 +170,7 @@ class Seq {
 	}
 
 	/**
-	 * Removes all spaces and upper-cases the sequence. The result is cached.
+	 * Removes all spaces and upper-cases the sequence.
 	 * @returns {string} normalized sequence string
 	 */
 	normalizedSequence_() {
