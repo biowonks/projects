@@ -36,7 +36,8 @@ const AbstractTask = require('./AbstractTask'),
 	genbankStream = require('../../lib/streams/genbank-stream'),
 	mutil = require('../../lib/mutil'),
 	ncbiAssemblyReportStream = require('../../lib/streams/ncbi-assembly-report-stream'),
-	uniqueSeqStream = require('../../lib/streams/unique-seq-stream')
+	uniqueSeqStream = require('../../lib/streams/unique-seq-stream'),
+	serializeStream = require('../../lib/streams/serialize-stream')
 
 // Constants
 const kDoneFileName = 'task.core-data.done'
@@ -70,9 +71,22 @@ class ParseCoreDataTask extends AbstractTask {
 		this.genesIdSequence_ = pseudoIdSequence()
 
 		this.componentsFnaWriteStream_ = this.promiseWriteStream(this.fileMapper_.pathFor('core.components-fna'))
-		this.componentsWriteStream_ = this.promiseWriteStream(this.fileMapper_.pathFor('core.components'))
-		this.gseqsWriteStream_ = this.promiseWriteStream(uniqueSeqStream(), this.fileMapper_.pathFor('core.gseqs'))
+		this.componentsWriteStream_ = this.promiseWriteStreamObj(
+			serializeStream.ndjson(),
+			this.fileMapper_.pathFor('core.components')
+		)
+		this.gseqsWriteStream_ = this.promiseWriteStreamObj(
+			uniqueSeqStream(),
+			serializeStream.ndjson(),
+			this.fileMapper_.pathFor('core.gseqs')
+		)
 		// this.aseqsFaaWriteStream_ = fs.createWriteStream(this.fileMapper_.pathFor('core.aseqs-faa'))
+
+		this.writeStreams_ = [
+			this.componentsFnaWriteStream_,
+			this.componentsWriteStream_,
+			this.gseqsWriteStream_
+		]
 
 		return Promise.resolve()
 	}
@@ -85,9 +99,16 @@ class ParseCoreDataTask extends AbstractTask {
 	}
 
 	run() {
-		return this.indexAssemblyReport_()
-		.then(this.parseGenbankFlatFile_.bind(this))
-		// .then(this.markTaskAsDone_.bind(this))
+		return new Promise((resolve, reject) => {
+			for (let stream of this.writeStreams_)
+				stream.on('error', reject)
+
+			return this.indexAssemblyReport_()
+			.then(this.parseGenbankFlatFile_.bind(this))
+			.then(resolve)
+			.catch(reject)
+			// .then(this.markTaskAsDone_.bind(this))
+		})
 	}
 
 	teardown() {
@@ -100,11 +121,9 @@ class ParseCoreDataTask extends AbstractTask {
 		this.aseqIdSet_.clear()
 		this.aseqIdSet_ = null
 
-		return Promise.all([
-			this.componentsFnaWriteStream_.endPromise(),
-			this.componentsWriteStream_.endPromise(),
-			this.gseqsWriteStream_.endPromise()
-		])
+		return Promise.each(this.writeStreams_, (writeStream) => {
+			return writeStream ? writeStream.endPromise() : null
+		})
 	}
 
 	// ----------------------------------------------------
@@ -152,7 +171,7 @@ class ParseCoreDataTask extends AbstractTask {
 		.then(this.processFeatures_.bind(this, record.features, genome, component))
 		.then(() => {
 			Reflect.deleteProperty(component, '$fastaSeq')
-			return this.componentsWriteStream_.writePromise(JSON.stringify(component) + '\n')
+			return this.componentsWriteStream_.writePromise(component)
 		})
 	}
 
@@ -209,10 +228,10 @@ class ParseCoreDataTask extends AbstractTask {
 		return Promise.each(features, (feature) => {
 			if (feature.key === 'gene') {
 				let location = this.locationStringParser_.parse(feature.location),
-					seq = location.transcriptFrom(component.$fastaSeq),
-					fasta = `>${seq.seqId()}\n${seq.fastaSequence()}`
+					seq = location.transcriptFrom(component.$fastaSeq)
+					// fasta = `>${seq.seqId()}\n${seq.fastaSequence()}`
 
-				return this.gseqsWriteStream_.writePromise(fasta)
+				return this.gseqsWriteStream_.writePromise(seq)
 			}
 
 			return null

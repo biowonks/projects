@@ -1,7 +1,8 @@
 'use strict'
 
 // Core
-const fs = require('fs'),
+const assert = require('assert'),
+	fs = require('fs'),
 	zlib = require('zlib')
 
 // Vendor
@@ -48,13 +49,23 @@ class AbstractTask {
 	}
 
 	promiseWriteStream(...args) {
-		let path = args.pop(),
-			streams = args
+		return this.promiseWriteStream_(pumpify, ...args)
+	}
+
+	promiseWriteStreamObj(...args) {
+		return this.promiseWriteStream_(pumpify.obj, ...args)
+	}
+
+	promiseWriteStream_(pumpifyFn, ...args) {
+		assert(args.length, 'usage: promiseWriteStream([...streams], targetFile)')
+		let path = args.pop()
+		assert(typeof path === 'string', 'Missing targetFile argument')
+		let streams = args
 		if (path.endsWith('.gz'))
 			streams.push(zlib.createGzip())
 		streams.push(fs.createWriteStream(path))
 
-		let stream = streams.length > 1 ? pumpify(...streams) : streams[0]
+		let stream = streams.length > 1 ? pumpifyFn(...streams) : streams[0]
 
 		streamMixins.writePromise(stream)
 		streamMixins.endPromise(stream)
