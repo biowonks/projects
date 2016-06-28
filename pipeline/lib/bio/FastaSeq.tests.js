@@ -45,18 +45,8 @@ describe('FastaSeq', function() {
 			fastaSequence = 'AAAAATTTTTGGGGGCCCCC',
 			seq = new FastaSeq(fastaHeader, fastaSequence)
 
-		it('Default should give one line sequence', function() {
+		it('Default should give one line sequence (because it is less than the default chars per line)', function() {
 			expect(seq.toString()).equal(`${fastaHeader}\n${fastaSequence}\n`)
-		})
-
-		it('Negative values should give one line sequence', function() {
-			expect(seq.toString(-2)).equal(`${fastaHeader}\n${fastaSequence}\n`)
-		})
-
-		it('Non-number parameter should give an error', function() {
-			expect(function() {
-				seq.toString('non-number')
-			}).throw(Error)
 		})
 
 		it('Sequence should be separated into lines', function() {

@@ -7,6 +7,52 @@ let Seq = require('./Seq')
 describe('Seq', function() {
 	let defaultSeq = new Seq()
 
+	describe('fastaSequence', function() {
+		let defaultCharsPerLine = Seq.kDefaultCharsPerLine,
+			sequence = 'AAAAATTTTTGGGGGCCCCC',
+			seq = new Seq(sequence)
+
+		before(() => {
+			Seq.kDefaultCharsPerLine = 5
+		})
+
+		after(() => {
+			Seq.kDefaultCharsPerLine = defaultCharsPerLine
+		})
+
+		it('default charsPerLine', function() {
+			expect(seq.fastaSequence()).equal('AAAAA\nTTTTT\nGGGGG\nCCCCC\n')
+		})
+
+		it('0 charsPerLine assumes default charsPerLine', function() {
+			expect(seq.fastaSequence()).equal('AAAAA\nTTTTT\nGGGGG\nCCCCC\n')
+		})
+
+		it('Negative charsPerLine throws error', function() {
+			expect(function() {
+				seq.fastaSequence(-1)
+			}).throw(Error)
+		})
+
+		it('Non-number parameter throws error', function() {
+			expect(function() {
+				seq.fastaSequence('non-number')
+			}).throw(Error)
+		})
+
+		it('charsPerLine > length returns entire sequence', function() {
+			expect(seq.fastaSequence(sequence.length + 1)).equal(sequence + '\n')
+		})
+
+		it('charsPerLine === length returns entire sequence', function() {
+			expect(seq.fastaSequence(sequence.length)).equal(sequence + '\n')
+		})
+
+		it('charsPerLine < length splits it into lines as expected', function() {
+			expect(seq.fastaSequence(3)).equal('AAA\nAAT\nTTT\nTGG\nGGG\nCCC\nCC\n')
+		})
+	})
+
 	describe('invalidSymbol', function() {
 		it('should equal "@"', function() {
 			expect(defaultSeq.invalidSymbol()).equal('@')
