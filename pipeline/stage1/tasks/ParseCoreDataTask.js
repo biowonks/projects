@@ -33,10 +33,10 @@ const Promise = require('bluebird'),
 const mutil = require('../../lib/mutil'),
 	AbstractTask = require('./AbstractTask'),
 	genbankStream = require('../../lib/streams/genbank-stream'),
+	streamMixins = require('../../lib/streams/stream-mixins'),
 	ncbiAssemblyReportStream = require('../../lib/streams/ncbi-assembly-report-stream'),
 	FastaSeq = require('../../lib/bio/FastaSeq'),
 
-	PromiseWriteStream = require('../../lib/streams/PromiseWriteStream'),
 	LocationStringParser = require('../../lib/bio/LocationStringParser')
 
 // Constants
@@ -70,8 +70,10 @@ class ParseCoreDataTask extends AbstractTask {
 		this.componentsIdSequence_ = pseudoIdSequence()
 		this.genesIdSequence_ = pseudoIdSequence()
 
-		this.componentsFnaWriteStream_ = new PromiseWriteStream(this.fileMapper_.pathFor('core.components-fna'))
-		this.componentsWriteStream_ = new PromiseWriteStream(this.fileMapper_.pathFor('core.components'))
+		this.componentsFnaWriteStream_ = fs.createWriteStream(this.fileMapper_.pathFor('core.components-fna'))
+		streamMixins.endPromise(this.componentsFnaWriteStream_)
+		this.componentsWriteStream_ = fs.createWriteStream(this.fileMapper_.pathFor('core.components'))
+		streamMixins.endPromise(this.componentsWriteStream_)
 
 		// this.gseqsWriteStream_ = fs.createWriteStream(this.fileMapper_.pathFor('core.gseqs'))
 		// this.aseqsFaaWriteStream_ = fs.createWriteStream(this.fileMapper_.pathFor('core.aseqs-faa'))
