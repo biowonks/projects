@@ -30,14 +30,13 @@ const Promise = require('bluebird'),
 	streamEach = require('stream-each')
 
 // Local
-const mutil = require('../../lib/mutil'),
-	AbstractTask = require('./AbstractTask'),
-	genbankStream = require('../../lib/streams/genbank-stream'),
-	streamMixins = require('../../lib/streams/stream-mixins'),
-	ncbiAssemblyReportStream = require('../../lib/streams/ncbi-assembly-report-stream'),
+const AbstractTask = require('./AbstractTask'),
 	FastaSeq = require('../../lib/bio/FastaSeq'),
-
-	LocationStringParser = require('../../lib/bio/LocationStringParser')
+	LocationStringParser = require('../../lib/bio/LocationStringParser'),
+	genbankStream = require('../../lib/streams/genbank-stream'),
+	mutil = require('../../lib/mutil'),
+	ncbiAssemblyReportStream = require('../../lib/streams/ncbi-assembly-report-stream'),
+	uniqueSeqStream = require('../../lib/streams/unique-seq-stream')
 
 // Constants
 const kDoneFileName = 'task.core-data.done'
@@ -48,7 +47,7 @@ function *pseudoIdSequence() {
 		yield index++
 }
 
-let pumpPromise = Promise.promisify(pump)
+let streamEachPromise = Promise.promisify(streamEach)
 
 module.exports =
 class ParseCoreDataTask extends AbstractTask {
@@ -70,12 +69,9 @@ class ParseCoreDataTask extends AbstractTask {
 		this.componentsIdSequence_ = pseudoIdSequence()
 		this.genesIdSequence_ = pseudoIdSequence()
 
-		this.componentsFnaWriteStream_ = fs.createWriteStream(this.fileMapper_.pathFor('core.components-fna'))
-		streamMixins.endPromise(this.componentsFnaWriteStream_)
-		this.componentsWriteStream_ = fs.createWriteStream(this.fileMapper_.pathFor('core.components'))
-		streamMixins.endPromise(this.componentsWriteStream_)
-
-		// this.gseqsWriteStream_ = fs.createWriteStream(this.fileMapper_.pathFor('core.gseqs'))
+		this.componentsFnaWriteStream_ = this.promiseWriteStream(this.fileMapper_.pathFor('core.components-fna'))
+		this.componentsWriteStream_ = this.promiseWriteStream(this.fileMapper_.pathFor('core.components'))
+		this.gseqsWriteStream_ = this.promiseWriteStream(uniqueSeqStream(), this.fileMapper_.pathFor('core.gseqs'))
 		// this.aseqsFaaWriteStream_ = fs.createWriteStream(this.fileMapper_.pathFor('core.aseqs-faa'))
 
 		return Promise.resolve()
@@ -106,7 +102,8 @@ class ParseCoreDataTask extends AbstractTask {
 
 		return Promise.all([
 			this.componentsFnaWriteStream_.endPromise(),
-			this.componentsWriteStream_.endPromise()
+			this.componentsWriteStream_.endPromise(),
+			this.gseqsWriteStream_.endPromise()
 		])
 	}
 
@@ -117,12 +114,12 @@ class ParseCoreDataTask extends AbstractTask {
 			readStream = fs.createReadStream(assemblyReportFile),
 			ncbiAssemblyReportReader = ncbiAssemblyReportStream()
 
-		streamEach(ncbiAssemblyReportReader, (assembly, next) => {
+		pump(readStream, ncbiAssemblyReportReader)
+
+		return streamEachPromise(ncbiAssemblyReportReader, (assembly, next) => {
 			this.assemblyReportMap_.set(assembly.refseqAccession, assembly)
 			next()
 		})
-
-		return pumpPromise(readStream, ncbiAssemblyReportReader)
 		.then(() => {
 			this.logger_.info(`Read ${this.assemblyReportMap_.size} rows from the assembly report`)
 		})
@@ -135,28 +132,24 @@ class ParseCoreDataTask extends AbstractTask {
 			genbankReader = genbankStream(),
 			index = 0
 
-		streamEach(genbankReader, (record, next) => {
+		pump(readStream, gunzipStream, genbankReader)
+
+		return streamEachPromise(genbankReader, (record, next) => {
 			++index
 			this.logger_.info({locus: record.locus, index}, 'Successfully parsed Genbank record')
 
-			console.log('Num features', record.features.length)
-
-			next()
-
-			// this.processGenbankRecord_(record)
-			// .then(next)
+			this.processGenbankRecord_(record)
+			.then(next)
+			.catch(next)
 		})
-
-		return pumpPromise(readStream, gunzipStream, genbankReader)
 	}
 
 	processGenbankRecord_(record) {
 		let genome = this.buildGenome_(),
-			component = this.componentFromGenbank_(record, genome.id),
-			charsPerLine = 80
+			component = this.componentFromGenbank_(record, genome.id)
 
-		return this.componentsFnaWriteStream_.writePromise(component.$fastaSeq.toString(charsPerLine))
-		.then(this.processFeatures_(record.features, genome, component))
+		return this.componentsFnaWriteStream_.writePromise(component.$fastaSeq.toString())
+		.then(this.processFeatures_.bind(this, record.features, genome, component))
 		.then(() => {
 			Reflect.deleteProperty(component, '$fastaSeq')
 			return this.componentsWriteStream_.writePromise(JSON.stringify(component) + '\n')
@@ -213,14 +206,16 @@ class ParseCoreDataTask extends AbstractTask {
 	processFeatures_(features, genome, component) {
 		this.logger_.info(`Processing ${features.length} features`)
 
-		// let i = 1
+		return Promise.each(features, (feature) => {
+			if (feature.key === 'gene') {
+				let location = this.locationStringParser_.parse(feature.location),
+					seq = location.transcriptFrom(component.$fastaSeq),
+					fasta = `>${seq.seqId()}\n${seq.fastaSequence()}`
 
-		features.filter((feature) => feature.key === 'gene')
-		.forEach((gene) => {
-			// let location = this.locationStringParser_.parse(gene.location)
-				// seq = location.transcriptFrom(component.$fastaSeq)
+				return this.gseqsWriteStream_.writePromise(fasta)
+			}
 
-			// console.log(`${i}\t${seq.length()}\t${seq.sequence().substr(0, 50)}`)
+			return null
 		})
 	}
 

@@ -1,7 +1,15 @@
 'use strict'
 
+// Core
+const fs = require('fs'),
+	zlib = require('zlib')
+
 // Vendor
-const Promise = require('bluebird')
+const Promise = require('bluebird'),
+	pumpify = require('pumpify')
+
+// Local
+const streamMixins = require('../../lib/streams/stream-mixins')
 
 module.exports =
 class AbstractTask {
@@ -31,5 +39,26 @@ class AbstractTask {
 
 	teardown() {
 		return Promise.resolve()
+	}
+
+	// ----------------------------------------------------
+	// Helper methods
+	readStream(path) {
+		throw new Error('not implemented')
+	}
+
+	promiseWriteStream(...args) {
+		let path = args.pop(),
+			streams = args
+		if (path.endsWith('.gz'))
+			streams.push(zlib.createGzip())
+		streams.push(fs.createWriteStream(path))
+
+		let stream = streams.length > 1 ? pumpify(...streams) : streams[0]
+
+		streamMixins.writePromise(stream)
+		streamMixins.endPromise(stream)
+
+		return stream
 	}
 }

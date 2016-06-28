@@ -7,7 +7,15 @@ module.exports = function(options) {
 	let seqIds = new Set()
 
 	return through2.obj(options, (seq, encoding, done) => {
-		let seqId = seq.seqId()
+		let seqId = null
+		try {
+			seqId = seq.seqId()
+		}
+		catch (error) {
+			done(error)
+			return
+		}
+
 		if (!seqIds.has(seqId)) {
 			seqIds.add(seqId)
 			done(null, seq)
