@@ -92,7 +92,7 @@ class Stage1Worker extends BaseWorker {
 
 		this.logger().info('Updating worker database status')
 		this.worker_.normal_exit = false
-		this.worker_.error_message = error.message
+		this.worker_.error_message = error.message + '\n\n' + error.stack
 		if (this.queuedGenome_)
 			this.worker_.job.genomes_queue_id = this.queuedGenome_.id
 		return this.worker_.save({fields: ['normal_exit', 'error_message', 'job']})
