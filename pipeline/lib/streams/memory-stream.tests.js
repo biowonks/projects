@@ -2,14 +2,14 @@
 
 'use strict'
 
-let StringStream = require('./StringStream')
+let memoryStream = require('./memory-stream')
 
-describe('Services', function() {
-	describe('StringStream', function() {
+describe('streams', function() {
+	describe('memory stream', function() {
 		it('undefined does not stream any data', function(done) {
-			let stringStream = new StringStream(),
+			let reader = memoryStream(),
 				result = 'dummy'
-			stringStream.on('data', (string) => {
+			reader.on('data', (string) => {
 				result = string
 			})
 			.on('end', () => {
@@ -19,9 +19,9 @@ describe('Services', function() {
 		})
 
 		it('empty string works', function(done) {
-			let stringStream = new StringStream(''),
+			let reader = memoryStream(''),
 				result = 'dummy'
-			stringStream.on('data', (string) => {
+			reader.on('data', (string) => {
 				result = string
 			})
 			.on('end', () => {
@@ -31,9 +31,9 @@ describe('Services', function() {
 		})
 
 		it('\' \' string works', function(done) {
-			let stringStream = new StringStream(' ', {encoding: 'utf8'}),
+			let reader = memoryStream(' '),
 				result = null
-			stringStream.on('data', (string) => {
+			reader.on('data', (string) => {
 				result = string
 			})
 			.on('end', () => {
@@ -43,9 +43,9 @@ describe('Services', function() {
 		})
 
 		it('\'abcdef\' works in one pass (buffer size set to 10)', function(done) {
-			let stringStream = new StringStream('abcdef', {encoding: 'utf8', highWaterMark: 10}),
+			let reader = memoryStream('abcdef', {highWaterMark: 10}),
 				result = null
-			stringStream.on('data', (string) => {
+			reader.on('data', (string) => {
 				result = string
 			})
 			.on('end', () => {
@@ -55,10 +55,10 @@ describe('Services', function() {
 		})
 
 		it('\'1234567890\' works in multiple passes (buffer size set to 3)', function(done) {
-			let stringStream = new StringStream('1234567890', {encoding: 'utf8', highWaterMark: 3}),
+			let reader = memoryStream('1234567890', {highWaterMark: 3}),
 				nDataCalls = 0,
 				result = null
-			stringStream.on('data', (string) => {
+			reader.on('data', (string) => {
 				if (nDataCalls)
 					result += string
 				else

@@ -1,11 +1,16 @@
 'use strict'
 
 // Core
-let assert = require('assert')
+const assert = require('assert'),
+	stream = require('stream'),
+	StringDecoder = require('string_decoder').StringDecoder
+
+// Vendor
+const split = require('split'),
+	pumpify = require('pumpify')
 
 // Local
-let GenbankKeywordNode = require('../bio/GenbankKeywordNode'),
-	LineStream = require('./LineStream')
+const GenbankKeywordNode = require('../bio/GenbankKeywordNode')
 
 // Constants
 const kKeywordInformationOffset = 12,
@@ -47,7 +52,7 @@ const kKeywordInformationOffset = 12,
  * Only performs limited validation. For example, this script checks for 7 whitespace separated
  * values following the LOCUS keyword; however, the actual values themselves are not inspected.
  * Thus, most validation is delegated to other classes. No checks are done to ensure that all
- * data is present. GenbankReaderStream happily emits sparsely populated PODs with what information
+ * data is present. GenbankStream happily emits sparsely populated PODs with what information
  * is able to be extracted. If a keyword that should only appear once is found twice an error is
  * thrown.
  *
@@ -134,11 +139,12 @@ const kKeywordInformationOffset = 12,
  *   provides a reliable output for consumers as well as supporting future qualifiers
  *   with multiple values without having to modify the code.
  */
-module.exports =
-class GenbankReaderStream extends LineStream {
-	constructor() {
-		super({keepEmptyLines: true})
-		//     ^^^^^^^^^^^^^^ For cases such as the COMMENT keyword
+class GenbankStream extends stream.Transform {
+	constructor(options = {}) {
+		options.objectMode = true
+		super(options)
+
+		this.decoder_ = new StringDecoder('utf8')
 		this.entry_ = null
 
 		this.observedRootKeywords_ = new Set()
@@ -156,7 +162,9 @@ class GenbankReaderStream extends LineStream {
 
 	// ----------------------------------------------------
 	// Overrided methods
-	_transform(line, encoding, done) {
+	_transform(rawLine, encoding, done) {
+		let line = this.decoder_.write(rawLine)
+
 		try {
 			// --------------------------------------------
 			if (!this.entry_) {
@@ -165,7 +173,6 @@ class GenbankReaderStream extends LineStream {
 					done()
 					return
 				}
-
 				this.entry_ = this.blankEntry_()
 			}
 
@@ -878,4 +885,8 @@ class GenbankReaderStream extends LineStream {
 		this.currentQualifierName_ = null
 		this.currentQualifierValue_ = null
 	}
+}
+
+module.exports = function(options) {
+	return pumpify.obj(split(), new GenbankStream(options))
 }
