@@ -12,24 +12,15 @@ describe('Seq', function() {
 	})
 
 	describe('fastaSequence', function() {
-		let defaultCharsPerLine = Seq.kDefaultCharsPerLine,
-			sequence = 'AAAAATTTTTGGGGGCCCCC',
+		let sequence = 'AAAAATTTTTGGGGGCCCCC',
 			seq = new Seq(sequence)
 
-		before(() => {
-			Seq.kDefaultCharsPerLine = 5
-		})
-
-		after(() => {
-			Seq.kDefaultCharsPerLine = defaultCharsPerLine
-		})
-
 		it('default charsPerLine', function() {
-			expect(seq.fastaSequence()).equal('AAAAA\nTTTTT\nGGGGG\nCCCCC\n')
+			expect(seq.fastaSequence(5)).equal('AAAAA\nTTTTT\nGGGGG\nCCCCC\n')
 		})
 
 		it('0 charsPerLine assumes default charsPerLine', function() {
-			expect(seq.fastaSequence()).equal('AAAAA\nTTTTT\nGGGGG\nCCCCC\n')
+			expect(seq.fastaSequence(0)).equal('AAAAATTTTTGGGGGCCCCC\n')
 		})
 
 		it('Negative charsPerLine throws error', function() {

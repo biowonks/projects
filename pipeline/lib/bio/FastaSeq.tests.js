@@ -40,6 +40,14 @@ describe('FastaSeq', function() {
 		})
 	})
 
+	describe('setHeader', function() {
+		it('change the header', function() {
+			let seq = new FastaSeq('>ecoli')
+			seq.setHeader('chey')
+			expect(seq.header()).equal('chey')
+		})
+	})
+
 	describe('toString', function() {
 		let fastaHeader = '>header_name',
 			fastaSequence = 'AAAAATTTTTGGGGGCCCCC',

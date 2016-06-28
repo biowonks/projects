@@ -1,5 +1,12 @@
 'use strict'
 
+// Core
+const assert = require('assert')
+
+exports.kDefaults = {
+	charsPerLine: 80
+}
+
 /**
  * Determines the distribution of each character in ${rawSequence}.
  *
@@ -19,6 +26,16 @@ exports.distribution = function(rawSequence = '') {
 	}
 
 	return distribution
+}
+
+/**
+ * @param {String} header
+ * @param {String} sequence
+ * @param {Number?} optCharsPerLine
+ * @returns {String}
+ */
+exports.fasta = function(header, sequence, optCharsPerLine) {
+	return '>' + header + '\n' + exports.spliceNewLines(sequence, optCharsPerLine)
 }
 
 /**
@@ -75,4 +92,22 @@ exports.parseMaskedRegions = function(maskedSequence) {
 	}
 
 	return maskedRegions
+}
+
+/**
+ * @param {String} string
+ * @param {Number?} charsPerLine number of sequence characters per line; defaults to 80
+ * @returns {string}
+ */
+exports.spliceNewLines = function(string, charsPerLine = exports.kDefaults.charsPerLine) {
+	assert(typeof charsPerLine === 'number', 'charsPerLine must be a number')
+	assert(charsPerLine >= 0, 'charsPerLine must be 0 or a positive integer')
+	if (!charsPerLine)
+		return string + '\n'
+
+	let result = ''
+	for (let i = 0, z = string.length; i < z; i += charsPerLine)
+		result += string.substr(i, charsPerLine) + '\n'
+
+	return result
 }

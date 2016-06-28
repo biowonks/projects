@@ -18,6 +18,13 @@ class FastaSeq extends Seq {
 	}
 
 	/**
+	 * @param {String} newHeader
+	 */
+	setHeader(newHeader) {
+		this.header_ = newHeader
+	}
+
+	/**
 	 * Convert this instance back into a FASTA formatted string. For example,
 	 *
 	 * >chea

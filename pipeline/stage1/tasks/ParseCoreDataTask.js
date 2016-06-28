@@ -33,10 +33,12 @@ const Promise = require('bluebird'),
 const AbstractTask = require('./AbstractTask'),
 	FastaSeq = require('../../lib/bio/FastaSeq'),
 	LocationStringParser = require('../../lib/bio/LocationStringParser'),
+	Seq = require('../../lib/bio/Seq'),
 	genbankStream = require('../../lib/streams/genbank-stream'),
 	mutil = require('../../lib/mutil'),
 	ncbiAssemblyReportStream = require('../../lib/streams/ncbi-assembly-report-stream'),
 	uniqueStream = require('../../lib/streams/unique-stream'),
+	seqUtil = require('../../lib/bio/seq-util'),
 	serializeStream = require('../../lib/streams/serialize-stream')
 
 // Constants
@@ -74,12 +76,30 @@ class ParseCoreDataTask extends AbstractTask {
 			serializeStream.ndjson(),
 			this.fileMapper_.pathFor('core.gseqs')
 		)
-		// this.aseqsFaaWriteStream_ = fs.createWriteStream(this.fileMapper_.pathFor('core.aseqs-faa'))
+
+		// After finding unique aseqs, the results are piped to two different sinks:
+		// the aseqs.faa and aseqs.ndjson.gz
+		this.uniqueAseqsStream_ = this.promiseWriteStreamObj(uniqueStream('id'))
+		this.aseqsFaaWriteStream_ = this.promiseWriteStreamObj(
+			this.uniqueAseqsStream_,
+			serializeStream((aseq) => {
+				return seqUtil.fasta(aseq.id, aseq.sequence)
+			}),
+			this.fileMapper_.pathFor('core.aseqs-faa')
+		)
+
+		this.aseqsWriteStream_ = this.promiseWriteStreamObj(
+			this.uniqueAseqsStream_,
+			serializeStream.ndjson(),
+			this.fileMapper_.pathFor('core.aseqs')
+		)
 
 		this.writeStreams_ = [
 			this.componentsFnaWriteStream_,
 			this.componentsWriteStream_,
-			this.gseqsWriteStream_
+			this.gseqsWriteStream_,
+			this.aseqsWriteStream_,
+			this.aseqsFaaWriteStream_
 		]
 
 		return Promise.resolve()
@@ -226,6 +246,15 @@ class ParseCoreDataTask extends AbstractTask {
 					gseq = this.models_.Gseq.fromSeq(seq)
 
 				return this.gseqsWriteStream_.writePromise(gseq)
+			}
+			else if (feature.key === 'CDS' && feature.translation && feature.translation[0]) {
+				let seq = new Seq(feature.translation[0]),
+					aseq = this.models_.Aseq.fromSeq(seq)
+
+				// Note: in the setup, we pipe the output of this stream to two separate streams:
+				// 1) the aseqs FASTA
+				// 2) and the aseqs ndjson
+				return this.uniqueAseqsStream_.writePromise(aseq)
 			}
 
 			return null

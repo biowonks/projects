@@ -37,6 +37,7 @@ for (let base in kComplementaryBases)
  * @constructor
  * @param {string?} optSequence defauls to the empty string
  */
+module.exports =
 class Seq {
 	constructor(optSequence = '') {
 		this.sequence_ = optSequence.trim()
@@ -70,12 +71,11 @@ class Seq {
 	 * Returns the FASTA sequence representation of this sequence. The sequence is split into lines
 	 * with ${charsPerLine} characters per line.
 	 *
-	 * @param {Number?} charsPerLine defaults to 80
+	 * @param {Number?} charsPerLine
 	 * @returns {String}
 	 */
-	fastaSequence(charsPerLine = Seq.kDefaultCharsPerLine) {
-		assert(typeof charsPerLine === 'number', 'charsPerLine must be a number')
-		return this.spliceNewlines_(charsPerLine)
+	fastaSequence(charsPerLine) {
+		return seqUtil.spliceNewLines(this.sequence_, charsPerLine)
 	}
 
 	gcPercent() {
@@ -189,23 +189,4 @@ class Seq {
 	removeNonSpaceWhitespace_() {
 		this.sequence_ = this.sequence_.replace(/(\n|\r|\f|\t|\v)/g, '')
 	}
-
-	/**
-	 * @param {number} charsPerLine number of sequence characters per line
-	 * @returns {string}
-	 */
-	spliceNewlines_(charsPerLine) {
-		assert(charsPerLine >= 0, 'charsPerLine must be 0 or a positive integer')
-		if (!charsPerLine)
-			return `${this.sequence_}\n`
-
-		let result = ''
-		for (let i = 0, z = this.sequence_.length; i < z; i += charsPerLine)
-			result += `${this.sequence_.substr(i, charsPerLine)}\n`
-
-		return result
-	}
 }
-
-Seq.kDefaultCharsPerLine = 80
-module.exports = Seq

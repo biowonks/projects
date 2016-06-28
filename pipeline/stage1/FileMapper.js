@@ -41,7 +41,7 @@ class FileMapper {
 			case 'core.components-fna':	return 'components-fna.gz'
 			case 'core.genes':			return 'genes.ndjson'
 			case 'core.gseqs':			return 'gseqs.ndjson.gz'
-			case 'core.aseqs-faa':		return 'aseqs.faa.gz'
+			case 'core.aseqs-faa':		return 'aseqs.faa'
 			case 'core.aseqs':			return 'aseqs.ndjson.gz'
 
 			default:

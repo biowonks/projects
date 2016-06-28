@@ -59,12 +59,13 @@ class AbstractTask {
 
 	promiseWriteStream_(pumpifyFn, ...args) {
 		assert(args.length, 'usage: promiseWriteStream([...streams], targetFile)')
-		let path = args.pop()
-		assert(typeof path === 'string', 'Missing targetFile argument')
-		let streams = args
-		if (path.endsWith('.gz'))
-			streams.push(zlib.createGzip())
-		streams.push(fs.createWriteStream(path))
+		let path = typeof args[args.length - 1] === 'string' ? args.pop() : null,
+			streams = args
+		if (path) {
+			if (path.endsWith('.gz'))
+				streams.push(zlib.createGzip())
+			streams.push(fs.createWriteStream(path))
+		}
 
 		let stream = streams.length > 1 ? pumpifyFn(...streams) : streams[0]
 
