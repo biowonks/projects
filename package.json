@@ -42,6 +42,7 @@
     "request-promise": "3.x",
     "sequelize": "3.x",
     "split": "1.x",
+    "stream-each": "1.x",
     "through2": "2.x",
     "umzug": "1.x",
     "universal-analytics": "0.3.x",

@@ -32,8 +32,8 @@ const Promise = require('bluebird'),
 // Local
 const mutil = require('../../lib/mutil'),
 	AbstractTask = require('./AbstractTask'),
-	GenbankReaderStream = require('../../lib/streams/GenbankReaderStream'),
-	NCBIAssemblyReportStream = require('../../lib/streams/NCBIAssemblyReportStream'),
+	genbankStream = require('../../lib/streams/genbank-stream'),
+	ncbiAssemblyReportStream = require('../../lib/streams/ncbi-assembly-report-stream'),
 	FastaSeq = require('../../lib/bio/FastaSeq'),
 
 	PromiseWriteStream = require('../../lib/streams/PromiseWriteStream'),
@@ -113,14 +113,14 @@ class ParseCoreDataTask extends AbstractTask {
 	indexAssemblyReport_() {
 		let assemblyReportFile = this.fileMapper_.pathFor('assembly-report'),
 			readStream = fs.createReadStream(assemblyReportFile),
-			ncbiAssemblyReportStream = new NCBIAssemblyReportStream()
+			ncbiAssemblyReportReader = ncbiAssemblyReportStream()
 
-		streamEach(ncbiAssemblyReportStream, (row, next) => {
-			this.assemblyReportMap_.set(row.refseqAccession, row)
+		streamEach(ncbiAssemblyReportReader, (assembly, next) => {
+			this.assemblyReportMap_.set(assembly.refseqAccession, assembly)
 			next()
 		})
 
-		return pumpPromise(readStream, ncbiAssemblyReportStream)
+		return pumpPromise(readStream, ncbiAssemblyReportReader)
 		.then(() => {
 			this.logger_.info(`Read ${this.assemblyReportMap_.size} rows from the assembly report`)
 		})
@@ -130,27 +130,22 @@ class ParseCoreDataTask extends AbstractTask {
 		let genbankFlatFile = this.fileMapper_.pathFor('genomic-genbank'),
 			readStream = fs.createReadStream(genbankFlatFile),
 			gunzipStream = zlib.createGunzip(),
-			gbs = new GenbankReaderStream(),
+			genbankReader = genbankStream(),
 			index = 0
 
-		streamEach(gbs, (genbankRecord, next) => {
+		streamEach(genbankReader, (record, next) => {
 			++index
-			this.logger_.info({locus: genbankRecord.locus, index}, 'Successfully parsed Genbank record')
+			this.logger_.info({locus: record.locus, index}, 'Successfully parsed Genbank record')
 
-			// console.log('Num features', genbankRecord.features.length)
+			console.log('Num features', record.features.length)
 
-			this.processGenbankRecord_(genbankRecord)
-			.then(next)
+			next()
+
+			// this.processGenbankRecord_(record)
+			// .then(next)
 		})
 
-		return new Promise((resolve, reject) => {
-			pump(readStream, gunzipStream, gbs, (error) => {
-				if (error)
-					reject(error)
-				else
-					resolve()
-			})
-		})
+		return pumpPromise(readStream, gunzipStream, genbankReader)
 	}
 
 	processGenbankRecord_(record) {
