@@ -38,11 +38,11 @@ class FileMapper {
 
 			case 'core.genomes':		return 'genomes.ndjson'
 			case 'core.components':		return 'components.ndjson'
-			case 'core.components-fna':	return 'components.fna'
+			case 'core.components-fna':	return 'components-fna.gz'
 			case 'core.genes':			return 'genes.ndjson'
-			case 'core.gseqs':			return 'gseqs.ndjson'
-			case 'core.aseqs-faa':		return 'aseqs.faa'
-			case 'core.aseqs':			return 'aseqs.ndjson'
+			case 'core.gseqs':			return 'gseqs.ndjson.gz'
+			case 'core.aseqs-faa':		return 'aseqs.faa.gz'
+			case 'core.aseqs':			return 'aseqs.ndjson.gz'
 
 			default:
 				throw new Error(`${sourceType} is not supported`)
@@ -68,8 +68,4 @@ class FileMapper {
 	pathFor(sourceType) {
 		return path.resolve(this.genomeRootPath(), this.fileNameFor(sourceType))
 	}
-
-	// idCacheFile() {
-	// 	return `${this.genomeRootPath()}/id-blocks.json`
-	// }
 }

@@ -12,9 +12,9 @@ const kDataSourceTypes = ['assembly-report', 'genomic-genbank']
 
 module.exports =
 class DownloadGenomeTask extends AbstractTask {
-	setup() {
+	constructor(...params) {
+		super(...params)
 		this.ncbiDataHelper_ = new NCBIDataHelper(this.fileMapper_, this.logger_)
-		return Promise.resolve()
 	}
 
 	isAlreadyDone() {

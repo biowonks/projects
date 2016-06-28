@@ -25,14 +25,19 @@ const fs = require('fs'),
 	zlib = require('zlib')
 
 // Vendor
-const Promise = require('bluebird')
+const Promise = require('bluebird'),
+	pump = require('pump'),
+	streamEach = require('stream-each')
 
 // Local
 const mutil = require('../../lib/mutil'),
 	AbstractTask = require('./AbstractTask'),
 	GenbankReaderStream = require('../../lib/streams/GenbankReaderStream'),
 	NCBIAssemblyReportStream = require('../../lib/streams/NCBIAssemblyReportStream'),
-	Seq = require('../../lib/bio/Seq')
+	FastaSeq = require('../../lib/bio/FastaSeq'),
+
+	PromiseWriteStream = require('../../lib/streams/PromiseWriteStream'),
+	LocationStringParser = require('../../lib/bio/LocationStringParser')
 
 // Constants
 const kDoneFileName = 'task.core-data.done'
@@ -43,10 +48,18 @@ function *pseudoIdSequence() {
 		yield index++
 }
 
+let pumpPromise = Promise.promisify(pump)
+
 module.exports =
 class ParseCoreDataTask extends AbstractTask {
-	setup() {
+	constructor(...args) {
+		super(...args)
 		this.doneFile_ = path.resolve(this.fileMapper_.genomeRootPath(), kDoneFileName)
+	}
+
+	setup() {
+		this.locationStringParser_ = new LocationStringParser()
+
 		// {RefSeq accession: {}}
 		this.assemblyReportMap_ = new Map()
 
@@ -57,8 +70,11 @@ class ParseCoreDataTask extends AbstractTask {
 		this.componentsIdSequence_ = pseudoIdSequence()
 		this.genesIdSequence_ = pseudoIdSequence()
 
-		this.gseqsWriterStream_ = fs.createWriteStream(this.fileMapper_.pathFor('core.gseqs'))
-		this.aseqsFaaWriterStream_ = fs.createWriteStream(this.fileMapper_.pathFor('core.aseqs-faa'))
+		this.componentsFnaWriteStream_ = new PromiseWriteStream(this.fileMapper_.pathFor('core.components-fna'))
+		this.componentsWriteStream_ = new PromiseWriteStream(this.fileMapper_.pathFor('core.components'))
+
+		// this.gseqsWriteStream_ = fs.createWriteStream(this.fileMapper_.pathFor('core.gseqs'))
+		// this.aseqsFaaWriteStream_ = fs.createWriteStream(this.fileMapper_.pathFor('core.aseqs-faa'))
 
 		return Promise.resolve()
 	}
@@ -73,7 +89,7 @@ class ParseCoreDataTask extends AbstractTask {
 	run() {
 		return this.indexAssemblyReport_()
 		.then(this.parseGenbankFlatFile_.bind(this))
-		.then(this.markTaskAsDone_.bind(this))
+		// .then(this.markTaskAsDone_.bind(this))
 	}
 
 	teardown() {
@@ -82,94 +98,100 @@ class ParseCoreDataTask extends AbstractTask {
 
 		this.gseqIdSet_.clear()
 		this.gseqIdSet_ = null
+
 		this.aseqIdSet_.clear()
 		this.aseqIdSet_ = null
 
-		this.gseqsWriterStream_.end()
-		this.gseqsWriterStream_ = null
-		this.aseqsFaaWriterStream_.end()
-		this.aseqsFaaWriterStream_ = null
-
-		return Promise.resolve()
+		return Promise.all([
+			this.componentsFnaWriteStream_.endPromise(),
+			this.componentsWriteStream_.endPromise()
+		])
 	}
 
 	// ----------------------------------------------------
 	// Private methods
 	indexAssemblyReport_() {
-		return new Promise((resolve, reject) => {
-			let assemblyReportFile = this.fileMapper_.pathFor('assembly-report'),
-				readStream = fs.createReadStream(assemblyReportFile),
-				ncbiAssemblyReportStream = new NCBIAssemblyReportStream()
+		let assemblyReportFile = this.fileMapper_.pathFor('assembly-report'),
+			readStream = fs.createReadStream(assemblyReportFile),
+			ncbiAssemblyReportStream = new NCBIAssemblyReportStream()
 
-			readStream
-			.on('error', reject)
-			.pipe(ncbiAssemblyReportStream)
-			.on('error', reject)
-			.on('data', (row) => {
-				this.assemblyReportMap_.set(row.refseqAccession, row)
-			})
-			.on('end', () => {
-				this.logger_.info(`Read ${this.assemblyReportMap_.size} rows from the assembly report`)
-				resolve()
-			})
+		streamEach(ncbiAssemblyReportStream, (row, next) => {
+			this.assemblyReportMap_.set(row.refseqAccession, row)
+			next()
+		})
+
+		return pumpPromise(readStream, ncbiAssemblyReportStream)
+		.then(() => {
+			this.logger_.info(`Read ${this.assemblyReportMap_.size} rows from the assembly report`)
 		})
 	}
 
 	parseGenbankFlatFile_() {
+		let genbankFlatFile = this.fileMapper_.pathFor('genomic-genbank'),
+			readStream = fs.createReadStream(genbankFlatFile),
+			gunzipStream = zlib.createGunzip(),
+			gbs = new GenbankReaderStream(),
+			index = 0
+
+		streamEach(gbs, (genbankRecord, next) => {
+			++index
+			this.logger_.info({locus: genbankRecord.locus, index}, 'Successfully parsed Genbank record')
+
+			// console.log('Num features', genbankRecord.features.length)
+
+			this.processGenbankRecord_(genbankRecord)
+			.then(next)
+		})
+
 		return new Promise((resolve, reject) => {
-			let genbankFlatFile = this.fileMapper_.pathFor('genomic-genbank'),
-				readStream = fs.createReadStream(genbankFlatFile),
-				gunzipStream = zlib.createGunzip(),
-				genbankReaderStream = new GenbankReaderStream(),
-				index = 1
-
-			function destroyAndReject(error) {
-				readStream.destroy()
-				reject(error)
-			}
-
-			readStream
-			.on('error', destroyAndReject)
-			.pipe(gunzipStream)
-			.on('error', destroyAndReject)
-			.pipe(genbankReaderStream)
-			.on('error', destroyAndReject)
-			.on('data', (genbankRecord) => {
-				this.interruptCheck()
-				genbankReaderStream.pause()
-
-				++index
-				this.logger_.info({locus: genbankRecord.locus, index}, 'Successfully parsed Genbank record')
-
-				this.processGenbankRecord_(genbankRecord)
-				.then(() => {
-					genbankReaderStream.resume()
-				})
-				.catch(destroyAndReject)
+			pump(readStream, gunzipStream, gbs, (error) => {
+				if (error)
+					reject(error)
+				else
+					resolve()
 			})
-			.on('error', destroyAndReject)
-			.on('end', resolve)
 		})
 	}
 
 	processGenbankRecord_(record) {
-		// let genome = this.queuedGenome_,
-		// 	component = this.componentFromGenbank_(record, 1)
+		let genome = this.buildGenome_(),
+			component = this.componentFromGenbank_(record, genome.id),
+			charsPerLine = 80
+
+		return this.componentsFnaWriteStream_.writePromise(component.$fastaSeq.toString(charsPerLine))
+		.then(this.processFeatures_(record.features, genome, component))
+		.then(() => {
+			Reflect.deleteProperty(component, '$fastaSeq')
+			return this.componentsWriteStream_.writePromise(JSON.stringify(component) + '\n')
+		})
+	}
+
+	buildGenome_() {
+		let genome = this.queuedGenome_.toJSON()
+		genome.id = 1
+		Reflect.deleteProperty(genome, 'worker_id')
+		Reflect.deleteProperty(genome, 'created_at')
+		Reflect.deleteProperty(genome, 'updated_at')
+		return genome
 	}
 
 	componentFromGenbank_(record, genomeId) {
-		let refseqAccession = record.accession.primary,
-			assemblyReport = this.assemblyReportMap_.get(refseqAccession),
-			seq = new Seq(record.origin)
+		let version = record.version,
+			assemblyReport = this.assemblyReportMap_.get(version),
+			componentId = this.componentsIdSequence_.next().value,
+			fastaSeq = new FastaSeq(String(componentId), record.origin)
 
-		seq.normalize()
+		fastaSeq.normalize()
+
+		if (!assemblyReport)
+			throw new Error('Genbank record does not have corresponding assembly report entry')
 
 		return {
-			id: this.componentsIdSequence_.next().value,
+			id: componentId,
 			genome_id: genomeId,
 
 			// Assembly report details
-			refseq_accession: refseqAccession,
+			refseq_accession: record.accession.primary,
 			genbank_accession: assemblyReport.genbankAccession,
 			name: assemblyReport.name,
 			role: assemblyReport.role,
@@ -179,14 +201,30 @@ class ParseCoreDataTask extends AbstractTask {
 
 			// Genbank fields
 			is_circular: this.isCircular_(record),
-			dna: seq.sequence(),
-			length: seq.length()
+			dna: null,
+			length: fastaSeq.length(),
+
+			$fastaSeq: fastaSeq
 		}
 	}
 
 	isCircular_(record) {
 		return (record.locus.topology === 'circular' || record.locus.topology === 'linear') ?
 			record.locus.topology === 'circular' : null
+	}
+
+	processFeatures_(features, genome, component) {
+		this.logger_.info(`Processing ${features.length} features`)
+
+		// let i = 1
+
+		features.filter((feature) => feature.key === 'gene')
+		.forEach((gene) => {
+			// let location = this.locationStringParser_.parse(gene.location)
+				// seq = location.transcriptFrom(component.$fastaSeq)
+
+			// console.log(`${i}\t${seq.length()}\t${seq.sequence().substr(0, 50)}`)
+		})
 	}
 
 	markTaskAsDone_() {

@@ -212,7 +212,7 @@ class Stage1Worker extends BaseWorker {
 			config: this.config_,
 			models: this.models_,
 			sequelize: this.sequelize_,
-			interruptCheck: () => this.interruptCheck()
+			interruptCheck: this.interruptCheck.bind(this)
 		}
 
 		return tasks.run(this.queuedGenome_, context)

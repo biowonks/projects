@@ -26,7 +26,7 @@ class AbstractTask {
 	}
 
 	run() {
-		throw new Error('not yet implemented')
+		throw new Error('not implemented')
 	}
 
 	teardown() {

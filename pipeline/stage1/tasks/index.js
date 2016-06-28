@@ -26,19 +26,19 @@ exports.run = function(queuedGenome, context) {
 
 			let task = new TaskClass(queuedGenome, context)
 
-			yield task.setup()
 			if (!(yield task.isAlreadyDone())) {
 				// In the event that the task throws an error while running, give it an opportunity
 				// to clean up.
 				try {
+					yield task.setup()
 					yield task.run()
 				}
 				catch (error) {
 					yield task.teardown()
 					throw error
 				}
+				yield task.teardown()
 			}
-			yield task.teardown()
 		}
 	})()
 }
