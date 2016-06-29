@@ -169,7 +169,7 @@ class Enqueuer {
 			this.insertGenome_(genomeData)
 			.then((genome) => {
 				if (genome) {
-					this.logger_.info({'genome.name': genome.name, refseq_assembly_accession: genome.refseq_assembly_accession}, 'Enqueued new genome')
+					this.logger_.info({'genome.name': genome.name, accession: genome.accession}, 'Enqueued new genome')
 
 					this.numGenomesQueued_++
 					if (this.maximumGenomesQueued_()) {
@@ -187,7 +187,7 @@ class Enqueuer {
 
 	genomeDataFromRow_(row) {
 		let genome = {
-			refseq_assembly_accession: row['# assembly_accession'],
+			accession: row['# assembly_accession'],
 			bioproject: row.bioproject,
 			biosample: row.biosample,
 			wgs_master: row.wgs_master,
@@ -223,8 +223,8 @@ class Enqueuer {
 	insertGenome_(genome) {
 		return this.sequelize_.transaction((t) => {
 			return Promise.all([
-				this.existsInGenomes_(genome.refseq_assembly_accession, t),
-				this.alreadyQueued_(genome.refseq_assembly_accession, t)
+				this.existsInGenomes_(genome.accession, t),
+				this.alreadyQueued_(genome.accession, t)
 			])
 			.spread((existsInGenomes, alreadyQueued) => {
 				if (existsInGenomes || alreadyQueued)
@@ -235,18 +235,18 @@ class Enqueuer {
 		})
 	}
 
-	existsInGenomes_(refseqAssemblyAccession, t) {
+	existsInGenomes_(accession, t) {
 		return this.models_.Genome.find({
 			where: {
-				refseq_assembly_accession: refseqAssemblyAccession
+				accession
 			}
 		})
 	}
 
-	alreadyQueued_(refseqAssemblyAccession, t) {
+	alreadyQueued_(accession, t) {
 		return this.models_.GenomesQueue.find({
 			where: {
-				refseq_assembly_accession: refseqAssemblyAccession
+				accession
 			}
 		})
 	}

@@ -10,7 +10,7 @@ module.exports = function(Sequelize, models) {
 				min: 1
 			}
 		},
-		refseq_assembly_accession: {
+		accession: {
 			type: Sequelize.TEXT,
 			allowNull: false,
 			validate: {
@@ -70,15 +70,7 @@ module.exports = function(Sequelize, models) {
 	return {
 		fields,
 		params: {
-			tableName: 'genomes_queue',
-			instanceMethods: {
-				short: function() {
-					return {
-						'genome.name': this.name,
-						refseq_assembly_accession: this.refseq_assembly_accession
-					}
-				}
-			}
+			tableName: 'genomes_queue'
 		}
 	}
 }

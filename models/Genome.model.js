@@ -2,7 +2,7 @@
 
 module.exports = function(Sequelize, models) {
 	let fields = {
-		refseq_assembly_accession: {
+		accession: {
 			type: Sequelize.TEXT,
 			allowNull: false,
 			validate: {

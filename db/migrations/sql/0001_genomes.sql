@@ -18,7 +18,7 @@ comment on column workers.normal_exit is 'null indicates unknown; may be alive o
 create table genomes_queue (
 	id serial primary key,
 	worker_id integer,
-	refseq_assembly_accession text not null,
+	accession text not null,
 	genbank_assembly_accession text,
 	bioproject text,
 	biosample text,
@@ -40,17 +40,18 @@ create table genomes_queue (
 	created_at timestamp with time zone not null default now(),
 	updated_at timestamp with time zone not null default now(),
 
-	unique(refseq_assembly_accession),
+	unique(accession),
 	foreign key(worker_id) references workers on update cascade on delete set null
 );
 comment on table genomes_queue is 'Genome assemblies yet to be processed';
 comment on column genomes_queue.worker_id is 'Currently assigned worker processing this genome';
+comment on column genomes_queue.accession is 'RefSeq assembly accession (standard case)';
 
 create index on genomes_queue(worker_id);
 
 create table genomes (
 	id integer primary key,
-	refseq_assembly_accession text not null,
+	accession text not null,
 	genbank_assembly_accession text,
 	bioproject text,
 	biosample text,
@@ -99,9 +100,9 @@ create table genomes (
 	created_at timestamp with time zone not null default now(),
 	updated_at timestamp with time zone not null default now(),
 
-	unique(refseq_assembly_accession)
+	unique(accession)
 );
-comment on column genomes.refseq_assembly_accession is 'Simply # assembly accession in the NCBI assembly report spreadsheet';
+comment on column genomes.accession is 'RefSeq # assembly accession in the NCBI assembly report spreadsheet';
 comment on column genomes.refseq_category is 'reference, representative, or na';
 comment on column genomes.version_status is 'latest: most recent version; replaced: version is superseded by another genome with the same wgs_master or biosample (this is not always the case)';
 comment on column genomes.assembly_level is 'complete, scaffold, contig, or chromosome';
