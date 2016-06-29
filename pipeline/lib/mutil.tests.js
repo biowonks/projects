@@ -86,4 +86,12 @@ describe('mutil', function() {
 			})
 		})
 	})
+
+	describe('sequence', function() {
+		it('by default, should monotonically increase starting from 1 by 1')
+
+		it('specifying a different initial index begins with that value')
+
+		it('changes by user specified delta')
+	})
 })

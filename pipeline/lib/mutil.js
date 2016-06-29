@@ -347,8 +347,14 @@ exports.createDeferred = function() {
 	return {resolve, reject, promise}
 }
 
-exports.pseudoIdSequence = function *() {
-	let index = 1
-	while (true) // eslint-disable-line no-constant-condition
-		yield index++
+/**
+ * @param {Number?} initialIndex the first sequence value to be yielded; defaults to 1
+ * @param {Number?} delta the amount to add to index with each call; defaults to 1
+ */
+exports.sequence = function *(initialIndex = 1, delta = 1) {
+	let index = initialIndex
+	while (true) { // eslint-disable-line no-constant-condition
+		yield index
+		index += delta
+	}
 }

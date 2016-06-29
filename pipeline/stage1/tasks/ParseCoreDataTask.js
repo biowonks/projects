@@ -63,8 +63,8 @@ class ParseCoreDataTask extends AbstractTask {
 		this.gseqIdSet_ = new Set()
 		this.aseqIdSet_ = new Set()
 
-		this.componentsIdSequence_ = mutil.pseudoIdSequence()
-		this.genesIdSequence_ = mutil.pseudoIdSequence()
+		this.componentsIdSequence_ = mutil.sequence()
+		this.genesIdSequence_ = mutil.sequence()
 
 		this.componentsFnaWriteStream_ = this.promiseWriteStream(this.fileMapper_.pathFor('core.components-fna'))
 		this.componentsWriteStream_ = this.promiseWriteStreamObj(
