@@ -1,8 +1,8 @@
 /* eslint-disable no-magic-numbers, no-new, no-unused-expressions */
-
 'use strict'
 
-let Location = require('./Location'),
+// Local
+const Location = require('./Location'),
 	LocationPoint = require('./LocationPoint'),
 	BetweenLocationPoint = require('./BetweenLocationPoint'),
 	BoundedLocationPoint = require('./BoundedLocationPoint'),
@@ -52,6 +52,35 @@ describe('Location', function() {
 				x = new Location(lp, lp, 'ABC123.1')
 
 			expect(x.accession()).equal('ABC123.1')
+		})
+	})
+
+	describe('lowerBound', function() {
+		it('returns the start location points lower bound', function() {
+			let lp1 = new LocationPoint(5),
+				lp2 = new LocationPoint(10),
+				x = new Location(lp1, lp2)
+
+			expect(x.lowerBound()).equal(lp1.lowerBound())
+		})
+	})
+
+	describe('upperBound', function() {
+		it('returns the stop location points upper bound', function() {
+			let lp1 = new LocationPoint(5),
+				lp2 = new LocationPoint(10),
+				x = new Location(lp1, lp2)
+
+			expect(x.upperBound()).equal(lp2.upperBound())
+		})
+	})
+
+	describe('strand', function() {
+		it('always returns +', function() {
+			let lp = new LocationPoint(5),
+				x = new Location(lp, lp)
+
+			expect(x.strand()).equal('+')
 		})
 	})
 

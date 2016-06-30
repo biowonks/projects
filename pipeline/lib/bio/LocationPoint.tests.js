@@ -1,8 +1,8 @@
 /* eslint-disable no-magic-numbers, no-new, no-unused-expressions, no-undefined */
-
 'use strict'
 
-let LocationPoint = require('./LocationPoint')
+// Local
+const LocationPoint = require('./LocationPoint')
 
 describe('LocationPoint', function() {
 	describe('constructor', function() {

@@ -2,7 +2,7 @@
 'use strict'
 
 // Local
-let seqUtil = require('./seq-util')
+const seqUtil = require('./seq-util')
 
 describe('seq-util', function() {
 	describe('distribution', function() {

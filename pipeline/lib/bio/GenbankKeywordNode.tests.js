@@ -1,8 +1,8 @@
 /* eslint-disable no-new, no-unused-expressions, no-undefined, no-magic-numbers */
-
 'use strict'
 
-let GenbankKeywordNode = require('./GenbankKeywordNode')
+// Local
+const GenbankKeywordNode = require('./GenbankKeywordNode')
 
 describe('GenbankKeywordNode', function() {
 	describe('constructor', function() {

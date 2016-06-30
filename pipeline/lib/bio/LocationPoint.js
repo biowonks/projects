@@ -1,7 +1,7 @@
 'use strict'
 
-// Core node libraries
-let assert = require('assert')
+// Core
+const assert = require('assert')
 
 // 345 or -1
 module.exports =

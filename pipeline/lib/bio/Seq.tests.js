@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-expressions, no-magic-numbers */
-
 'use strict'
 
-let Seq = require('./Seq')
+// Local
+const Seq = require('./Seq')
 
 describe('Seq', function() {
 	let defaultSeq = new Seq()

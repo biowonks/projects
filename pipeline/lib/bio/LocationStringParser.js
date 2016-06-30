@@ -6,14 +6,13 @@
  * order, etc. The location string is first parsed into a tree representation and then traversed
  * to produce a single location object representing this location string.
  */
-
 'use strict'
 
-// Core node libraries
-let assert = require('assert')
+// Core
+const assert = require('assert')
 
-// Local includes
-let LocationPoint = require('./LocationPoint'),
+// Local
+const LocationPoint = require('./LocationPoint'),
 	BetweenLocationPoint = require('./BetweenLocationPoint'),
 	FuzzyLocationPoint = require('./FuzzyLocationPoint'),
 	BoundedLocationPoint = require('./BoundedLocationPoint'),
