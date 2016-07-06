@@ -6,41 +6,16 @@ const seqUtil = require('../pipeline/lib/bio/seq-util')
 // Constants
 const kFloatPrecision = 6
 
-module.exports = function(Sequelize, models) {
+module.exports = function(Sequelize, models, extras) {
 	let fields = {
-		length: {
-			type: Sequelize.INTEGER,
-			allowNull: false,
-			validate: {
-				isInt: true,
-				min: 1
-			}
-		},
-		gc_percent: {
-			type: Sequelize.REAL,
-			allowNull: false,
-			validate: {
-				isFloat: true,
-				min: 0,
-				max: 100
-			}
-		},
-		sequence: {
-			type: Sequelize.TEXT,
-			allowNull: false,
-			validate: {
-				notEmpty: true,
-				is: /^[A-Z]+$/
-			}
-		}
+		length: extras.requiredPositiveInteger(),
+		gc_percent: extras.requiredPercentage(),
+		sequence: extras.requiredSequence()
 	}
 
 	// Model validations
 	let validate = {
-		sequenceLength: () => {
-			if (this.sequence.length !== this.length)
-				throw new Error('Sequence length does not equal the length property')
-		},
+		sequenceLength: extras.validate.referencedLength('length', 'sequence'),
 		accurateGC: () => {
 			let gcPercent = seqUtil.gcPercent(this.sequence)
 			if (gcPercent.toFixed(kFloatPrecision) !== this.gcPercent.toFixed(kFloatPrecision))
@@ -53,7 +28,7 @@ module.exports = function(Sequelize, models) {
 			let clonedSeq = seq.clone()
 			clonedSeq.normalize()
 
-			return models.Gseq.build({
+			return models.Dseq.build({
 				id: clonedSeq.seqId(),
 				length: clonedSeq.length(),
 				gc_percent: clonedSeq.gcPercent(),

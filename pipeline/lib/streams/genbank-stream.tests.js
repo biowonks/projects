@@ -236,7 +236,7 @@ describe('streams', function() {
 				.then((result) => {
 					expect(result.accession).deep.equal({
 						primary: 'NC_019565',
-						secondary: null
+						secondary: []
 					})
 				})
 			})
@@ -1264,7 +1264,7 @@ describe('streams', function() {
 
 					expect(result.accession).deep.equal({
 						primary: 'NC_019565',
-						secondary: null
+						secondary: []
 					})
 
 					expect(result.version).equal('NC_019565.1')

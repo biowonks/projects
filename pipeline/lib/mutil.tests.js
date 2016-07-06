@@ -1,4 +1,4 @@
-/* eslint-disable no-unused-expressions */
+/* eslint-disable no-unused-expressions, no-magic-numbers */
 
 'use strict'
 
@@ -88,10 +88,63 @@ describe('mutil', function() {
 	})
 
 	describe('sequence', function() {
-		it('by default, should monotonically increase starting from 1 by 1')
+		it('by default, should monotonically increase starting from 1 by 1', function() {
+			let x = mutil.sequence()
+			expect(x.next().value).equal(1)
+			expect(x.next().value).equal(2)
+			expect(x.next().value).equal(3)
+		})
 
-		it('specifying a different initial index begins with that value')
+		it('specifying a different initial index begins with that value', function() {
+			let x = mutil.sequence(5)
+			expect(x.next().value).equal(5)
+			expect(x.next().value).equal(6)
+		})
 
-		it('changes by user specified delta')
+		it('changes by user specified delta', function() {
+			let x = mutil.sequence(1, 2)
+			expect(x.next().value).equal(1)
+			expect(x.next().value).equal(3)
+
+			x = mutil.sequence(1, -2)
+			expect(x.next().value).equal(1)
+			expect(x.next().value).equal(-1)
+		})
+	})
+
+	describe('parseAccessionVersion', function() {
+		it('returns [] if no accession', function() {
+			expect(mutil.parseAccessionVersion()).deep.equal([])
+		})
+
+		it('returns [] if null accession', function() {
+			expect(mutil.parseAccessionVersion(null)).deep.equal([])
+		})
+
+		it('returns [accession, null] if not suffixed with a version number', function() {
+			expect(mutil.parseAccessionVersion('NC_019232')).deep.equal([
+				'NC_019232',
+				null
+			])
+			expect(mutil.parseAccessionVersion('NC_019232.')).deep.equal([
+				'NC_019232',
+				null
+			])
+		})
+
+		it('returns both accession and version', function() {
+			expect(mutil.parseAccessionVersion('NC_019234.1')).deep.equal([
+				'NC_019234',
+				1
+			])
+			expect(mutil.parseAccessionVersion('NC_019234.2')).deep.equal([
+				'NC_019234',
+				2
+			])
+			expect(mutil.parseAccessionVersion('.1')).deep.equal([
+				'',
+				1
+			])
+		})
 	})
 })

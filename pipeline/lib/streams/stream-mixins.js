@@ -15,5 +15,21 @@ exports.writePromise = function(stream) {
 }
 
 exports.endPromise = function(stream) {
-	stream.endPromise = Promise.promisify(stream.end)
+	// Once a stream has been finished, there is no way without digging into the private API to
+	// know if it has been finished via future calls. The following listens for the finish event and
+	// stores its state locally so that no matter how many calls to this function it will always
+	// resolve with the proper response.
+	let ended = false
+	stream.once('finish', () => {
+		ended = true
+	})
+
+	stream.endPromise = function() {
+		return new Promise((resolve) => {
+			if (ended)
+				resolve()
+			else
+				stream.end(resolve)
+		})
+	}
 }

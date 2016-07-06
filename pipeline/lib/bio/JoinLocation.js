@@ -19,6 +19,13 @@ class JoinLocation extends AbstractLocation {
 		this.locations_ = locations
 	}
 
+	length(isCircular, seqLength) {
+		let sum = 0
+		for (let location of this.locations_)
+			sum += location.length(isCircular, seqLength)
+		return sum
+	}
+
 	lowerBound() {
 		return this.locations_[0].lowerBound()
 	}

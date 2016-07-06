@@ -153,7 +153,7 @@ class Stage1Worker extends BaseWorker {
 		if (!this.worker_)
 			return Promise.resolve()
 
-		return this.models_.GenomesQueue.update({worker_id: null}, {
+		return this.models_.GenomeQueue.update({worker_id: null}, {
 			where: {
 				worker_id: this.worker_.id
 			}
@@ -183,7 +183,7 @@ class Stage1Worker extends BaseWorker {
 
 		return this.sequelize_.transaction({isolationLevel: kIsolationLevels.READ_COMMITTED},
 		(transaction) => {
-			return this.models_.GenomesQueue.findOne({
+			return this.models_.GenomeQueue.findOne({
 				where: {
 					worker_id: null
 				},
@@ -220,7 +220,7 @@ class Stage1Worker extends BaseWorker {
 
 	setupSubLogger_() {
 		this.subLogger_ = this.logger_.child({
-			refseqAssemblyAccession: this.queuedGenome_.refseq_assembly_accession,
+			'genome.accession': this.queuedGenome_.compoundAccession(),
 			source: this.queuedGenome_.name
 		})
 	}

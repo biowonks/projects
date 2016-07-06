@@ -28,21 +28,22 @@ class FileMapper {
 		let prefix = this.ncbiPrefix()
 
 		switch (sourceType) {
-			case 'checksums':			return 'md5checksums.txt'
-			case 'genomic-genbank':		return `${prefix}_genomic.gbff.gz`
-			case 'genomic-fasta':		return `${prefix}_genomic.fna.gz`
-			case 'protein-fasta':		return `${prefix}_protein.faa.gz`
-			case 'assembly-report':		return `${prefix}_assembly_report.txt`
-			case 'genes-gff':			return `${prefix}_genomic.gff.gz`
-			case 'feature-table':		return `${prefix}_feature_table.txt.gz`
+			case 'checksums':				return 'md5checksums.txt'
+			case 'genomic-genbank':			return `${prefix}_genomic.gbff.gz`
+			case 'genomic-fasta':			return `${prefix}_genomic.fna.gz`
+			case 'protein-fasta':			return `${prefix}_protein.faa.gz`
+			case 'assembly-report':			return `${prefix}_assembly_report.txt`
+			case 'genes-gff':				return `${prefix}_genomic.gff.gz`
+			case 'feature-table':			return `${prefix}_feature_table.txt.gz`
 
-			case 'core.genomes':		return 'genomes.ndjson'
-			case 'core.components':		return 'components.ndjson'
-			case 'core.components-fna':	return 'components-fna.gz'
-			case 'core.genes':			return 'genes.ndjson'
-			case 'core.gseqs':			return 'gseqs.ndjson.gz'
-			case 'core.aseqs-faa':		return 'aseqs.faa'
-			case 'core.aseqs':			return 'aseqs.ndjson.gz'
+			case 'core.genomes':			return 'genomes.ndjson'
+			case 'core.components':			return 'components.ndjson.gz'
+			case 'core.genes':				return 'genes.ndjson.gz'
+			case 'core.dseqs':				return 'dseqs.ndjson.gz'
+			case 'core.aseqs-faa':			return 'aseqs.faa'
+			case 'core.aseqs':				return 'aseqs.ndjson.gz'
+			case 'core.xrefs':				return 'xrefs.ndjson.gz'
+			case 'core.component-features':	return 'component-features.ndjson.gz'
 
 			default:
 				throw new Error(`${sourceType} is not supported`)
@@ -54,7 +55,7 @@ class FileMapper {
 			throw new Error('Genome has not been set. Please call setGenome first')
 
 		let urlAssemblyName = this.genome_.assembly_name.replace(/ /g, '_')
-		return `${this.genome_.refseq_assembly_accession}_${urlAssemblyName}`
+		return `${this.compoundAccession_()}_${urlAssemblyName}`
 	}
 
 	ncbiUrlFor(sourceType) {
@@ -62,10 +63,16 @@ class FileMapper {
 	}
 
 	genomeRootPath() {
-		return path.resolve(this.rootGenomesPath_, this.genome_.refseq_assembly_accession)
+		return path.resolve(this.rootGenomesPath_, this.compoundAccession_())
 	}
 
 	pathFor(sourceType) {
 		return path.resolve(this.genomeRootPath(), this.fileNameFor(sourceType))
+	}
+
+	// ----------------------------------------------------
+	// Private methods
+	compoundAccession_() {
+		return this.genome_.accession + '.' + this.genome_.version
 	}
 }

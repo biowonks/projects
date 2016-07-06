@@ -31,15 +31,14 @@ const Promise = require('bluebird'),
 
 // Local
 const AbstractTask = require('./AbstractTask'),
-	FastaSeq = require('../../lib/bio/FastaSeq'),
 	LocationStringParser = require('../../lib/bio/LocationStringParser'),
-	Seq = require('../../lib/bio/Seq'),
 	genbankStream = require('../../lib/streams/genbank-stream'),
 	mutil = require('../../lib/mutil'),
 	ncbiAssemblyReportStream = require('../../lib/streams/ncbi-assembly-report-stream'),
 	uniqueStream = require('../../lib/streams/unique-stream'),
 	seqUtil = require('../../lib/bio/seq-util'),
-	serializeStream = require('../../lib/streams/serialize-stream')
+	serializeStream = require('../../lib/streams/serialize-stream'),
+	genbankMistStream = require('../../lib/streams/genbank-mist-stream')
 
 // Constants
 const kDoneFileName = 'task.core-data.done'
@@ -59,22 +58,14 @@ class ParseCoreDataTask extends AbstractTask {
 		// {RefSeq accession: {}}
 		this.assemblyReportMap_ = new Map()
 
-		// Track which gseq and aseq ids have been processed
-		this.gseqIdSet_ = new Set()
-		this.aseqIdSet_ = new Set()
-
-		this.componentsIdSequence_ = mutil.sequence()
-		this.genesIdSequence_ = mutil.sequence()
-
-		this.componentsFnaWriteStream_ = this.promiseWriteStream(this.fileMapper_.pathFor('core.components-fna'))
 		this.componentsWriteStream_ = this.promiseWriteStreamObj(
 			serializeStream.ndjson(),
 			this.fileMapper_.pathFor('core.components')
 		)
-		this.gseqsWriteStream_ = this.promiseWriteStreamObj(
+		this.dseqsWriteStream_ = this.promiseWriteStreamObj(
 			uniqueStream('id'),
 			serializeStream.ndjson(),
-			this.fileMapper_.pathFor('core.gseqs')
+			this.fileMapper_.pathFor('core.dseqs')
 		)
 
 		// After finding unique aseqs, the results are piped to two different sinks:
@@ -87,19 +78,35 @@ class ParseCoreDataTask extends AbstractTask {
 			}),
 			this.fileMapper_.pathFor('core.aseqs-faa')
 		)
-
 		this.aseqsWriteStream_ = this.promiseWriteStreamObj(
 			this.uniqueAseqsStream_,
 			serializeStream.ndjson(),
 			this.fileMapper_.pathFor('core.aseqs')
 		)
 
+		this.genesWriteStream_ = this.promiseWriteStreamObj(
+			serializeStream.ndjson(),
+			this.fileMapper_.pathFor('core.genes')
+		)
+
+		this.xrefsWriteStream_ = this.promiseWriteStreamObj(
+			serializeStream.ndjson(),
+			this.fileMapper_.pathFor('core.xrefs')
+		)
+
+		this.componentFeaturesStream_ = this.promiseWriteStreamObj(
+			serializeStream.ndjson(),
+			this.fileMapper_.pathFor('core.component-features')
+		)
+
 		this.writeStreams_ = [
-			this.componentsFnaWriteStream_,
 			this.componentsWriteStream_,
-			this.gseqsWriteStream_,
+			this.dseqsWriteStream_,
 			this.aseqsWriteStream_,
-			this.aseqsFaaWriteStream_
+			this.aseqsFaaWriteStream_,
+			this.genesWriteStream_,
+			this.xrefsWriteStream_,
+			this.componentFeaturesStream_
 		]
 
 		return Promise.resolve()
@@ -114,30 +121,25 @@ class ParseCoreDataTask extends AbstractTask {
 
 	run() {
 		return new Promise((resolve, reject) => {
+			// Capture and bork on any stream errors
 			for (let stream of this.writeStreams_)
 				stream.on('error', reject)
 
 			return this.indexAssemblyReport_()
 			.then(this.parseGenbankFlatFile_.bind(this))
+			.then(this.markTaskAsDone_.bind(this))
 			.then(resolve)
 			.catch(reject)
-			// .then(this.markTaskAsDone_.bind(this))
 		})
 	}
 
 	teardown() {
+		this.locationStringParser_ = null
+
 		this.assemblyReportMap_.clear()
 		this.assemblyReportMap_ = null
 
-		this.gseqIdSet_.clear()
-		this.gseqIdSet_ = null
-
-		this.aseqIdSet_.clear()
-		this.aseqIdSet_ = null
-
-		return Promise.each(this.writeStreams_, (writeStream) => {
-			return writeStream ? writeStream.endPromise() : null
-		})
+		return Promise.each(this.writeStreams_, (writeStream) => writeStream.endPromise())
 	}
 
 	// ----------------------------------------------------
@@ -154,7 +156,7 @@ class ParseCoreDataTask extends AbstractTask {
 			next()
 		})
 		.then(() => {
-			this.logger_.info(`Read ${this.assemblyReportMap_.size} rows from the assembly report`)
+			this.logger_.info(`Read ${this.assemblyReportMap_.size} row(s) from the assembly report`)
 		})
 	}
 
@@ -163,111 +165,68 @@ class ParseCoreDataTask extends AbstractTask {
 			readStream = fs.createReadStream(genbankFlatFile),
 			gunzipStream = zlib.createGunzip(),
 			genbankReader = genbankStream(),
+			genbankMistReader = genbankMistStream(this.models_),
 			index = 0
 
-		pump(readStream, gunzipStream, genbankReader)
+		pump(readStream, gunzipStream, genbankReader, genbankMistReader)
 
-		return streamEachPromise(genbankReader, (record, next) => {
+		return streamEachPromise(genbankMistReader, (mistData, next) => {
+			let component = mistData.component,
+				compoundAccession = component.compoundAccession(),
+				tmpLogger = this.logger_.child({
+					'component.accession': compoundAccession,
+					index
+				})
 			++index
-			this.logger_.info({locus: record.locus, index}, 'Successfully parsed Genbank record')
+			tmpLogger.info('Successfully parsed Genbank record')
 
-			this.processGenbankRecord_(record)
-			.then(next)
+			let assemblyReport = this.assemblyReportMap_.get(compoundAccession)
+			if (!assemblyReport) {
+				next(new Error('Genbank record does not have corresponding assembly report entry'))
+				return null
+			}
+
+			// Assembly report details
+			[component.genbank_accession, component.genbank_version] = mutil.parseAccessionVersion(assemblyReport.genbankAccession)
+			component.name = assemblyReport.name
+			component.role = assemblyReport.role
+			component.assigned_molecule = assemblyReport.assignedMolecule
+			component.type = assemblyReport.type
+			component.genbank_refseq_relationship = assemblyReport.genbankRefseqRelationship
+
+			return this.componentsWriteStream_.writePromise(component)
+			.then(() => {
+				tmpLogger.info('>> Streamed component data')
+				return Promise.each(mistData.genes, (gene) => this.genesWriteStream_.writePromise(gene))
+			})
+			.then(() => {
+				tmpLogger.info(`>> Streamed ${mistData.genes.length} gene(s)`)
+				return Promise.each(mistData.dseqs, (dseq) => this.dseqsWriteStream_.writePromise(dseq))
+			})
+			.then(() => {
+				tmpLogger.info(`>> Streamed ${mistData.dseqs.length} dseq(s)`)
+				// Note: in the setup, we pipe the output of this stream to two separate streams:
+				// 1) the aseqs FASTA
+				// 2) and the aseqs ndjson
+				return Promise.each(mistData.aseqs, (aseq) => this.uniqueAseqsStream_.writePromise(aseq))
+			})
+			.then(() => {
+				tmpLogger.info(`>> Streamed ${mistData.aseqs.length} aseq(s)`)
+				return Promise.each(mistData.xrefs, (xref) => this.xrefsWriteStream_.writePromise(xref))
+			})
+			.then(() => {
+				tmpLogger.info(`>> Streamed ${mistData.xrefs.length} cross reference(s)`)
+				return Promise.each(mistData.componentFeatures, (componentFeature) => this.componentFeaturesStream_.writePromise(componentFeature))
+			})
+			.then(() => {
+				tmpLogger.info(`>> Streamed ${mistData.componentFeatures.length} non-gene feature(s)`)
+				next()
+			})
 			.catch(next)
 		})
 	}
 
-	processGenbankRecord_(record) {
-		let genome = this.buildGenome_(),
-			component = this.componentFromGenbank_(record, genome.id)
-
-		return this.componentsFnaWriteStream_.writePromise(component.$fastaSeq.toString())
-		.then(this.processFeatures_.bind(this, record.features, genome, component))
-		.then(() => {
-			Reflect.deleteProperty(component, '$fastaSeq')
-			return this.componentsWriteStream_.writePromise(component)
-		})
-	}
-
-	buildGenome_() {
-		let genome = this.queuedGenome_.toJSON()
-		genome.id = 1
-		Reflect.deleteProperty(genome, 'worker_id')
-		Reflect.deleteProperty(genome, 'created_at')
-		Reflect.deleteProperty(genome, 'updated_at')
-		return genome
-	}
-
-	componentFromGenbank_(record, genomeId) {
-		let version = record.version,
-			assemblyReport = this.assemblyReportMap_.get(version),
-			componentId = this.componentsIdSequence_.next().value,
-			fastaSeq = new FastaSeq(String(componentId), record.origin)
-
-		fastaSeq.normalize()
-
-		if (!assemblyReport)
-			throw new Error('Genbank record does not have corresponding assembly report entry')
-
-		return {
-			id: componentId,
-			genome_id: genomeId,
-
-			// Assembly report details
-			refseq_accession: record.accession.primary,
-			genbank_accession: assemblyReport.genbankAccession,
-			name: assemblyReport.name,
-			role: assemblyReport.role,
-			assigned_molecule: assemblyReport.assignedMolecule,
-			type: assemblyReport.type,
-			genbank_refseq_relationship: assemblyReport.genbankRefseqRelationship,
-
-			// Genbank fields
-			is_circular: this.isCircular_(record),
-			dna: null,
-			length: fastaSeq.length(),
-
-			$fastaSeq: fastaSeq
-		}
-	}
-
-	isCircular_(record) {
-		return (record.locus.topology === 'circular' || record.locus.topology === 'linear') ?
-			record.locus.topology === 'circular' : null
-	}
-
-	processFeatures_(features, genome, component) {
-		this.logger_.info(`Processing ${features.length} features`)
-
-		return Promise.each(features, (feature) => {
-			if (feature.key === 'gene') {
-				let location = this.locationStringParser_.parse(feature.location),
-					seq = location.transcriptFrom(component.$fastaSeq),
-					gseq = this.models_.Gseq.fromSeq(seq)
-
-				return this.gseqsWriteStream_.writePromise(gseq)
-			}
-			else if (feature.key === 'CDS' && feature.translation && feature.translation[0]) {
-				let seq = new Seq(feature.translation[0]),
-					aseq = this.models_.Aseq.fromSeq(seq)
-
-				// Note: in the setup, we pipe the output of this stream to two separate streams:
-				// 1) the aseqs FASTA
-				// 2) and the aseqs ndjson
-				return this.uniqueAseqsStream_.writePromise(aseq)
-			}
-
-			return null
-		})
-	}
-
 	markTaskAsDone_() {
-		return new Promise((resolve, reject) => {
-			let stream = fs.createWriteStream(this.doneFile_)
-			stream
-			.on('error', reject)
-			.on('finish', resolve)
-			stream.close()
-		})
+		return this.promiseWriteStream(this.doneFile_).endPromise()
 	}
 }

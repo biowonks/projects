@@ -31,7 +31,8 @@ let _ = require('lodash'),
 	Sequelize = require('sequelize')
 
 // Local
-let setupAssociations = require('./associations')
+let modelExtras = require('./model-extras')(Sequelize),
+	setupAssociations = require('./associations')
 
 // Constants
 let kModelFileNameSuffix = '.model.js' // All files ending with this are treated as models
@@ -51,7 +52,7 @@ function loadModels(sequelize, logger) {
 	getModelFileNames()
 	.forEach((modelFileName) => {
 		// eslint-disable-next-line global-require
-		let definition = require('./' + modelFileName)(Sequelize, models)
+		let definition = require('./' + modelFileName)(Sequelize, models, modelExtras)
 		if (!definition)
 			throw new Error(`Missing return value from model file, ${modelFileName}`)
 

@@ -169,7 +169,7 @@ class Enqueuer {
 			this.insertGenome_(genomeData)
 			.then((genome) => {
 				if (genome) {
-					this.logger_.info({'genome.name': genome.name, accession: genome.accession}, 'Enqueued new genome')
+					this.logger_.info({name: genome.name, accession: genome.accession, version: genome.version}, 'Enqueued new genome')
 
 					this.numGenomesQueued_++
 					if (this.maximumGenomesQueued_()) {
@@ -186,15 +186,21 @@ class Enqueuer {
 	}
 
 	genomeDataFromRow_(row) {
+		let refseqAccessionParts = mutil.parseAccessionVersion(row['# assembly_accession']),
+			genbankAccessionParts = mutil.parseAccessionVersion(row.gbrs_paired_asm)
+
 		let genome = {
-			accession: row['# assembly_accession'],
-			bioproject: row.bioproject,
-			biosample: row.biosample,
-			wgs_master: row.wgs_master,
-			refseq_category: row.refseq_category,
+			accession: refseqAccessionParts[0],
+			version: refseqAccessionParts[1],
+			genbank_assembly_accession: genbankAccessionParts[0],
+			genbank_assembly_version: genbankAccessionParts[1],
 			taxonomy_id: row.taxid,
 			species_taxonomy_id: row.species_taxid,
 			name: row.organism_name,
+			refseq_category: row.refseq_category,
+			bioproject: row.bioproject,
+			biosample: row.biosample,
+			wgs_master: row.wgs_master,
 			strain: this.extractStrain_(row.infraspecific_name),
 			isolate: row.isolate,
 			version_status: row.version_status,
@@ -203,7 +209,6 @@ class Enqueuer {
 			release_date: row.seq_rel_date,
 			assembly_name: row.asm_name,
 			submitter: row.submitter,
-			genbank_assembly_accession: row.gbrs_paired_asm,
 			ftp_path: row.ftp_path
 		}
 
@@ -223,30 +228,32 @@ class Enqueuer {
 	insertGenome_(genome) {
 		return this.sequelize_.transaction((t) => {
 			return Promise.all([
-				this.existsInGenomes_(genome.accession, t),
-				this.alreadyQueued_(genome.accession, t)
+				this.existsInGenomes_(genome.accession, genome.version, t),
+				this.alreadyQueued_(genome.accession, genome.version, t)
 			])
 			.spread((existsInGenomes, alreadyQueued) => {
 				if (existsInGenomes || alreadyQueued)
 					return null
 
-				return this.models_.GenomesQueue.create(genome)
+				return this.models_.GenomeQueue.create(genome)
 			})
 		})
 	}
 
-	existsInGenomes_(accession, t) {
+	existsInGenomes_(accession, version, t) {
 		return this.models_.Genome.find({
 			where: {
-				accession
+				accession,
+				version
 			}
 		})
 	}
 
-	alreadyQueued_(accession, t) {
-		return this.models_.GenomesQueue.find({
+	alreadyQueued_(accession, version, t) {
+		return this.models_.GenomeQueue.find({
 			where: {
-				accession
+				accession,
+				version
 			}
 		})
 	}

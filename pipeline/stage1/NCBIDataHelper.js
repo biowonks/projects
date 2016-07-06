@@ -86,14 +86,14 @@ class NCBIDataHelper {
 			let fileName = this.fileMapper_.fileNameFor(sourceType),
 				checksum = this.checksums_[fileName]
 			if (checksum) {
-				this.logger_.info({fileName}, 'Verifying file contents')
+				this.logger_.info({fileName}, `Verifying ${sourceType} file contents`)
 				return mutil.checkFileMD5(destFile, checksum)
 			}
 
 			// To my knowledge, only the assembly report lacks a checksum
 			// For now, assuming that wget would report error if only part of
 			// the file is retrieved...
-			this.logger_.info({fileName}, 'No checksum found, assuming file contents are valid')
+			this.logger_.info({fileName}, `No checksum found, assuming ${sourceType} file contents are valid`)
 			return true
 		})
 	}

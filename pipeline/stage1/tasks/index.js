@@ -24,9 +24,10 @@ exports.run = function(queuedGenome, context) {
 		for (let TaskClass of taskClasses) {
 			context.interruptCheck()
 
-			let task = new TaskClass(queuedGenome, context)
+			let task = new TaskClass(queuedGenome, context),
+				alreadyDone = yield task.isAlreadyDone()
 
-			if (!(yield task.isAlreadyDone())) {
+			if (!alreadyDone) {
 				// In the event that the task throws an error while running, give it an opportunity
 				// to clean up.
 				try {

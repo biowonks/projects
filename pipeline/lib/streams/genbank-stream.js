@@ -444,7 +444,7 @@ class GenbankStream extends stream.Transform {
 
 		return {
 			primary: primaryAccession,
-			secondary: accessions.length ? accessions : null
+			secondary: accessions
 		}
 	}
 

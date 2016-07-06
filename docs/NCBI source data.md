@@ -46,7 +46,7 @@ Using the FTP path specified for each genome in the assembly_summary.txt files a
 
   REFERENCE >> genome_references (taken from the first component's REFERENCE section)
 
-  components.moleculeType = LOCUS.moleculeType
+  components.molecule_type = LOCUS.moleculeType
   components.is_circular = LOCUS.topology
   components.annotation_date = LOCUS.date
   components.dna = ORIGIN
@@ -54,7 +54,7 @@ Using the FTP path specified for each genome in the assembly_summary.txt files a
 
   The remaining core tables are all sourced from the feature table section (FEATURES).
 
-  The main table is genes which aggregates information for coding sequences, RNAs, and pseudo genes. A gene feature is linked to another cognate feature if they both have an identical location. If unexpectedly multiple non-gene features share the same location with a gene feature, then only the first one is linked to the gene. The others will be stored in the components_features table (see below).
+  The main table is genes which aggregates information for coding sequences, RNAs, and pseudo genes. A gene feature is linked to another cognate feature if they both have an identical location. If unexpectedly multiple non-gene features share the same location with a gene feature, then only the first one is linked to the gene. The remainder will be stored in the components_features table (see below).
 
   Each gene will be assigned a database generated identifier; however this is not intended to be consumed by the public. Rather, genes are meant to be identified using either the RefSeq accession (with or without the version), locus tags, or cross-references. To support annotated genes that lack an accession (e.g. RNA sequences), the accession field is not required.
 

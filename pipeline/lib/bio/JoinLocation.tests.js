@@ -41,6 +41,34 @@ describe('JoinLocation', function() {
 		})
 	})
 
+	describe('length', function() {
+		let notCircular = false,
+			circular = true
+
+		it('linear join(1..2,5..6) is 4', function() {
+			let location1 = new Location(new LocationPoint(1), new LocationPoint(2)),
+				location2 = new Location(new LocationPoint(5), new LocationPoint(6)),
+				x = new JoinLocation([location1, location2])
+
+			expect(x.length(notCircular, 10)).equal(4)
+		})
+
+		it('linear join(5..6,1..2) is 4', function() {
+			let location1 = new Location(new LocationPoint(5), new LocationPoint(6)),
+				location2 = new Location(new LocationPoint(1), new LocationPoint(2)),
+				x = new JoinLocation([location1, location2])
+
+			expect(x.length(notCircular, 10)).equal(4)
+		})
+
+		it('circular join(8..1) length 10 returns 4', function() {
+			let location = new Location(new LocationPoint(8), new LocationPoint(1)),
+				x = new JoinLocation([location])
+
+			expect(x.length(circular, 10)).equal(4)
+		})
+	})
+
 	describe('strand', function() {
 		it('always returns +', function() {
 			let location = new Location(new LocationPoint(1), new LocationPoint(3)),

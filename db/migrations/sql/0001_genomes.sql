@@ -19,13 +19,16 @@ create table genomes_queue (
 	id serial primary key,
 	worker_id integer,
 	accession text not null,
+	version integer not null,
 	genbank_assembly_accession text,
+	genbank_assembly_version integer,
+	taxonomy_id integer,
+	species_taxonomy_id integer,
+	name text not null,
+	refseq_category text,
 	bioproject text,
 	biosample text,
 	wgs_master text,
-	refseq_category text,
-	taxonomy_id integer,
-	species_taxonomy_id integer,
 	isolate text,
 	version_status text,
 	assembly_level text,
@@ -35,12 +38,10 @@ create table genomes_queue (
 	submitter text,
 	ftp_path text,
 
-	name text not null,
-
 	created_at timestamp with time zone not null default now(),
 	updated_at timestamp with time zone not null default now(),
 
-	unique(accession),
+	unique(accession, version),
 	foreign key(worker_id) references workers on update cascade on delete set null
 );
 comment on table genomes_queue is 'Genome assemblies yet to be processed';
@@ -52,13 +53,16 @@ create index on genomes_queue(worker_id);
 create table genomes (
 	id integer primary key,
 	accession text not null,
+	version integer not null,
 	genbank_assembly_accession text,
+	genbank_assembly_version integer,
+	taxonomy_id integer,
+	species_taxonomy_id integer,
+	name text not null,
+	refseq_category text,
 	bioproject text,
 	biosample text,
 	wgs_master text,
-	refseq_category text,
-	taxonomy_id integer,
-	species_taxonomy_id integer,
 	isolate text,
 	version_status text,
 	assembly_level text,
@@ -69,7 +73,6 @@ create table genomes (
 	ftp_path text,
 
 	-- Taxonomy (obtained by querying the NCBI taxonomy browser with the taxid)
-	name text not null,
 	superkingdom text,
 	phylum text,
 	class text,
@@ -94,13 +97,10 @@ create table genomes (
 	-- stddev_protein_length
 	stats jsonb not null default '{}',
 
-	-- For tracking progress
-	status jsonb not null default '{}',
-
 	created_at timestamp with time zone not null default now(),
 	updated_at timestamp with time zone not null default now(),
 
-	unique(accession)
+	unique(accession, version)
 );
 comment on column genomes.accession is 'RefSeq # assembly accession in the NCBI assembly report spreadsheet';
 comment on column genomes.refseq_category is 'reference, representative, or na';

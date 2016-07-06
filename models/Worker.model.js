@@ -1,6 +1,6 @@
 'use strict'
 
-module.exports = function(Sequelize, models) {
+module.exports = function(Sequelize, models, extras) {
 	let fields = {
 		hostname: {
 			type: Sequelize.TEXT
@@ -13,14 +13,7 @@ module.exports = function(Sequelize, models) {
 				isInt: true
 			}
 		},
-		public_ip: {
-			type: Sequelize.TEXT,
-			allowNull: false,
-			validate: {
-				notEmpty: true,
-				isIP: true
-			}
-		},
+		public_ip: extras.requiredText(),
 		message: {
 			type: Sequelize.TEXT
 		},

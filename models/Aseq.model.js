@@ -1,23 +1,9 @@
 'use strict'
 
-module.exports = function(Sequelize, models) {
+module.exports = function(Sequelize, models, extras) {
 	let fields = {
-		length: {
-			type: Sequelize.INTEGER,
-			allowNull: false,
-			validate: {
-				isInt: true,
-				min: 1
-			}
-		},
-		sequence: {
-			type: Sequelize.TEXT,
-			allowNull: false,
-			validate: {
-				notEmpty: true,
-				is: /^[A-Z]+$/
-			}
-		},
+		length: extras.requiredPositiveInteger(),
+		sequence: extras.requiredSequence(),
 		tool_status: {
 			type: Sequelize.JSONB,
 			allowNull: false,
@@ -32,10 +18,7 @@ module.exports = function(Sequelize, models) {
 
 	// Model validations
 	let validate = {
-		sequenceLength: function() {
-			if (this.sequence.length !== this.length)
-				throw new Error('Sequence length does not equal the length property')
-		}
+		sequenceLength: extras.validate.referencedLength('length', 'sequence')
 	}
 
 	let classMethods = {

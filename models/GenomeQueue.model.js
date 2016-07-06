@@ -2,6 +2,7 @@
 
 module.exports = function(Sequelize, models, extras) {
 	let fields = {
+		worker_id: extras.positiveInteger(),
 		accession: extras.requiredAccessionWithoutVersion(),
 		version: extras.requiredPositiveInteger(),
 		genbank_assembly_accession: extras.accessionWithoutVersion(),
@@ -48,38 +49,6 @@ module.exports = function(Sequelize, models, extras) {
 				notEmpty: true,
 				isUrl: true
 			}
-		},
-		superkingdom: {
-			type: Sequelize.TEXT
-		},
-		phylum: {
-			type: Sequelize.TEXT
-		},
-		class: {
-			type: Sequelize.TEXT
-		},
-		orderr: {
-			type: Sequelize.TEXT
-		},
-		family: {
-			type: Sequelize.TEXT
-		},
-		genus: {
-			type: Sequelize.TEXT
-		},
-		species: {
-			type: Sequelize.TEXT
-		},
-		strain: {
-			type: Sequelize.TEXT
-		},
-		taxonomic_group: {
-			type: Sequelize.TEXT
-		},
-		stats: {
-			type: Sequelize.JSONB,
-			allowNull: false,
-			defaultValue: {}
 		}
 	}
 
@@ -92,12 +61,8 @@ module.exports = function(Sequelize, models, extras) {
 	return {
 		fields,
 		params: {
-			classMethods: {
-				sequenceName: function() {
-					return 'genomes'
-				}
-			},
 			instanceMethods,
+			tableName: 'genomes_queue',
 			validate: {
 				genbankAssemblyAccessionVersion: extras.validate.bothNullOrBothNotEmpty(
 					'genbank_assembly_accession',
