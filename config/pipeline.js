@@ -58,8 +58,8 @@ module.exports = function(kRootPath) {
 				basePath: path.resolve(paths.vendor, 'agfam', '2.0')
 			},
 			pfam: {
-				version: '29.0',
-				basePath: path.resolve(paths.vendor, 'pfam', '29.0')
+				version: '30.0',
+				basePath: path.resolve(paths.vendor, 'pfam', '30.0')
 			}
 		},
 
