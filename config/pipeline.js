@@ -24,17 +24,7 @@ module.exports = function(kRootPath) {
 
 		ncbi: {
 			ftp: {
-				genomeDataRootUrl: 'ftp://ftp.ncbi.nlm.nih.gov/genomes/all',
-				assemblySummaryLinks: [
-					{
-						url: 'ftp://ftp.ncbi.nih.gov/genomes/refseq/archaea/assembly_summary.txt',
-						filename: 'archaea-assembly-summary.tsv'
-					},
-					{
-						url: 'ftp://ftp.ncbi.nih.gov/genomes/refseq/bacteria/assembly_summary.txt',
-						filename: 'bacteria-assembly-summary.tsv'
-					}
-				]
+				genomeDataRootUrl: 'ftp://ftp.ncbi.nlm.nih.gov/genomes/all'
 			}
 		},
 
@@ -64,23 +54,20 @@ module.exports = function(kRootPath) {
 		},
 
 		// ----------------------------------------------------
-		// Specific tool configuration
-		enqueuer: {
-			logging: {
-				errFile: path.resolve(pipelineRootPath, 'logs', 'enqueuer.err')
-			},
-			summaryDuration: moment.duration(1, 'day'),
-			maxNewGenomesToQueuePerRun: 5
-		},
-
-		stage1: {
-			// Logging is all done to stdout
-			master: {
-				numWorkers: 1,
-				// Amount to delay when kicking off parallel slaves
-				interSlaveDelayMs: 1000,
-				maxTriesPerGenome: 2
-			}
+		// Specific module configuration
+		seedNewGenomes: {
+			summaryFileDuration: moment.duration(1, 'day'),
+			maxNewGenomesPerRun: 5,
+			assemblySummaryLinks: [
+				{
+					url: 'ftp://ftp.ncbi.nih.gov/genomes/refseq/archaea/assembly_summary.txt',
+					fileName: 'archaea-assembly-summary.tsv'
+				},
+				{
+					url: 'ftp://ftp.ncbi.nih.gov/genomes/refseq/bacteria/assembly_summary.txt',
+					fileName: 'bacteria-assembly-summary.tsv'
+				}
+			]
 		}
 	}
 }

@@ -15,43 +15,8 @@ comment on table workers is 'record of all worker processes';
 comment on column workers.normal_exit is 'null indicates unknown; may be alive or dead';
 comment on column workers.job is 'job details such as the pipeline modules and genome ids';
 
-create table genomes_queue (
-	id serial primary key,
-	worker_id integer,
-	accession text not null,
-	version integer not null,
-	genbank_assembly_accession text,
-	genbank_assembly_version integer,
-	taxonomy_id integer,
-	species_taxonomy_id integer,
-	name text not null,
-	refseq_category text,
-	bioproject text,
-	biosample text,
-	wgs_master text,
-	isolate text,
-	version_status text,
-	assembly_level text,
-	release_type text,
-	release_date date,
-	assembly_name text,
-	submitter text,
-	ftp_path text,
-
-	created_at timestamp with time zone not null default clock_timestamp(),
-	updated_at timestamp with time zone not null default clock_timestamp(),
-
-	unique(accession, version),
-	foreign key(worker_id) references workers on update cascade on delete set null
-);
-create index on genomes_queue(worker_id);
-
-comment on table genomes_queue is 'Genome assemblies yet to be processed';
-comment on column genomes_queue.worker_id is 'Currently assigned worker processing this genome';
-comment on column genomes_queue.accession is 'RefSeq assembly accession (standard case)';
-
 create table genomes (
-	id integer primary key,
+	id serial primary key,
 	accession text not null,
 	version integer not null,
 	genbank_assembly_accession text,
@@ -138,5 +103,4 @@ comment on column workers_modules.redo is 'true if this module should be re-run'
 -- MIGRATION DOWN SQL
 drop table if exists workers_modules;
 drop table if exists genomes;
-drop table if exists genomes_queue;
 drop table if exists workers;

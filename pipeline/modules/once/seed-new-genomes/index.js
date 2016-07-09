@@ -16,9 +16,10 @@ const mutil = require('../../../lib/mutil')
 
 module.exports = function(app) {
 	let {config, logger, models, sequelize} = app,
+		thisConfig = config.pipeline.seedNewGenomes,
 		numGenomesQueued = 0
 
-	return Promise.each(config.pipeline.ncbi.ftp.assemblySummaryLinks, (assemblyLink) => {
+	return Promise.each(thisConfig.assemblySummaryLinks, (assemblyLink) => {
 		if (maximumGenomesQueued())
 			return null
 
@@ -27,20 +28,20 @@ module.exports = function(app) {
 	})
 
 	function maximumGenomesQueued() {
-		return config.pipeline.enqueuer.maxNewGenomesToQueuePerRun &&
-			numGenomesQueued >= config.pipeline.enqueuer.maxNewGenomesToQueuePerRun
+		return thisConfig.maxNewGenomesPerRun &&
+			numGenomesQueued >= thisConfig.maxNewGenomesPerRun
 	}
 
 	function downloadAssemblySummary(link) {
-		let destFile = path.resolve(__dirname, link.filename)
-		return mutil.pathIsYoungerThan(destFile, config.pipeline.enqueuer.summaryDuration)
+		let destFile = path.resolve(__dirname, link.fileName)
+		return mutil.pathIsYoungerThan(destFile, thisConfig.summaryFileDuration)
 		.then((isYounger) => {
 			if (isYounger) {
-				logger.info({path: destFile}, `Summary file already exists and is younger than ${config.pipeline.enqueuer.summaryDuration.humanize()}`)
+				logger.info({path: destFile}, `Summary file already exists and is younger than ${thisConfig.summaryFileDuration.humanize()}`)
 				return destFile
 			}
 
-			logger.info({path: destFile}, `Downloading assembly summary: ${link.filename}`)
+			logger.info({path: destFile}, `Downloading assembly summary: ${link.fileName}`)
 			return mutil.download(link.url, destFile)
 			.then((downloadResult) => {
 				logger.info('Download finished')
@@ -89,11 +90,11 @@ module.exports = function(app) {
 				insertGenome(genomeData)
 				.then((genome) => {
 					if (genome) {
-						logger.info({name: genome.name, accession: genome.accession, version: genome.version}, 'Enqueued new genome')
+						logger.info({name: genome.name, accession: genome.accession, version: genome.version}, 'Inserted new genome')
 
 						numGenomesQueued++
 						if (maximumGenomesQueued()) {
-							logger.info({numGenomesQueued}, 'Maximum number of genomes queued')
+							logger.info({numGenomesQueued}, 'Maximum number of genomes inserted')
 							stream.destroy()
 							resolve()
 							return
@@ -116,7 +117,7 @@ module.exports = function(app) {
 		let refseqAccessionParts = mutil.parseAccessionVersion(row['# assembly_accession']),
 			genbankAccessionParts = mutil.parseAccessionVersion(row.gbrs_paired_asm)
 
-		let genome = {
+		let genomeData = {
 			accession: refseqAccessionParts[0],
 			version: refseqAccessionParts[1],
 			genbank_assembly_accession: genbankAccessionParts[0],
@@ -139,12 +140,12 @@ module.exports = function(app) {
 			ftp_path: row.ftp_path
 		}
 
-		for (let key in genome) {
-			if (!genome[key])
-				genome[key] = null
+		for (let key in genomeData) {
+			if (!genomeData[key])
+				genomeData[key] = null
 		}
 
-		return genome
+		return genomeData
 	}
 
 	function extractStrain(infraSpecificName) {
@@ -152,36 +153,17 @@ module.exports = function(app) {
 		return matches ? matches[1] : null
 	}
 
-	function insertGenome(genome) {
-		return sequelize.transaction((t) => {
-			return Promise.all([
-				existsInGenomes(genome.accession, genome.version, t),
-				alreadyQueued(genome.accession, genome.version, t)
-			])
-			.spread((existsInGenomes_, alreadyQueued_) => {
-				if (existsInGenomes_ || alreadyQueued_)
-					return null
-
-				return models.GenomeQueue.create(genome)
+	function insertGenome(genomeData) {
+		return sequelize.transaction(() => {
+			return models.Genome.find({
+				where: {
+					accession: genomeData.accession,
+					version: genomeData.version
+				}
 			})
-		})
-	}
-
-	function existsInGenomes(accession, version) {
-		return models.Genome.find({
-			where: {
-				accession,
-				version
-			}
-		})
-	}
-
-	function alreadyQueued(accession, version) {
-		return models.GenomeQueue.find({
-			where: {
-				accession,
-				version
-			}
+			.then((genome) => {
+				return !genome ? models.Genome.create(genomeData) : null
+			})
 		})
 	}
 }
