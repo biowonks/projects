@@ -13,8 +13,9 @@ class WorkerService {
 	buildWorker(optMessage = null) {
 		return this.models_.Worker.build({
 			hostname: os.hostname(),
-			pid: process.pid,
+			process_id: process.pid,
 			public_ip: this.publicIP_,
+			active: true,
 			message: optMessage
 		})
 	}

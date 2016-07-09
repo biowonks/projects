@@ -5,7 +5,7 @@ module.exports = function(Sequelize, models, extras) {
 		hostname: {
 			type: Sequelize.TEXT
 		},
-		pid: {
+		process_id: {
 			type: Sequelize.INTEGER,
 			allowNull: false,
 			validate: {
@@ -13,21 +13,38 @@ module.exports = function(Sequelize, models, extras) {
 				isInt: true
 			}
 		},
-		public_ip: extras.requiredText(),
-		message: {
-			type: Sequelize.TEXT
+		public_ip: {
+			type: Sequelize.TEXT,
+			allowNull: false,
+			validate: {
+				notEmpty: true,
+				isIP: true
+			}
+		},
+		active: {
+			type: Sequelize.BOOLEAN,
+			allowNull: false,
+			defaultValue: true,
+			validate: {
+				notEmpty: true
+			}
 		},
 		normal_exit: {
 			type: Sequelize.BOOLEAN
+		},
+		message: {
+			type: Sequelize.TEXT
 		},
 		error_message: {
 			type: Sequelize.TEXT
 		},
 		job: {
-			type: Sequelize.JSONB
-		},
-		last_heartbeat_at: {
-			type: Sequelize.DATE
+			type: Sequelize.JSONB,
+			allowNull: false,
+			defaultValue: {},
+			validate: {
+				notEmpty: true
+			}
 		}
 	}
 

@@ -1,19 +1,19 @@
 create table workers (
 	id serial primary key,
 	hostname text,
-	pid integer not null,
+	process_id integer not null,
 	public_ip text not null,
-	message text,
+	active boolean not null default true,
 	normal_exit boolean,
+	message text,
 	error_message text,
-	job jsonb not null default '{}',
-	last_heartbeat_at timestamp with time zone not null default now(),
-	created_at timestamp with time zone not null default now(),
-	updated_at timestamp with time zone not null default now()
+	job jsonb not null default '{}',		-- e.g. modules: [], genomeIds: []
+	created_at timestamp with time zone not null default clock_timestamp(),
+	updated_at timestamp with time zone not null default clock_timestamp()
 );
-comment on table workers is 'Record of all worker processes';
-comment on column workers.pid is 'process id';
+comment on table workers is 'record of all worker processes';
 comment on column workers.normal_exit is 'null indicates unknown; may be alive or dead';
+comment on column workers.job is 'job details such as the pipeline modules and genome ids';
 
 create table genomes_queue (
 	id serial primary key,
@@ -38,17 +38,17 @@ create table genomes_queue (
 	submitter text,
 	ftp_path text,
 
-	created_at timestamp with time zone not null default now(),
-	updated_at timestamp with time zone not null default now(),
+	created_at timestamp with time zone not null default clock_timestamp(),
+	updated_at timestamp with time zone not null default clock_timestamp(),
 
 	unique(accession, version),
 	foreign key(worker_id) references workers on update cascade on delete set null
 );
+create index on genomes_queue(worker_id);
+
 comment on table genomes_queue is 'Genome assemblies yet to be processed';
 comment on column genomes_queue.worker_id is 'Currently assigned worker processing this genome';
 comment on column genomes_queue.accession is 'RefSeq assembly accession (standard case)';
-
-create index on genomes_queue(worker_id);
 
 create table genomes (
 	id integer primary key,
@@ -97,8 +97,8 @@ create table genomes (
 	-- stddev_protein_length
 	stats jsonb not null default '{}',
 
-	created_at timestamp with time zone not null default now(),
-	updated_at timestamp with time zone not null default now(),
+	created_at timestamp with time zone not null default clock_timestamp(),
+	updated_at timestamp with time zone not null default clock_timestamp(),
 
 	unique(accession, version)
 );
@@ -107,11 +107,36 @@ comment on column genomes.refseq_category is 'reference, representative, or na';
 comment on column genomes.version_status is 'latest: most recent version; replaced: version is superseded by another genome with the same wgs_master or biosample (this is not always the case)';
 comment on column genomes.assembly_level is 'complete, scaffold, contig, or chromosome';
 comment on column genomes.release_type is 'major or minor';
-comment on column genomes.assembly_name is 'Not necessarily different between genome versions';
-comment on column genomes.taxonomic_group is 'Phylum; if proteobacteria, then its class';
-comment on column genomes.orderr is 'Intentional typo because order is a reserved word';
+comment on column genomes.assembly_name is 'not necessarily different between genome versions';
+comment on column genomes.taxonomic_group is 'phylum; if proteobacteria, then its class';
+comment on column genomes.orderr is 'intentional typo because order is a reserved word';
+
+create table workers_modules (
+	id serial primary key,
+	genome_id integer,
+	worker_id integer not null,
+	module text not null,
+	state text not null,		-- active, done, error
+	redo boolean not null default false,
+	started_at timestamp with time zone,
+	finished_at timestamp with time zone,
+	created_at timestamp with time zone not null default clock_timestamp(),
+	updated_at timestamp with time zone not null default clock_timestamp(),
+
+	unique(genome_id, module),
+	foreign key(genome_id) references genomes(id) on update cascade on delete cascade,
+	foreign key(worker_id) references workers(id) on update cascade on delete cascade
+);
+create index on workers_modules(genome_id);
+create index on workers_modules(worker_id);
+
+comment on table workers_modules is 'catalog of all modules that have been performed on a given genome and by what worker';
+comment on column workers_modules.genome_id is 'not all modules have to be associated with a genome (e.g. enqueue-new-genomes)';
+comment on column workers_modules.state is 'active, done, or error';
+comment on column workers_modules.redo is 'true if this module should be re-run';
 
 -- MIGRATION DOWN SQL
-drop table genomes;
-drop table genomes_queue;
-drop table workers;
+drop table if exists workers_modules;
+drop table if exists genomes;
+drop table if exists genomes_queue;
+drop table if exists workers;

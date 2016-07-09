@@ -5,9 +5,18 @@ module.exports = function(models, logger) {
 
 	let {
 		Worker,
-		GenomeQueue
+		GenomeQueue,
+		Genome,
+		WorkerModule
 	} = models
 
 	Worker.hasMany(GenomeQueue)
-	GenomeQueue.hasOne(Worker)
+	Worker.hasMany(WorkerModule)
+
+	GenomeQueue.belongsTo(Worker)
+
+	Genome.hasMany(WorkerModule)
+
+	WorkerModule.belongsTo(Worker)
+	WorkerModule.belongsTo(Genome)
 }

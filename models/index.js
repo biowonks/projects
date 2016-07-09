@@ -96,5 +96,8 @@ function setupDefinition(definition, modelName) {
 }
 
 function defaultTableName(modelName) {
-	return inflection.underscore(inflection.pluralize(modelName))
+	return inflection.underscore(modelName)
+		.split('_')
+		.map((val) => inflection.pluralize(val))
+		.join('_')
 }
