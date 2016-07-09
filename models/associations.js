@@ -12,6 +12,7 @@ module.exports = function(models, logger) {
 	Worker.hasMany(WorkerModule)
 
 	Genome.hasMany(WorkerModule)
+	Genome.belongsTo(Worker)
 
 	WorkerModule.belongsTo(Worker)
 	WorkerModule.belongsTo(Genome)

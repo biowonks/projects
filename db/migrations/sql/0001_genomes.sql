@@ -17,6 +17,7 @@ comment on column workers.job is 'job details such as the pipeline modules and g
 
 create table genomes (
 	id serial primary key,
+	worker_id integer,					-- Defined if a current worker is assigned to this genome
 	accession text not null,
 	version integer not null,
 	genbank_assembly_accession text,
@@ -65,7 +66,8 @@ create table genomes (
 	created_at timestamp with time zone not null default clock_timestamp(),
 	updated_at timestamp with time zone not null default clock_timestamp(),
 
-	unique(accession, version)
+	unique(accession, version),
+	foreign key(worker_id) references workers(id) on update cascade on delete set null
 );
 comment on column genomes.accession is 'RefSeq # assembly accession in the NCBI assembly report spreadsheet';
 comment on column genomes.refseq_category is 'reference, representative, or na';
@@ -90,7 +92,7 @@ create table workers_modules (
 
 	unique(genome_id, module),
 	foreign key(genome_id) references genomes(id) on update cascade on delete cascade,
-	foreign key(worker_id) references workers(id) on update cascade on delete cascade
+	foreign key(worker_id) references workers(id) on update cascade on delete restrict
 );
 create index on workers_modules(genome_id);
 create index on workers_modules(worker_id);

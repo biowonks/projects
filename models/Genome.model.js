@@ -2,6 +2,7 @@
 
 module.exports = function(Sequelize, models, extras) {
 	let fields = {
+		worker_id: extras.positiveInteger(),
 		accession: extras.requiredAccessionWithoutVersion(),
 		version: extras.requiredPositiveInteger(),
 		genbank_assembly_accession: extras.accessionWithoutVersion(),

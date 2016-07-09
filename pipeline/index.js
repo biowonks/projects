@@ -16,7 +16,8 @@ const BootService = require('../services/BootService'),
 // Constants
 const kModulesOncePath = path.resolve(__dirname, 'modules', 'once'),
 	kModulesPerGenomePath = path.resolve(__dirname, 'modules', 'per-genome'),
-	kShutdownGracePeriodMs = 30000
+	kShutdownGracePeriodMs = 30000,
+	kIsolationLevels = BootService.Sequelize.Transaction.ISOLATION_LEVELS
 
 let availableOnceModuleNames = enumerateModules(kModulesOncePath),
 	availablePerGenomeModuleNames = enumerateModules(kModulesPerGenomePath)
@@ -70,7 +71,7 @@ if (invalidModuleNames.length) {
 }
 
 let onceModules = readyModules(kModulesOncePath, onceModuleNames),
-	// perGenomeModules = readyModules(kModulesPerGenomePath, perGenomeModuleNames),
+	perGenomeModules = readyModules(kModulesPerGenomePath, perGenomeModuleNames),
 	bootService = new BootService({
 		logger: {
 			name: 'pipeline',
@@ -128,7 +129,7 @@ bootService.setup()
 	}
 
 	return runOnceModules(app, onceModules)
-	.then(() => runPerGenomeModules(app))
+	.then(() => runPerGenomeModules(app, perGenomeModules))
 })
 .then(() => {
 	// Worker cleanup
@@ -161,7 +162,7 @@ function parseGenomeIds(csvGenomeIds) {
 			throw new Error('Each genome id must be a positive integer')
 	}
 
-	return ids
+	return Array.from(ids)
 }
 
 /**
@@ -272,8 +273,8 @@ function runOnceModules(app, modules) {
 	return Promise.coroutine(function *() {
 		for (let module of modules) {
 			shutdownCheck()
-			app.logger = logger.child({module: module.name})
 			logger.info(`Starting "once" module: ${module.name}`)
+			app.logger = logger.child({module: module.name})
 
 			let workerModule = yield app.models.WorkerModule.create({
 				worker_id: app.worker.id,
@@ -294,6 +295,65 @@ function runOnceModules(app, modules) {
 	})()
 }
 
-function runPerGenomeModules() {
+function runPerGenomeModules(app, modules) {
+	return Promise.coroutine(function *() {
+		// eslint-disable-next-line no-constant-condition
+		while (true) {
+			shutdownCheck()
+			let genome = yield lockNextGenome(app, modules)
+			if (!genome)
+				break
 
+			logger.info({genomeId: genome.id, name: genome.name}, 'Locked genome')
+
+			try {
+				for (let module of modules) {
+					shutdownCheck()
+					app.logger = logger.child({
+						module: module.name,
+						genomeId: genome.id,
+						name: genome.name
+					})
+					app.logger.info(`Starting module: ${module.name}`)
+				}
+			}
+			catch (error) { // eslint-disable-line
+			}
+		}
+	})()
+}
+
+function lockNextGenome(app, modules) {
+	let genomesTable = app.models.Genome.tableName,
+		workerModulesTable = app.models.WorkerModule.tableName,
+		genomeIdClause = program.genomeIds ? `a.id IN (${program.genomeIds.join(',')}) ` : 'b.genome_id is null',
+		queryModuleArrayString = `ARRAY['${modules.map((module) => module.name).join("','")}']`,
+		sql =
+`WITH done_genomes_modules AS (
+	SELECT b.genome_id, array_agg(module) as modules
+	FROM ${genomesTable} a JOIN ${workerModulesTable} b ON (a.id = b.genome_id)
+	WHERE a.worker_id is null AND (b.id is null OR b.redo is false)
+	GROUP BY b.genome_id
+)
+SELECT a.*
+FROM ${genomesTable} a LEFT OUTER JOIN done_genomes_modules b ON (a.id = b.genome_id)
+WHERE a.worker_id is null AND (${genomeIdClause} or NOT b.modules @> ${queryModuleArrayString})
+ORDER BY a.id
+LIMIT 1
+FOR UPDATE`
+
+	return app.sequelize.transaction({isolationLevel: kIsolationLevels.READ_COMMITTED}, () => {
+		return app.sequelize.query(sql, {
+			model: app.models.Genome,
+			type: app.sequelize.QueryTypes.SELECT
+		})
+		.then((genomes) => {
+			if (!genomes.length)
+				return null
+
+			return genomes[0].update({
+				worker_id: app.worker.id
+			}, {fields: ['worker_id']})
+		})
+	})
 }
