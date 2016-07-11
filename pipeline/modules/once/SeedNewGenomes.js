@@ -22,7 +22,7 @@ class SeedNewGenomes extends OncePipelineModule {
 
 		this.seedConfig_ = this.config_.pipeline.seedNewGenomes
 		this.numGenomesSeeded_ = 0
-		this.dataDir_ = path.resolve(__dirname, 'seed-new-genomes-data')
+		this.dataDir_ = path.resolve(__dirname, 'SeedNewGenomes')
 	}
 
 	optimize() {
