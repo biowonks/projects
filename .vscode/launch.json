@@ -21,12 +21,16 @@
 			"outDir": null
 		},
 		{
-			"name": "Stage 1",
+			"name": "Pipeline",
 			"type": "node",
 			"request": "launch",
-			"program": "${workspaceRoot}/pipeline/stage1/worker.js",
+			"program": "${workspaceRoot}/pipeline/index.js",
 			"stopOnEntry": false,
-			"cwd": "${workspaceRoot}",
+			"cwd": "${workspaceRoot}/pipeline",
+			"args": [
+				"-r",
+				"SeedNewGenomes"
+			],
 			"preLaunchTask": null,
 			"runtimeExecutable": null,
 			"runtimeArgs": [

@@ -9,9 +9,12 @@ const program = require('commander'),
 	Promise = require('bluebird')
 
 // Local
-const BootService = require('../services/BootService'),
+const arrayUtil = require('./lib/array-util'),
+	BootService = require('../services/BootService'),
 	WorkerService = require('../services/WorkerService'),
-	InterruptError = require('./lib/errors/InterruptError')
+	InterruptError = require('./lib/errors/InterruptError'),
+	OncePipelineModule = require('./modules/OncePipelineModule'),
+	PerGenomePipelineModule = require('./modules/PerGenomePipelineModule')
 
 // Constants
 const kModulesOncePath = path.resolve(__dirname, 'modules', 'once'),
@@ -19,8 +22,12 @@ const kModulesOncePath = path.resolve(__dirname, 'modules', 'once'),
 	kShutdownGracePeriodMs = 30000,
 	kIsolationLevels = BootService.Sequelize.Transaction.ISOLATION_LEVELS
 
-let availableOnceModuleNames = enumerateModules(kModulesOncePath),
-	availablePerGenomeModuleNames = enumerateModules(kModulesPerGenomePath)
+let availableModules = discoverModules(kModulesOncePath, kModulesPerGenomePath),
+	availableOnceModuleNames = availableModules.once.map((x) => x.name),
+	availablePerGenomeModuleNames = availableModules.perGenome.map((x) => x.name)
+
+// let availableOnceModuleNames = enumerateModules(kModulesOncePath),
+// 	availablePerGenomeModuleNames = enumerateModules(kModulesPerGenomePath)
 
 // Leverage bluebird globally for all Promises
 global.Promise = Promise
@@ -57,21 +64,10 @@ if (!onceModuleNames.length && !perGenomeModuleNames.length) {
 	process.exit(1)
 }
 
-// Are the requested modules legitimate?
-let invalidModuleNames = [
-	...difference(onceModuleNames, availableOnceModuleNames),
-	...difference(perGenomeModuleNames, availablePerGenomeModuleNames)
-]
-if (invalidModuleNames.length) {
-	// eslint-disable-next-line no-console
-	console.error(`FATAL: Module(s) does not exist: ${invalidModuleNames.join(', ')}\n` +
-		'-'.repeat(60)) // eslint-disable-line
-	program.outputHelp()
-	process.exit(1)
-}
+dieIfRequestedInvalidModules()
 
-let onceModules = readyModules(kModulesOncePath, onceModuleNames),
-	perGenomeModules = readyModules(kModulesPerGenomePath, perGenomeModuleNames),
+let onceModules = modulesByName(onceModuleNames, availableModules.once),
+	perGenomeModules = modulesByName(perGenomeModuleNames, availableModules.perGenome),
 	bootService = new BootService({
 		logger: {
 			name: 'pipeline',
@@ -147,9 +143,68 @@ bootService.setup()
 
 // --------------------------------------------------------
 // --------------------------------------------------------
-function enumerateModules(srcPath) {
+function discoverModules(...srcPaths) {
+	let result = {
+		once: [],
+		perGenome: []
+	}
+
+	for (let srcPath of srcPaths) {
+		getJsFiles(srcPath)
+		.forEach((jsFile) => {
+			try {
+				// eslint-disable-next-line global-require
+				let moduleClass = require(`${srcPath}/${jsFile}`)
+				if (moduleClass.prototype instanceof OncePipelineModule)
+					result.once.push(moduleClass)
+				else if (moduleClass.prototype instanceof PerGenomePipelineModule)
+					result.perGenome.push(moduleClass)
+			}
+			catch (error) {
+				if (error.code === 'MODULE_NOT_FOUND')
+					// eslint-disable-next-line no-console
+					console.warn(`WARNING: File could not be loaded: ${srcPath}/${jsFile}\n\n`, error)
+			}
+		})
+	}
+
+	return result
+}
+
+function getJsFiles(srcPath) {
 	return fs.readdirSync(srcPath)
-	.filter((file) => fs.statSync(path.join(srcPath, file)).isDirectory())
+	.filter((file) => file.endsWith('.js') && fs.statSync(path.join(srcPath, file)).isFile())
+}
+
+function dieIfRequestedInvalidModules() {
+	let invalidOnceModuleNames = arrayUtil.difference(onceModuleNames, availableOnceModuleNames)
+	if (invalidOnceModuleNames.length)
+		die(`the following "once" module(s) are invalid: ${invalidOnceModuleNames.join(', ')}`)
+	let invalidPerGenomeModuleNames = arrayUtil.difference(perGenomeModuleNames, availablePerGenomeModuleNames)
+	if (invalidPerGenomeModuleNames.length)
+		die(`the following "per-genome" module(s) are invalid: ${invalidPerGenomeModuleNames.join(', ')}`)
+}
+
+function die(message) {
+	// eslint-disable-next-line no-console
+	console.error(`FATAL: ${message}\n` + '-'.repeat(60)) // eslint-disable-line
+	program.outputHelp()
+	process.exit(1)
+}
+
+function modulesByName(names, sourceModules) {
+	let result = []
+
+	for (let name of names) {
+		for (let module of sourceModules) {
+			if (name === module.name) {
+				result.push(module)
+				break
+			}
+		}
+	}
+
+	return result
 }
 
 function parseGenomeIds(csvGenomeIds) {
@@ -163,38 +218,6 @@ function parseGenomeIds(csvGenomeIds) {
 	}
 
 	return Array.from(ids)
-}
-
-/**
- * @param {Array} a
- * @param {Array} b
- * @returns {Array} elements in ${a} that are not in ${b}
- */
-function difference(a, b) {
-	let bSet = new Set(b)
-	return a.filter((x) => !bSet.has(x))
-}
-
-function readyModules(srcPath, moduleNames) {
-	let result = []
-	for (let name of moduleNames) {
-		try {
-			result.push({
-				name,
-				main: require(`${srcPath}/${name}`) // eslint-disable-line global-require
-			})
-		}
-		catch (error) {
-			if (error.code === 'MODULE_NOT_FOUND') {
-				// eslint-disable-next-line no-console
-				console.error(`FATAL: Module could not be loaded: ${name}\n\n`, error)
-				process.exit(1)
-			}
-
-			throw error
-		}
-	}
-	return result
 }
 
 function unregisterWorker() {
@@ -270,32 +293,22 @@ function shutdownCheck() {
 }
 
 function runOnceModules(app, modules) {
-	return Promise.coroutine(function *() {
-		for (let module of modules) {
-			shutdownCheck()
-			logger.info(`Starting "once" module: ${module.name}`)
-			app.logger = logger.child({module: module.name})
-
-			let workerModule = yield app.models.WorkerModule.create({
-				worker_id: app.worker.id,
-				module: module.name,
-				state: 'active',
-				started_at: app.sequelize.fn('clock_timestamp')
-			})
-			try {
-				yield module.main(app)
-			}
-			catch (error) {
-				yield workerModule.updateState('error')
-				throw error
-			}
-			yield workerModule.updateState('done')
-			logger.info(`Module finished normally: ${module.name}`)
-		}
-	})()
+	return Promise.each(modules, (ModuleClass) => {
+		shutdownCheck()
+		logger.info(`Starting "once" module: ${ModuleClass.name}`)
+		app.logger = logger.child({module: ModuleClass.name})
+		let module = new ModuleClass(app)
+		return module.main()
+		.then(() => {
+			logger.info(`Module finished normally: ${ModuleClass.name}`)
+		})
+	})
 }
 
 function runPerGenomeModules(app, modules) {
+	if (!modules.length)
+		return null
+
 	return Promise.coroutine(function *() {
 		// eslint-disable-next-line no-constant-condition
 		while (true) {
@@ -304,21 +317,23 @@ function runPerGenomeModules(app, modules) {
 			if (!genome)
 				break
 
-			logger.info({genomeId: genome.id, name: genome.name}, 'Locked genome')
+			logger.info({genomeId: genome.id, name: genome.name}, `Locked genome: ${genome.name}`)
 
-			try {
-				for (let module of modules) {
-					shutdownCheck()
-					app.logger = logger.child({
-						module: module.name,
-						genomeId: genome.id,
-						name: genome.name
-					})
-					app.logger.info(`Starting module: ${module.name}`)
-				}
+			for (let ModuleClass of modules) {
+				shutdownCheck()
+				app.logger = logger.child({
+					module: ModuleClass.name,
+					genomeId: genome.id,
+					name: genome.name
+				})
+				logger.info(`Starting module: ${ModuleClass.name}`)
+				let module = new ModuleClass(app, genome)
+				yield module.main()
+				logger.info(`Module finished normally: ${ModuleClass.name}`)
 			}
-			catch (error) { // eslint-disable-line
-			}
+
+			yield unlockGenome(genome)
+			logger.info({genomeId: genome.id, name: genome.name}, `Unlocked genome: ${genome.name}`)
 		}
 	})()
 }
@@ -356,4 +371,10 @@ FOR UPDATE`
 			}, {fields: ['worker_id']})
 		})
 	})
+}
+
+function unlockGenome(genome) {
+	return genome.update({
+		worker_id: null
+	}, {fields: ['worker_id']})
 }
