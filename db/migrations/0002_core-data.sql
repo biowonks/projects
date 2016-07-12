@@ -11,7 +11,9 @@ create table genomes_references (
 	consortium text,
 	journal text,
 	remark text,
-	notes text
+	notes text,
+
+	foreign key(genome_id) references genomes(id) on update cascade on delete cascade
 );
 create index on genomes_references(genome_id);
 
@@ -87,7 +89,7 @@ create table genes (
 	-- associated qualifiers from CDS, etc. take precedence over any gene qualifiers that have the
 	-- same name
 	qualifiers jsonb not null default '{}',
-	cognate_qualifiers jsonb not null default '{}'
+	cognate_qualifiers jsonb not null default '{}',
 
 	foreign key(component_id) references components(id) on update cascade on delete cascade
 );
@@ -134,3 +136,10 @@ create table components_features (
 
 create index on components_features(component_id);
 create index on components_features(gene_id);
+
+-- MIGRATION DOWN SQL
+drop table components_features;
+drop table xrefs;
+drop table genes;
+drop table components;
+drop table genomes_references;

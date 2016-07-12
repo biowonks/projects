@@ -103,6 +103,6 @@ comment on column workers_modules.state is 'active, done, or error';
 comment on column workers_modules.redo is 'true if this module should be re-run';
 
 -- MIGRATION DOWN SQL
-drop table if exists workers_modules;
-drop table if exists genomes;
-drop table if exists workers;
+drop table workers_modules;
+drop table genomes;
+drop table workers;

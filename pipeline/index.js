@@ -22,15 +22,12 @@ const kModulesOncePath = path.resolve(__dirname, 'modules', 'once'),
 	kShutdownGracePeriodMs = 30000,
 	kIsolationLevels = BootService.Sequelize.Transaction.ISOLATION_LEVELS
 
+// Leverage bluebird globally for all Promises
+global.Promise = Promise
+
 let availableModules = discoverModules(kModulesOncePath, kModulesPerGenomePath),
 	availableOnceModuleNames = availableModules.once.map((x) => x.name),
 	availablePerGenomeModuleNames = availableModules.perGenome.map((x) => x.name)
-
-// let availableOnceModuleNames = enumerateModules(kModulesOncePath),
-// 	availablePerGenomeModuleNames = enumerateModules(kModulesPerGenomePath)
-
-// Leverage bluebird globally for all Promises
-global.Promise = Promise
 
 program
 .description(`Executes a pipeline of one or more MiST modules. There are two main
@@ -161,7 +158,10 @@ function discoverModules(...srcPaths) {
 					result.perGenome.push(moduleClass)
 			}
 			catch (error) {
-				if (error.code === 'MODULE_NOT_FOUND')
+				if (!error.code)
+					// eslint-disable-next-line no-console
+					die(`an unexpected error occurred while parsing module: ${srcPath}/${jsFile}`, error)
+				else if (error.code === 'MODULE_NOT_FOUND')
 					// eslint-disable-next-line no-console
 					console.warn(`WARNING: File could not be loaded: ${srcPath}/${jsFile}\n\n`, error)
 			}
@@ -185,10 +185,17 @@ function dieIfRequestedInvalidModules() {
 		die(`the following "per-genome" module(s) are invalid: ${invalidPerGenomeModuleNames.join(', ')}`)
 }
 
-function die(message) {
+function die(message, optError) {
 	// eslint-disable-next-line no-console
-	console.error(`FATAL: ${message}\n` + '-'.repeat(60)) // eslint-disable-line
-	program.outputHelp()
+	console.error(`FATAL: ${message}`)
+	if (optError) {
+		// eslint-disable-next-line no-console
+		console.error(optError)
+	}
+	else {
+		console.error('-'.repeat(60)) // eslint-disable-line
+		program.outputHelp()
+	}
 	process.exit(1)
 }
 

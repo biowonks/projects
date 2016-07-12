@@ -44,7 +44,6 @@
     "split": "1.x",
     "stream-each": "1.x",
     "through2": "2.x",
-    "umzug": "1.x",
     "universal-analytics": "0.3.x",
     "xml2js": "0.4.x"
   },

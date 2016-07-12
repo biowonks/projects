@@ -336,6 +336,13 @@ describe('GenbankMistAdapter', function() {
 			})
 		})
 
+		it('respects the genome id constructor argument', function() {
+			let x = new GenbankMistAdapter(mockModels, 2),
+				result = x.formatRefSeq(refSeq)
+
+			expect(result.component.genome_id).equal(2)
+		})
+
 		it('references are formatted as expected', function() {
 			let x = new GenbankMistAdapter(mockModels)
 			refSeq.references = [

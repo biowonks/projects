@@ -95,8 +95,18 @@ class BootService {
 
 		if (!this.sequelize_)
 			this.sequelize_ = new Sequelize(dbConfig.name, dbConfig.user, dbConfig.password, dbConfig.sequelizeOptions)
-		if (!this.migratorService_)
-			this.migratorService_ = new MigratorService(this.sequelize_, config.database.migrations.umzug, this.bootLogger_)
+
+		if (!this.migratorService_) {
+			let options = {
+				path: dbConfig.migrations.path,
+				pattern: dbConfig.migrations.pattern,
+				modelName: dbConfig.migrations.modelName,
+				tableName: dbConfig.migrations.tableName,
+				schema: dbConfig.migrations.schema,
+				logger: this.logger_.child({module: 'migrations'})
+			}
+			this.migratorService_ = new MigratorService(this.sequelize_, options)
+		}
 	}
 
 	loadModels() {

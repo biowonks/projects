@@ -48,15 +48,16 @@ class GenbankMistAdapter {
 	 * @constructor
 	 * @param {Object} models MiST data models: GenomeReference, Component, Gene, Xref,
 	 *   ComponentFeature, Aseq, and Dseq
+	 * @param {Number?} genomeId defaults to 1
 	 */
-	constructor(models) {
+	constructor(models, genomeId = 1) {
 		if (!models)
 			throw new Error('models argument is not defined')
 
 		this.models_ = models
 
 		this.locationStringParser_ = new LocationStringParser()
-		this.genomeId_ = 1
+		this.genomeId_ = genomeId
 
 		this.referencesIdSequence_ = mutil.sequence()
 		this.componentsIdSequence_ = mutil.sequence()
