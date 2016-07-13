@@ -256,7 +256,7 @@ function logError(error) {
 
 	switch (error.constructor) {
 		case BootService.Sequelize.DatabaseError:
-			logger.error({name: error.name, sql: error.sql}, shortMessage)
+			logger.error({name: error.name, sql: error.sql.substr(0, k1KB)}, shortMessage)
 			return
 		// case BootService.Sequelize.ValidationError:
 		// 	logger.error({errors: error.errors, record: error.record}, shortMessage)

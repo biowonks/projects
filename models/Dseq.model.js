@@ -24,16 +24,18 @@ module.exports = function(Sequelize, models, extras) {
 	}
 
 	let classMethods = {
-		fromSeq: (seq) => {
-			let clonedSeq = seq.clone()
-			clonedSeq.normalize()
-
-			return models.Dseq.build({
-				id: clonedSeq.seqId(),
-				length: clonedSeq.length(),
-				gc_percent: clonedSeq.gcPercent(),
-				sequence: clonedSeq.sequence()
-			})
+		/**
+		 * @param {Seq} seq
+		 * @returns {Object}
+		 */
+		dataFromSeq: function(seq) {
+			let normalizedSequence = seq.normalizedSequence()
+			return {
+				id: seq.seqId(),
+				length: normalizedSequence.length,
+				gc_percent: seqUtil.gcPercent(normalizedSequence),
+				sequence: normalizedSequence
+			}
 		}
 	}
 

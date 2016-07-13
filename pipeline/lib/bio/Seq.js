@@ -103,12 +103,18 @@ class Seq {
 	}
 
 	normalize() {
-		if (!this.isNormalized_) {
-			this.sequence_ = this.normalizedSequence_()
-			this.isNormalized_ = true
-		}
+		this.sequence_ = this.normalizedSequence()
+		this.isNormalized_ = true
 
 		return this
+	}
+
+	/**
+	 * Removes all spaces and upper-cases the sequence.
+	 * @returns {string} normalized sequence string
+	 */
+	normalizedSequence() {
+		return this.isNormalized_ ? this.sequence_ : this.sequence_.replace(/ /g, '').toUpperCase()
 	}
 
 	reverseComplement() {
@@ -122,7 +128,7 @@ class Seq {
 	seqId() {
 		let md5base64 = crypto
 			.createHash('md5')
-			.update(this.normalizedSequence_())
+			.update(this.normalizedSequence())
 			.digest('base64')
 		return md5base64
 			.replace(/=+/g, '')
@@ -167,14 +173,6 @@ class Seq {
 	 */
 	clean_() {
 		this.sequence_ = this.sequence_.replace(/[^A-Za-z.\-* ]/g, kInvalidSymbol)
-	}
-
-	/**
-	 * Removes all spaces and upper-cases the sequence.
-	 * @returns {string} normalized sequence string
-	 */
-	normalizedSequence_() {
-		return this.isNormalized_ ? this.sequence_ : this.sequence_.replace(/ /g, '').toUpperCase()
 	}
 
 	/**

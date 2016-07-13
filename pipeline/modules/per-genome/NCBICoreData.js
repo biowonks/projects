@@ -12,6 +12,8 @@ const pump = require('pump'),
 // Local
 const PerGenomePipelineModule = require('../PerGenomePipelineModule'),
 	NCBIDataHelper = require('./NCBICoreData/NCBIDataHelper'),
+	AseqsService = require('../../../services/AseqsService'),
+	DseqsService = require('../../../services/DseqsService'),
 	LocationStringParser = require('../../lib/bio/LocationStringParser'),
 	genbankStream = require('../../lib/streams/genbank-stream'),
 	genbankMistStream = require('../../lib/streams/genbank-mist-stream'),
@@ -27,6 +29,8 @@ class NCBICoreData extends PerGenomePipelineModule {
 
 		this.ncbiDataHelper_ = new NCBIDataHelper(this.fileMapper_, this.logger_)
 		this.locationStringParser_ = new LocationStringParser()
+		this.aseqsService_ = new AseqsService(this.models_.Aseq)
+		this.dseqsService_ = new DseqsService(this.models_.Dseq)
 		// {RefSeq accession: {}}
 		this.assemblyReportMap_ = new Map()
 
@@ -119,7 +123,9 @@ class NCBICoreData extends PerGenomePipelineModule {
 		// Load the entire genome and its related data in a single transaction. Each "record"
 		// returned from the genbankMistReader is a component with its own set of genes, aseqs,
 		// etc.
-		return this.sequelize_.transaction((transaction) => {
+		return this.sequelize_.transaction({
+			isolationLevel: 'READ COMMITTED' // Necessary to avoid getting: could not serialize access due to concurrent update errors
+		}, (transaction) => {
 			return streamEachPromise(genbankMistReader, (mistData, next) => {
 				let component = mistData.component,
 					tmpLogger = this.logger_.child({
@@ -147,6 +153,16 @@ class NCBICoreData extends PerGenomePipelineModule {
 			.then((dbComponent) => {
 				this.setForeignKeyIds_(mistData.genes, 'component_id', dbComponent.id)
 				this.setForeignKeyIds_(mistData.componentFeatures, 'component_id', dbComponent.id)
+			})
+			.then(() => {
+				this.logger_.info(`Loading (ignoring duplicates) ${mistData.geneSeqs.length} gene seqs (dseqs)`)
+				return this.dseqsService_.insertIgnoreSeqs(mistData.geneSeqs, transaction)
+			})
+			.then(() => {
+				this.logger_.info(`Loading (ignoring duplicates) ${mistData.proteinSeqs.length} protein seqs (aseqs)`)
+				return this.aseqsService_.insertIgnoreSeqs(mistData.proteinSeqs, transaction)
+			})
+			.then(() => {
 				artificialGeneIds = mistData.genes.map((x) => x.id)
 				return this.loadGenes_(mistData.genes, transaction)
 			})

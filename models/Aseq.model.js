@@ -4,14 +4,16 @@ module.exports = function(Sequelize, models, extras) {
 	let fields = {
 		length: extras.requiredPositiveInteger(),
 		sequence: extras.requiredSequence(),
-		tool_status: {
+		pfam30: {
 			type: Sequelize.JSONB,
-			allowNull: false,
 			defaultValue: {}
 		},
-		features: {
+		segs: {
 			type: Sequelize.JSONB,
-			allowNull: false,
+			defaultValue: {}
+		},
+		coils: {
+			type: Sequelize.JSONB,
 			defaultValue: {}
 		}
 	}
@@ -22,28 +24,23 @@ module.exports = function(Sequelize, models, extras) {
 	}
 
 	let classMethods = {
-		fromSeq: (seq) => {
-			let clonedSeq = seq.clone()
-			clonedSeq.normalize()
-
-			return models.Aseq.build({
-				id: clonedSeq.seqId(),
-				length: clonedSeq.length(),
-				sequence: clonedSeq.sequence()
-			})
-		}
-	}
-
-	let instanceMethods = {
-		hasData: function(toolAlias) {
-			return !!this.features[toolAlias]
+		/**
+		 * @param {Seq} seq
+		 * @returns {Object}
+		 */
+		dataFromSeq: function(seq) {
+			let normalizedSequence = seq.normalizedSequence()
+			return {
+				id: seq.seqId(),
+				length: normalizedSequence.length,
+				sequence: normalizedSequence
+			}
 		}
 	}
 
 	return {
 		fields,
 		params: {
-			instanceMethods,
 			classMethods,
 			validate,
 			schema: 'seqdepot'
