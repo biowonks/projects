@@ -51,9 +51,16 @@ program
   module pipeline for all genomes in the database that have not yet been
   analyzed with at least one of the requested modules. Otherwise, it is only
   applied to the specified genomes with genome-ids.
+
+  # Redo
+  When the -r / --redo flag is provided, then all specified modules that are in
+  the error state are redone; however, if one or more genome-ids are also
+  specified, then all specified modules are redone regardless of their done
+  state (excluding those that are active).
 `)
 .usage('[options] <module ...>')
-.option('-r, --run-once <module,...>', 'CSV list of module names', (value) => value.split(','))
+// .option('-r, --redo', 'Redo specified modules (see description for details)')
+.option('-o, --run-once <module,...>', 'CSV list of module names', (value) => value.split(','))
 .option('-g, --genome-ids <genome id,...>', 'CSV list of genome ids', parseGenomeIds)
 .parse(process.argv)
 
@@ -251,6 +258,9 @@ function logError(error) {
 		case BootService.Sequelize.DatabaseError:
 			logger.error({name: error.name, sql: error.sql}, shortMessage)
 			return
+		// case BootService.Sequelize.ValidationError:
+		// 	logger.error({errors: error.errors, record: error.record}, shortMessage)
+		// 	return
 		case InterruptError:
 			logger.error(shortMessage)
 			return
@@ -361,7 +371,7 @@ function lockNextGenome(app, modules) {
 `WITH done_genomes_modules AS (
 	SELECT b.genome_id, array_agg(module) as modules
 	FROM ${genomesTable} a JOIN ${workerModulesTable} b ON (a.id = b.genome_id)
-	WHERE a.worker_id is null AND (b.id is null OR b.redo is false)
+	WHERE a.worker_id is null AND (b.id is null OR b.redo is false) AND b.state = 'done'
 	GROUP BY b.genome_id
 )
 SELECT a.*
