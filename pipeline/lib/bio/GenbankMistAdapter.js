@@ -46,16 +46,9 @@ module.exports =
 class GenbankMistAdapter {
 	/**
 	 * @constructor
-	 * @param {Object} models MiST data models: GenomeReference, Component, Gene, Xref,
-	 *   ComponentFeature, Aseq, and Dseq
 	 * @param {Number?} genomeId defaults to 1
 	 */
-	constructor(models, genomeId = 1) {
-		if (!models)
-			throw new Error('models argument is not defined')
-
-		this.models_ = models
-
+	constructor(genomeId = 1) {
 		this.locationStringParser_ = new LocationStringParser()
 		this.genomeId_ = genomeId
 
@@ -159,9 +152,9 @@ class GenbankMistAdapter {
 			xrefs: [],
 			componentFeatures: [],
 
-			// The following are collections of aseqs and dseqs - not instances of the actual models
-			aseqs: [],
-			dseqs: []
+			// The following are collections of Seqs - not instances of the actual models
+			geneSeqs: [],
+			proteinSeqs: []
 		}
 	}
 
@@ -175,7 +168,7 @@ class GenbankMistAdapter {
 	}
 
 	formatReference_(reference) {
-		return this.models_.GenomeReference.build({
+		return {
 			id: this.referencesIdSequence_.next().value,
 			genome_id: this.genomeId_,
 			pubmed_id: reference.pubmed,
@@ -186,7 +179,7 @@ class GenbankMistAdapter {
 			journal: reference.journal,
 			remark: reference.remark,
 			notes: reference.notes
-		})
+		}
 	}
 
 	/**
@@ -203,7 +196,7 @@ class GenbankMistAdapter {
 		this.componentDnaSeq_ = new Seq(genbankRecord.origin)
 		this.componentDnaSeq_.normalize()
 
-		return this.models_.Component.build({
+		return {
 			id: this.componentsIdSequence_.next().value,
 			genome_id: this.genomeId_,
 			accession: genbankRecord.accession.primary,
@@ -223,7 +216,7 @@ class GenbankMistAdapter {
 			dna: this.componentDnaSeq_.sequence(),
 			length: this.componentDnaSeq_.length(),
 			stats: {}
-		})
+		}
 	}
 
 	isCircular_(genbankRecord) {
@@ -254,8 +247,10 @@ class GenbankMistAdapter {
 				let geneData = lastGeneData = featureData
 				this.formatGene_(geneData, feature)
 
-				let nextFeature = features[i + 1]
-				if (nextFeature && feature.location === nextFeature.location) {
+				let nextFeature = features[i + 1],
+					sameLocation = nextFeature && geneData.location === nextFeature.location,
+					sameLocus = nextFeature && geneData.locus && geneData.locus === nextFeature.locus_tag[0]
+				if (nextFeature && (sameLocation || sameLocus)) {
 					this.formatCognateGeneFeature_(nextFeature, geneData)
 					i++ // Skip the next feature since we are linking it with the gene
 				}
@@ -263,7 +258,7 @@ class GenbankMistAdapter {
 					this.geneXrefSet_.clear()
 				}
 
-				this.mistData_.genes.push(this.models_.Gene.build(geneData))
+				this.mistData_.genes.push(geneData)
 			}
 			else {
 				let otherData = featureData
@@ -281,7 +276,7 @@ class GenbankMistAdapter {
 					this.mergeQualfiers_(otherData, feature, kIgnoreOtherQualifierSet)
 				}
 
-				this.mistData_.componentFeatures.push(this.models_.ComponentFeature.build(otherData))
+				this.mistData_.componentFeatures.push(otherData)
 			}
 		}
 	}
@@ -322,9 +317,10 @@ class GenbankMistAdapter {
 	/**
 	 * Sorts ${features} by:
 	 * 1) Location's lower bound position
-	 * 2) Location length
-	 * 3) Actual location string
-	 * 4) Gene feature key before all others
+	 * 2) Gene if matching locus tags
+	 * 3) Location length
+	 * 4) Actual location string
+	 * 5) Gene feature key before all others
 	 *
 	 * @param {Array.<Object>} features
 	 */
@@ -332,12 +328,24 @@ class GenbankMistAdapter {
 		let isCircular = this.mistData_.component.is_circular,
 			componentLength = this.mistData_.component.length
 
-		features.sort((a, b) => a.$location.lowerBound() - b.$location.lowerBound() ||
+		function geneIfSameLocus(a, b) {
+			if (a.locus_tag && b.locus_tag && a.locus_tag[0] === b.locus_tag[0]) {
+				if (a.key === 'gene')
+					return -1
+				else if (b.key === 'gene')
+					return 1
+			}
+			return 0
+		}
+
+		features.sort(function(a, b) {
+			return a.$location.lowerBound() - b.$location.lowerBound() ||
+			geneIfSameLocus(a, b) ||
 			a.$location.length(isCircular, componentLength) - b.$location.length(isCircular, componentLength) ||
 			a.location.localeCompare(b.location) ||
 			(a.key === 'gene' ? -1 : 0) ||
 			(b.key === 'gene' ? 1 : 0)
-		)
+		})
 	}
 
 	/**
@@ -352,11 +360,11 @@ class GenbankMistAdapter {
 		geneData.cognate_qualifiers = {}
 		geneData.cognate_key = null
 
-		let dseq = feature.$location.transcriptFrom(this.componentDnaSeq_)
-		this.mistData_.dseqs.push(this.models_.Dseq.fromSeq(dseq))
+		let geneSeq = feature.$location.transcriptFrom(this.componentDnaSeq_)
+		this.mistData_.geneSeqs.push(geneSeq)
 
 		geneData.id = this.genesIdSequence_.next().value
-		geneData.dseq_id = dseq.seqId()
+		geneData.dseq_id = geneSeq.seqId()
 		geneData.locus = feature.locus_tag ? feature.locus_tag[0] : null
 		geneData.old_locus = feature.old_locus_tag ? feature.old_locus_tag[0] : null
 		geneData.names = feature.gene || null
@@ -436,13 +444,18 @@ class GenbankMistAdapter {
 				database_id
 			}
 
-			this.mistData_.xrefs.push(this.models_.Xref.build(xrefData))
+			this.mistData_.xrefs.push(xrefData)
 		}
 	}
 
 	formatCognateGeneFeature_(cognateFeature, geneData) {
 		assert(cognateFeature.key !== 'gene', 'two gene features are not permitted to have the same location')
 		geneData.cognate_key = cognateFeature.key
+
+		let differentLocationSameLocus = geneData.location !== cognateFeature.location &&
+			geneData.locus && geneData.locus === cognateFeature.locus_tag[0]
+		if (differentLocationSameLocus)
+			geneData.cognate_location = cognateFeature.location
 
 		this.formatXrefs_(cognateFeature, geneData.id)
 
@@ -457,10 +470,10 @@ class GenbankMistAdapter {
 		geneData.codon_start = cdsFeature.codon_start ? Number(cdsFeature.codon_start[0]) : null
 		geneData.translation_table = cdsFeature.transl_table ? Number(cdsFeature.transl_table[0]) : null
 		if (cdsFeature.translation) {
-			let aseq = new Seq(cdsFeature.translation[0])
-			aseq.normalize()
-			geneData.aseq_id = aseq.seqId()
-			this.mistData_.aseqs.push(this.models_.Aseq.fromSeq(aseq))
+			let proteinSeq = new Seq(cdsFeature.translation[0])
+			proteinSeq.normalize()
+			geneData.aseq_id = proteinSeq.seqId()
+			this.mistData_.proteinSeqs.push(proteinSeq)
 		}
 
 		if (cdsFeature.protein_id)

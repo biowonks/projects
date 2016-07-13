@@ -6,40 +6,9 @@
 let GenbankMistAdapter = require('./GenbankMistAdapter'),
 	Seq = require('./Seq')
 
-// Mock models
-class MockModel {
-	build(data) {
-		return data
-	}
-}
-
-class MockSeqModel extends MockModel {
-	fromSeq(data) {
-		return data
-	}
-}
-
-let mockModels = {
-	Component: new MockModel(),
-	GenomeReference: new MockModel(),
-	Gene: new MockModel(),
-	ComponentFeature: new MockModel(),
-	Xref: new MockModel(),
-	Aseq: new MockSeqModel(),
-	Dseq: new MockSeqModel()
-}
-
 describe('GenbankMistAdapter', function() {
-	describe('constructor', function() {
-		it('throws error if models are not passed into instantiation', function() {
-			expect(function() {
-				new GenbankMistAdapter()
-			}).throw(Error)
-		})
-	})
-
 	describe('findRefSeqError', function() {
-		let x = new GenbankMistAdapter(mockModels)
+		let x = new GenbankMistAdapter()
 		it('undefined / null record returns error', function() {
 			expect(x.findRefSeqError()).instanceof(Error)
 		})
@@ -295,14 +264,14 @@ describe('GenbankMistAdapter', function() {
 		})
 
 		it('throws error if invalid genbank record', function() {
-			let x = new GenbankMistAdapter(mockModels)
+			let x = new GenbankMistAdapter()
 			expect(function() {
 				x.formatRefSeq()
 			}).throw(Error)
 		})
 
 		it('barebones refseq record returns barebones mist structure', function() {
-			let x = new GenbankMistAdapter(mockModels),
+			let x = new GenbankMistAdapter(),
 				result = x.formatRefSeq(refSeq)
 
 			expect(result).deep.equal({
@@ -331,20 +300,20 @@ describe('GenbankMistAdapter', function() {
 				genes: [],
 				xrefs: [],
 				componentFeatures: [],
-				aseqs: [],
-				dseqs: []
+				proteinSeqs: [],
+				geneSeqs: []
 			})
 		})
 
 		it('respects the genome id constructor argument', function() {
-			let x = new GenbankMistAdapter(mockModels, 2),
+			let x = new GenbankMistAdapter(2),
 				result = x.formatRefSeq(refSeq)
 
 			expect(result.component.genome_id).equal(2)
 		})
 
 		it('references are formatted as expected', function() {
-			let x = new GenbankMistAdapter(mockModels)
+			let x = new GenbankMistAdapter()
 			refSeq.references = [
 				{
 					number: 2,
@@ -401,7 +370,7 @@ describe('GenbankMistAdapter', function() {
 
 		describe('features', function() {
 			it('sorted by start, location length, location string, gene, remainder', function() {
-				let x = new GenbankMistAdapter(mockModels)
+				let x = new GenbankMistAdapter()
 				refSeq.features = [
 					{
 						location: '5..10',
@@ -459,7 +428,7 @@ describe('GenbankMistAdapter', function() {
 			})
 
 			it('basic gene fields', function() {
-				let x = new GenbankMistAdapter(mockModels)
+				let x = new GenbankMistAdapter()
 				refSeq.features = [
 					{
 						key: 'gene',
@@ -479,7 +448,7 @@ describe('GenbankMistAdapter', function() {
 				]
 
 				let result = x.formatRefSeq(refSeq),
-					dseq = new Seq(refSeq.origin.substr(0, 2))
+					geneSeq = new Seq(refSeq.origin.substr(0, 2))
 				expect(result.genes.length).equal(1)
 				expect(result.genes[0]).deep.equal({
 					id: 1,
@@ -489,7 +458,7 @@ describe('GenbankMistAdapter', function() {
 					start: 1,
 					stop: 2,
 					length: 2,
-					dseq_id: dseq.seqId(),
+					dseq_id: geneSeq.seqId(),
 					locus: 'locus_tag',
 					old_locus: 'old_locus_tag',
 					names: ['name1', 'name2', 'syn1', 'syn2'],
@@ -509,8 +478,8 @@ describe('GenbankMistAdapter', function() {
 					product: null
 				})
 
-				expect(result.dseqs.length).equal(1)
-				expect(result.dseqs[0].sequence()).equal(refSeq.origin.substr(0, 2))
+				expect(result.geneSeqs.length).equal(1)
+				expect(result.geneSeqs[0].sequence()).equal(refSeq.origin.substr(0, 2))
 
 				expect(result.xrefs.length).equal(1)
 				expect(result.xrefs[0]).deep.equal({
@@ -522,7 +491,7 @@ describe('GenbankMistAdapter', function() {
 			})
 
 			it('gene + CDS populates CDS fields', function() {
-				let x = new GenbankMistAdapter(mockModels)
+				let x = new GenbankMistAdapter()
 				refSeq.features = [
 					{
 						key: 'gene',
@@ -541,8 +510,8 @@ describe('GenbankMistAdapter', function() {
 				]
 
 				let result = x.formatRefSeq(refSeq),
-					dseq = new Seq(refSeq.origin.substr(0, 6)),
-					aseq = new Seq(refSeq.features[1].translation[0])
+					geneSeq = new Seq(refSeq.origin.substr(0, 6)),
+					proteinSeq = new Seq(refSeq.features[1].translation[0])
 				expect(result.genes.length).equal(1)
 				expect(result.genes[0]).deep.equal({
 					id: 1,
@@ -552,7 +521,7 @@ describe('GenbankMistAdapter', function() {
 					start: 1,
 					stop: 6,
 					length: 6,
-					dseq_id: dseq.seqId(),
+					dseq_id: geneSeq.seqId(),
 					locus: null,
 					old_locus: null,
 					names: null,
@@ -568,18 +537,18 @@ describe('GenbankMistAdapter', function() {
 					translation_table: 11,
 					accession: 'ABC',
 					version: 1,
-					aseq_id: aseq.seqId()
+					aseq_id: proteinSeq.seqId()
 				})
 
-				expect(result.dseqs.length).equal(1)
-				expect(result.dseqs[0].sequence()).equal(refSeq.origin.substr(0, 6))
+				expect(result.geneSeqs.length).equal(1)
+				expect(result.geneSeqs[0].sequence()).equal(refSeq.origin.substr(0, 6))
 
-				expect(result.aseqs.length).equal(1)
-				expect(result.aseqs[0].sequence()).equal(refSeq.features[1].translation[0])
+				expect(result.proteinSeqs.length).equal(1)
+				expect(result.proteinSeqs[0].sequence()).equal(refSeq.features[1].translation[0])
 			})
 
 			it('gene + tRNA', function() {
-				let x = new GenbankMistAdapter(mockModels)
+				let x = new GenbankMistAdapter()
 				refSeq.features = [
 					{
 						key: 'gene',
@@ -594,7 +563,7 @@ describe('GenbankMistAdapter', function() {
 				]
 
 				let result = x.formatRefSeq(refSeq),
-					dseq = new Seq(refSeq.origin.substr(0, 6))
+					geneSeq = new Seq(refSeq.origin.substr(0, 6))
 				expect(result.genes.length).equal(1)
 				expect(result.genes[0]).deep.equal({
 					id: 1,
@@ -604,7 +573,7 @@ describe('GenbankMistAdapter', function() {
 					start: 1,
 					stop: 6,
 					length: 6,
-					dseq_id: dseq.seqId(),
+					dseq_id: geneSeq.seqId(),
 					locus: null,
 					old_locus: null,
 					names: null,
@@ -627,8 +596,30 @@ describe('GenbankMistAdapter', function() {
 				expect(result.componentFeatures.length).equal(0)
 			})
 
+			it('link gene with cognate feature using locus_tag but different location', function() {
+				let x = new GenbankMistAdapter()
+				refSeq.features = [
+					{
+						key: 'gene',
+						location: '2..10',
+						locus_tag: ['my-locus-tag']
+					},
+					{
+						key: 'tRNA',
+						location: 'join(2..4,6..10)',
+						locus_tag: ['my-locus-tag']
+					}
+				]
+				let result = x.formatRefSeq(refSeq)
+				expect(result.genes.length).equal(1)
+				expect(result.genes[0].location).equal('2..10')
+				expect(result.genes[0].locus).equal('my-locus-tag')
+				expect(result.genes[0].cognate_key).equal('tRNA')
+				expect(result.genes[0].cognate_location).equal(refSeq.features[1].location)
+			})
+
 			it('two genes with same locations throws error', function() {
-				let x = new GenbankMistAdapter(mockModels)
+				let x = new GenbankMistAdapter()
 				refSeq.features = [
 					{
 						key: 'gene',
@@ -646,7 +637,7 @@ describe('GenbankMistAdapter', function() {
 			})
 
 			it('non-gene feature', function() {
-				let x = new GenbankMistAdapter(mockModels)
+				let x = new GenbankMistAdapter()
 				refSeq.features = [
 					{
 						key: 'stem_loop',
@@ -671,7 +662,7 @@ describe('GenbankMistAdapter', function() {
 			})
 
 			it('link last gene data based on location: gene + CDS + X', function() {
-				let x = new GenbankMistAdapter(mockModels)
+				let x = new GenbankMistAdapter()
 				refSeq.features = [
 					{
 						key: 'gene',
@@ -705,7 +696,7 @@ describe('GenbankMistAdapter', function() {
 			})
 
 			it('identical cross-references between shared locations are ignored', function() {
-				let x = new GenbankMistAdapter(mockModels)
+				let x = new GenbankMistAdapter()
 				refSeq.features = [
 					{
 						key: 'gene',
@@ -747,7 +738,7 @@ describe('GenbankMistAdapter', function() {
 			})
 
 			it('sequences are not reset between calls', function() {
-				let x = new GenbankMistAdapter(mockModels)
+				let x = new GenbankMistAdapter()
 				refSeq.features = [
 					{
 						key: 'gene',
