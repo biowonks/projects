@@ -22,20 +22,20 @@
 'use strict'
 
 // Core
-let fs = require('fs'),
+const fs = require('fs'),
 	path = require('path')
 
 // Vendor
-let _ = require('lodash'),
+const _ = require('lodash'),
 	inflection = require('inflection'),
 	Sequelize = require('sequelize')
 
 // Local
-let modelExtras = require('./model-extras')(Sequelize),
+const modelExtras = require('./model-extras')(Sequelize), // eslint-disable-line no-mixed-requires
 	setupAssociations = require('./associations')
 
 // Constants
-let kModelFileNameSuffix = '.model.js' // All files ending with this are treated as models
+const kModelFileNameSuffix = '.model.js' // All files ending with this are treated as models
 
 module.exports = function(sequelize, logger) {
 	let models = loadModels(sequelize, logger)

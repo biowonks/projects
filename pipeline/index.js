@@ -1,3 +1,5 @@
+#!/usr/bin/env node
+
 'use strict'
 
 // Core
@@ -17,7 +19,8 @@ const arrayUtil = require('./lib/array-util'),
 	PerGenomePipelineModule = require('./modules/PerGenomePipelineModule')
 
 // Constants
-const kModulesOncePath = path.resolve(__dirname, 'modules', 'once'),
+const k1KB = 1024,
+	kModulesOncePath = path.resolve(__dirname, 'modules', 'once'),
 	kModulesPerGenomePath = path.resolve(__dirname, 'modules', 'per-genome'),
 	kShutdownGracePeriodMs = 30000,
 	kIsolationLevels = BootService.Sequelize.Transaction.ISOLATION_LEVELS
@@ -242,16 +245,18 @@ function unregisterWorker() {
 }
 
 function logError(error) {
+	let shortMessage = error.message ? error.message.substr(0, k1KB) : null
+
 	switch (error.constructor) {
 		case BootService.Sequelize.DatabaseError:
-			logger.error({name: error.name, sql: error.sql}, error.message)
+			logger.error({name: error.name, sql: error.sql}, shortMessage)
 			return
 		case InterruptError:
-			logger.error(error.message)
+			logger.error(shortMessage)
 			return
 
 		default:
-			logger.error({error, stack: error.stack}, `Unhandled error: ${error.message}`)
+			logger.error({error, stack: error.stack}, `Unhandled error: ${shortMessage}`)
 			return
 	}
 }
@@ -263,7 +268,7 @@ function saveWorkerError(error) {
 	logger.info('Updating worker status')
 	worker.active = false
 	worker.normal_exit = false
-	worker.error_message = error.message
+	worker.error_message = error.message ? error.message.substr(0, k1KB) : null
 	if (error.constructor !== InterruptError)
 		worker.error_message += '\n\n' + error.stack
 	return worker.save({fields: ['active', 'normal_exit', 'error_message', 'job']})
@@ -330,8 +335,10 @@ function runPerGenomeModules(app, modules) {
 				shutdownCheck()
 				app.logger = logger.child({
 					module: ModuleClass.name,
-					genomeId: genome.id,
-					name: genome.name
+					genome: {
+						id: genome.id,
+						name: genome.name
+					}
 				})
 				logger.info(`Starting module: ${ModuleClass.name}`)
 				let module = new ModuleClass(app, genome)
@@ -340,7 +347,7 @@ function runPerGenomeModules(app, modules) {
 			}
 
 			yield unlockGenome(genome)
-			logger.info({genomeId: genome.id, name: genome.name}, `Unlocked genome: ${genome.name}`)
+			logger.info({genome: {id: genome.id, name: genome.name}}, `Unlocked genome: ${genome.name}`)
 		}
 	})()
 }
@@ -348,7 +355,7 @@ function runPerGenomeModules(app, modules) {
 function lockNextGenome(app, modules) {
 	let genomesTable = app.models.Genome.tableName,
 		workerModulesTable = app.models.WorkerModule.tableName,
-		genomeIdClause = program.genomeIds ? `a.id IN (${program.genomeIds.join(',')}) ` : 'b.genome_id is null',
+		genomeIdClause = program.genomeIds ? `AND a.id IN (${program.genomeIds.join(',')}) ` : '',
 		queryModuleArrayString = `ARRAY['${modules.map((module) => module.name).join("','")}']`,
 		sql =
 `WITH done_genomes_modules AS (
@@ -359,7 +366,7 @@ function lockNextGenome(app, modules) {
 )
 SELECT a.*
 FROM ${genomesTable} a LEFT OUTER JOIN done_genomes_modules b ON (a.id = b.genome_id)
-WHERE a.worker_id is null AND (${genomeIdClause} or NOT b.modules @> ${queryModuleArrayString})
+WHERE a.worker_id is null ${genomeIdClause} AND (b.genome_id is null OR NOT b.modules @> ${queryModuleArrayString})
 ORDER BY a.id
 LIMIT 1
 FOR UPDATE`

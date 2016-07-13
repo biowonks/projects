@@ -155,7 +155,7 @@ class BootService {
 		return this.models_
 	}
 
-	migratorService() {
+	migrator() {
 		return this.migrator_
 	}
 

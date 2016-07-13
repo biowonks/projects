@@ -59,10 +59,6 @@ function undoMigration() {
 
 	bootService.setupSequelize()
 	bootService.checkDatabaseConnection()
-	.then(() => {
-		return bootService.setupDatabase()
-	})
-	.then(() => {
-		return bootService.migratorService().down(numberToUndo)
-	})
+	.then(() => bootService.setupDatabase())
+	.then(() => bootService.migrator().down(numberToUndo))
 }
