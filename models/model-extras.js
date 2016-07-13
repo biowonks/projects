@@ -81,6 +81,22 @@ module.exports = function(Sequelize) {
 		}
 	}
 
+	function seqId() {
+		return {
+			type: Sequelize.TEXT,
+			validate: {
+				notEmpty: true,
+				is: /^[A-Za-z0-9_\-]{22}$/
+			}
+		}
+	}
+
+	function requiredSeqId() {
+		let result = seqId()
+		result.allowNull = false
+		return result
+	}
+
 	// ----------------------------------------------------
 	let validate = {
 		bothNullOrBothNotEmpty: function(field1, field2) {
@@ -119,9 +135,11 @@ module.exports = function(Sequelize) {
 		dnaStrand,
 		requiredAccessionWithoutVersion,
 		positiveInteger,
+		seqId,
 		requiredPercentage,
 		requiredPositiveInteger,
 		requiredSequence,
+		requiredSeqId,
 		requiredText,
 
 		validate

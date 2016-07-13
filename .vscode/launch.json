@@ -28,8 +28,31 @@
 			"stopOnEntry": false,
 			"cwd": "${workspaceRoot}/pipeline",
 			"args": [
-				"-r",
-				"SeedNewGenomes"
+				"-o",
+				"SeedNewGenomes",
+				"NCBICoreData"
+			],
+			"preLaunchTask": null,
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "develop"
+			},
+			"externalConsole": false,
+			"sourceMaps": false,
+			"outDir": null
+		},
+		{
+			"name": "Undo migration",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/db/undo-migration.js",
+			"stopOnEntry": false,
+			"cwd": "${workspaceRoot}/pipeline",
+			"args": [
+				"-y"
 			],
 			"preLaunchTask": null,
 			"runtimeExecutable": null,

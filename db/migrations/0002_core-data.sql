@@ -13,6 +13,11 @@ create table genomes_references (
 	remark text,
 	notes text,
 
+	created_at timestamp with time zone not null default now(),
+	updated_at timestamp with time zone not null default now(),
+
+	unique(genome_id, pubmed_id),
+
 	foreign key(genome_id) references genomes(id) on update cascade on delete cascade
 );
 create index on genomes_references(genome_id);
@@ -61,7 +66,7 @@ create index on components(accession);
 create table genes (
 	id serial primary key,
 	component_id integer not null,
-	dseq_id integer not null,
+	dseq_id text not null,
 	aseq_id text,
 
 	accession text,					-- No version suffix; RefSeq GenBank.protein_id prefix
@@ -83,6 +88,7 @@ create table genes (
 	notes text,						-- sourced from /note
 
 	cognate_key text,				-- CDS, \w+RNA, ... or null if not associated
+	cognate_location text,			-- For those cases where the cognate feature has a non-identical location, but is linked via its locus_tag
 	product text,					-- source from /product
 	codon_start integer,			-- 1, 2, or 3
 	translation_table integer,
@@ -131,7 +137,8 @@ create table components_features (
 									--   where the gene spans the origin
 	qualifiers jsonb not null default '{}',
 
-	foreign key(component_id) references components(id) on update cascade on delete cascade
+	foreign key(component_id) references components(id) on update cascade on delete cascade,
+	foreign key(gene_id) references genes(id) on update cascade on delete set null
 );
 
 create index on components_features(component_id);

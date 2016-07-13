@@ -3,8 +3,8 @@
 module.exports = function(Sequelize, models, extras) {
 	let fields = {
 		component_id: extras.requiredPositiveInteger(),
-		dseq_id: extras.requiredPositiveInteger(),
-		aseq_id: extras.positiveInteger(),
+		dseq_id: extras.requiredSeqId(),
+		aseq_id: extras.seqId(),
 		accession: extras.accessionWithoutVersion(),
 		version: extras.positiveInteger(),
 		locus: {
@@ -18,7 +18,10 @@ module.exports = function(Sequelize, models, extras) {
 		start: extras.requiredPositiveInteger(),
 		stop: extras.requiredPositiveInteger(),
 		length: extras.requiredPositiveInteger(),
-		key: {
+		cognate_key: {
+			type: Sequelize.TEXT
+		},
+		cognate_location: {
 			type: Sequelize.TEXT
 		},
 		names: {
@@ -79,17 +82,14 @@ module.exports = function(Sequelize, models, extras) {
 	}
 
 	let validate = {
-		accessionVersion: extras.validate.bothNullOrBothNotEmpty('accession', 'version'),
-		correctLength: function() {
-			if (this.stop - this.start + 1 !== this.length)
-				throw new Error('Length does not equal stop - start + 1')
-		}
+		accessionVersion: extras.validate.bothNullOrBothNotEmpty('accession', 'version')
 	}
 
 	return {
 		fields,
 		params: {
-			validate
+			validate,
+			timestamps: false
 		}
 	}
 }

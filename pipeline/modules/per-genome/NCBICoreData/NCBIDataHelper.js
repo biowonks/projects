@@ -1,15 +1,15 @@
 'use strict'
 
 // Core
-let assert = require('assert'),
+const assert = require('assert'),
 	fs = require('fs')
 
 // Vendor
-let Promise = require('bluebird'),
+const Promise = require('bluebird'),
 	byline = require('byline')
 
 // Local
-let mutil = require('../lib/mutil')
+const mutil = require('../../../lib/mutil')
 
 module.exports =
 class NCBIDataHelper {

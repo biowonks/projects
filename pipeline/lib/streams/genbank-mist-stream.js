@@ -6,8 +6,8 @@ const through2 = require('through2')
 // Local
 const GenbankMistAdapter = require('../bio/GenbankMistAdapter')
 
-module.exports = function(models) {
-	let genbankMistAdapter = new GenbankMistAdapter(models)
+module.exports = function(genomeId) {
+	let genbankMistAdapter = new GenbankMistAdapter(genomeId)
 
 	return through2.obj((genbankRecord, encoding, done) => {
 		let mistData = null

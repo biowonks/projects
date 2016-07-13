@@ -8,6 +8,9 @@ module.exports = function(Sequelize, models, extras) {
 	}
 
 	return {
-		fields
+		fields,
+		params: {
+			timestamps: false
+		}
 	}
 }

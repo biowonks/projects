@@ -23,7 +23,7 @@ class AbstractPipelineModule {
 	main(options = {}) {
 		let self = this
 		return Promise.coroutine(function *() {
-			let missingDependencies = self.missingDependencies()
+			let missingDependencies = yield self.missingDependencies()
 			if (missingDependencies.length) {
 				self.logger_.warning({missingDependencies}, 'Missing one or more dependencies')
 				return null

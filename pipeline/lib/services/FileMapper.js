@@ -10,7 +10,7 @@ module.exports =
 class FileMapper {
 	/**
 	 * @param {String} rootGenomesPath
-	 * @param {Object} genome may also be a queued genome
+	 * @param {Object} genome
 	 */
 	constructor(rootGenomesPath, genome) {
 		this.rootGenomesPath_ = rootGenomesPath
