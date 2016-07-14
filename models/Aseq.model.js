@@ -1,7 +1,13 @@
 'use strict'
 
+// Core
+const assert = require('assert')
+
 // Local
 const seqUtil = require('../pipeline/lib/bio/seq-util')
+
+// Constants
+const kToolIdFieldNames = ['pfam30', 'segs', 'coils']
 
 module.exports = function(Sequelize, models, extras) {
 	let fields = {
@@ -17,6 +23,11 @@ module.exports = function(Sequelize, models, extras) {
 			type: Sequelize.JSONB
 		}
 	}
+
+	// Ensure that the fields and tool id fields are in sync
+	kToolIdFieldNames.forEach((toolId) => {
+		assert(Reflect.has(fields, toolId), `tool id, ${toolId}, is missing from fields`)
+	})
 
 	// Model validations
 	let validate = {
@@ -41,7 +52,7 @@ module.exports = function(Sequelize, models, extras) {
 		 * @returns {Array.<String>} - toolId field names that contain the results of running that specific tool
 		 */
 		toolIdFieldNames: function() {
-			return ['pfam30', 'segs', 'coils']
+			return kToolIdFieldNames
 		}
 	}
 
@@ -61,3 +72,4 @@ module.exports = function(Sequelize, models, extras) {
 		}
 	}
 }
+module.exports.kToolIdFieldNames = kToolIdFieldNames
