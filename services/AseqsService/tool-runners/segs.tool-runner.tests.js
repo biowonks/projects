@@ -7,7 +7,7 @@ const models = require('../../../models').withDummyConnection(),
 	segsToolRunner = require('./segs.tool-runner')
 
 describe('services', function() {
-	describe('aseqs', function() {
+	describe('AseqsService', function() {
 		describe('segs', function() {
 			let aseqs = null
 

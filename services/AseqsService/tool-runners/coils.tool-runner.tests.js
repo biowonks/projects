@@ -7,7 +7,7 @@ const models = require('../../../models').withDummyConnection(),
 	coilsToolRunner = require('./coils.tool-runner')
 
 describe('services', function() {
-	describe('aseqs', function() {
+	describe('AseqsService', function() {
 		describe('coils', function() {
 			let aseqs = null
 
