@@ -9,6 +9,7 @@ const streamEach = require('stream-each'),
 
 // Local
 const segStream = require('../../../pipeline/lib/streams/seg-stream')
+
 /**
  * Updates each ${aseqs} ${targetField} with the results of running the seg tool.
  *
