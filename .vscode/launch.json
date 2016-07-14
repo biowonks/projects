@@ -76,7 +76,8 @@
 			"args": [
 				"--no-timeouts",
 				"--require", "testing/test-setup.js",
-				"pipeline/**/*.tests.js"
+				"pipeline/**/*.tests.js",
+				"services/**/*.tests.js"
 			],
 			"runtimeExecutable": null
 		},

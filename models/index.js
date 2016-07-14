@@ -37,17 +37,22 @@ const modelExtras = require('./model-extras')(Sequelize), // eslint-disable-line
 // Constants
 const kModelFileNameSuffix = '.model.js' // All files ending with this are treated as models
 
-module.exports = function(sequelize, logger) {
-	let models = loadModels(sequelize, logger)
-	setupAssociations(models, logger)
+module.exports = function(sequelize, optLogger) {
+	let models = loadModels(sequelize, optLogger)
+	setupAssociations(models, optLogger)
 	return models
 }
 
+module.exports.withDummyConnection = function(optLogger) {
+	return module.exports(new Sequelize(null, null, null, {dialect: 'postgres'}), optLogger)
+}
+
 // ----------------------------------------------------------------------------
-function loadModels(sequelize, logger) {
+function loadModels(sequelize, optLogger) {
 	let models = {}
 
-	logger.info('Loading models')
+	if (optLogger)
+		optLogger.info('Loading models')
 
 	getModelFileNames()
 	.forEach((modelFileName) => {
@@ -61,7 +66,8 @@ function loadModels(sequelize, logger) {
 
 		models[modelName] = sequelize.define(modelName, definition.fields, definition.params)
 
-		logger.info({modelName, table: definition.params.tableName}, `Loaded model: ${modelName} (${definition.params.tableName} table)`)
+		if (optLogger)
+			optLogger.info({modelName, table: definition.params.tableName}, `Loaded model: ${modelName} (${definition.params.tableName} table)`)
 	})
 
 	return models
@@ -83,10 +89,7 @@ function nameFromFileName(modelFileName) {
 
 function setupDefinition(definition, modelName) {
 	let defaultParams = {
-		tableName: defaultTableName(modelName),
-		classMethods: {
-			fieldNames: Object.keys(definition.fields)
-		}
+		tableName: defaultTableName(modelName)
 	}
 
 	if (!definition.params)

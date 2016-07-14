@@ -10,7 +10,7 @@ const fs = require('fs'),
 const segStream = require('./seg-stream')
 
 describe('streams', function() {
-	describe.only('seg stream', function() {
+	describe('seg stream', function() {
 		it('streaming prediction of segs', function(done) {
 			let inputFile = path.resolve(__dirname, 'test-data', 'seqs-with-segs.faa'),
 				inStream = fs.createReadStream(inputFile),
