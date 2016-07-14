@@ -40,6 +40,9 @@ module.exports = function(Sequelize, models, extras) {
 	}
 
 	let instanceMethods = {
+		toFasta: function() {
+			return seqUtil.fasta(this.id, this.sequence)
+		},
 		toJSON: function() {
 			let values = this.get()
 			values.gc_percent = Number(values.gc_percent.toFixed(kFloatPrecision))

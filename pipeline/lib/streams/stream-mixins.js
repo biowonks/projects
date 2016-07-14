@@ -3,6 +3,11 @@
 // Vendor
 const Promise = require('bluebird')
 
+exports.all = function(stream) {
+	exports.writePromise(stream)
+	exports.endPromise(stream)
+}
+
 exports.writePromise = function(stream) {
 	stream.writePromise = function(chunk, encoding, callback) {
 		return new Promise((resolve) => {

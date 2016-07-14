@@ -1,7 +1,8 @@
 'use strict'
 
-module.exports = function(models, logger) {
-	logger.info('Setting up model associations')
+module.exports = function(models, optLogger) {
+	if (optLogger)
+		optLogger.info('Setting up model associations')
 
 	let {
 		Worker,

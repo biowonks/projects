@@ -1,20 +1,20 @@
 'use strict'
 
+// Local
+const seqUtil = require('../pipeline/lib/bio/seq-util')
+
 module.exports = function(Sequelize, models, extras) {
 	let fields = {
 		length: extras.requiredPositiveInteger(),
 		sequence: extras.requiredSequence(),
 		pfam30: {
-			type: Sequelize.JSONB,
-			defaultValue: {}
+			type: Sequelize.JSONB
 		},
 		segs: {
-			type: Sequelize.JSONB,
-			defaultValue: {}
+			type: Sequelize.JSONB
 		},
 		coils: {
-			type: Sequelize.JSONB,
-			defaultValue: {}
+			type: Sequelize.JSONB
 		}
 	}
 
@@ -38,10 +38,17 @@ module.exports = function(Sequelize, models, extras) {
 		}
 	}
 
+	let instanceMethods = {
+		toFasta: function() {
+			return seqUtil.fasta(this.id, this.sequence)
+		}
+	}
+
 	return {
 		fields,
 		params: {
 			classMethods,
+			instanceMethods,
 			validate,
 			schema: 'seqdepot'
 		}

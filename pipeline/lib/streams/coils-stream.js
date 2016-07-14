@@ -11,7 +11,8 @@ const pumpify = require('pumpify'),
 // Local
 const config = require('../../../config'),
 	fastaStream = require('./fasta-stream'),
-	seqUtil = require('../bio/seq-util')
+	seqUtil = require('../bio/seq-util'),
+	streamMixins = require('./stream-mixins')
 
 // Constants
 const kCoilsToolDir = config.pipeline.vendor.coils.basePath,
@@ -28,7 +29,10 @@ module.exports = function(options) {
 				header: fastaSeq.header(),
 				coils: seqUtil.parseMaskedRegions(fastaSeq.sequence())
 			})
-		})
+		}),
+		pipeline = pumpify.obj(coilsTool, fastaStream(true /* skip empty sequences */), coilsParser)
 
-	return pumpify.obj(coilsTool, fastaStream(true /* skip empty sequences */), coilsParser)
+	streamMixins.all(pipeline)
+
+	return pipeline
 }
