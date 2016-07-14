@@ -10,15 +10,15 @@ const pump = require('pump'),
 	streamEach = require('stream-each')
 
 // Local
-const PerGenomePipelineModule = require('../PerGenomePipelineModule'),
-	NCBIDataHelper = require('./NCBICoreData/NCBIDataHelper'),
-	AseqsService = require('../../../services/AseqsService'),
-	DseqsService = require('../../../services/DseqsService'),
-	LocationStringParser = require('../../lib/bio/LocationStringParser'),
-	genbankStream = require('../../lib/streams/genbank-stream'),
-	genbankMistStream = require('../../lib/streams/genbank-mist-stream'),
-	mutil = require('../../lib/mutil'),
-	ncbiAssemblyReportStream = require('../../lib/streams/ncbi-assembly-report-stream')
+const PerGenomePipelineModule = require('../../PerGenomePipelineModule'),
+	NCBIDataHelper = require('./NCBIDataHelper'),
+	AseqsService = require('../../../../services/AseqsService'),
+	DseqsService = require('../../../../services/DseqsService'),
+	LocationStringParser = require('../../../lib/bio/LocationStringParser'),
+	genbankStream = require('../../../lib/streams/genbank-stream'),
+	genbankMistStream = require('../../../lib/streams/genbank-mist-stream'),
+	mutil = require('../../../lib/mutil'),
+	ncbiAssemblyReportStream = require('../../../lib/streams/ncbi-assembly-report-stream')
 
 let streamEachPromise = Promise.promisify(streamEach)
 

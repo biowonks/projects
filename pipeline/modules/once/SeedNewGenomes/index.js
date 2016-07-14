@@ -12,8 +12,8 @@ const parse = require('csv-parse'),
 	through2 = require('through2')
 
 // Local
-const OncePipelineModule = require('../OncePipelineModule'),
-	mutil = require('../../lib/mutil')
+const OncePipelineModule = require('../../OncePipelineModule'),
+	mutil = require('../../../lib/mutil')
 
 module.exports =
 class SeedNewGenomes extends OncePipelineModule {
@@ -22,7 +22,7 @@ class SeedNewGenomes extends OncePipelineModule {
 
 		this.seedConfig_ = this.config_.pipeline.seedNewGenomes
 		this.numGenomesSeeded_ = 0
-		this.dataDir_ = path.resolve(__dirname, 'SeedNewGenomes')
+		this.dataDir_ = __dirname
 	}
 
 	optimize() {

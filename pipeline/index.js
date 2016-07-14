@@ -157,11 +157,11 @@ function discoverModules(...srcPaths) {
 	}
 
 	for (let srcPath of srcPaths) {
-		getJsFiles(srcPath)
-		.forEach((jsFile) => {
+		getModuleRootFiles(srcPath)
+		.forEach((moduleRootFile) => {
 			try {
 				// eslint-disable-next-line global-require
-				let moduleClass = require(`${srcPath}/${jsFile}`)
+				let moduleClass = require(`${srcPath}/${moduleRootFile}`)
 				if (moduleClass.prototype instanceof OncePipelineModule)
 					result.once.push(moduleClass)
 				else if (moduleClass.prototype instanceof PerGenomePipelineModule)
@@ -170,10 +170,10 @@ function discoverModules(...srcPaths) {
 			catch (error) {
 				if (!error.code)
 					// eslint-disable-next-line no-console
-					die(`an unexpected error occurred while parsing module: ${srcPath}/${jsFile}`, error)
+					die(`an unexpected error occurred while parsing module: ${srcPath}/${moduleRootFile}`, error)
 				else if (error.code === 'MODULE_NOT_FOUND')
 					// eslint-disable-next-line no-console
-					console.warn(`WARNING: File could not be loaded: ${srcPath}/${jsFile}\n\n`, error)
+					console.warn(`WARNING: File could not be loaded: ${srcPath}/${moduleRootFile}\n\n`, error)
 			}
 		})
 	}
@@ -181,9 +181,12 @@ function discoverModules(...srcPaths) {
 	return result
 }
 
-function getJsFiles(srcPath) {
+function getModuleRootFiles(srcPath) {
 	return fs.readdirSync(srcPath)
-	.filter((file) => file.endsWith('.js') && fs.statSync(path.join(srcPath, file)).isFile())
+	.filter((file) => {
+		let stat = fs.statSync(path.join(srcPath, file))
+		return stat.isDirectory() || (stat.isFile && file.endsWith('.js'))
+	})
 }
 
 function dieIfRequestedInvalidModules() {
