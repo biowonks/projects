@@ -77,7 +77,8 @@
 				"--no-timeouts",
 				"--require", "testing/test-setup.js",
 				"pipeline/**/*.tests.js",
-				"services/**/*.tests.js"
+				"services/**/*.tests.js",
+				"models/**/*.tests.js"
 			],
 			"runtimeExecutable": null
 		},

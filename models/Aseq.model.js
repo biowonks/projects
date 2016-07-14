@@ -35,6 +35,13 @@ module.exports = function(Sequelize, models, extras) {
 				length: normalizedSequence.length,
 				sequence: normalizedSequence
 			}
+		},
+
+		/**
+		 * @returns {Array.<String>} - toolId field names that contain the results of running that specific tool
+		 */
+		toolIdFieldNames: function() {
+			return ['pfam30', 'segs', 'coils']
 		}
 	}
 
