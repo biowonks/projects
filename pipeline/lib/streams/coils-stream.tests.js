@@ -2,10 +2,12 @@
 
 'use strict'
 
-let fs = require('fs'),
+// Core
+const fs = require('fs'),
 	path = require('path')
 
-let coilsStream = require('./coils-stream')
+// Local
+const coilsStream = require('./coils-stream')
 
 describe('streams', function() {
 	describe('coils stream', function() {

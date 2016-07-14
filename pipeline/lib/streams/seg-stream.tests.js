@@ -3,22 +3,26 @@
 'use strict'
 
 // Core
-const path = require('path')
+const fs = require('fs'),
+	path = require('path')
 
 // Local
 const segStream = require('./seg-stream')
 
 describe('streams', function() {
-	describe('seg stream', function() {
-		it('runs seg on a fasta file', function(done) {
+	describe.only('seg stream', function() {
+		it('streaming prediction of segs', function(done) {
 			let inputFile = path.resolve(__dirname, 'test-data', 'seqs-with-segs.faa'),
+				inStream = fs.createReadStream(inputFile),
 				seg = segStream(inputFile),
 				results = []
 
-			// Any error within coils stream (including spawn problems) should make this test fail
+			// Any error within seg stream (including spawn problems) should make this test fail
 			seg.on('error', done)
+			inStream.on('error', done)
 
-			seg.on('data', function(result) {
+			inStream.pipe(seg)
+			.on('data', function(result) {
 				results.push(result)
 			})
 			.on('finish', () => {
