@@ -92,6 +92,14 @@ describe('streams', function() {
 			})
 		})
 
+		it('//[newline] returns single blank entry', function() {
+			return parseSingle('//\n')
+			.then((result) => {
+				expect(result).a('object')
+				expect(result.locus).null
+			})
+		})
+
 		it('multiple record separators returns right number of genbank records', function() {
 			return parse('//\n//')
 			.then((results) => {
@@ -228,7 +236,7 @@ describe('streams', function() {
 				.then((result) => {
 					expect(result.accession).deep.equal({
 						primary: 'NC_019565',
-						secondary: null
+						secondary: []
 					})
 				})
 			})
@@ -1256,7 +1264,7 @@ describe('streams', function() {
 
 					expect(result.accession).deep.equal({
 						primary: 'NC_019565',
-						secondary: null
+						secondary: []
 					})
 
 					expect(result.version).equal('NC_019565.1')
@@ -1359,6 +1367,27 @@ describe('streams', function() {
 						'aaagcttacccacttgcatgaaaaaatcgctaacatcagacttgattttttacacaagct' +
 						'cacaagctctcttataagacactc'
 					)
+				})
+			})
+
+			it('multiple non-empty records', function() {
+				return parse('LOCUS       NC_019565               1634 bp    DNA     circular CON 30-JUL-2015\n' +
+				'//\n' +
+				'LOCUS       NC_019565               1634 bp    DNA     circular CON 30-JUL-2015\n' +
+				'//\n')
+				.then((results) => {
+					let expectedLocus = {
+						name: 'NC_019565',
+						bp: 1634,
+						moleculeType: 'DNA',
+						topology: 'circular',
+						divisionCode: 'CON',
+						date: '30-JUL-2015'
+					}
+
+					expect(results.length).equal(2)
+					expect(results[0].locus).deep.equal(expectedLocus)
+					expect(results[1].locus).deep.equal(expectedLocus)
 				})
 			})
 		})

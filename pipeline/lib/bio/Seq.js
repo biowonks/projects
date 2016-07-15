@@ -1,11 +1,14 @@
 'use strict'
 
-// Core node libraries
-let assert = require('assert'),
+// Core
+const assert = require('assert'),
 	crypto = require('crypto')
 
+// Local
+const seqUtil = require('./seq-util')
+
 // Constants
-let kComplementaryBases = {
+const kComplementaryBases = {
 	A: 'T',
 	C: 'G',
 	G: 'C',
@@ -21,7 +24,7 @@ let kComplementaryBases = {
 	V: 'B'
 }
 
-let kInvalidSymbol = '@'
+const kInvalidSymbol = '@'
 
 // Create the equivalent lower case base complements
 for (let base in kComplementaryBases)
@@ -36,12 +39,20 @@ for (let base in kComplementaryBases)
  */
 module.exports =
 class Seq {
-	constructor(optSequence) {
-		this.sequence_ = (optSequence || '').trim()
+	constructor(optSequence = '') {
+		this.sequence_ = optSequence.trim()
 		this.isCircular_ = false
 		this.isNormalized_ = false
 		this.removeNonSpaceWhitespace_()
 		this.clean_()
+	}
+
+	clone(otherSeq) {
+		let newSeq = new Seq()
+		newSeq.sequence_ = this.sequence_
+		newSeq.isCircular_ = this.isCircular_
+		newSeq.isNormalized_ = this.isNormalized_
+		return newSeq
 	}
 
 	complement(optReverse) {
@@ -54,6 +65,21 @@ class Seq {
 		}
 
 		return new Seq(complementaryStrand)
+	}
+
+	/**
+	 * Returns the FASTA sequence representation of this sequence. The sequence is split into lines
+	 * with ${charsPerLine} characters per line.
+	 *
+	 * @param {Number?} charsPerLine
+	 * @returns {String}
+	 */
+	fastaSequence(charsPerLine) {
+		return seqUtil.spliceNewLines(this.sequence_, charsPerLine)
+	}
+
+	gcPercent() {
+		return seqUtil.gcPercent(this.sequence_)
 	}
 
 	invalidSymbol() {
@@ -77,12 +103,18 @@ class Seq {
 	}
 
 	normalize() {
-		if (!this.isNormalized_) {
-			this.sequence_ = this.normalizedSequence_()
-			this.isNormalized_ = true
-		}
+		this.sequence_ = this.normalizedSequence()
+		this.isNormalized_ = true
 
 		return this
+	}
+
+	/**
+	 * Removes all spaces and upper-cases the sequence.
+	 * @returns {string} normalized sequence string
+	 */
+	normalizedSequence() {
+		return this.isNormalized_ ? this.sequence_ : this.sequence_.replace(/ /g, '').toUpperCase()
 	}
 
 	reverseComplement() {
@@ -96,7 +128,7 @@ class Seq {
 	seqId() {
 		let md5base64 = crypto
 			.createHash('md5')
-			.update(this.normalizedSequence_())
+			.update(this.normalizedSequence())
 			.digest('base64')
 		return md5base64
 			.replace(/=+/g, '')
@@ -141,14 +173,6 @@ class Seq {
 	 */
 	clean_() {
 		this.sequence_ = this.sequence_.replace(/[^A-Za-z.\-* ]/g, kInvalidSymbol)
-	}
-
-	/**
-	 * Removes all spaces and upper-cases the sequence. The result is cached.
-	 * @returns {string} normalized sequence string
-	 */
-	normalizedSequence_() {
-		return this.isNormalized_ ? this.sequence_ : this.sequence_.replace(/ /g, '').toUpperCase()
 	}
 
 	/**

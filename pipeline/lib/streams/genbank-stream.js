@@ -168,7 +168,8 @@ class GenbankStream extends stream.Transform {
 		try {
 			// --------------------------------------------
 			if (!this.entry_) {
-				if (!line) {
+				// Ignore blank lines between records (or at the end of the file)
+				if (!line || /^\s*$/.test(line)) {
 					done()
 					return
 				}
@@ -225,7 +226,7 @@ class GenbankStream extends stream.Transform {
 			if (isTerminator) {
 				this.processRootKeywordNode_()
 				this.push(this.entry_)
-				this.entry_ = null
+				this.resetForNextEntry_()
 				done()
 				return
 			}
@@ -246,6 +247,11 @@ class GenbankStream extends stream.Transform {
 
 	// ----------------------------------------------------
 	// Private methods
+	resetForNextEntry_() {
+		this.entry_ = null
+		this.observedRootKeywords_.clear()
+	}
+
 	/**
 	 * @returns {object} blank result initialized with null values
 	 */
@@ -438,7 +444,7 @@ class GenbankStream extends stream.Transform {
 
 		return {
 			primary: primaryAccession,
-			secondary: accessions.length ? accessions : null
+			secondary: accessions
 		}
 	}
 

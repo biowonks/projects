@@ -1,8 +1,8 @@
 /* eslint-disable no-magic-numbers, no-new, no-unused-expressions */
-
 'use strict'
 
-let Location = require('./Location'),
+// Local
+const Location = require('./Location'),
 	LocationPoint = require('./LocationPoint'),
 	BetweenLocationPoint = require('./BetweenLocationPoint'),
 	BoundedLocationPoint = require('./BoundedLocationPoint'),
@@ -52,6 +52,88 @@ describe('Location', function() {
 				x = new Location(lp, lp, 'ABC123.1')
 
 			expect(x.accession()).equal('ABC123.1')
+		})
+	})
+
+	describe('length', function() {
+		describe('linear sequences', function() {
+			let notCircular = false,
+				lp1 = new LocationPoint(5),
+				lp2 = new LocationPoint(10),
+				x = new Location(lp1, lp2)
+
+			it('throws error if lower bound is > sequence length', function() {
+				expect(function() {
+					x.length(notCircular, 5 - 1)
+				}).throw(Error)
+			})
+
+			it('throws error if upper bound is > sequence length', function() {
+				expect(function() {
+					x.length(notCircular, 10 - 1)
+				}).throw(Error)
+			})
+
+			it('5..10 returns 6', function() {
+				expect(x.length(notCircular, 10)).equal(10 - 5 + 1)
+			})
+		})
+
+		describe('circular sequences', function() {
+			let circular = true,
+				lp1 = new LocationPoint(5),
+				lp2 = new LocationPoint(8),
+				x = new Location(lp1, lp2)
+
+			it('throws error if lower bound is > sequence length', function() {
+				expect(function() {
+					x.length(circular, 5 - 1)
+				}).throw(Error)
+			})
+
+			it('throws error if upper bound is > sequence length', function() {
+				expect(function() {
+					x.length(circular, 8 - 1)
+				}).throw(Error)
+			})
+
+			it('5..8 (length: 10) returns 4', function() {
+				expect(x.length(circular, 10)).equal(8 - 5 + 1)
+			})
+
+			it('8..1 (length 8) returns 2', function() {
+				let y = new Location(new LocationPoint(8), new LocationPoint(1))
+				expect(y.length(circular, 8)).equal(2)
+			})
+		})
+	})
+
+	describe('lowerBound', function() {
+		it('returns the start location points lower bound', function() {
+			let lp1 = new LocationPoint(5),
+				lp2 = new LocationPoint(10),
+				x = new Location(lp1, lp2)
+
+			expect(x.lowerBound()).equal(lp1.lowerBound())
+		})
+	})
+
+	describe('upperBound', function() {
+		it('returns the stop location points upper bound', function() {
+			let lp1 = new LocationPoint(5),
+				lp2 = new LocationPoint(10),
+				x = new Location(lp1, lp2)
+
+			expect(x.upperBound()).equal(lp2.upperBound())
+		})
+	})
+
+	describe('strand', function() {
+		it('always returns +', function() {
+			let lp = new LocationPoint(5),
+				x = new Location(lp, lp)
+
+			expect(x.strand()).equal('+')
 		})
 	})
 

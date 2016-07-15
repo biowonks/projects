@@ -1,6 +1,7 @@
 'use strict'
 
-let LocationStringParser = require('./LocationStringParser'),
+// Local
+const LocationStringParser = require('./LocationStringParser'),
 	Seq = require('./Seq')
 
 describe('LocationStringParser', function() {

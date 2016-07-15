@@ -1,10 +1,10 @@
 'use strict'
 
-// Core includes
-let assert = require('assert')
+// Core
+const assert = require('assert')
 
-// Local includes
-let AbstractLocation = require('./AbstractLocation'),
+// Local
+const AbstractLocation = require('./AbstractLocation'),
 	Seq = require('./Seq')
 
 module.exports =
@@ -17,6 +17,25 @@ class JoinLocation extends AbstractLocation {
 			// eslint-disable-next-line no-console
 			console.warn('JoinLocation::constructor() - constructed with only one location')
 		this.locations_ = locations
+	}
+
+	length(isCircular, seqLength) {
+		let sum = 0
+		for (let location of this.locations_)
+			sum += location.length(isCircular, seqLength)
+		return sum
+	}
+
+	lowerBound() {
+		return this.locations_[0].lowerBound()
+	}
+
+	upperBound() {
+		return this.locations_[this.locations_.length - 1].upperBound()
+	}
+
+	strand() {
+		return '+'
 	}
 
 	// Overlaps are permitted

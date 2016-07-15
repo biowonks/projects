@@ -41,69 +41,52 @@ Using the FTP path specified for each genome in the assembly_summary.txt files a
 * md5checksums.txt
   These are used to verify downloaded file integrity
 
+* GCF..._genomic.gbff.gz
+  This file contains the complete GenBank formatted RefSeq genome data. More accurately, it consists of one or more records (delimited by //\n) that correspond to one or more "components". Loosely speaking, a component is any stretch of DNA with its annotation. These are typically replicons in the context of complete genomes, and contigs / scaffolds for draft genomes. The following sections describe where MiST sources its data from this core data file and how it maps to the database tables.
+
+  REFERENCE >> genome_references (taken from the first component's REFERENCE section)
+
+  components.molecule_type = LOCUS.moleculeType
+  components.is_circular = LOCUS.topology
+  components.annotation_date = LOCUS.date
+  components.dna = ORIGIN
+  components.length is calculated from the dna
+
+  The remaining core tables are all sourced from the feature table section (FEATURES).
+
+  The main table is genes which aggregates information for coding sequences, RNAs, and pseudo genes. A gene feature is linked to another cognate feature if they both have an identical location. If unexpectedly multiple non-gene features share the same location with a gene feature, then only the first one is linked to the gene. The remainder will be stored in the components_features table (see below).
+
+  Each gene will be assigned a database generated identifier; however this is not intended to be consumed by the public. Rather, genes are meant to be identified using either the RefSeq accession (with or without the version), locus tags, or cross-references. To support annotated genes that lack an accession (e.g. RNA sequences), the accession field is not required.
+
+  genes.dseq_id = generated from the Seq returned by LocationStringParser
+  genes.aseq_id = generated from the Seq constructed with the CDS transalation
+  genes.accession = CDS/protein_id
+  genes.version = CDS/protein_id
+  genes.locus = /locus_tag this is usually the RefSeq assigned locus
+  genes.old_locus = /old_locus_tag this is usually the GenBank assigned locus
+  genes.strand, start, stop = determined by the LocationStringParser
+  genes.length = genes.dseq.length()
+  genes.type = if this gene is linked with another feature, this value is the feature key it is associated with (e.g. CDS, tRNA, etc)
+  genes.names (array) = names.0 = /gene, other /gene and /gene_synonym are appended
+  genes.pseudo = /pseudo
+  genes.product = CDS/product
+  genes.codon_start = CDS/codon_start
+  genes.translation_table = CDS/transl_table
+  genes.notes = /note
+  genes.qualifiers = all other unprocessed qualifiers. Only the first qualifier of each name is included (e.g. if multiple 'inference' fields exist, the first one takes precedence)
+
+  /db_xrefs are stored in the xrefs table with some additional processing rules:
+  - All GI numbers are ignored
+
+  All features other than gene and its linked features are stored in components_features.
+
 * GCF..._assembly_report.txt
   Determine the associated components and their general properties.
 
+  RefSeq-Accn >> components.accession
+  GenBank-Accn >> components.genbank_accession
   Sequence-Name >> components.name
   Sequence-Role >> components.role
   Assigned-Molecule >> components.assigned_molecule
   Assigned-Molecule-Location/Type >> components.type
-  GenBank-Accn >> components.genbank_accession
   Relationship >> components.genbank_refseq_relationship
-  RefSeq-Accn >> components.refseq_accession
-
-* GCF..._genomic.fna.gz
-  Contains the DNA sequence for each component in FASTA format.
-
-  Each DNA sequence begins with: >${RefSeq Accession} and this will be used to associate sequences with the metadata from the assembly report. The following fields are taken from this file:
-
-  components.dna
-  components.length
-
-* GCF..._genomic.gff.gz
-  Much gene/protein data is duplicated in the feature_table.txt file, and because of its simpler format, it will be primarily sourced for information; however, some useful information is only contained in this file. Specifically,
-
-  The region lines for each sequence indicate whether a component is circular. For example,
-
-	NC_009438.1     RefSeq  region  1       4659220 .       +       .       ID=id0;Dbxref=taxon:319224;Is_circular=true;Name=ANONYMOUS;gbkey=Src;genome=chromosome;mol_type=genomic DNA;strain=CN-32
-
-	RefSeq region Is_circular >> components.is_circular
-
-  Also unique to this file are any notes about the product:
-
-  	NC_012261.1     Protein Homology        CDS     47      325     .       +       0       ID=cds0;Parent=gene0;Dbxref=Genbank:WP_012622030.1;Name=WP_012622030.1;Note=catalyzes the hydrolysis of acylphosphate;gbkey=CDS;product=acylphosphatase;protein_id=WP_012622030.1;transl_table=11
-
-  	Note=(...) >> genes.product_note
-
-* GCF..._feature_table.txt
-  # feature
-  class >> genes.class
-  assembly
-  assembly_unit
-  seq_type
-  chromosome
-  genomic_accession (this is the refseq_assembly_accession) >> genes.component_id via looking up the refseq_assembly_accession
-  start >> genes.start
-  stop >> genes.stop
-  strand >> genes.strand
-  product_accession >> genes.product_accession
-  non-redundant_refseq >> genes.nr_refseq_product_accession
-  related_accession
-  name >> genes.product
-  symbol >> genes.names[]
-  GeneID
-  locus_tag >> genes.locus
-  feature_interval_length
-  product_length
-  attributes.old_locus_tag >> genes.old_locus
-
-  If feature = tRNA, attributes.anticodon >> genes.anticodon
-
-* GCF..._protein.faa.gz
-  Obtain the translated amino acid sequences for this genome.
-
-  Each coding sequence begins with: >${product_accession} and this will be used to associate sequences with the metadata from the feature table. The following fields are taken from this file:
-
-  aseqs.sequence
-  aseqs.length
-  genes.aseq_id

@@ -1,6 +1,6 @@
 'use strict'
 
-// Core node libraries
+// Core
 let child_process = require('child_process'), // eslint-disable-line camelcase
 	crypto = require('crypto'),
 	domain = require('domain'),
@@ -10,7 +10,7 @@ let child_process = require('child_process'), // eslint-disable-line camelcase
 	xml2js = require('xml2js'),
 	mv = require('mv')
 
-// 3rd-party libraries
+// Vendor
 let Promise = require('bluebird'),
 	mkdirp = require('mkdirp'),
 	moment = require('moment')
@@ -345,4 +345,31 @@ exports.createDeferred = function() {
 		})
 
 	return {resolve, reject, promise}
+}
+
+/**
+ * @param {Number?} initialIndex the first sequence value to be yielded; defaults to 1
+ * @param {Number?} delta the amount to add to index with each call; defaults to 1
+ */
+exports.sequence = function *(initialIndex = 1, delta = 1) {
+	let index = initialIndex
+	while (true) { // eslint-disable-line no-constant-condition
+		yield index
+		index += delta
+	}
+}
+
+/**
+ * @param {String} accession
+ * @returns {Array} 2-element array containing the accession and version
+ */
+exports.parseAccessionVersion = function(accession) {
+	if (!accession)
+		return []
+
+	let parts = accession.split('.')
+	if (parts.length <= 2) // eslint-disable-line no-magic-numbers
+		return [parts[0], /^\d+$/.test(parts[1]) ? Number(parts[1]) : null]
+
+	return []
 }

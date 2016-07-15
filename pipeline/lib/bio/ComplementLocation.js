@@ -1,10 +1,10 @@
 'use strict'
 
-// Core includes
-let assert = require('assert')
+// Core
+const assert = require('assert')
 
-// Local includes
-let AbstractLocation = require('./AbstractLocation'),
+// Local
+const AbstractLocation = require('./AbstractLocation'),
 	Seq = require('./Seq')
 
 module.exports =
@@ -13,6 +13,18 @@ class ComplementLocation extends AbstractLocation {
 		assert(location instanceof AbstractLocation, 'location argument is not a valid AbstractLocation instance')
 		super()
 		this.location_ = location
+	}
+
+	lowerBound() {
+		return this.location_.lowerBound()
+	}
+
+	upperBound() {
+		return this.location_.upperBound()
+	}
+
+	strand() {
+		return '-'
 	}
 
 	transcriptFrom(seq) {

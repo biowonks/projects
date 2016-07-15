@@ -3,7 +3,7 @@
 'use strict'
 
 // Local
-let serializeStream = require('./serialize-stream')
+const serializeStream = require('./serialize-stream')
 
 let createMockObject = function() {
 	return {
@@ -59,6 +59,37 @@ describe('streams', function() {
 				1,
 				'abc'
 			], 'squawk'.repeat(2), done, {highWaterMark: 1}, squawk)
+		})
+
+		it('accepts null options and serialize function', function(done) {
+			function squawk() {
+				return 'squawk'
+			}
+
+			writeAndExpect([
+				1,
+				'abc'
+			], 'squawk'.repeat(2), done, null, squawk)
+		})
+
+		it('ndjson', function(done) {
+			let x = serializeStream.ndjson(),
+				object1 = {name: 'Luke'},
+				object2 = {name: 'Ogun', married: true},
+				result = ''
+
+			x.write(object1)
+			x.write(object2)
+			x.end()
+
+			x.on('error', done)
+			.on('data', (chunk) => {
+				result += chunk
+			})
+			.on('end', () => {
+				expect(result).equal(JSON.stringify(object1) + '\n' + JSON.stringify(object2) + '\n')
+				done()
+			})
 		})
 	})
 })

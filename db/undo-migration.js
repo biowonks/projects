@@ -15,11 +15,19 @@ let BootService = require('../services/BootService')
 // --------------------------------------------------------
 program
 .description('Reverts the last exectued migration')
+.option('-n, --num-to-undo <integer>', 'Number of migrations to undo', parseInt)
 .option('-y, --yes', 'Automatic yes to prompt (run non-interactively)')
 .parse(process.argv)
 
+let numberToUndo = program.numToUndo ? Number(program.numToUndo) : 1
+if (!/^[1-9]\d*$/.test(numberToUndo)) {
+	// eslint-disable-next-line no-console
+	console.error('FATAL: invalid value for -n, --num-to-undo option; must be a positive integer')
+	process.exit(1)
+}
+
 if (program.yes)
-	undoLastMigration()
+	undoMigration()
 else
 	confirmUndo()
 
@@ -38,11 +46,11 @@ function confirmUndo() {
 		if (answer !== 'y')
 			process.exit(0)
 
-		undoLastMigration()
+		undoMigration()
 	})
 }
 
-function undoLastMigration() {
+function undoMigration() {
 	let bootService = new BootService({
 		logger: {
 			name: 'undo-migration'
@@ -51,10 +59,6 @@ function undoLastMigration() {
 
 	bootService.setupSequelize()
 	bootService.checkDatabaseConnection()
-	.then(() => {
-		return bootService.setupDatabase()
-	})
-	.then(() => {
-		return bootService.migratorService().down()
-	})
+	.then(() => bootService.setupDatabase())
+	.then(() => bootService.migrator().down(numberToUndo))
 }

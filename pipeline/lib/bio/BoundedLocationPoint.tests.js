@@ -1,8 +1,8 @@
 /* eslint-disable no-magic-numbers, no-undefined, no-new */
-
 'use strict'
 
-let BoundedLocationPoint = require('./BoundedLocationPoint')
+// Local
+const BoundedLocationPoint = require('./BoundedLocationPoint')
 
 describe('BoundedLocationPoint', function() {
 	describe('constructor', function() {

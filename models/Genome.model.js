@@ -1,15 +1,16 @@
 'use strict'
 
-module.exports = function(Sequelize, models) {
+module.exports = function(Sequelize, models, extras) {
 	let fields = {
-		refseq_assembly_accession: {
-			type: Sequelize.TEXT,
-			allowNull: false,
-			validate: {
-				notEmpty: true
-			}
-		},
-		genbank_assembly_accession: {
+		worker_id: extras.positiveInteger(),
+		accession: extras.requiredAccessionWithoutVersion(),
+		version: extras.requiredPositiveInteger(),
+		genbank_assembly_accession: extras.accessionWithoutVersion(),
+		genbank_assembly_version: extras.positiveInteger(),
+		taxonomy_id: extras.positiveInteger(),
+		species_taxonomy_id: extras.positiveInteger(),
+		name: extras.requiredText(),
+		refseq_category: {
 			type: Sequelize.TEXT
 		},
 		bioproject: {
@@ -20,15 +21,6 @@ module.exports = function(Sequelize, models) {
 		},
 		wgs_master: {
 			type: Sequelize.TEXT
-		},
-		refseq_category: {
-			type: Sequelize.TEXT
-		},
-		taxonomy_id: {
-			type: Sequelize.INTEGER
-		},
-		species_taxonomy_id: {
-			type: Sequelize.INTEGER
 		},
 		isolate: {
 			type: Sequelize.TEXT
@@ -43,7 +35,7 @@ module.exports = function(Sequelize, models) {
 			type: Sequelize.TEXT
 		},
 		release_date: {
-			type: Sequelize.TEXT
+			type: Sequelize.DATE
 		},
 		assembly_name: {
 			type: Sequelize.TEXT
@@ -52,10 +44,11 @@ module.exports = function(Sequelize, models) {
 			type: Sequelize.TEXT
 		},
 		ftp_path: {
-			type: Sequelize.TEXT
-		},
-		name: {
-			type: Sequelize.TEXT
+			type: Sequelize.TEXT,
+			validate: {
+				notEmpty: true,
+				isUrl: true
+			}
 		},
 		superkingdom: {
 			type: Sequelize.TEXT
@@ -85,10 +78,15 @@ module.exports = function(Sequelize, models) {
 			type: Sequelize.TEXT
 		},
 		stats: {
-			type: Sequelize.JSONB
-		},
-		status: {
-			type: Sequelize.JSONB
+			type: Sequelize.JSONB,
+			allowNull: false,
+			defaultValue: {}
+		}
+	}
+
+	let instanceMethods = {
+		compoundAccession: function() {
+			return this.accession + '.' + this.version
 		}
 	}
 
@@ -99,6 +97,13 @@ module.exports = function(Sequelize, models) {
 				sequenceName: function() {
 					return 'genomes'
 				}
+			},
+			instanceMethods,
+			validate: {
+				genbankAssemblyAccessionVersion: extras.validate.bothNullOrBothNotEmpty(
+					'genbank_assembly_accession',
+					'genbank_assembly_version'
+				)
 			}
 		}
 	}

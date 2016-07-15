@@ -1,11 +1,56 @@
 /* eslint-disable no-unused-expressions, no-magic-numbers */
-
 'use strict'
 
-let Seq = require('./Seq')
+// Local
+const Seq = require('./Seq')
 
 describe('Seq', function() {
 	let defaultSeq = new Seq()
+
+	describe('clone', function() {
+		it('creates an identical, yet distinct sequence')
+	})
+
+	describe('fastaSequence', function() {
+		let sequence = 'AAAAATTTTTGGGGGCCCCC',
+			seq = new Seq(sequence)
+
+		it('default charsPerLine', function() {
+			expect(seq.fastaSequence(5)).equal('AAAAA\nTTTTT\nGGGGG\nCCCCC\n')
+		})
+
+		it('0 charsPerLine assumes default charsPerLine', function() {
+			expect(seq.fastaSequence(0)).equal('AAAAATTTTTGGGGGCCCCC\n')
+		})
+
+		it('Negative charsPerLine throws error', function() {
+			expect(function() {
+				seq.fastaSequence(-1)
+			}).throw(Error)
+		})
+
+		it('Non-number parameter throws error', function() {
+			expect(function() {
+				seq.fastaSequence('non-number')
+			}).throw(Error)
+		})
+
+		it('charsPerLine > length returns entire sequence', function() {
+			expect(seq.fastaSequence(sequence.length + 1)).equal(sequence + '\n')
+		})
+
+		it('charsPerLine === length returns entire sequence', function() {
+			expect(seq.fastaSequence(sequence.length)).equal(sequence + '\n')
+		})
+
+		it('charsPerLine < length splits it into lines as expected', function() {
+			expect(seq.fastaSequence(3)).equal('AAA\nAAT\nTTT\nTGG\nGGG\nCCC\nCC\n')
+		})
+	})
+
+	describe('gcPercent', function() {
+		it('returns the same results as seqUtil.gcPercent but using the Seq sequence')
+	})
 
 	describe('invalidSymbol', function() {
 		it('should equal "@"', function() {

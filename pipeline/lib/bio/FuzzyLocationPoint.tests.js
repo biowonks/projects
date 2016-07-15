@@ -1,8 +1,8 @@
 /* eslint-disable no-magic-numbers, no-unused-expressions, no-new */
-
 'use strict'
 
-let FuzzyLocationPoint = require('./FuzzyLocationPoint')
+// Local
+const FuzzyLocationPoint = require('./FuzzyLocationPoint')
 
 describe('FuzzyLocationPoint', function() {
 	describe('constructor', function() {

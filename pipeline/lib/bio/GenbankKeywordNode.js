@@ -1,7 +1,7 @@
 'use strict'
 
 // Core
-let assert = require('assert')
+const assert = require('assert')
 
 /**
  * Specialized tree node class for dealing with GenBank keywords and any sub-keywords. Originally,
