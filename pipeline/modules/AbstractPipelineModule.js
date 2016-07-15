@@ -25,11 +25,20 @@ class AbstractPipelineModule {
 		return Promise.coroutine(function *() {
 			let missingDependencies = yield self.missingDependencies()
 			if (missingDependencies.length) {
-				self.logger_.warning({missingDependencies}, 'Missing one or more dependencies')
+				self.logger_.warn({missingDependencies}, 'Missing one or more dependencies')
 				return null
 			}
 
-			let workerModule = yield self.models_.WorkerModule.create(self.newWorkerData())
+			// Most modules will only have one corresponding WorkerModule; however, in some cases,
+			// such as Compute, there may be multiple worker modules. Thus, dealing with an array
+			// or worker modules is supported here.
+			let workerModuleRecords = yield self.workerModuleRecords(),
+				workerModules = yield self.models_.WorkerModule.bulkCreate(workerModuleRecords, {
+					validate: true,
+					returning: true
+				})
+
+			// let workerModule = yield self.models_.WorkerModule.create(self.newWorkerModuleData())
 			try {
 				self.shutdownCheck_()
 				yield self.setup()
@@ -45,10 +54,10 @@ class AbstractPipelineModule {
 				yield self.teardown()
 			}
 			catch (error) {
-				yield workerModule.updateState('error')
+				yield self.updateWorkerModulesState_(workerModules, 'error')
 				throw error
 			}
-			yield workerModule.updateState('done')
+			yield self.updateWorkerModulesState_(workerModules, 'done')
 			return null
 		})()
 	}
@@ -98,12 +107,26 @@ class AbstractPipelineModule {
 		throw new Error('not implemented')
 	}
 
-	newWorkerData() {
+	workerModuleRecords() {
+		return [this.newWorkerModuleData()]
+	}
+
+	newWorkerModuleData() {
 		return {
 			worker_id: this.worker_.id,
 			module: this.name(),
 			state: 'active',
 			started_at: this.sequelize_.fn('clock_timestamp')
 		}
+	}
+
+	// ----------------------------------------------------
+	// Private methods
+	updateWorkerModulesState_(workerModules, newState) {
+		return this.sequelize_.transaction((transaction) => {
+			return Promise.each(workerModules, (workerModule) => {
+				return workerModule.updateState(newState, transaction)
+			})
+		})
 	}
 }

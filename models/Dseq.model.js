@@ -36,6 +36,14 @@ module.exports = function(Sequelize, models, extras) {
 				gc_percent: seqUtil.gcPercent(normalizedSequence),
 				sequence: normalizedSequence
 			}
+		},
+
+		/**
+		 * @param {Seq} seq
+		 * @returns {Aseq}
+		 */
+		fromSeq: function(seq) {
+			return this.build(this.dataFromSeq(seq))
 		}
 	}
 

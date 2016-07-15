@@ -3,7 +3,8 @@
 'use strict'
 
 // Core
-const fs = require('fs'),
+const assert = require('assert'),
+	fs = require('fs'),
 	path = require('path')
 
 // Vendor
@@ -40,12 +41,12 @@ program
      prior to any "per-genome" modules. All such modules must be located
      beneath the modules/once folder. Available "once" modules include:
 
-       ${(availableOnceModuleNames || ['[none]']).join('\n       ')}
+${modulesHelp(availableModules.once)}
 
   2. "per-genome" modules are serially invoked for one genome at a time before
      processing the next genome. Available "per-genome" modules include:
 
-       ${(availablePerGenomeModuleNames || ['[none]']).join('\n       ')}
+${modulesHelp(availableModules.perGenome)}
 
   If no genome-ids are specified via the options, this script will iterate the
   module pipeline for all genomes in the database that have not yet been
@@ -64,18 +65,22 @@ program
 .option('-g, --genome-ids <genome id,...>', 'CSV list of genome ids', parseGenomeIds)
 .parse(process.argv)
 
-let onceModuleNames = program.runOnce || [],
-	perGenomeModuleNames = program.args
-if (!onceModuleNames.length && !perGenomeModuleNames.length) {
+let onceModuleTexts = program.runOnce || [],
+	perGenomeModuleTexts = program.args
+if (!onceModuleTexts.length && !perGenomeModuleTexts.length) {
 	program.outputHelp()
 	process.exit(1)
 }
 
+let requestedOnceModules = onceModuleTexts.map(deserializeModuleText),
+	requestedPerGenomeModules = perGenomeModuleTexts.map(deserializeModuleText)
+
 dieIfRequestedInvalidModules()
 
-let onceModules = modulesByName(onceModuleNames, availableModules.once),
-	perGenomeModules = modulesByName(perGenomeModuleNames, availableModules.perGenome),
-	bootService = new BootService({
+requestedOnceModules.forEach((x) => parseModuleParameters(x, availableModules.once))
+requestedPerGenomeModules.forEach((x) => parseModuleParameters(x, availableModules.perGenome))
+
+let bootService = new BootService({
 		logger: {
 			name: 'pipeline',
 			streams: [
@@ -108,8 +113,8 @@ bootService.setup()
 	worker.job = {
 		genomeIds: program.genomeIds,
 		modules: {
-			once: onceModuleNames,
-			perGenome: perGenomeModuleNames
+			once: onceModuleTexts,
+			perGenome: perGenomeModuleTexts
 		}
 	}
 	return worker.save()
@@ -131,8 +136,8 @@ bootService.setup()
 		sequelize: bootService.sequelize()
 	}
 
-	return runOnceModules(app, onceModules)
-	.then(() => runPerGenomeModules(app, perGenomeModules))
+	return runOnceModules(app, requestedOnceModules)
+	.then(() => runPerGenomeModules(app, requestedPerGenomeModules))
 })
 .then(() => {
 	// Worker cleanup
@@ -189,11 +194,55 @@ function getModuleRootFiles(srcPath) {
 	})
 }
 
+function modulesHelp(modules) {
+	if (!modules.length)
+		return '     [none]'
+
+	return modules.map(moduleHelp).join('\n')
+}
+
+function moduleHelp(module) {
+	let help = `     ${module.name}`
+	if (module.cli) {
+		let cli = module.cli()
+		if (cli.usage)
+			help += `:${cli.usage}`
+		if (cli.description)
+			help += `: ${cli.description}`
+		if (cli.moreInfo) {
+			help += '\n'
+			help += '       ' + cli.moreInfo.split('\n').join('\n       ') + '\n'
+		}
+	}
+	return help
+}
+
+function deserializeModuleText(moduleText) {
+	let matches = /^([\w-]+)(?::([\w-+]+))$/.exec(moduleText),
+		result = {
+			name: moduleText,
+			paramText: null,
+			param: null,
+			ModuleClass: null,
+			subModuleNames: null // e.g. Compute:pfam30
+		}
+
+	if (matches) {
+		result.name = matches[1]
+		result.paramText = matches[2]
+	}
+
+	return result
+}
+
 function dieIfRequestedInvalidModules() {
-	let invalidOnceModuleNames = arrayUtil.difference(onceModuleNames, availableOnceModuleNames)
+	let requestedOnceModuleNames = requestedOnceModules.map((x) => x.name),
+		invalidOnceModuleNames = arrayUtil.difference(requestedOnceModuleNames, availableOnceModuleNames)
 	if (invalidOnceModuleNames.length)
 		die(`the following "once" module(s) are invalid: ${invalidOnceModuleNames.join(', ')}`)
-	let invalidPerGenomeModuleNames = arrayUtil.difference(perGenomeModuleNames, availablePerGenomeModuleNames)
+
+	let requestedPerGenomeModuleNames = requestedPerGenomeModules.map((x) => x.name),
+		invalidPerGenomeModuleNames = arrayUtil.difference(requestedPerGenomeModuleNames, availablePerGenomeModuleNames)
 	if (invalidPerGenomeModuleNames.length)
 		die(`the following "per-genome" module(s) are invalid: ${invalidPerGenomeModuleNames.join(', ')}`)
 }
@@ -203,7 +252,7 @@ function die(message, optError) {
 	console.error(`FATAL: ${message}`)
 	if (optError) {
 		// eslint-disable-next-line no-console
-		console.error(optError)
+		console.error('\n', optError)
 	}
 	else {
 		console.error('-'.repeat(60)) // eslint-disable-line
@@ -212,19 +261,31 @@ function die(message, optError) {
 	process.exit(1)
 }
 
-function modulesByName(names, sourceModules) {
-	let result = []
+function parseModuleParameters(requestedModule, sourceModules) {
+	let ModuleClass = moduleByName(requestedModule.name, sourceModules)
+	assert(ModuleClass)
+	requestedModule.ModuleClass = ModuleClass
 
-	for (let name of names) {
-		for (let module of sourceModules) {
-			if (name === module.name) {
-				result.push(module)
-				break
-			}
+	let cli = ModuleClass.cli()
+	if (cli && cli.parse) {
+		try {
+			requestedModule.param = cli.parse(requestedModule.paramText)
+			if (cli.subModuleNames)
+				requestedModule.subModuleNames = cli.subModuleNames(requestedModule.param)
+		}
+		catch (error) {
+			die(`An error occurred while parsing the parameters for ${requestedModule.name}`, error)
 		}
 	}
+}
 
-	return result
+function moduleByName(name, sourceModules) {
+	for (let module of sourceModules) {
+		if (name === module.name)
+			return module
+	}
+
+	return null
 }
 
 function parseGenomeIds(csvGenomeIds) {
@@ -318,14 +379,14 @@ function shutdownCheck() {
 }
 
 function runOnceModules(app, modules) {
-	return Promise.each(modules, (ModuleClass) => {
+	return Promise.each(modules, (module) => {
 		shutdownCheck()
-		logger.info(`Starting "once" module: ${ModuleClass.name}`)
-		app.logger = logger.child({module: ModuleClass.name})
-		let module = new ModuleClass(app)
-		return module.main()
+		logger.info(`Starting "once" module: ${module.name}`)
+		app.logger = logger.child({module: module.name})
+		let moduleInstance = new module.ModuleClass(app, module.param)
+		return moduleInstance.main()
 		.then(() => {
-			logger.info(`Module finished normally: ${ModuleClass.name}`)
+			logger.info(`Module finished normally: ${module.name}`)
 		})
 	})
 }
@@ -344,7 +405,8 @@ function runPerGenomeModules(app, modules) {
 
 			logger.info({genomeId: genome.id, name: genome.name}, `Locked genome: ${genome.name}`)
 
-			for (let ModuleClass of modules) {
+			for (let module of modules) {
+				let ModuleClass = module.ModuleClass
 				shutdownCheck()
 				app.logger = logger.child({
 					module: ModuleClass.name,
@@ -353,10 +415,10 @@ function runPerGenomeModules(app, modules) {
 						name: genome.name
 					}
 				})
-				logger.info(`Starting module: ${ModuleClass.name}`)
-				let module = new ModuleClass(app, genome)
-				yield module.main()
-				logger.info(`Module finished normally: ${ModuleClass.name}`)
+				logger.info(`Starting module: ${module.name}`)
+				let moduleInstance = new ModuleClass(app, genome, module.param)
+				yield moduleInstance.main()
+				logger.info(`Module finished normally: ${module.name}`)
 			}
 
 			yield unlockGenome(genome)
@@ -369,7 +431,8 @@ function lockNextGenome(app, modules) {
 	let genomesTable = app.models.Genome.tableName,
 		workerModulesTable = app.models.WorkerModule.tableName,
 		genomeIdClause = program.genomeIds ? `AND a.id IN (${program.genomeIds.join(',')}) ` : '',
-		queryModuleArrayString = `ARRAY['${modules.map((module) => module.name).join("','")}']`,
+		queryModuleNames = flattenModuleNames(modules),
+		queryModuleArrayString = `ARRAY['${queryModuleNames.join("','")}']`,
 		sql =
 `WITH done_genomes_modules AS (
 	SELECT b.genome_id, array_agg(module) as modules
@@ -398,6 +461,27 @@ FOR UPDATE`
 			}, {fields: ['worker_id']})
 		})
 	})
+}
+
+/**
+ * @param {Array.<Object>} modules
+ * @returns {Array.<String>} - each item is by default the module name unless subModuleNames is defined, in which case each subModuleNames becomes a separate item
+ */
+function flattenModuleNames(modules) {
+	let result = []
+
+	modules.forEach((module) => {
+		if (module.subModuleNames) {
+			module.subModuleNames.forEach((x) => {
+				result.push(x)
+			})
+		}
+		else {
+			result.push(module.name)
+		}
+	})
+
+	return result
 }
 
 function unlockGenome(genome) {

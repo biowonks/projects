@@ -27,7 +27,7 @@ module.exports = function(Sequelize, models, extras) {
 	}
 
 	let instanceMethods = {
-		updateState: function(newState) {
+		updateState: function(newState, optTransaction) {
 			let changes = {
 				state: newState
 			}
@@ -36,7 +36,10 @@ module.exports = function(Sequelize, models, extras) {
 			else
 				changes.finished_at = this.sequelize.fn('clock_timestamp')
 
-			return this.update(changes, {fields: Object.keys(changes)})
+			return this.update(changes, {
+				fields: Object.keys(changes),
+				transaction: optTransaction
+			})
 		}
 	}
 

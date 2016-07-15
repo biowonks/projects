@@ -20,18 +20,22 @@ class PerGenomePipelineModule extends AbstractPipelineModule {
 	}
 
 	doneModules() {
-		let sql = `SELECT array_agg(distinct(module)) as done_modules
-FROM ${this.models_.WorkerModule.tableName}
-WHERE genome_id is ? AND state = 'done'`
+		let sql = `SELECT array_agg(module) as done_modules
+FROM ${this.models_.WorkerModule.getTableName()}
+WHERE genome_id = ? AND state = 'done'`
 
-		return this.sequelize_.query(sql, {raw: true, replacements: [this.genome_.id]})
+		return this.sequelize_.query(sql, {
+			raw: true,
+			type: this.sequelize_.QueryTypes.SELECT,
+			replacements: [this.genome_.id]
+		})
 		.then((result) => result[0].done_modules)
 	}
 
-	newWorkerData() {
-		let workerData = super.newWorkerData()
-		workerData.genome_id = this.genome_.id
-		return workerData
+	newWorkerModuleData() {
+		let workerModuleData = super.newWorkerModuleData()
+		workerModuleData.genome_id = this.genome_.id
+		return workerModuleData
 	}
 
 	// ----------------------------------------------------

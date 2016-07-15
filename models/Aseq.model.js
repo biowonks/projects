@@ -49,6 +49,14 @@ module.exports = function(Sequelize, models, extras) {
 		},
 
 		/**
+		 * @param {Seq} seq
+		 * @returns {Aseq}
+		 */
+		fromSeq: function(seq) {
+			return this.build(this.dataFromSeq(seq))
+		},
+
+		/**
 		 * @returns {Array.<String>} - toolId field names that contain the results of running that specific tool
 		 */
 		toolIdFieldNames: function() {
