@@ -24,11 +24,17 @@ class ModuleDepNode {
 			pool = moduleNamesWithDeps.slice(0),
 			nameNodeMap = new Map()
 
-		function *takeSubRoots(array) {
+		/**
+		 * Generator function that yields module names with no dependencies.
+		 *
+		 * @param {Array.<Object>} array
+		 * @yields {Object} - generated value
+		 */
+		function *takeNextWithNoDeps(array) {
 			let i = 0
 			while (i < array.length) {
-				let isRoot = array[i].deps.length === 0
-				if (isRoot)
+				let noDeps = array[i].deps.length === 0
+				if (noDeps)
 					yield array.splice(i, 1)[0]
 				else
 					// Not root
@@ -36,32 +42,39 @@ class ModuleDepNode {
 			}
 		}
 
-		function throwIfDuplicate(name) {
+		/**
+		 * @param {String} name
+		 */
+		function throwIfDuplicateName(name) {
 			let isDuplicate = nameNodeMap.has(name)
 			if (isDuplicate)
 				throw new Error(`duplicate module name: ${name}`)
 		}
 
+		/**
+		 * @param {String} name
+		 * @returns {ModuleDepNode}
+		 */
 		function createNode(name) {
-			throwIfDuplicate(name)
+			throwIfDuplicateName(name)
 			let node = new ModuleDepNode(name)
 			nameNodeMap.set(name, node)
 			return node
 		}
 
 		/**
-		 * node dependsOn parentNode
+		 * @param {ModuleDepNode} node
+		 * @param {ModuleDepNode} parentNode
 		 */
 		function linkKin(node, parentNode) {
 			parentNode.children_.push(node)
 			node.parents_.push(parentNode)
 		}
 
-		for (let x of takeSubRoots(pool)) {
-			let subRootNode = createNode(x.name)
-			linkKin(subRootNode, root)
-		}
-
+		/**
+		 * @param {Array.<Object>} array
+		 * @returns {Object} - next module that has all dependency nodes in the graph
+		 */
 		function takeNext(array) {
 			for (let i = 0, z = array.length; i < z; i++) {
 				let moduleDeps = array[i]
@@ -72,12 +85,25 @@ class ModuleDepNode {
 			return null
 		}
 
-		function allDepNodesCreated(deps) {
-			return deps.every((x) => nameNodeMap.has(x))
+		/**
+		 * @param {Array.<String>} depNames
+		 * @returns {Boolean} - true if nodes for all ${depNames} have been created; false otherwise
+		 */
+		function allDepNodesCreated(depNames) {
+			return depNames.every((x) => nameNodeMap.has(x))
 		}
 
+		// Step 1: Create the "root" nodes (these are those immediately below the topmost true root
+		// node)
+		for (let x of takeNextWithNoDeps(pool)) {
+			let subRootNode = createNode(x.name)
+			linkKin(subRootNode, root)
+		}
+
+		// Step 2: Iteratively process all modules + dependencies that have all dependencies
+		// satisfied
 		for (let moduleDeps; (moduleDeps = takeNext(pool));) {
-			throwIfDuplicate(moduleDeps.name)
+			throwIfDuplicateName(moduleDeps.name)
 			let node = createNode(moduleDeps.name)
 			moduleDeps.deps.forEach((depName) => {
 				if (depName === moduleDeps.name) {
@@ -90,6 +116,7 @@ class ModuleDepNode {
 			})
 		}
 
+		// Step 3: ensure that there are no "orphan" nodes - dependencies that do not exist
 		let hasOrphanNodes = pool.length > 0
 		if (hasOrphanNodes) {
 			let invalidNames = pool.map((x) => x.name).join(', ')
