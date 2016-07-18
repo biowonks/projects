@@ -13,12 +13,74 @@ describe('pipeline', function() {
 			new ModuleDepNode('name', {})
 		})
 
+		describe('dependsOn', function() {
+			let root = ModuleDepNode.createFromDepList([
+					{name: 'A',		deps: []},
+					{name: 'B1',	deps: ['A']},
+					{name: 'B2',	deps: ['A']},
+					{name: 'C',		deps: ['B1', 'B2']},
+
+					{name: 'A2',	deps: []},
+					{name: 'B3',	deps: ['A2']}
+				]),
+				map = root.nameNodeMap(),
+				A = map.get('A'),
+				B1 = map.get('B1'),
+				B2 = map.get('B2'),
+				C = map.get('C'),
+				A2 = map.get('A2'),
+				B3 = map.get('B3')
+
+			it('A !-> B1 or A2', function() {
+				expect(A.dependsOn(B1)).false
+				expect(A.dependsOn(A2)).false
+			})
+
+			it('B1 dependsOn A', function() {
+				expect(B1.dependsOn(A)).true
+			})
+
+			it('C dependsOn A, B1, and B2', function() {
+				expect(C.dependsOn(A)).true
+				expect(C.dependsOn(B1)).true
+				expect(C.dependsOn(B2)).true
+			})
+
+			it('!A dependsOn C', function() {
+				expect(A.dependsOn(C)).false
+			})
+
+			it('B3 dependsOn A2', function() {
+				expect(B3.dependsOn(A2)).true
+				expect(A2.dependsOn(B3)).false
+			})
+		})
+
 		it('name', function() {
 			let x = new ModuleDepNode('core-data')
 			expect(x.name()).equal('core-data')
 
 			let y = new ModuleDepNode(null)
 			expect(y.name()).null
+		})
+
+		it('nameNodeMap', function() {
+			let node = ModuleDepNode.createFromDepList([
+					{name: 'A',		deps: []},
+					{name: 'B1',		deps: ['A']},
+					{name: 'B2',		deps: ['A']},
+					{name: 'C',		deps: ['B1', 'B2']}
+				]),
+				x = node.nameNodeMap()
+
+			expect(x.has('A')).true
+			expect(x.get('A').name()).equal('A')
+			expect(x.has('B1')).true
+			expect(x.get('B1').name()).equal('B1')
+			expect(x.has('B2')).true
+			expect(x.get('B2').name()).equal('B2')
+			expect(x.has('C')).true
+			expect(x.get('C').name()).equal('C')
 		})
 
 		it('[set] WorkerModule', function() {

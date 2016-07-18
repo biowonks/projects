@@ -123,6 +123,8 @@ class ModuleDepNode {
 			throw new Error(`The following module names are invalid: ${invalidNames}`)
 		}
 
+		nameNodeMap.clear()
+
 		return root
 	}
 
@@ -149,10 +151,32 @@ class ModuleDepNode {
 	}
 
 	/**
+	 * @param {ModuleDepNode} otherNode
+	 * @returns {Boolean} - true if this node depends on ${otherNode} at any point in the graph; false otherwise
+	 */
+	dependsOn(otherNode) {
+		if (this.parents_.indexOf(otherNode) >= 0)
+			return true
+
+		for (let parentNode of this.parents_) {
+			if (parentNode.dependsOn(otherNode))
+				return true
+		}
+
+		return false
+	}
+
+	/**
 	 * @returns {String} - the name of the worker module
 	 */
 	name() {
 		return this.name_
+	}
+
+	nameNodeMap() {
+		let map = new Map()
+		this.recurseBuildNameNodeMap_(this, map)
+		return map
 	}
 
 	/**
@@ -172,5 +196,13 @@ class ModuleDepNode {
 
 	workerModule() {
 		return this.workerModule_
+	}
+
+	// ----------------------------------------------------
+	// Private methods
+	recurseBuildNameNodeMap_(node, map) {
+		map.set(node.name_, node)
+		for (let child of node.children_)
+			this.recurseBuildNameNodeMap_(child, map)
 	}
 }
