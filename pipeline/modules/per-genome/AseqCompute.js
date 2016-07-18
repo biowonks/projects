@@ -10,7 +10,7 @@ const PerGenomePipelineModule = require('../PerGenomePipelineModule'),
 	arrayUtil = require('../../lib/array-util')
 
 module.exports =
-class Compute extends PerGenomePipelineModule {
+class AseqCompute extends PerGenomePipelineModule {
 	/**
 	 * @returns {Object} - enumerated information on how to call this module via the pipeline entrypoint. Supported tools include those with fields defined in the Aseq model class and that have a corresponding tool runner.
 	 */
@@ -40,7 +40,7 @@ class Compute extends PerGenomePipelineModule {
 				return inputToolIds
 			},
 			subModuleNames: function(parseResult) {
-				return parseResult.map((toolId) => `Compute:${toolId}`)
+				return parseResult.map((toolId) => `AseqCompute:${toolId}`)
 			}
 		}
 	}
@@ -77,7 +77,7 @@ class Compute extends PerGenomePipelineModule {
 		let sql = `
 SELECT array_agg(substring(module, 9)) as done_compute_tool_ids
 FROM ${this.models_.WorkerModule.getTableName()}
-WHERE genome_id = ? AND module like 'Compute:%'`
+WHERE genome_id = ? AND module like '${this.name()}:%'`
 
 		return this.sequelize_.query(sql, {
 			replacements: [this.genome_.id],
