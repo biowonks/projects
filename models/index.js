@@ -22,36 +22,42 @@
 'use strict'
 
 // Core
-let fs = require('fs'),
+const fs = require('fs'),
 	path = require('path')
 
 // Vendor
-let _ = require('lodash'),
+const _ = require('lodash'),
 	inflection = require('inflection'),
 	Sequelize = require('sequelize')
 
 // Local
-let setupAssociations = require('./associations')
+const modelExtras = require('./model-extras')(Sequelize), // eslint-disable-line no-mixed-requires
+	setupAssociations = require('./associations')
 
 // Constants
-let kModelFileNameSuffix = '.model.js' // All files ending with this are treated as models
+const kModelFileNameSuffix = '.model.js' // All files ending with this are treated as models
 
-module.exports = function(sequelize, logger) {
-	let models = loadModels(sequelize, logger)
-	setupAssociations(models, logger)
+module.exports = function(sequelize, optLogger) {
+	let models = loadModels(sequelize, optLogger)
+	setupAssociations(models, optLogger)
 	return models
 }
 
+module.exports.withDummyConnection = function(optLogger) {
+	return module.exports(new Sequelize(null, null, null, {dialect: 'postgres'}), optLogger)
+}
+
 // ----------------------------------------------------------------------------
-function loadModels(sequelize, logger) {
+function loadModels(sequelize, optLogger) {
 	let models = {}
 
-	logger.info('Loading models')
+	if (optLogger)
+		optLogger.info('Loading models')
 
 	getModelFileNames()
 	.forEach((modelFileName) => {
 		// eslint-disable-next-line global-require
-		let definition = require('./' + modelFileName)(Sequelize, models)
+		let definition = require('./' + modelFileName)(Sequelize, models, modelExtras)
 		if (!definition)
 			throw new Error(`Missing return value from model file, ${modelFileName}`)
 
@@ -60,7 +66,8 @@ function loadModels(sequelize, logger) {
 
 		models[modelName] = sequelize.define(modelName, definition.fields, definition.params)
 
-		logger.info({modelName, table: definition.params.tableName}, `Loaded model: ${modelName} (${definition.params.tableName} table)`)
+		if (optLogger)
+			optLogger.info({modelName, table: definition.params.tableName}, `Loaded model: ${modelName} (${definition.params.tableName} table)`)
 	})
 
 	return models
@@ -82,10 +89,7 @@ function nameFromFileName(modelFileName) {
 
 function setupDefinition(definition, modelName) {
 	let defaultParams = {
-		tableName: defaultTableName(modelName),
-		classMethods: {
-			fieldNames: Object.keys(definition.fields)
-		}
+		tableName: defaultTableName(modelName)
 	}
 
 	if (!definition.params)
@@ -95,5 +99,8 @@ function setupDefinition(definition, modelName) {
 }
 
 function defaultTableName(modelName) {
-	return inflection.underscore(inflection.pluralize(modelName))
+	return inflection.underscore(modelName)
+		.split('_')
+		.map((val) => inflection.pluralize(val))
+		.join('_')
 }

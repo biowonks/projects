@@ -21,6 +21,52 @@
 			"outDir": null
 		},
 		{
+			"name": "Pipeline",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/pipeline/index.js",
+			"stopOnEntry": false,
+			"cwd": "${workspaceRoot}/pipeline",
+			"args": [
+				"-o",
+				"SeedNewGenomes",
+				"NCBICoreData"
+			],
+			"preLaunchTask": null,
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "develop"
+			},
+			"externalConsole": false,
+			"sourceMaps": false,
+			"outDir": null
+		},
+		{
+			"name": "Undo migration",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/db/undo-migration.js",
+			"stopOnEntry": false,
+			"cwd": "${workspaceRoot}/pipeline",
+			"args": [
+				"-y"
+			],
+			"preLaunchTask": null,
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "develop"
+			},
+			"externalConsole": false,
+			"sourceMaps": false,
+			"outDir": null
+		},
+		{
 			"name": "Unit tests (local)",
 			"type": "node",
 			"request": "launch",
@@ -30,7 +76,9 @@
 			"args": [
 				"--no-timeouts",
 				"--require", "testing/test-setup.js",
-				"pipeline/**/*.tests.js"
+				"pipeline/**/*.tests.js",
+				"services/**/*.tests.js",
+				"models/**/*.tests.js"
 			],
 			"runtimeExecutable": null
 		},

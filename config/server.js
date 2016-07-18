@@ -6,7 +6,7 @@ let os = require('os')
 module.exports = function() {
 	return {
 		host: process.env.HOST || '127.0.0.1',
-		port: process.env.PORT || 7001, // eslint-disable-line no-magic-numbers
+		port: process.env.PORT || 5000, // eslint-disable-line no-magic-numbers
 		cpus: os.cpus().length, // By default, use all available CPUs
 		restartAutomatically: true,
 		restartDelayScaleFactor: 2, // Double the delay with each subsequent crash

@@ -1,10 +1,10 @@
 'use strict'
 
-// Core node libraries
-let assert = require('assert')
+// Core
+const assert = require('assert')
 
-// Local includes
-let LocationPoint = require('./LocationPoint')
+// Local
+const LocationPoint = require('./LocationPoint')
 
 // 10.20
 module.exports =

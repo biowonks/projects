@@ -31,7 +31,9 @@ let kWatchPatterns = [
 // gulp.task('default', gulp.series(['server', 'watch'])
 
 let kTestFiles = [
-	'pipeline/**/*.tests.js'
+	'pipeline/**/*.tests.js',
+	'services/**/*.tests.js',
+	'models/**/*.tests.js'
 ]
 
 let kRunTimeFiles = [

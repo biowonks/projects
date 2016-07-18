@@ -2,7 +2,8 @@
 
 'use strict'
 
-let BetweenLocationPoint = require('./BetweenLocationPoint')
+// Local
+const BetweenLocationPoint = require('./BetweenLocationPoint')
 
 describe('BetweenLocationPoint', function() {
 	describe('constructor', function() {

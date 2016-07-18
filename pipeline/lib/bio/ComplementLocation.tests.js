@@ -1,8 +1,8 @@
 /* eslint-disable no-unused-expressions, no-magic-numbers, no-new */
-
 'use strict'
 
-let ComplementLocation = require('./ComplementLocation'),
+// Local
+const ComplementLocation = require('./ComplementLocation'),
 	Location = require('./Location'),
 	LocationPoint = require('./LocationPoint'),
 	Seq = require('./Seq')
@@ -22,6 +22,42 @@ describe('ComplementLocation', function() {
 		it('valid location works', function() {
 			let location = new Location(new LocationPoint(1), new LocationPoint(3))
 			new ComplementLocation(location)
+		})
+	})
+
+	describe('lowerBound', function() {
+		it('returns the start location points lower bound', function() {
+			let lp1 = new LocationPoint(5),
+				lp2 = new LocationPoint(10),
+				x = new ComplementLocation(new Location(lp1, lp2))
+
+			expect(x.lowerBound()).equal(lp1.lowerBound())
+		})
+	})
+
+	describe('upperBound', function() {
+		it('returns the stop location points upper bound', function() {
+			let lp1 = new LocationPoint(5),
+				lp2 = new LocationPoint(10),
+				x = new ComplementLocation(new Location(lp1, lp2))
+
+			expect(x.upperBound()).equal(lp2.upperBound())
+		})
+	})
+
+	describe('strand', function() {
+		it('always returns -', function() {
+			let location = new Location(new LocationPoint(1), new LocationPoint(3)),
+				x = new ComplementLocation(location)
+
+			expect(x.strand()).equal('-')
+		})
+
+		it('complement(complement(location)) returns -', function() {
+			let location = new Location(new LocationPoint(1), new LocationPoint(3)),
+				x = new ComplementLocation(new ComplementLocation(location))
+
+			expect(x.strand()).equal('-')
 		})
 	})
 

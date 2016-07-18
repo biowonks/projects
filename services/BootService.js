@@ -6,13 +6,13 @@ const _ = require('lodash'),
 	Promise = require('bluebird'),
 	Sequelize = require('sequelize')
 
+// Vendor
+const publicIp = require('public-ip'),
+	Migrator = require('sequelize-migrator').Migrator
+
 // Local
 const config = require('../config'),
-	loadModels = require('../models'),
-	MigratorService = require('./MigratorService')
-
-// Vendor
-const publicIp = require('public-ip')
+	loadModels = require('../models')
 
 /**
  * Encapsulates a common configuration and all boot strapping methods. May be used to call
@@ -34,7 +34,7 @@ class BootService {
 		this.logger_ = this.createLogger_(options.logger)
 		this.bootLogger_ = this.logger_.child({module: 'bootService'})
 		this.sequelize_ = null
-		this.migratorService_ = null
+		this.migrator_ = null
 		this.models_ = null
 		this.setupComplete_ = false
 		this.publicIP_ = null
@@ -95,8 +95,18 @@ class BootService {
 
 		if (!this.sequelize_)
 			this.sequelize_ = new Sequelize(dbConfig.name, dbConfig.user, dbConfig.password, dbConfig.sequelizeOptions)
-		if (!this.migratorService_)
-			this.migratorService_ = new MigratorService(this.sequelize_, config.database.migrations.umzug, this.bootLogger_)
+
+		if (!this.migrator_) {
+			let options = {
+				path: dbConfig.migrations.path,
+				pattern: dbConfig.migrations.pattern,
+				modelName: dbConfig.migrations.modelName,
+				tableName: dbConfig.migrations.tableName,
+				schema: dbConfig.migrations.schema,
+				logger: this.logger_.child({module: 'migrations'})
+			}
+			this.migrator_ = new Migrator(this.sequelize_, options)
+		}
 	}
 
 	loadModels() {
@@ -145,8 +155,8 @@ class BootService {
 		return this.models_
 	}
 
-	migratorService() {
-		return this.migratorService_
+	migrator() {
+		return this.migrator_
 	}
 
 	publicIP() {
@@ -201,7 +211,7 @@ class BootService {
 	}
 
 	runPendingMigrations_() {
-		return this.migratorService_.up()
+		return this.migrator_.up()
 	}
 }
 

@@ -1,8 +1,8 @@
 /* eslint-disable no-magic-numbers, no-new */
-
 'use strict'
 
-let JoinLocation = require('./JoinLocation'),
+// Local
+const JoinLocation = require('./JoinLocation'),
 	ComplementLocation = require('./ComplementLocation'),
 	Location = require('./Location'),
 	LocationPoint = require('./LocationPoint'),
@@ -20,6 +20,61 @@ describe('JoinLocation', function() {
 			expect(function() {
 				new JoinLocation([])
 			}).throw(Error)
+		})
+	})
+
+	describe('bounds', function() {
+		let location1 = new Location(new LocationPoint(8), new LocationPoint(10)),
+			location2 = new Location(new LocationPoint(1), new LocationPoint(2)),
+			x = new JoinLocation([location1, location2])
+
+		describe('lowerBound', function() {
+			it('returns the first locations lower bound', function() {
+				expect(x.lowerBound()).equal(location1.lowerBound())
+			})
+		})
+
+		describe('upperBound', function() {
+			it('returns the last locations upper bound', function() {
+				expect(x.upperBound()).equal(location2.upperBound())
+			})
+		})
+	})
+
+	describe('length', function() {
+		let notCircular = false,
+			circular = true
+
+		it('linear join(1..2,5..6) is 4', function() {
+			let location1 = new Location(new LocationPoint(1), new LocationPoint(2)),
+				location2 = new Location(new LocationPoint(5), new LocationPoint(6)),
+				x = new JoinLocation([location1, location2])
+
+			expect(x.length(notCircular, 10)).equal(4)
+		})
+
+		it('linear join(5..6,1..2) is 4', function() {
+			let location1 = new Location(new LocationPoint(5), new LocationPoint(6)),
+				location2 = new Location(new LocationPoint(1), new LocationPoint(2)),
+				x = new JoinLocation([location1, location2])
+
+			expect(x.length(notCircular, 10)).equal(4)
+		})
+
+		it('circular join(8..1) length 10 returns 4', function() {
+			let location = new Location(new LocationPoint(8), new LocationPoint(1)),
+				x = new JoinLocation([location])
+
+			expect(x.length(circular, 10)).equal(4)
+		})
+	})
+
+	describe('strand', function() {
+		it('always returns +', function() {
+			let location = new Location(new LocationPoint(1), new LocationPoint(3)),
+				x = new JoinLocation([location])
+
+			expect(x.strand()).equal('+')
 		})
 	})
 
