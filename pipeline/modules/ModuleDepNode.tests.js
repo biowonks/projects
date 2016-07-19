@@ -1,4 +1,4 @@
-/* eslint-disable no-new, no-unused-expressions */
+/* eslint-disable no-new, no-unused-expressions, no-magic-numbers */
 
 'use strict'
 
@@ -6,7 +6,7 @@
 let ModuleDepNode = require('./ModuleDepNode')
 
 describe('pipeline', function() {
-	describe('ModuleDepNode', function() {
+	describe.only('ModuleDepNode', function() {
 		it('constructor', function() {
 			new ModuleDepNode()
 			new ModuleDepNode('name')
@@ -56,6 +56,35 @@ describe('pipeline', function() {
 			})
 		})
 
+		describe('depth of: A -> B1, A -> B2, B1 -> D, B2 -> C, C -> D', function() {
+			let x = ModuleDepNode.createFromDepList([
+					{name: 'A',		deps: []},
+					{name: 'B1',	deps: ['A']},
+					{name: 'B2',	deps: ['A']},
+					{name: 'C',		deps: ['B2']},
+					{name: 'D',		deps: ['B1', 'C']}
+				]),
+				nameNodeMap = x.nameNodeMap(x),
+				inputs = [
+					['A', 1],
+					['B1', 2],
+					['B2', 2],
+					['C', 3],
+					['D', 7]
+				]
+
+			it('root returns 0', function() {
+				expect(x.depth()).equal(0)
+			})
+
+			for (let input of inputs) {
+				let [name, expectedDepth] = input
+				it(`${name} returns ${expectedDepth}`, function() {
+					expect(nameNodeMap.get(name).depth()).equal(expectedDepth)
+				})
+			}
+		})
+
 		it('name', function() {
 			let x = new ModuleDepNode('core-data')
 			expect(x.name()).equal('core-data')
@@ -99,7 +128,7 @@ describe('pipeline', function() {
 			}).throw(Error)
 		})
 
-		describe('createFromDepList', function() {
+		describe('createFromDepList (static)', function() {
 			function checkGraph(node, expected) {
 				// Is node a root node?
 				expect(node.name()).null
@@ -300,6 +329,33 @@ describe('pipeline', function() {
 					])
 				}).throw(Error)
 			})
+		})
+
+		it('traverseParents (static) calls callbackFn for every parent', function() {
+			let x = ModuleDepNode.createFromDepList([
+				{name: 'A',		deps: []},
+				{name: 'B1',	deps: ['A']},
+				{name: 'B2',	deps: ['A']},
+				{name: 'C',		deps: ['B2']},
+				{name: 'D',		deps: ['B1', 'C']}
+			])
+
+			let names = [],
+				nameNodeMap = x.nameNodeMap(),
+				D = nameNodeMap.get('D')
+			ModuleDepNode.traverseParents(D, (node) => {
+				names.push(node.name())
+			})
+
+			expect(names).eql([
+				'B1',
+				'A',
+				null,
+				'C',
+				'B2',
+				'A',
+				null
+			])
 		})
 	})
 })

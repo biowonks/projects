@@ -128,6 +128,13 @@ class ModuleDepNode {
 		return root
 	}
 
+	static traverseParents(node, callbackFn) {
+		for (let parentNode of node.parents()) {
+			callbackFn(parentNode)
+			ModuleDepNode.traverseParents(parentNode, callbackFn)
+		}
+	}
+
 	/**
 	 * A module may depend on multiple modules - these are its parents. The reverse is also true,
 	 * this module may be required by multiple modules. Thus, there may be 0..n parents and 0..m
@@ -164,6 +171,15 @@ class ModuleDepNode {
 		}
 
 		return false
+	}
+
+	/**
+	 * @returns {Number} - the cumulative depth of all paths from the root to this node
+	 */
+	depth() {
+		let d = 0
+		ModuleDepNode.traverseParents(this, () => d++)
+		return d
 	}
 
 	/**
