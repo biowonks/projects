@@ -38,7 +38,7 @@ class ModuleDepGraph {
 		for (let node of nodes) {
 			this.traverseParents_(node, (parentNode) => {
 				let workerModule = parentNode.workerModule(),
-					isIncomplete = !workerModule && !moduleNamesSet.has(parentNode.name())
+					isIncomplete = !moduleNamesSet.has(parentNode.name()) && (!workerModule || workerModule.state === 'error')
 				if (isIncomplete)
 					resultSet.add(parentNode.name())
 			})
@@ -53,7 +53,7 @@ class ModuleDepGraph {
 	 */
 	allDependenciesDone(moduleName) {
 		let node = this.nodeByName_(moduleName)
-		return this.traverseParentsEvery_(node, (parentNode) => {
+		return node.traverseParentsEvery((parentNode) => {
 			let workerModule = parentNode.workerModule()
 			return !!workerModule && workerModule.state === 'done'
 		})
@@ -95,36 +95,5 @@ class ModuleDepGraph {
 
 	toNodes_(moduleNames) {
 		return moduleNames.map((x) => this.nodeByName_(x))
-	}
-
-	traverseParents_(node, callbackFn) {
-		for (let parentNode of node.parents()) {
-			callbackFn(parentNode)
-			this.traverseParents_(parentNode, callbackFn)
-		}
-	}
-
-	traverseParentsEvery_(node, conditionFn) {
-		for (let parentNode of node.parents()) {
-			let value = conditionFn(parentNode)
-			if (!value)
-				return false
-
-			return this.traverseParentsEvery_(parentNode, conditionFn)
-		}
-
-		return true
-	}
-
-	traverseParentsSome_(node, conditionFn) {
-		for (let parentNode of node.parents()) {
-			let value = conditionFn(parentNode)
-			if (value)
-				return true
-
-			return this.traverseParentsSome_(parentNode, conditionFn)
-		}
-
-		return false
 	}
 }
