@@ -66,11 +66,11 @@ describe('pipeline', function() {
 				]),
 				nameNodeMap = x.nameNodeMap(x),
 				inputs = [
-					['A', 0],
-					['B1', 1],
-					['B2', 1],
-					['C', 2],
-					['D', 5]
+					['A', 1],
+					['B1', 2],
+					['B2', 2],
+					['C', 3],
+					['D', 7]
 				]
 
 			it('root returns 0', function() {
@@ -329,65 +329,6 @@ describe('pipeline', function() {
 					])
 				}).throw(Error)
 			})
-		})
-
-		it('traverseParents calls callbackFn for every parent', function() {
-			let graph = ModuleDepNode.createFromDepList([
-				{name: 'A',		deps: []},
-				{name: 'B1',	deps: ['A']},
-				{name: 'B2',	deps: ['A']},
-				{name: 'C',		deps: ['B2']},
-				{name: 'D',		deps: ['B1', 'C']}
-			])
-
-			let names = [],
-				nameNodeMap = graph.nameNodeMap(),
-				D = nameNodeMap.get('D')
-			D.traverseParents((node) => {
-				names.push(node.name())
-			})
-
-			expect(names).eql([
-				'B1',
-				'A',
-				'C',
-				'B2',
-				'A'
-			])
-		})
-
-		it('traverseParentsEvery returns true when every element passes', function() {
-			let graph = ModuleDepNode.createFromDepList([
-				{name: 'A',		deps: []},
-				{name: 'A1',	deps: ['A']},
-				{name: 'A2',	deps: ['A']},
-				{name: 'X',		deps: ['A1', 'A2']}
-			])
-
-			let nameNodeMap = graph.nameNodeMap(),
-				X = nameNodeMap.get('X'),
-				result = X.traverseParentsEvery((node) => node.name()[0] === 'A')
-			expect(result).true
-
-			result = X.traverseParentsEvery((node) => /^[12]$/.test(node.name()[1]))
-			expect(result).false
-		})
-
-		it('traverseParentsSome returns true when a element passes', function() {
-			let graph = ModuleDepNode.createFromDepList([
-				{name: 'A',		deps: []},
-				{name: 'A1',	deps: ['A']},
-				{name: 'A2',	deps: ['A']},
-				{name: 'X',		deps: ['A1', 'A2']}
-			])
-
-			let nameNodeMap = graph.nameNodeMap(),
-				X = nameNodeMap.get('X'),
-				result = X.traverseParentsSome((node) => node.name()[1] === '1')
-			expect(result).true
-
-			result = X.traverseParentsSome((node) => node.name()[0] === 'Z')
-			expect(result).false
 		})
 	})
 })

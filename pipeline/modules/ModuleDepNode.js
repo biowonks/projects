@@ -1,7 +1,10 @@
 'use strict'
 
+// Local
+const AbstractManyManyNode = require('../lib/data-structures/graph/AbstractManyManyNode')
+
 module.exports =
-class ModuleDepNode {
+class ModuleDepNode extends AbstractManyManyNode {
 	/**
 	 * Creates a dependency graph from an array of module names with their associated dependencies.
 	 * ${moduleNamesWithDeps} should be structured as follows:
@@ -130,24 +133,15 @@ class ModuleDepNode {
 
 	/**
 	 * A module may depend on multiple modules - these are its parents. The reverse is also true,
-	 * this module may be required by multiple modules. Thus, there may be 0..n parents and 0..m
-	 * children.
+	 * this module may be required by multiple modules.
 	 *
 	 * @param {String} [name = null] - name of this module
 	 * @param {WorkerModule} [workerModule = null]
 	 */
 	constructor(name = null, workerModule = null) {
+		super()
 		this.name_ = name
 		this.workerModule_ = workerModule
-		this.parents_ = []
-		this.children_ = []
-	}
-
-	/**
-	 * @returns {Set}
-	 */
-	children() {
-		return this.children_
 	}
 
 	/**
@@ -155,24 +149,10 @@ class ModuleDepNode {
 	 * @returns {Boolean} - true if this node depends on ${otherNode} at any point in the graph; false otherwise
 	 */
 	dependsOn(otherNode) {
-		if (this.parents_.indexOf(otherNode) >= 0)
+		if (this.parents_.includes(otherNode))
 			return true
 
-		for (let parentNode of this.parents_) {
-			if (parentNode.dependsOn(otherNode))
-				return true
-		}
-
-		return false
-	}
-
-	/**
-	 * @returns {Number} - the cumulative depth of all paths from the root to this node
-	 */
-	depth() {
-		let d = 0
-		this.traverseParents(() => d++)
-		return d
+		return this.traverseParentsSome((node) => node.parents_.includes(otherNode))
 	}
 
 	/**
@@ -182,50 +162,13 @@ class ModuleDepNode {
 		return this.name_
 	}
 
+	/**
+	 * @returns {Map.<String,ModuleDepNode>}
+	 */
 	nameNodeMap() {
 		let map = new Map()
-		this.recurseBuildNameNodeMap_(this, map)
+		this.traverse((node) => map.set(node.name_, node))
 		return map
-	}
-
-	/**
-	 * @returns {Set}
-	 */
-	parents() {
-		return this.parents_
-	}
-
-	/**
-	 * Traverses the parents of node in reverse depth-first order. Excludes the top-most root node
-	 * (node without any parents).
-	 *
-	 * @param {Function} callbackFn - callback function to execute when visiting each parentNode
-	 */
-	traverseParents(callbackFn) {
-		for (let parentNode of this.parents_) {
-			if (parentNode.parents_.length > 0) {
-				callbackFn(parentNode)
-				parentNode.traverseParents(callbackFn)
-			}
-		}
-	}
-
-	traverseParentsEvery(conditionFn) {
-		for (let parentNode of this.parents_) {
-			if (parentNode.parents_.length > 0)
-				return conditionFn(parentNode) ? parentNode.traverseParentsEvery(conditionFn) : false
-		}
-
-		return true
-	}
-
-	traverseParentsSome(conditionFn) {
-		for (let parentNode of this.parents_) {
-			if (parentNode.parents_.length > 0)
-				return conditionFn(parentNode) ? true : parentNode.traverseParentsSome(conditionFn)
-		}
-
-		return false
 	}
 
 	setWorkerModule(newWorkerModule) {
@@ -238,13 +181,5 @@ class ModuleDepNode {
 
 	workerModule() {
 		return this.workerModule_
-	}
-
-	// ----------------------------------------------------
-	// Private methods
-	recurseBuildNameNodeMap_(node, map) {
-		map.set(node.name_, node)
-		for (let child of node.children_)
-			this.recurseBuildNameNodeMap_(child, map)
 	}
 }
