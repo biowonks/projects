@@ -128,13 +128,6 @@ class ModuleDepNode {
 		return root
 	}
 
-	static traverseParents(node, callbackFn) {
-		for (let parentNode of node.parents()) {
-			callbackFn(parentNode)
-			ModuleDepNode.traverseParents(parentNode, callbackFn)
-		}
-	}
-
 	/**
 	 * A module may depend on multiple modules - these are its parents. The reverse is also true,
 	 * this module may be required by multiple modules. Thus, there may be 0..n parents and 0..m
@@ -178,7 +171,7 @@ class ModuleDepNode {
 	 */
 	depth() {
 		let d = 0
-		ModuleDepNode.traverseParents(this, () => d++)
+		this.traverseParents(() => d++)
 		return d
 	}
 
@@ -200,6 +193,39 @@ class ModuleDepNode {
 	 */
 	parents() {
 		return this.parents_
+	}
+
+	/**
+	 * Traverses the parents of node in reverse depth-first order. Excludes the top-most root node
+	 * (node without any parents).
+	 *
+	 * @param {Function} callbackFn - callback function to execute when visiting each parentNode
+	 */
+	traverseParents(callbackFn) {
+		for (let parentNode of this.parents_) {
+			if (parentNode.parents_.length > 0) {
+				callbackFn(parentNode)
+				parentNode.traverseParents(callbackFn)
+			}
+		}
+	}
+
+	traverseParentsEvery(conditionFn) {
+		for (let parentNode of this.parents_) {
+			if (parentNode.parents_.length > 0)
+				return conditionFn(parentNode) ? parentNode.traverseParentsEvery(conditionFn) : false
+		}
+
+		return true
+	}
+
+	traverseParentsSome(conditionFn) {
+		for (let parentNode of this.parents_) {
+			if (parentNode.parents_.length > 0)
+				return conditionFn(parentNode) ? true : parentNode.traverseParentsSome(conditionFn)
+		}
+
+		return false
 	}
 
 	setWorkerModule(newWorkerModule) {
