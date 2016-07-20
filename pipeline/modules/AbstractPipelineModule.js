@@ -16,18 +16,18 @@ class AbstractPipelineModule {
 
 	// --------------
 	// Public methods
-	dependencies() {
-		return []
-	}
+	// dependencies() {
+	// 	return []
+	// }
 
 	main(options = {}) {
 		let self = this
 		return Promise.coroutine(function *() {
-			let missingDependencies = yield self.missingDependencies()
-			if (missingDependencies.length) {
-				self.logger_.warn({missingDependencies}, 'Missing one or more dependencies')
-				return null
-			}
+			// let missingDependencies = yield self.missingDependencies()
+			// if (missingDependencies.length) {
+			// 	self.logger_.warn({missingDependencies}, 'Missing one or more dependencies')
+			// 	return null
+			// }
 
 			// Most modules will only have one corresponding WorkerModule; however, in some cases,
 			// such as Compute, there may be multiple worker modules. Thus, dealing with an array
@@ -91,21 +91,21 @@ class AbstractPipelineModule {
 		})
 	}
 
-	missingDependencies() {
-		// Shortcut :)
-		let deps = this.dependencies()
-		if (!deps.length)
-			return Promise.resolve([])
+	// missingDependencies() {
+	// 	// Shortcut :)
+	// 	let deps = this.dependencies()
+	// 	if (!deps.length)
+	// 		return Promise.resolve([])
 
-		return this.doneModules()
-		.then((doneModules) => {
-			return arrayUtil.difference(deps, doneModules)
-		})
-	}
+	// 	return this.doneModules()
+	// 	.then((doneModules) => {
+	// 		return arrayUtil.difference(deps, doneModules)
+	// 	})
+	// }
 
-	doneModules() {
-		throw new Error('not implemented')
-	}
+	// doneModules() {
+	// 	throw new Error('not implemented')
+	// }
 
 	workerModuleRecords() {
 		return [this.newWorkerModuleData()]

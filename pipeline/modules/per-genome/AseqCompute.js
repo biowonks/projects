@@ -45,6 +45,10 @@ class AseqCompute extends PerGenomePipelineModule {
 		}
 	}
 
+	static dependencies() {
+		return ['NCBICoreData']
+	}
+
 	/**
 	 * @param {Array.<String>} toolIds - list of requested tool ids; however, some of these may be already done; however, at least one of ${toolIds} is not done.
 	 */
@@ -53,10 +57,6 @@ class AseqCompute extends PerGenomePipelineModule {
 		this.requestedToolIds_ = requestedToolIds
 		this.undoneToolIds_ = null
 		this.aseqsService_ = new AseqsService(this.models_.Aseq)
-	}
-
-	dependencies() {
-		return ['NCBICoreData']
 	}
 
 	optimize() {

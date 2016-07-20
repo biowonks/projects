@@ -22,61 +22,41 @@ class ModuleDepGraph {
 	loadState(workerModules) {
 		this.clearWorkerModules_()
 		for (let workerModule of workerModules) {
-			let node = this.nodeByName_(workerModule.name())
+			let node = this.nodeByName_(workerModule.module)
 			node.setWorkerModule(workerModule)
 		}
 	}
 
 	/**
-	 * @param {Array.<String>} moduleNames
-	 * @returns {Array.<String>} - the names of modules (not including {$moduleNames}) that must be completed before ${moduleNames} prior to ${moduleNames}
+	 * @param {String} moduleName
+	 * @returns {Array.<String>} - the names of modules that must be completed before ${moduleName}
 	 */
-	missingDependencies(moduleNames) {
+	missingDependencies(moduleName) {
 		let resultSet = new Set(),
-			moduleNamesSet = new Set(moduleNames),
-			nodes = this.toNodes_(moduleNames)
-		for (let node of nodes) {
-			this.traverseParents_(node, (parentNode) => {
-				let workerModule = parentNode.workerModule(),
-					isIncomplete = !moduleNamesSet.has(parentNode.name()) && (!workerModule || workerModule.state === 'error')
-				if (isIncomplete)
-					resultSet.add(parentNode.name())
-			})
-		}
+			node = this.nodeByName_(moduleName)
+		node.traverseParents_((parentNode) => {
+			let workerModule = parentNode.workerModule(),
+				isIncomplete = !workerModule || workerModule.state === 'error'
+			if (isIncomplete)
+				resultSet.add(parentNode.name())
+		})
 		return Array.from(resultSet)
 	}
 
-	/**
-	 * Every parent node has to have an associated worker module
-	 * @param {String} moduleName
-	 * @returns {Boolean}
-	 */
-	allDependenciesDone(moduleName) {
-		let node = this.nodeByName_(moduleName)
-		return node.traverseParentsEvery((parentNode) => {
-			let workerModule = parentNode.workerModule()
-			return !!workerModule && workerModule.state === 'done'
-		})
+	incompleteModules(moduleNames) {
+		return this.toNodes_(moduleNames)
+			.filter((node) => !node.workerModule() || node.workerModule().state === 'error')
+			.map((node) => node.name())
 	}
 
 	/**
 	 * @param {Array.<String>} moduleNames
 	 * @returns {Array.<String>} - array of module names ordered with the most dependent modules occurring later
 	 */
-	orderByDependencies(moduleNames) {
-		let depNodes = moduleNames.map((x) => this.nodeByName_(x))
-		depNodes.sort((a, b) => {
-			// First, by those that all dependencies done
-			// let aAllDone = this.allDependenciesDone(a.name()),
-			// 	bAllDone = this.allDependenciesDone(b.name())
-
-			return false
-
-			// if (aAllDone && bAllDone) {
-
-			// }
-		})
-		return depNodes.map((x) => x.name())
+	orderByDepth(moduleNames) {
+		return this.toNodes_(moduleNames)
+			.sort((a, b) => a.depth() - b.depth())
+			.map((node) => node.name())
 	}
 
 	// ----------------------------------------------------

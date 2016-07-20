@@ -17,7 +17,9 @@ const arrayUtil = require('./lib/array-util'),
 	WorkerService = require('../services/WorkerService'),
 	InterruptError = require('./lib/errors/InterruptError'),
 	OncePipelineModule = require('./modules/OncePipelineModule'),
-	PerGenomePipelineModule = require('./modules/PerGenomePipelineModule')
+	PerGenomePipelineModule = require('./modules/PerGenomePipelineModule'),
+	ModuleDepNode = require('./modules/ModuleDepNode'),
+	ModuleDepGraph = require('./modules/ModuleDepGraph')
 
 // Constants
 const k1KB = 1024,
@@ -395,18 +397,37 @@ function runPerGenomeModules(app, modules) {
 	if (!modules.length)
 		return null
 
+	let depGraph = createModuleDepGraph(availableModules.perGenome),
+		moduleNames = modules.map((x) => x.name)
+
 	return Promise.coroutine(function *() {
 		// eslint-disable-next-line no-constant-condition
 		while (true) {
 			shutdownCheck()
-			let genome = yield lockNextGenome(app, modules)
+			let genome = yield lockNextAvailableGenome(app, modules)
 			if (!genome)
 				break
 
 			logger.info({genomeId: genome.id, name: genome.name}, `Locked genome: ${genome.name}`)
 
-			for (let module of modules) {
-				let ModuleClass = module.ModuleClass
+			let workerModules = yield app.models.WorkerModel.findAll({
+				where: {
+					genome_id: genome.id
+				}
+			})
+			depGraph.loadState(workerModules)
+			let incompleteModuleNames = depGraph.incompleteModules(moduleNames),
+				orderedModuleNames = depGraph.orderByDepth(incompleteModuleNames)
+
+			for (let moduleName of orderedModuleNames) {
+				let missingDependencies = depGraph.missingDependencies(moduleName)
+				if (missingDependencies.length) {
+					logger.info({missingDependencies}, `Unable to run: ${moduleName}. The following dependencies are not done: ${missingDependencies.join(', ')}`)
+					continue
+				}
+
+				let module = moduleByName(moduleName, availableModules.perGenome),
+					ModuleClass = module.ModuleClass
 				shutdownCheck()
 				app.logger = logger.child({
 					module: ModuleClass.name,
@@ -427,7 +448,27 @@ function runPerGenomeModules(app, modules) {
 	})()
 }
 
-function lockNextGenome(app, modules) {
+function createModuleDepGraph(moduleClasses) {
+	let moduleNamesWithDeps = moduleClasses.map((ModuleClass) => {
+			return {
+				name: ModuleClass.name,
+				deps: ModuleClass.dependencies ? ModuleClass.dependencies() : []
+			}
+		}),
+		rootNode = ModuleDepNode.createFromDepList(moduleNamesWithDeps)
+
+	return new ModuleDepGraph(rootNode)
+}
+
+/**
+ * Locks the next available (is not associated with another worker - dead or alive) genome that has
+ * at least one of ${modules} incomplete (never started or in the error state).
+ *
+ * @param {Object} app
+ * @param {Array.<Object>} modules
+ * @returns {Promise.<Genome>}
+ */
+function lockNextAvailableGenome(app, modules) {
 	let genomesTable = app.models.Genome.tableName,
 		workerModulesTable = app.models.WorkerModule.tableName,
 		genomeIdClause = program.genomeIds ? `AND a.id IN (${program.genomeIds.join(',')}) ` : '',
