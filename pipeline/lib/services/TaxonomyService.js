@@ -10,7 +10,7 @@ let NCBITaxonomyXMLParser = require('./NCBITaxonomyXMLParser'),
 
 // Constants
 const kNCBIPartialTaxonomyUrl = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=taxonomy&retmode=text&rettype=xml&id='
-
+	kNCBIRootTaxonomyId = 1
 /**
  * @constructor
  */
@@ -51,10 +51,10 @@ class TaxonomyService {
 	taxonomicGroup(phylum, classs) {
 		throw new Error('Not yet implemented')
 	}
-	
+
 	 /**
      * @param {number} taxonomyId numeric identifier
-     * @returns {boolean} true if the give node Taxonomy ID doesn't exist in the taxonomy table
+     * @returns {Promise} with resolve as boolean true if the give node Taxonomy ID doesn't exist in the taxonomy table
      */
     nodeDoesNotExist_(taxonomyId) {
 		return this.bootService_.setup()
@@ -70,36 +70,64 @@ class TaxonomyService {
         	})
 		})
         .then((taxonomyRow) => {
-        	return !!taxonomyRow  
+        	return requestPromise(!!taxonomyRow)
         )}
 	}
-	
-	writeNodeToFile_(node) {
-		//TO DO
+
+	/**
+	 * @param {object} taxonomyObject with id, name, rank, parent
+	 * It inserts the object in the Taxonomy table
+	 */
+	insertNode_(node) {
+		return this.sequelize_.transaction(() => {
+			return this.models_.Taxonomy.find({
+				where: {
+					id: taxonomyNode.id
+				}
+			})
+			.then((foundNode) => {
+				return !foundNode ? this.models_.Taxonomy.create(node) : null
+			})
+		})
 	}
-	
-	updateTable(taxonomyId) {
+
+	/**
+	 * @param {int} taxonomyId
+	 * It fetches taxonomy information from NCBI and inserts the taxonomyNode in Taxonomy table
+	 * @returns taxonomyObject with id, name, rank, parent
+	 */
+	fetchTaxonomyAndUpdateTable(taxonomyId) {
         return this.nodeDoesNotExist_()
         .then((doesntExist) => {
             this.fetch(taxonomyId)
-            .then((taxonomyObject) => {
-                for (let i = taxonomyObject.lineage.length(); i >= 0 ; i--) {
-                    let node = taxonomyObject.lineage[i]
-                    node.parentTaxonomyId = 1
-                    node.hasParent: (i !== 0)
+		})
+		.then((taxonomyObject) => {
+			for (let i = taxonomyObject.lineage.length(); i >= 0 ; i--) {
+				let taxonomyNode = taxonomyObject.lineage[i]
+				taxonomyNode.parentId = kNCBIRootTaxonomyId
+				taxonomyNode.hasParent: (i !== 0)
 
-                    if (this.nodeDoesNotExist_(nodeTaxonomyId)) {
-                        if (node.hasParent) {
-                            node.parentTaxonomyId = taxonomyObject.lineage[i - 1].id
-                        }
-                        this.writeNodeToFile_(node)
-                    }
-                    else {
-                        break //No need iterate insertion check for parents. If the node already exists, its parents must exist as well.
-                    }
-                }
-            })
-        })
+				if (this.nodeDoesNotExist_(nodeTaxonomyId)) {
+					if (taxonomyNode.hasParent) {
+						taxonomyNode.parentId = taxonomyObject.lineage[i - 1].id
+					}
+					delete taxonomyNode.hasParent //No need for this value anymore
+					this.insertNode_(taxonomyNode)
+					.then((taxonomyNode) => {
+						this.logger_.info({
+							id: taxonomyNode.id,
+							parentId: taxonomyNode.parentId,
+							name: taxonomyNode.name,
+							rank: taxonomyNode.rank
+						}, 'Inserted new taxonomy node')
+					})
+				}
+				else {
+					break //No need iterate insertion check for parents. If the node already exists, its parents must exist as well.
+				}
+			}
+			return requestPromise(taxonomyObject)
+		})
     }
 
 }
