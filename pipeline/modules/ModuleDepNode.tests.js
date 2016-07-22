@@ -15,13 +15,13 @@ describe('pipeline', function() {
 
 		describe('dependsOn', function() {
 			let root = ModuleDepNode.createFromDepList([
-					{name: 'A',		deps: []},
-					{name: 'B1',	deps: ['A']},
-					{name: 'B2',	deps: ['A']},
-					{name: 'C',		deps: ['B1', 'B2']},
+					{name: 'A',		dependencies: []},
+					{name: 'B1',	dependencies: ['A']},
+					{name: 'B2',	dependencies: ['A']},
+					{name: 'C',		dependencies: ['B1', 'B2']},
 
-					{name: 'A2',	deps: []},
-					{name: 'B3',	deps: ['A2']}
+					{name: 'A2',	dependencies: []},
+					{name: 'B3',	dependencies: ['A2']}
 				]),
 				map = root.nameNodeMap(),
 				A = map.get('A'),
@@ -58,11 +58,11 @@ describe('pipeline', function() {
 
 		describe('depth of: A -> B1, A -> B2, B1 -> D, B2 -> C, C -> D', function() {
 			let x = ModuleDepNode.createFromDepList([
-					{name: 'A',		deps: []},
-					{name: 'B1',	deps: ['A']},
-					{name: 'B2',	deps: ['A']},
-					{name: 'C',		deps: ['B2']},
-					{name: 'D',		deps: ['B1', 'C']}
+					{name: 'A',		dependencies: []},
+					{name: 'B1',	dependencies: ['A']},
+					{name: 'B2',	dependencies: ['A']},
+					{name: 'C',		dependencies: ['B2']},
+					{name: 'D',		dependencies: ['B1', 'C']}
 				]),
 				nameNodeMap = x.nameNodeMap(x),
 				inputs = [
@@ -95,10 +95,10 @@ describe('pipeline', function() {
 
 		it('nameNodeMap', function() {
 			let node = ModuleDepNode.createFromDepList([
-					{name: 'A',		deps: []},
-					{name: 'B1',		deps: ['A']},
-					{name: 'B2',		deps: ['A']},
-					{name: 'C',		deps: ['B1', 'B2']}
+					{name: 'A',		dependencies: []},
+					{name: 'B1',		dependencies: ['A']},
+					{name: 'B2',		dependencies: ['A']},
+					{name: 'C',		dependencies: ['B1', 'B2']}
 				]),
 				x = node.nameNodeMap()
 
@@ -117,12 +117,12 @@ describe('pipeline', function() {
 			expect(x.workerModule()).null
 
 			let mockWorkerModule = {
-				name: 'core-data'
+				module: 'core-data'
 			}
 			x.setWorkerModule(mockWorkerModule)
 			expect(x.workerModule()).equal(mockWorkerModule)
 
-			mockWorkerModule.name = 'not-core-data'
+			mockWorkerModule.module = 'not-core-data'
 			expect(function() {
 				x.setWorkerModule(mockWorkerModule)
 			}).throw(Error)
@@ -158,10 +158,10 @@ describe('pipeline', function() {
 
 			it('does not mutate input array', function() {
 				let moduleNamesWithDeps = [
-						{name: 'root1', deps: []}
+						{name: 'root1', dependencies: []}
 					],
 					copy = [
-						{name: 'root1', deps: []}
+						{name: 'root1', dependencies: []}
 					]
 
 				ModuleDepNode.createFromDepList(moduleNamesWithDeps)
@@ -171,7 +171,7 @@ describe('pipeline', function() {
 
 			it('single root node', function() {
 				let x = ModuleDepNode.createFromDepList([
-					{name: 'root1', deps: []}
+					{name: 'root1', dependencies: []}
 				])
 				checkGraph(x, [
 					{
@@ -184,8 +184,8 @@ describe('pipeline', function() {
 
 			it('multiple root nodes', function() {
 				let x = ModuleDepNode.createFromDepList([
-					{name: 'root1', deps: []},
-					{name: 'root2',	deps: []}
+					{name: 'root1', dependencies: []},
+					{name: 'root2',	dependencies: []}
 				])
 
 				checkGraph(x, [
@@ -204,9 +204,9 @@ describe('pipeline', function() {
 
 			it('A -> B1, A -> B2', function() {
 				let x = ModuleDepNode.createFromDepList([
-					{name: 'A', 	deps: []},
-					{name: 'B1',	deps: ['A']},
-					{name: 'B2',	deps: ['A']}
+					{name: 'A', 	dependencies: []},
+					{name: 'B1',	dependencies: ['A']},
+					{name: 'B2',	dependencies: ['A']}
 				])
 
 				checkGraph(x, [
@@ -231,11 +231,11 @@ describe('pipeline', function() {
 
 			it('A -> B1, A -> B2, A -> B3, B1 -> C, B3 -> C (diamond)', function() {
 				let x = ModuleDepNode.createFromDepList([
-					{name: 'A',		deps: []},
-					{name: 'B1',	deps: ['A']},
-					{name: 'B2',	deps: ['A']},
-					{name: 'B3',	deps: ['A']},
-					{name: 'C',		deps: ['B1', 'B3']}
+					{name: 'A',		dependencies: []},
+					{name: 'B1',	dependencies: ['A']},
+					{name: 'B2',	dependencies: ['A']},
+					{name: 'B3',	dependencies: ['A']},
+					{name: 'C',		dependencies: ['B1', 'B3']}
 				])
 
 				let C = {
@@ -275,9 +275,9 @@ describe('pipeline', function() {
 
 			it('A -> B, B -> C, A -> C (out of order)', function() {
 				let x = ModuleDepNode.createFromDepList([
-					{name: 'C',		deps: ['A', 'B']},
-					{name: 'B',		deps: ['A']},
-					{name: 'A',		deps: []}
+					{name: 'C',		dependencies: ['A', 'B']},
+					{name: 'B',		dependencies: ['A']},
+					{name: 'A',		dependencies: []}
 				])
 
 				let C = {
@@ -308,8 +308,8 @@ describe('pipeline', function() {
 			it('duplicate name throws error', function() {
 				expect(function() {
 					ModuleDepNode.createFromDepList([
-						{name: 'A',		deps: []},
-						{name: 'A',		deps: []}
+						{name: 'A',		dependencies: []},
+						{name: 'A',		dependencies: []}
 					])
 				}).throw(Error)
 			})
@@ -317,7 +317,7 @@ describe('pipeline', function() {
 			it('module depending on itself throws error', function() {
 				expect(function() {
 					ModuleDepNode.createFromDepList([
-						{name: 'A', deps: ['A']}
+						{name: 'A', dependencies: ['A']}
 					])
 				}).throw(Error)
 			})
@@ -325,7 +325,7 @@ describe('pipeline', function() {
 			it('modules with dependencies on non-existent nodes throws error', function() {
 				expect(function() {
 					ModuleDepNode.createFromDepList([
-						{name: 'A', deps: ['B']}
+						{name: 'A', dependencies: ['B']}
 					])
 				}).throw(Error)
 			})
