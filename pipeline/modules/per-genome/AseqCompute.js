@@ -6,43 +6,21 @@ const assert = require('assert')
 // Local
 const PerGenomePipelineModule = require('../PerGenomePipelineModule'),
 	AseqsService = require('../../../services/AseqsService'),
-	AseqModelFn = require('../../../models/Aseq.model.js'),
-	arrayUtil = require('../../lib/array-util')
+	AseqModelFn = require('../../../models/Aseq.model.js')
+
+// Other
+const kAseqModelToolIdSet = new Set(AseqModelFn.kToolIdFieldNames),
+	kSupportedTools = AseqsService.tools().filter((x) => kAseqModelToolIdSet.has(x.id)),
+	kSupportedSubModuleMap = new Map(kSupportedTools.map((x) => [x.id, x.description]))
 
 module.exports =
 class AseqCompute extends PerGenomePipelineModule {
-	/**
-	 * @returns {Object} - enumerated information on how to call this module via the pipeline entrypoint. Supported tools include those with fields defined in the Aseq model class and that have a corresponding tool runner.
-	 */
-	static cli() {
-		let aseqModelToolIdSet = new Set(AseqModelFn.kToolIdFieldNames),
-			supportedTools = AseqsService.tools().filter((x) => aseqModelToolIdSet.has(x.id)),
-			supportedToolIdSet = new Set(supportedTools.map((x) => x.id))
+	static description() {
+		return 'run one or more tools and persist the results'
+	}
 
-		return {
-			description: 'run one or more tools and store the results',
-			usage: '<toolId>[+...]',
-			moreInfo: 'Supported tools include:\n\n' +
-				supportedTools.map((x) => `* ${x.id}` + (x.description ? `: ${x.description}` : ''))
-					.join('\n'),
-			parse: function(input) {
-				if (!input || /^\s+$/.test(input))
-					throw new Error('At least one tool id is required')
-
-				let inputToolIds = input.split('+')
-					.map((x) => x.trim())
-
-				inputToolIds.forEach((toolId) => {
-					if (!supportedToolIdSet.has(toolId))
-						throw new Error(`${toolId} is not a supported tool`)
-				})
-
-				return inputToolIds
-			},
-			subModuleNames: function(parseResult) {
-				return parseResult.map((toolId) => `AseqCompute:${toolId}`)
-			}
-		}
+	static subModuleMap() {
+		return kSupportedSubModuleMap
 	}
 
 	static dependencies() {
@@ -50,51 +28,42 @@ class AseqCompute extends PerGenomePipelineModule {
 	}
 
 	/**
-	 * @param {Array.<String>} toolIds - list of requested tool ids; however, some of these may be already done; however, at least one of ${toolIds} is not done.
+	 * The AseqCompute module computes the results for one or more ${toolIds} for the Aseqs
+	 * contained in ${genome}.
+	 *
+	 * @param {Object} app
+	 * @param {Genome} genome
+	 * @param {Array.<String>} toolIds - list of tool ids to compute
 	 */
-	constructor(app, genome, requestedToolIds) {
+	constructor(app, genome, toolIds) {
 		super(app, genome)
-		this.requestedToolIds_ = requestedToolIds
-		this.undoneToolIds_ = null
+		this.toolIds_ = toolIds
 		this.aseqsService_ = new AseqsService(this.models_.Aseq)
 	}
 
 	optimize() {
-
+		return this.analyze(this.models_.Aseq.getTableName())
 	}
 
 	run() {
-		return this.aseqsMissingData_(this.undoneToolIds_)
+		return this.aseqsMissingData_(this.toolIds_)
 		.then((aseqs) => {
-			this.logger_.info(`Found ${aseqs.length} aseqs missing data for one of ${this.undoneToolIds_.join(', ')}`)
-			let groups = this.aseqsService_.groupByUndoneTools(aseqs, this.undoneToolIds_)
+			this.logger_.info(`Found ${aseqs.length} aseqs missing data for one of ${this.toolIds_.join(', ')}`)
+			this.shutdownCheck_()
+			let groups = this.aseqsService_.groupByUndoneTools(aseqs, this.toolIds_)
 			return this.computeGroups_(groups)
 			.then(() => this.saveGroups_(groups))
 		})
 	}
 
+	/**
+	 * @returns {Array.<Object>} - an array of worker module records, one for each tool id provided to the constructor
+	 */
 	workerModuleRecords() {
-		let sql = `
-SELECT array_agg(substring(module, 9)) as done_compute_tool_ids
-FROM ${this.models_.WorkerModule.getTableName()}
-WHERE genome_id = ? AND module like '${this.name()}:%'`
-
-		return this.sequelize_.query(sql, {
-			replacements: [this.genome_.id],
-			raw: true,
-			type: this.sequelize_.QueryTypes.SELECT
-		})
-		.then((result) => {
-			let doneComputeToolIds = result[0].done_compute_tool_ids || []
-			this.undoneToolIds_ = arrayUtil.difference(this.requestedToolIds_, doneComputeToolIds)
-			if (!this.undoneToolIds_.length)
-				throw new Error(`Expected at least one requested tool id (${this.requestedToolIds_.join(', ')}) to be incomplete; however, all are marked as done`)
-
-			return this.undoneToolIds_.map((toolId) => {
-				let data = super.newWorkerModuleData()
-				data.module += ':' + toolId
-				return data
-			})
+		return this.toolIds_.map((toolId) => {
+			let data = super.newWorkerModuleData()
+			data.module += ':' + toolId
+			return data
 		})
 	}
 
@@ -131,6 +100,14 @@ ORDER BY b.id`
 		})
 	}
 
+	/**
+	 * Each group is an object containing an array of aseqs and an array of toolIds to run on the
+	 * given aseqs. This method iterates over each group and computes the results of each of the
+	 * specified toolIds.
+	 *
+	 * @param {Array.<Object>} groups
+	 * @returns {Promise}
+	 */
 	computeGroups_(groups) {
 		return Promise.each(groups, (group) => {
 			this.logger_.info({
@@ -138,9 +115,18 @@ ORDER BY b.id`
 				toolIds: group.toolIds
 			}, `Computing ${group.toolIds.join(', ')} for ${group.aseqs.length} aseqs`)
 			return this.aseqsService_.compute(group.aseqs, group.toolIds)
+			.then(() => {
+				this.shutdownCheck_()
+			})
 		})
 	}
 
+	/**
+	 * Persists each of the results for each group of tool results.
+	 *
+	 * @param {Array.<Object>} groups
+	 * @returns {Promise}
+	 */
 	saveGroups_(groups) {
 		return this.sequelize_.transaction({
 			isolationLevel: 'READ COMMITTED'

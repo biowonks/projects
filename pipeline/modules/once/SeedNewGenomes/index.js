@@ -17,10 +17,8 @@ const OncePipelineModule = require('../../OncePipelineModule'),
 
 module.exports =
 class SeedNewGenomes extends OncePipelineModule {
-	static cli() {
-		return {
-			description: 'seed the database with genomes sourced from NCBI'
-		}
+	static description() {
+		return 'seed the database with genomes sourced from NCBI'
 	}
 
 	constructor(app) {

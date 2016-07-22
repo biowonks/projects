@@ -36,7 +36,7 @@ class ModuleDepNode extends AbstractManyManyNode {
 		function *takeNextWithNoDeps(array) {
 			let i = 0
 			while (i < array.length) {
-				let noDeps = array[i].deps.length === 0
+				let noDeps = array[i].dependencies.length === 0
 				if (noDeps)
 					yield array.splice(i, 1)[0]
 				else
@@ -81,7 +81,7 @@ class ModuleDepNode extends AbstractManyManyNode {
 		function takeNext(array) {
 			for (let i = 0, z = array.length; i < z; i++) {
 				let moduleDeps = array[i]
-				if (allDepNodesCreated(moduleDeps.deps))
+				if (allDepNodesCreated(moduleDeps.dependencies))
 					return array.splice(i, 1)[0]
 			}
 
@@ -108,7 +108,7 @@ class ModuleDepNode extends AbstractManyManyNode {
 		for (let moduleDeps; (moduleDeps = takeNext(pool));) {
 			throwIfDuplicateName(moduleDeps.name)
 			let node = createNode(moduleDeps.name)
-			moduleDeps.deps.forEach((depName) => {
+			moduleDeps.dependencies.forEach((depName) => {
 				if (depName === moduleDeps.name) {
 					throw new Error(`invalid dependencies for ${moduleDeps.name}: a module may ` +
 						'not depend on itself')
@@ -173,8 +173,8 @@ class ModuleDepNode extends AbstractManyManyNode {
 
 	setWorkerModule(newWorkerModule) {
 		this.workerModule_ = newWorkerModule
-		if (this.workerModule_ && this.name_ !== this.workerModule_.name) {
-			throw new Error(`worker module name, ${this.workerModule_.name} does not match name ` +
+		if (this.workerModule_ && this.name_ !== this.workerModule_.module) {
+			throw new Error(`worker module name, ${this.workerModule_.module} does not match name ` +
 				`given in the constructror: ${this.name_}`)
 		}
 	}
