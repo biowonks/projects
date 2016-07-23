@@ -76,6 +76,13 @@ class ModuleDepGraph {
 		return Array.from(resultSet)
 	}
 
+	/**
+	 * "incomplete" modules are those that either do not have an associated worker module or if
+	 * the worker module state is in error.
+	 *
+	 * @param {Array.<ModuleId>} moduleIds
+	 * @returns {Array.<ModuleId>}
+	 */
 	incompleteModuleIds(moduleIds) {
 		return this.toNodes(moduleIds)
 			.filter((node) => !node.workerModule() || node.workerModule().state === 'error')
