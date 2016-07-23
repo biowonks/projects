@@ -51,6 +51,7 @@ class AbstractPipelineModule {
 	}
 
 	undo() {
+		throw new Error('not implemented')
 	}
 
 	run() {
