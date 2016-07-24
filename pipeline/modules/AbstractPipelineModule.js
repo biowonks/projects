@@ -11,7 +11,49 @@ class AbstractPipelineModule {
 		this.shutdownCheck_ = app.shutdownCheck
 	}
 
-	// --------------
+	// ----------------------------------------------------
+	// The following static methods are intended as a reference for implementing in derived classes.
+	// Given their static nature, they are not inherited and would be meaningless even if they were.
+	// Each module class should implement whichever methods are relevant for the CLI.
+	/**
+	 * @returns {String} - short module description
+	 */
+	static description() {
+		return 'this module does such and such'
+	}
+
+	/**
+	 * @returns {String} - any other helpful information
+	 */
+	static moreInfo() {
+		return 'More informative details may be returned via this method'
+	}
+
+	/**
+	 * To reference a submodule, simply suffix the module name with a colon and then the submodule
+	 * name (e.g. AseqCompute:pfam30).
+	 *
+	 * @returns {Array.<String>} - one or more "flat" module id strings
+	 */
+	static dependencies() {
+		return [] // this module doesn't depend on anything else
+	}
+
+	/**
+	 * @returns {Array.<String>} - an array of valid submodules
+	 */
+	static subModuleNames() {
+		return [] // this module doesn't have any submodules
+	}
+
+	/**
+	 * @returns {Map.<String,String>} - a map with submodule names as keys, and descriptions as values
+	 */
+	static subModuleMap() {
+		return new Map()
+	}
+
+	// ----------------------------------------------------
 	// Public methods
 	main(options = {}) {
 		let self = this

@@ -62,29 +62,6 @@ exports.moduleHelp = function(ModuleClass) {
 
 /**
  * -------------------------------------------------------------------------------------------------
- * @param {Array.<String>} inputModuleNames
- * @returns {Array.<Object>} - array of module names and any submodules
- */
-// exports.decodeInputModuleNames = function(inputModuleNames) {
-// 	return inputModuleNames.map(exports.decodeInputModuleName)
-// }
-
-/**
- * Module and submodule names must begin with a character and consist entirely of alphanumeric
- * characters. Submodule names must follow a colon symbol immediately after the module name.
- * Multiple submodules should be separated by plus signs. Any violation of these formatting rules
- * will throw an exception. A colon without any named submodules also throws an error.
- *
- * Examples:
- * 'SeedNewGenomes' -> {name: 'SeedNewGenomes', subNames: []}
- * 'AseqCompute(pfam30+segs)' -> {name: 'AseqCompute', subNames: ['pfam30', 'segs']}
- *
- * @param {String} inputModuleName - compact string representation of a module and any optional submodules which must be enclosed in parentheses and separated by plus signs.
- * @returns {Object} - contains the module name and any submodules
- */
-
-/**
- * -------------------------------------------------------------------------------------------------
  * @param {...String} srcPaths - an array of paths to search for compatible pipeline modules
  * @returns {Object.<String,Array.<AbstractPipelineModule>>} - object with three keys: 'once', 'perGenome', and 'all'; which contain 'once', 'per-genome', and all pipeline modules, respectively.
  */
@@ -137,7 +114,7 @@ function getModuleRootFiles(srcPath) {
  * -------------------------------------------------------------------------------------------------
  * @param {Array.<ModuleId>} moduleIds - array of parsed module names and any submodules
  * @param {Array.<Function>} ModuleClasses - array of module class definitions
- * @returns {Array.<String>} - array of qualified module names that do not have a cognate ModuleClass or submodule
+ * @returns {Array.<ModuleId>} - array of qualified module names that do not have a cognate ModuleClass or submodule
  */
 exports.findInvalidModuleIds = function(moduleIds, ModuleClasses) {
 	let map = exports.mapModuleClassesByName(ModuleClasses),
@@ -150,21 +127,11 @@ exports.findInvalidModuleIds = function(moduleIds, ModuleClasses) {
 			return
 		}
 
-		let subName = moduleId.subNames()[0]
-		if (subName && !ModuleClass.subModuleMap().has(subName))
+		let hasSubModules = ModuleClass.subModuleMap().size > 0,
+			subName = moduleId.subNames()[0]
+		if ((hasSubModules && !subName) || (subName && !ModuleClass.subModuleMap().has(subName)))
 			result.push(moduleId)
 	})
-	// moduleIds.forEach((moduleId) => {
-	// 	if (!map.has(moduleId.name())) {
-	// 		result.push(moduleId.name)
-	// 		return
-	// 	}
-
-	// 	for (let subName of parsedModuleName.subNames) {
-	// 		if (!ModuleClasses.subModuleMap().has(subName))
-	// 			result.push(parsedModuleName.name + ':' + subName)
-	// 	}
-	// })
 
 	return result
 }
@@ -267,101 +234,9 @@ exports.unnestedDependencyArray = function(ModuleClasses) {
 
 /**
  * -------------------------------------------------------------------------------------------------
- * Produces an array of expanded module names from ${ModuleClasses}. If a ModuleClass does not have
- * any submodules, then it simply returns the ModuleClass's name; otherwise, it returns a qualified
- * module name for each of its submodules.
- *
- * For example:
- *
- * Core.subModuleNames() -> []
- * AseqCompute.subModuleNames() -> ['pfam30', 'segs', 'coils']
- *
- * flatModuleNames([Core, AseqCompute]) returns:
- *
- * [
- *   'Core',
- *   'AseqCompute:pfam30',
- *   'AseqCompute:segs',
- *   'AseqCompute:coils'
- * ]
- *
- * This assumes that each ModuleClass has had static stubs added (@see addDefaultStaticMethods)
- *
- * @param {Array.<ModuleId>} ModuleClasses - array of module class definitions
- * @returns {Array.<String>}
- */
-// exports.flatModuleNames = function(decodedModuleNames) {
-// 	let result = []
-
-// 	decodedModuleNames.forEach((decodedModuleName) => {
-// 		let subModuleNames = decodedModuleName.subNames
-// 		if (subModuleNames.length) {
-// 			subModuleNames.forEach((subModuleName) => {
-// 				result.push(`${decodedModuleName.name}:${subModuleName}`)
-// 			})
-// 		}
-// 		else {
-// 			result.push(decodedModuleName.name)
-// 		}
-// 	})
-
-// 	return result
-// }
-// exports.flatModuleNames = function(ModuleClasses) {
-// 	let result = []
-
-// 	ModuleClasses.forEach((ModuleClass) => {
-// 		let subModuleNames = ModuleClass.subModuleNames()
-// 		if (subModuleNames.length) {
-// 			subModuleNames.forEach((subModuleName) => {
-// 				result.push(`${ModuleClass.name}:${subModuleName}`)
-// 			})
-// 		}
-// 		else {
-// 			result.push(ModuleClass.name)
-// 		}
-// 	})
-
-// 	return result
-// }
-
-/**
- * -------------------------------------------------------------------------------------------------
  * @param {Array.<Function>} ModuleClasses - array of module class definitions
  * @returns {Map.<String,Function>}
  */
 exports.mapModuleClassesByName = function(ModuleClasses) {
 	return new Map(ModuleClasses.map((x) => [x.name, x]))
-}
-
-/**
- * -------------------------------------------------------------------------------------------------
- * @param {Array.<String>} flatModuleNames - array of qualified module names
- * @returns {Array.<Object>}
- */
-exports.unflatModuleNames = function(flatModuleNames) {
-	let result = [],
-		map = new Map()
-
-	flatModuleNames.forEach((flatModuleName) => {
-		let hasSubNames = flatModuleName.includes(':')
-		if (hasSubNames) {
-			let [name, subName] = flatModuleName.split(':', 2), // eslint-disable-line no-magic-numbers
-				entry = map.get(name)
-
-			if (entry) {
-				entry.subNames.push(subName)
-			}
-			else {
-				entry = {name, subNames: [subName]}
-				map.set(name, entry)
-				result.push(entry)
-			}
-		}
-		else {
-			result.push({name: flatModuleName, subNames: []})
-		}
-	})
-
-	return result
 }
