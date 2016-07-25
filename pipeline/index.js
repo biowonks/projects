@@ -52,22 +52,21 @@ ${putil.modulesHelp(availableModules.perGenome)}
   applied to the specified genomes with genome-ids.
 `)
 .usage('[options] <module ...>')
-.option('-o, --run-once <module,...>', 'CSV list of module names', (value) => value.split(','))
+// .option('-o, --run-once <module,...>', 'CSV list of module names', (value) => value.split(','))
 .option('-g, --genome-ids <genome id,...>', 'CSV list of genome ids', parseGenomeIds)
 .parse(process.argv)
 
-let onceModuleIdStrings = program.runOnce || [],
-	perGenomeModuleIdStrings = program.args
+let requestedModuleIds = ModuleId.nest(ModuleId.fromStrings(program.args))
 
-if (!onceModuleIdStrings.length && !perGenomeModuleIdStrings.length) {
+if (!requestedModuleIds.length) {
 	program.outputHelp()
 	process.exit(1)
 }
 
-let requestedOnceModuleIds = ModuleId.fromStrings(onceModuleIdStrings),
-	requestedPerGenomeModuleIds = ModuleId.fromStrings(perGenomeModuleIdStrings)
-
 dieIfRequestedInvalidModules()
+
+let requestedOnceModuleIds = putil.matchingModuleIds(requestedModuleIds, availableModules.once),
+	requestedPerGenomeModuleIds = putil.matchingModuleIds(requestedModuleIds, availableModules.perGenome)
 
 let bootService = new BootService({
 		logger: {
@@ -102,8 +101,8 @@ bootService.setup()
 	worker.job = {
 		genomeIds: program.genomeIds,
 		modules: {
-			once: onceModuleIdStrings,
-			perGenome: perGenomeModuleIdStrings
+			once: requestedOnceModuleIds,
+			perGenome: requestedPerGenomeModuleIds
 		}
 	}
 	return worker.save()
@@ -145,16 +144,10 @@ bootService.setup()
 // --------------------------------------------------------
 // --------------------------------------------------------
 function dieIfRequestedInvalidModules() {
-	let invalidOnces = putil.findInvalidModuleIds(requestedOnceModuleIds, availableModules.once)
-	if (invalidOnces.length) {
-		die('the following "once" modules (or submodules) are invalid\n\n' +
-			`  ${invalidOnces.join('\n  ')}\n`)
-	}
-
-	let invalidPerGenomes = putil.findInvalidModuleIds(requestedPerGenomeModuleIds, availableModules.perGenome)
-	if (invalidPerGenomes.length) {
-		die('the following "per-genome" modules (or submodules) are invalid\n\n' +
-			`  ${invalidPerGenomes.join('\n  ')}\n`)
+	let invalidModuleIds = putil.findInvalidModuleIds(requestedModuleIds, availableModules.all)
+	if (invalidModuleIds.length) {
+		die('the following modules (or submodules) are invalid\n\n' +
+			`  ${invalidModuleIds.join('\n  ')}\n`)
 	}
 }
 

@@ -138,6 +138,17 @@ exports.findInvalidModuleIds = function(moduleIds, ModuleClasses) {
 
 /**
  * -------------------------------------------------------------------------------------------------
+ * @param {Array.<ModuleId>} moduleIds
+ * @param {Array.<AbstractPipelineModule>} ModuleClasses
+ * @returns {Array.<ModuleId>} - those module ids that match a class in ${ModuleClasses}
+ */
+exports.matchingModuleIds = function(moduleIds, ModuleClasses) {
+	let map = exports.mapModuleClassesByName(ModuleClasses)
+	return moduleIds.filter((x) => map.has(x.name()))
+}
+
+/**
+ * -------------------------------------------------------------------------------------------------
  * Returns an array of objects containing the name of this module and its dependencies as specified
  * by the ModuleClass's static dependencies() method. If a ModuleClass has one or more submodules,
  * then an entry is created for each submodule. For example,

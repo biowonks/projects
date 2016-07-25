@@ -61,6 +61,31 @@ describe('pipeline', function() {
 			expect(x[3].toString()).equal('PerGenomeOneModule:invalid')
 		})
 
+		it('matchingModuleIds', function() {
+			let OnceOneModuleId = new ModuleId('OnceOneModule'),
+				OnceTwoModuleId = new ModuleId('OnceTwoModule'),
+				PerGenomeOneModuleIdA = new ModuleId('PerGenomeOneModule', ['subModule1', 'subModule2']),
+				PerGenomeOneModuleIdB = new ModuleId('PerGenomeOneModule'),
+				PerGenomeTwoModuleId = new ModuleId('PerGenomeTwoModule')
+
+			let x = putil.matchingModuleIds([
+				OnceOneModuleId,
+				OnceTwoModuleId,
+				PerGenomeOneModuleIdA,
+				PerGenomeOneModuleIdB,
+				PerGenomeTwoModuleId
+			], [
+				OnceOneModule,
+				PerGenomeOneModule
+			])
+
+			expect(x).eql([
+				OnceOneModuleId,
+				PerGenomeOneModuleIdA,
+				PerGenomeOneModuleIdB
+			])
+		})
+
 		it('unnestedDependencyArray', function() {
 			let x = putil.unnestedDependencyArray([
 				OnceOneModule,
