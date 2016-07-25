@@ -138,42 +138,6 @@ exports.findInvalidModuleIds = function(moduleIds, ModuleClasses) {
 
 /**
  * -------------------------------------------------------------------------------------------------
- * Each module may optionally define one or more of the following static methods:
- *
- * description()
- * moreInfo(): returns any other helpful information
- * dependencies(): returns an array of flat module dependency names
- * subModuleNames(): returns an array of sub module names derived from the subModuleMap
- * subModuleMap(): returns a map of sub module names and their corresponding descriptions
- *
- * Since static methods are not inherited, this method injects default implementations of these
- * methods onto each ${ModuleClass} for uniformity.
- *
- * @param {Array.<Function>} ModuleClasses - array of module class definitions
- */
-exports.addDefaultStaticMethods = function(ModuleClasses) {
-	ModuleClasses.forEach((ModuleClass) => {
-		if (!ModuleClass.description)
-			ModuleClass.description = () => ''
-		if (!ModuleClass.moreInfo)
-			ModuleClass.moreInfo = () => ''
-		if (!ModuleClass.dependencies) {
-			let emptyArray = []
-			ModuleClass.dependencies = () => emptyArray
-		}
-		if (!ModuleClass.subModuleMap) {
-			let emptyMap = new Map()
-			ModuleClass.subModuleMap = () => emptyMap
-		}
-		if (!ModuleClass.subModuleNames) {
-			let names = Array.from(ModuleClass.subModuleMap().keys())
-			ModuleClass.subModuleNames = () => names
-		}
-	})
-}
-
-/**
- * -------------------------------------------------------------------------------------------------
  * Returns an array of objects containing the name of this module and its dependencies as specified
  * by the ModuleClass's static dependencies() method. If a ModuleClass has one or more submodules,
  * then an entry is created for each submodule. For example,
@@ -212,7 +176,7 @@ exports.unnestedDependencyArray = function(ModuleClasses) {
 	let result = []
 
 	ModuleClasses.forEach((ModuleClass) => {
-		let subModuleNames = ModuleClass.subModuleNames()
+		let subModuleNames = Array.from(ModuleClass.subModuleMap().keys())
 		if (subModuleNames.length) {
 			subModuleNames.forEach((subModuleName) => {
 				result.push({

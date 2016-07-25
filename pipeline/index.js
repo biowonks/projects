@@ -30,7 +30,6 @@ const k1KB = 1024,
 global.Promise = Promise
 
 let availableModules = putil.enumerateModules(kModulesOncePath, kModulesPerGenomePath)
-putil.addDefaultStaticMethods(availableModules.all)
 
 program
 .description(`Executes a pipeline of one or more MiST modules. There are two main

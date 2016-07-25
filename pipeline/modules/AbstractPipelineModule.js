@@ -19,14 +19,14 @@ class AbstractPipelineModule {
 	 * @returns {String} - short module description
 	 */
 	static description() {
-		return 'this module does such and such'
+		return ''
 	}
 
 	/**
 	 * @returns {String} - any other helpful information
 	 */
 	static moreInfo() {
-		return 'More informative details may be returned via this method'
+		return ''
 	}
 
 	/**
@@ -37,13 +37,6 @@ class AbstractPipelineModule {
 	 */
 	static dependencies() {
 		return [] // this module doesn't depend on anything else
-	}
-
-	/**
-	 * @returns {Array.<String>} - an array of valid submodules
-	 */
-	static subModuleNames() {
-		return [] // this module doesn't have any submodules
 	}
 
 	/**

@@ -18,7 +18,7 @@ const putil = require('./putil'),
 	PerGenomeThreeModule = require('./test-data/module-dir2/PerGenomeThreeModule')
 
 describe('pipeline', function() {
-	describe.only('putil', function() {
+	describe('putil', function() {
 		it('enumerateModules', function() {
 			let x = putil.enumerateModules(
 				path.resolve(__dirname, 'test-data', 'module-dir1'),
@@ -61,18 +61,40 @@ describe('pipeline', function() {
 			expect(x[3].toString()).equal('PerGenomeOneModule:invalid')
 		})
 
-		it.skip('addDefaultStaticMethods', function() {
-			let staticMethodNames = [
-				'description',
-				'moreInfo',
-				'dependencies',
-				'subModuleMap',
-				'subModuleNames'
-			]
+		it('unnestedDependencyArray', function() {
+			let x = putil.unnestedDependencyArray([
+				OnceOneModule,
+				OnceTwoModule,
+				PerGenomeOneModule,
+				PerGenomeTwoModule
+			])
+			expect(x).eql([
+				{
+					name: 'OnceOneModule',
+					dependencies: []
+				},
+				{
+					name: 'OnceTwoModule',
+					dependencies: []
+				},
+				{
+					name: 'PerGenomeOneModule:subModule1',
+					dependencies: ['OnceTwoModule']
+				},
+				{
+					name: 'PerGenomeOneModule:subModule2',
+					dependencies: ['OnceTwoModule']
+				},
+				{
+					name: 'PerGenomeTwoModule',
+					dependencies: []
+				}
+			])
+		})
 
-			staticMethodNames.forEach((methodName) => {
-				expect(PerGenomeThreeModule).not.property(methodName)
-			})
+		it('mapModuleClassesByName', function() {
+			let x = putil.mapModuleClassesByName([OnceOneModule, PerGenomeOneModule])
+			expect(Array.from(x.keys())).eql(['OnceOneModule', 'PerGenomeOneModule'])
 		})
 	})
 })
