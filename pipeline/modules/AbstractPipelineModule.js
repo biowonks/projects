@@ -1,8 +1,5 @@
 'use strict'
 
-// Local
-const arrayUtil = require('../lib/array-util')
-
 module.exports =
 class AbstractPipelineModule {
 	constructor(app) {
@@ -14,31 +11,47 @@ class AbstractPipelineModule {
 		this.shutdownCheck_ = app.shutdownCheck
 	}
 
-	// --------------
-	// Public methods
-	dependencies() {
-		return []
+	// ----------------------------------------------------
+	// The following static methods are intended as a reference for implementing in derived classes.
+	// Given their static nature, they are not inherited and would be meaningless even if they were.
+	// Each module class should implement whichever methods are relevant for the CLI.
+	/**
+	 * @returns {String} - short module description
+	 */
+	static description() {
+		return ''
 	}
 
+	/**
+	 * @returns {String} - any other helpful information
+	 */
+	static moreInfo() {
+		return ''
+	}
+
+	/**
+	 * To reference a submodule, simply suffix the module name with a colon and then the submodule
+	 * name (e.g. AseqCompute:pfam30).
+	 *
+	 * @returns {Array.<String>} - one or more "flat" module id strings
+	 */
+	static dependencies() {
+		return [] // this module doesn't depend on anything else
+	}
+
+	/**
+	 * @returns {Map.<String,String>} - a map with submodule names as keys, and descriptions as values
+	 */
+	static subModuleMap() {
+		return new Map()
+	}
+
+	// ----------------------------------------------------
+	// Public methods
 	main(options = {}) {
 		let self = this
 		return Promise.coroutine(function *() {
-			let missingDependencies = yield self.missingDependencies()
-			if (missingDependencies.length) {
-				self.logger_.warn({missingDependencies}, 'Missing one or more dependencies')
-				return null
-			}
-
-			// Most modules will only have one corresponding WorkerModule; however, in some cases,
-			// such as Compute, there may be multiple worker modules. Thus, dealing with an array
-			// or worker modules is supported here.
-			let workerModuleRecords = yield self.workerModuleRecords(),
-				workerModules = yield self.models_.WorkerModule.bulkCreate(workerModuleRecords, {
-					validate: true,
-					returning: true
-				})
-
-			// let workerModule = yield self.models_.WorkerModule.create(self.newWorkerModuleData())
+			let workerModules = yield self.createWorkerModules_()
 			try {
 				self.shutdownCheck_()
 				yield self.setup()
@@ -54,11 +67,12 @@ class AbstractPipelineModule {
 				yield self.teardown()
 			}
 			catch (error) {
-				yield self.updateWorkerModulesState_(workerModules, 'error')
+				if (workerModules)
+					yield self.updateWorkerModulesState_(workerModules, 'error')
 				throw error
 			}
 			yield self.updateWorkerModulesState_(workerModules, 'done')
-			return null
+			return workerModules
 		})()
 	}
 
@@ -72,6 +86,7 @@ class AbstractPipelineModule {
 	}
 
 	undo() {
+		throw new Error('not implemented')
 	}
 
 	run() {
@@ -91,22 +106,6 @@ class AbstractPipelineModule {
 		})
 	}
 
-	missingDependencies() {
-		// Shortcut :)
-		let deps = this.dependencies()
-		if (!deps.length)
-			return Promise.resolve([])
-
-		return this.doneModules()
-		.then((doneModules) => {
-			return arrayUtil.difference(deps, doneModules)
-		})
-	}
-
-	doneModules() {
-		throw new Error('not implemented')
-	}
-
 	workerModuleRecords() {
 		return [this.newWorkerModuleData()]
 	}
@@ -122,6 +121,46 @@ class AbstractPipelineModule {
 
 	// ----------------------------------------------------
 	// Private methods
+	/**
+	 * The pipeline will attempt to redo modules that are in the error state. Thus, it is likely
+	 * that a worker module will already exist. This method first destroys any existing worker
+	 * module records and then creates a new batch for each worker module record reported by child
+	 * modules implementations.
+	 *
+	 * @returns {Promise.<WorkerModule>}
+	 */
+	createWorkerModules_() {
+		// Most modules will only have one corresponding WorkerModule; however, in some cases,
+		// such as AseqCompute, there may be multiple worker modules. Thus, dealing with an array
+		// or worker modules is supported here.
+		let workerModuleRecords = this.workerModuleRecords()
+		return this.sequelize_.transaction((transaction) => {
+			return this.models_.WorkerModule.destroy({
+				where: {
+					genome_id: workerModuleRecords[0].genome_id,
+					module: {
+						$in: workerModuleRecords.map((x) => x.module)
+					}
+				},
+				transaction
+			})
+			.then(() => {
+				return this.models_.WorkerModule.bulkCreate(workerModuleRecords, {
+					validate: true,
+					returning: true,
+					transaction
+				})
+			})
+		})
+	}
+
+	/**
+	 * Updates the state of multiple worker modules to ${newState}
+	 *
+	 * @param {Array.<WorkerModule>} workerModules
+	 * @param {String} newState
+	 * @returns {Promise}
+	 */
 	updateWorkerModulesState_(workerModules, newState) {
 		return this.sequelize_.transaction((transaction) => {
 			return Promise.each(workerModules, (workerModule) => {

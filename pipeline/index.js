@@ -3,21 +3,21 @@
 'use strict'
 
 // Core
-const assert = require('assert'),
-	fs = require('fs'),
-	path = require('path')
+const path = require('path')
 
 // Vendor
 const program = require('commander'),
 	Promise = require('bluebird')
 
 // Local
-const arrayUtil = require('./lib/array-util'),
-	BootService = require('../services/BootService'),
+const putil = require('./modules/putil'),
+	ModuleId = require('./modules/ModuleId')
+
+const BootService = require('../services/BootService'),
 	WorkerService = require('../services/WorkerService'),
 	InterruptError = require('./lib/errors/InterruptError'),
-	OncePipelineModule = require('./modules/OncePipelineModule'),
-	PerGenomePipelineModule = require('./modules/PerGenomePipelineModule')
+	ModuleDepNode = require('./modules/ModuleDepNode'),
+	ModuleDepGraph = require('./modules/ModuleDepGraph')
 
 // Constants
 const k1KB = 1024,
@@ -29,9 +29,7 @@ const k1KB = 1024,
 // Leverage bluebird globally for all Promises
 global.Promise = Promise
 
-let availableModules = discoverModules(kModulesOncePath, kModulesPerGenomePath),
-	availableOnceModuleNames = availableModules.once.map((x) => x.name),
-	availablePerGenomeModuleNames = availableModules.perGenome.map((x) => x.name)
+let availableModules = putil.enumerateModules(kModulesOncePath, kModulesPerGenomePath)
 
 program
 .description(`Executes a pipeline of one or more MiST modules. There are two main
@@ -41,44 +39,35 @@ program
      prior to any "per-genome" modules. All such modules must be located
      beneath the modules/once folder. Available "once" modules include:
 
-${modulesHelp(availableModules.once)}
+${putil.modulesHelp(availableModules.once)}
 
   2. "per-genome" modules are serially invoked for one genome at a time before
      processing the next genome. Available "per-genome" modules include:
 
-${modulesHelp(availableModules.perGenome)}
+${putil.modulesHelp(availableModules.perGenome)}
 
   If no genome-ids are specified via the options, this script will iterate the
   module pipeline for all genomes in the database that have not yet been
   analyzed with at least one of the requested modules. Otherwise, it is only
   applied to the specified genomes with genome-ids.
-
-  # Redo
-  When the -r / --redo flag is provided, then all specified modules that are in
-  the error state are redone; however, if one or more genome-ids are also
-  specified, then all specified modules are redone regardless of their done
-  state (excluding those that are active).
 `)
 .usage('[options] <module ...>')
-// .option('-r, --redo', 'Redo specified modules (see description for details)')
 .option('-o, --run-once <module,...>', 'CSV list of module names', (value) => value.split(','))
 .option('-g, --genome-ids <genome id,...>', 'CSV list of genome ids', parseGenomeIds)
 .parse(process.argv)
 
-let onceModuleTexts = program.runOnce || [],
-	perGenomeModuleTexts = program.args
-if (!onceModuleTexts.length && !perGenomeModuleTexts.length) {
+let onceModuleIdStrings = program.runOnce || [],
+	perGenomeModuleIdStrings = program.args
+
+if (!onceModuleIdStrings.length && !perGenomeModuleIdStrings.length) {
 	program.outputHelp()
 	process.exit(1)
 }
 
-let requestedOnceModules = onceModuleTexts.map(deserializeModuleText),
-	requestedPerGenomeModules = perGenomeModuleTexts.map(deserializeModuleText)
+let requestedOnceModuleIds = ModuleId.fromStrings(onceModuleIdStrings),
+	requestedPerGenomeModuleIds = ModuleId.fromStrings(perGenomeModuleIdStrings)
 
 dieIfRequestedInvalidModules()
-
-requestedOnceModules.forEach((x) => parseModuleParameters(x, availableModules.once))
-requestedPerGenomeModules.forEach((x) => parseModuleParameters(x, availableModules.perGenome))
 
 let bootService = new BootService({
 		logger: {
@@ -113,8 +102,8 @@ bootService.setup()
 	worker.job = {
 		genomeIds: program.genomeIds,
 		modules: {
-			once: onceModuleTexts,
-			perGenome: perGenomeModuleTexts
+			once: onceModuleIdStrings,
+			perGenome: perGenomeModuleIdStrings
 		}
 	}
 	return worker.save()
@@ -136,8 +125,8 @@ bootService.setup()
 		sequelize: bootService.sequelize()
 	}
 
-	return runOnceModules(app, requestedOnceModules)
-	.then(() => runPerGenomeModules(app, requestedPerGenomeModules))
+	return runOnceModules(app, requestedOnceModuleIds)
+	.then(() => runPerGenomeModules(app, requestedPerGenomeModuleIds))
 })
 .then(() => {
 	// Worker cleanup
@@ -155,96 +144,18 @@ bootService.setup()
 
 // --------------------------------------------------------
 // --------------------------------------------------------
-function discoverModules(...srcPaths) {
-	let result = {
-		once: [],
-		perGenome: []
-	}
-
-	for (let srcPath of srcPaths) {
-		getModuleRootFiles(srcPath)
-		.forEach((moduleRootFile) => {
-			try {
-				// eslint-disable-next-line global-require
-				let moduleClass = require(`${srcPath}/${moduleRootFile}`)
-				if (moduleClass.prototype instanceof OncePipelineModule)
-					result.once.push(moduleClass)
-				else if (moduleClass.prototype instanceof PerGenomePipelineModule)
-					result.perGenome.push(moduleClass)
-			}
-			catch (error) {
-				if (!error.code)
-					// eslint-disable-next-line no-console
-					die(`an unexpected error occurred while parsing module: ${srcPath}/${moduleRootFile}`, error)
-				else if (error.code === 'MODULE_NOT_FOUND')
-					// eslint-disable-next-line no-console
-					console.warn(`WARNING: File could not be loaded: ${srcPath}/${moduleRootFile}\n\n`, error)
-			}
-		})
-	}
-
-	return result
-}
-
-function getModuleRootFiles(srcPath) {
-	return fs.readdirSync(srcPath)
-	.filter((file) => {
-		let stat = fs.statSync(path.join(srcPath, file))
-		return stat.isDirectory() || (stat.isFile && file.endsWith('.js'))
-	})
-}
-
-function modulesHelp(modules) {
-	if (!modules.length)
-		return '     [none]'
-
-	return modules.map(moduleHelp).join('\n')
-}
-
-function moduleHelp(module) {
-	let help = `     ${module.name}`
-	if (module.cli) {
-		let cli = module.cli()
-		if (cli.usage)
-			help += `:${cli.usage}`
-		if (cli.description)
-			help += `: ${cli.description}`
-		if (cli.moreInfo) {
-			help += '\n'
-			help += '       ' + cli.moreInfo.split('\n').join('\n       ') + '\n'
-		}
-	}
-	return help
-}
-
-function deserializeModuleText(moduleText) {
-	let matches = /^([\w-]+)(?::([\w-+]+))$/.exec(moduleText),
-		result = {
-			name: moduleText,
-			paramText: null,
-			param: null,
-			ModuleClass: null,
-			subModuleNames: null // e.g. Compute:pfam30
-		}
-
-	if (matches) {
-		result.name = matches[1]
-		result.paramText = matches[2]
-	}
-
-	return result
-}
-
 function dieIfRequestedInvalidModules() {
-	let requestedOnceModuleNames = requestedOnceModules.map((x) => x.name),
-		invalidOnceModuleNames = arrayUtil.difference(requestedOnceModuleNames, availableOnceModuleNames)
-	if (invalidOnceModuleNames.length)
-		die(`the following "once" module(s) are invalid: ${invalidOnceModuleNames.join(', ')}`)
+	let invalidOnces = putil.findInvalidModuleIds(requestedOnceModuleIds, availableModules.once)
+	if (invalidOnces.length) {
+		die('the following "once" modules (or submodules) are invalid\n\n' +
+			`  ${invalidOnces.join('\n  ')}\n`)
+	}
 
-	let requestedPerGenomeModuleNames = requestedPerGenomeModules.map((x) => x.name),
-		invalidPerGenomeModuleNames = arrayUtil.difference(requestedPerGenomeModuleNames, availablePerGenomeModuleNames)
-	if (invalidPerGenomeModuleNames.length)
-		die(`the following "per-genome" module(s) are invalid: ${invalidPerGenomeModuleNames.join(', ')}`)
+	let invalidPerGenomes = putil.findInvalidModuleIds(requestedPerGenomeModuleIds, availableModules.perGenome)
+	if (invalidPerGenomes.length) {
+		die('the following "per-genome" modules (or submodules) are invalid\n\n' +
+			`  ${invalidPerGenomes.join('\n  ')}\n`)
+	}
 }
 
 function die(message, optError) {
@@ -259,33 +170,6 @@ function die(message, optError) {
 		program.outputHelp()
 	}
 	process.exit(1)
-}
-
-function parseModuleParameters(requestedModule, sourceModules) {
-	let ModuleClass = moduleByName(requestedModule.name, sourceModules)
-	assert(ModuleClass)
-	requestedModule.ModuleClass = ModuleClass
-
-	let cli = ModuleClass.cli()
-	if (cli && cli.parse) {
-		try {
-			requestedModule.param = cli.parse(requestedModule.paramText)
-			if (cli.subModuleNames)
-				requestedModule.subModuleNames = cli.subModuleNames(requestedModule.param)
-		}
-		catch (error) {
-			die(`An error occurred while parsing the parameters for ${requestedModule.name}`, error)
-		}
-	}
-}
-
-function moduleByName(name, sourceModules) {
-	for (let module of sourceModules) {
-		if (name === module.name)
-			return module
-	}
-
-	return null
 }
 
 function parseGenomeIds(csvGenomeIds) {
@@ -322,9 +206,9 @@ function logError(error) {
 		case BootService.Sequelize.DatabaseError:
 			logger.error({name: error.name, sql: error.sql.substr(0, k1KB)}, shortMessage)
 			return
-		// case BootService.Sequelize.ValidationError:
-		// 	logger.error({errors: error.errors, record: error.record}, shortMessage)
-		// 	return
+		case BootService.Sequelize.ValidationError:
+			logger.error({errors: error.errors, record: error.record}, shortMessage)
+			return
 		case InterruptError:
 			logger.error(shortMessage)
 			return
@@ -378,12 +262,15 @@ function shutdownCheck() {
 		throw new InterruptError()
 }
 
-function runOnceModules(app, modules) {
-	return Promise.each(modules, (module) => {
+function runOnceModules(app, moduleIds) {
+	let moduleClassMap = putil.mapModuleClassesByName(availableModules.once)
+
+	return Promise.each(moduleIds, (moduleId) => {
 		shutdownCheck()
-		logger.info(`Starting "once" module: ${module.name}`)
-		app.logger = logger.child({module: module.name})
-		let moduleInstance = new module.ModuleClass(app, module.param)
+		logger.info(`Starting "once" module: ${moduleId}`)
+		app.logger = logger.child({moduleId})
+		let ModuleClass = moduleClassMap.get(moduleId.name()),
+			moduleInstance = new ModuleClass(app, moduleId.subNames())
 		return moduleInstance.main()
 		.then(() => {
 			logger.info(`Module finished normally: ${module.name}`)
@@ -391,48 +278,86 @@ function runOnceModules(app, modules) {
 	})
 }
 
-function runPerGenomeModules(app, modules) {
-	if (!modules.length)
+function runPerGenomeModules(app, moduleIds) {
+	if (!moduleIds.length)
 		return null
+
+	let moduleClassMap = putil.mapModuleClassesByName(availableModules.perGenome),
+		unnestedDeps = putil.unnestedDependencyArray(availableModules.perGenome),
+		rootDepNode = ModuleDepNode.createFromDepList(unnestedDeps),
+		depGraph = new ModuleDepGraph(rootDepNode, logger),
+		unnestedModuleIds = ModuleId.unnest(moduleIds),
+		lastGenomeId = null
 
 	return Promise.coroutine(function *() {
 		// eslint-disable-next-line no-constant-condition
 		while (true) {
 			shutdownCheck()
-			let genome = yield lockNextGenome(app, modules)
+			let genome = yield lockNextAvailableGenome(app, unnestedModuleIds, lastGenomeId)
 			if (!genome)
 				break
 
 			logger.info({genomeId: genome.id, name: genome.name}, `Locked genome: ${genome.name}`)
 
-			for (let module of modules) {
-				let ModuleClass = module.ModuleClass
+			let genomeState = yield app.models.WorkerModule.findAll({
+				where: {
+					genome_id: genome.id
+				}
+			})
+			depGraph.loadState(genomeState)
+			let incompleteModuleIds = depGraph.incompleteModuleIds(unnestedModuleIds)
+			incompleteModuleIds = depGraph.orderByDepth(incompleteModuleIds)
+			incompleteModuleIds = ModuleId.nest(incompleteModuleIds)
+
+			for (let moduleId of incompleteModuleIds) {
 				shutdownCheck()
+
+				// Dependency check. The Dep graph uses flat single subname
+				let repModuleId = moduleId.unnest()[0]
+				let missingDependencies = depGraph.missingDependencies(repModuleId)
+				if (missingDependencies.length) {
+					logger.info({missingDependencies}, `Unable to run: ${moduleId}. The following dependencies are not satisfied: ${missingDependencies.join(', ')}`)
+					continue
+				}
+
+				let ModuleClass = moduleClassMap.get(moduleId.name())
 				app.logger = logger.child({
-					module: ModuleClass.name,
+					moduleId: moduleId.toString(),
 					genome: {
 						id: genome.id,
 						name: genome.name
 					}
 				})
-				logger.info(`Starting module: ${module.name}`)
-				let moduleInstance = new ModuleClass(app, genome, module.param)
-				yield moduleInstance.main()
-				logger.info(`Module finished normally: ${module.name}`)
+				logger.info(`Starting module: ${moduleId}`)
+				let moduleInstance = new ModuleClass(app, genome, moduleId.subNames()),
+					workerModules = yield moduleInstance.main()
+				depGraph.updateState(workerModules)
+				logger.info(`Module finished normally: ${moduleId}`)
 			}
 
 			yield unlockGenome(genome)
 			logger.info({genome: {id: genome.id, name: genome.name}}, `Unlocked genome: ${genome.name}`)
+
+			lastGenomeId = genome.id
 		}
 	})()
 }
 
-function lockNextGenome(app, modules) {
+/**
+ * Locks the next available (is not associated with another worker - dead or alive) genome that has
+ * at least one of ${modules} incomplete (never started or in the error state).
+ *
+ * @param {Object} app
+ * @param {Array.<ModuleId>} moduleIds
+ * @param {Number} [lastGenomeId=null]
+ * @returns {Promise.<Genome>}
+ */
+function lockNextAvailableGenome(app, moduleIds, lastGenomeId = null) {
 	let genomesTable = app.models.Genome.tableName,
 		workerModulesTable = app.models.WorkerModule.tableName,
+		minGenomeIdClause = lastGenomeId ? `AND a.id > ${lastGenomeId} ` : '',
 		genomeIdClause = program.genomeIds ? `AND a.id IN (${program.genomeIds.join(',')}) ` : '',
-		queryModuleNames = flattenModuleNames(modules),
-		queryModuleArrayString = `ARRAY['${queryModuleNames.join("','")}']`,
+		queryModuleArrayString = `ARRAY['${moduleIds.join("','")}']`,
 		sql =
 `WITH done_genomes_modules AS (
 	SELECT b.genome_id, array_agg(module) as modules
@@ -442,7 +367,7 @@ function lockNextGenome(app, modules) {
 )
 SELECT a.*
 FROM ${genomesTable} a LEFT OUTER JOIN done_genomes_modules b ON (a.id = b.genome_id)
-WHERE a.worker_id is null ${genomeIdClause} AND (b.genome_id is null OR NOT b.modules @> ${queryModuleArrayString})
+WHERE a.worker_id is null ${minGenomeIdClause} ${genomeIdClause} AND (b.genome_id is null OR NOT b.modules @> ${queryModuleArrayString})
 ORDER BY a.id
 LIMIT 1
 FOR UPDATE`
@@ -461,27 +386,6 @@ FOR UPDATE`
 			}, {fields: ['worker_id']})
 		})
 	})
-}
-
-/**
- * @param {Array.<Object>} modules
- * @returns {Array.<String>} - each item is by default the module name unless subModuleNames is defined, in which case each subModuleNames becomes a separate item
- */
-function flattenModuleNames(modules) {
-	let result = []
-
-	modules.forEach((module) => {
-		if (module.subModuleNames) {
-			module.subModuleNames.forEach((x) => {
-				result.push(x)
-			})
-		}
-		else {
-			result.push(module.name)
-		}
-	})
-
-	return result
 }
 
 function unlockGenome(genome) {

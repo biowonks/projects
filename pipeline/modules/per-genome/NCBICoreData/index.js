@@ -24,10 +24,8 @@ let streamEachPromise = Promise.promisify(streamEach)
 
 module.exports =
 class NCBICoreData extends PerGenomePipelineModule {
-	static cli() {
-		return {
-			description: 'load NCBI RefSeq genome data'
-		}
+	static description() {
+		return 'load NCBI RefSeq genome data'
 	}
 
 	constructor(app, genome) {
