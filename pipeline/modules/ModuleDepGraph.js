@@ -91,7 +91,7 @@ class ModuleDepGraph {
 
 	/**
 	 * @param {Array.<ModuleId>} moduleIds
-	 * @returns {Array.<String>} - array of module names ordered with the most dependent modules occurring later
+	 * @returns {Array.<ModuleId>} - array of module names ordered with the most dependent modules occurring later
 	 */
 	orderByDepth(moduleIds) {
 		return this.toNodes(moduleIds)
@@ -99,6 +99,10 @@ class ModuleDepGraph {
 			.map((node) => ModuleId.fromString(node.name()))
 	}
 
+	/**
+	 * @param {Array.<ModuleId>} moduleIds
+	 * @returns {Array.<ModuleDepNode>}
+	 */
 	toNodes(moduleIds) {
 		return moduleIds.map((x) => this.nodeByName_(x.toString()))
 	}
@@ -110,6 +114,10 @@ class ModuleDepGraph {
 			node.setWorkerModule(null)
 	}
 
+	/**
+	 * @param {String} moduleName
+	 * @returns {ModuleDepNode}
+	 */
 	nodeByName_(moduleName) {
 		let node = this.nameNodeMap_.get(moduleName)
 		if (!node)
