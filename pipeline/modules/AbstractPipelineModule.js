@@ -74,7 +74,8 @@ class AbstractPipelineModule {
 	mainUndo(workerModules) {
 		let self = this
 		return Promise.coroutine(function *() {
-			yield self.setup();		self.shutdownCheck_()
+			yield self.setup()
+			self.shutdownCheck_()
 			let priorWorkerModuleStates = workerModules.map((x) => x.state)
 			yield self.updateWorkerModulesState_(workerModules, 'undo')
 			try {
@@ -152,6 +153,7 @@ class AbstractPipelineModule {
 			return this.models_.WorkerModule.destroy({
 				where: {
 					genome_id: workerModuleRecords[0].genome_id,
+					state: 'error',
 					module: {
 						$in: workerModuleRecords.map((x) => x.module)
 					}

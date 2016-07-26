@@ -39,6 +39,7 @@ class AseqCompute extends PerGenomePipelineModule {
 		super(app, genome)
 		this.toolIds_ = toolIds
 		this.aseqsService_ = new AseqsService(this.models_.Aseq)
+		this.totalAseqsToProcess_ = null
 	}
 
 	optimize() {
@@ -52,7 +53,14 @@ class AseqCompute extends PerGenomePipelineModule {
 	run() {
 		return this.aseqsMissingData_(this.toolIds_)
 		.then((aseqs) => {
-			this.logger_.info(`Found ${aseqs.length} aseqs missing data for one of ${this.toolIds_.join(', ')}`)
+			this.totalAseqsToProcess_ = aseqs.length
+			let toolIdString = this.toolIds_.join(', ')
+			if (!aseqs.length) {
+				this.logger_.info(`All ${toolIdString} for this genome has already been precomputed`)
+				return null
+			}
+
+			this.logger_.info(`${aseqs.length} aseqs are missing data for some of ${toolIdString}`)
 			this.shutdownCheck_()
 			let groups = this.aseqsService_.groupByUndoneTools(aseqs, this.toolIds_)
 			return this.computeGroups_(groups)

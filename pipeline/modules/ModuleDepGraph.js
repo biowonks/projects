@@ -143,8 +143,19 @@ class ModuleDepGraph {
 	 * @returns {Array.<ModuleId>}
 	 */
 	doneModuleIds(moduleIds) {
+		return this.matchingModuleIds(moduleIds, (node) => {
+			return node.workerModule() && node.workerModule().state === 'done'
+		})
+	}
+
+	/**
+	 * @param {Array.<ModuleId>} moduleIds
+	 * @param {Function} nodeFilterFn - filter function that receives a single argument, a ModuleDepNode, and must return true to match this node or false otherwise.
+	 * @returns {Array.<ModuleId>}
+	 */
+	matchingModuleIds(moduleIds, nodeFilterFn) {
 		return this.toNodes(moduleIds)
-			.filter((node) => node.workerModule() && node.workerModule().state === 'done')
+			.filter(nodeFilterFn)
 			.map((node) => ModuleId.fromString(node.name()))
 	}
 
