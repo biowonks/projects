@@ -4,7 +4,7 @@ module.exports =
 [
 	{
 		start: 96849,
-		stop: 96849,
+		stop: 99074,
 		strand: '+'
 	},
 	{
@@ -45,11 +45,6 @@ module.exports =
 	{
 		start: 107445,
 		stop: 109040,
-		strand: '+'
-	},
-	{
-		start: 102388,
-		stop: 103758,
 		strand: '+'
 	},
 	{
