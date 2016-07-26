@@ -114,29 +114,30 @@ class ModuleDepGraph {
 	}
 
 	/**
-	 * This method helps determine if ${moduleIds} may be undone. If this method returns an empty
-	 * array, then all ${moduleIds} may be undone; however, if a downstream node depends on one of
-	 * the ${moduleIds} then they may not be undone.
+	 * This method helps determine if ${moduleId} may be undone. If this method returns an empty
+	 * array, then ${moduleId} may be undone; however, if a downstream node depends on ${moduleId}
+	 * then they may not be undone.
 	 *
 	 * @param {ModuleId} moduleId
 	 * @returns {Array.<ModuleId>} - deeper module ids that depend on ${moduleIds}
 	 */
 	moduleIdsDependingOn(moduleId) {
 		let node = this.nodeByName_(moduleId.toString()),
-			moduleIdStrings = []
+			moduleIdStrings = new Set()
 		node.traverse((childNode) => {
 			if (childNode === node)
 				return
 
 			let workerModule = childNode.workerModule()
 			if (workerModule && workerModule.state === 'done')
-				moduleIdStrings.push(childNode.name())
+				moduleIdStrings.add(childNode.name())
 		})
-		return ModuleId.fromStrings(moduleIdStrings)
+		return ModuleId.fromStrings(Array.from(moduleIdStrings))
 	}
 
 	/**
-	 * "done" modules are those that have a worker module with a state of done.
+	 * "done" modules are those identified by ${moduleIds} that have a worker module with a state of
+	 * done.
 	 *
 	 * @param {Array.<ModuleId>} moduleIds
 	 * @returns {Array.<ModuleId>}

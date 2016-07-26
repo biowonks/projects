@@ -42,6 +42,14 @@ describe('pipeline', function() {
 			})
 		})
 
+		function checkModuleIdArray(result, expectedArray) {
+			expect(result).a('array')
+			expect(result.length).equal(expectedArray.length)
+			result.forEach((moduleId, i) => {
+				expect(moduleId.toString()).equal(expectedArray[i].toString())
+			})
+		}
+
 		it('constructor and default state', function() {
 			new ModuleDepGraph(root, logger)
 		})
@@ -152,18 +160,12 @@ describe('pipeline', function() {
 
 			it('done states', function() {
 				let result = x.moduleIdsInStates('done')
-				expect(result).a('array')
-				expect(result.length).equal(2)
-				expect(result[0].toString()).equal('A')
-				expect(result[1].toString()).equal('B')
+				checkModuleIdArray(result, [Aid, Bid])
 			})
 
 			it('mixed array of states', function() {
 				let result = x.moduleIdsInStates('active', 'undo')
-				expect(result).a('array')
-				expect(result.length).equal(2)
-				expect(result[0].toString()).equal('C')
-				expect(result[1].toString()).equal('D')
+				checkModuleIdArray(result, [Cid, Did])
 			})
 		})
 
@@ -214,13 +216,54 @@ describe('pipeline', function() {
 			})
 		})
 
+		describe('moduleIdsDependingOn', function() {
+			let x = new ModuleDepGraph(root)
+
+			it('no worker modules returns empty array', function() {
+				expect(x.moduleIdsDependingOn(Aid)).eql([])
+				expect(x.moduleIdsDependingOn(Bid)).eql([])
+				expect(x.moduleIdsDependingOn(Fid)).eql([])
+			})
+
+			it('does not include currently referenced node', function() {
+				B.setWorkerModule(WorkerModule.build({module: 'B', state: 'done'}))
+				expect(x.moduleIdsDependingOn(Bid)).eql([])
+			})
+
+			it('all descendant nodes with done worker modules are identified', function() {
+				B.setWorkerModule(WorkerModule.build({module: 'B', state: 'done'}))
+				C.setWorkerModule(WorkerModule.build({module: 'C', state: 'error'}))
+				D.setWorkerModule(WorkerModule.build({module: 'D', state: 'done'}))
+				F.setWorkerModule(WorkerModule.build({module: 'F', state: 'done'}))
+
+				let result = x.moduleIdsDependingOn(Bid)
+				checkModuleIdArray(result, [Fid, Did])
+			})
+		})
+
+		describe('doneModuleIds', function() {
+			it('returns moduleIds that are done', function() {
+				let x = new ModuleDepGraph(root)
+				B.setWorkerModule(WorkerModule.build({module: 'B', state: 'done'}))
+				C.setWorkerModule(WorkerModule.build({module: 'C', state: 'error'}))
+				D.setWorkerModule(WorkerModule.build({module: 'D', state: 'done'}))
+				F.setWorkerModule(WorkerModule.build({module: 'F', state: 'done'}))
+
+				expect(x.doneModuleIds([])).eql([])
+				expect(x.doneModuleIds([Aid])).eql([])
+				checkModuleIdArray(x.doneModuleIds([Aid, Bid]), [Bid])
+
+				checkModuleIdArray(x.doneModuleIds([
+					Aid, Bid, Cid, Fid, Gid, Hid // Note - Did is excluded
+				]), [Bid, Fid])
+			})
+		})
+
 		describe('incompleteModuleIds', function() {
 			let x = new ModuleDepGraph(root)
 			it('no worker module is incomplete', function() {
 				let result = x.incompleteModuleIds([Aid])
-				expect(result).a('array')
-				expect(result.length).equal(1)
-				expect(result[0].toString()).equal('A')
+				checkModuleIdArray(result, [Aid])
 			})
 
 			it('worker module with done state is not incomplete', function() {
@@ -234,10 +277,7 @@ describe('pipeline', function() {
 				D.setWorkerModule(WorkerModule.build({module: 'D', state: 'error'}))
 
 				let result = x.incompleteModuleIds([Aid, Bid, Cid, Did])
-				expect(result).a('array')
-				expect(result.length).equal(2)
-				expect(result[0].toString()).equal('C')
-				expect(result[1].toString()).equal('D')
+				checkModuleIdArray(result, [Cid, Did])
 			})
 		})
 
@@ -246,38 +286,55 @@ describe('pipeline', function() {
 
 			function checkOrder(input, output) {
 				let result = x.orderByDepth(input)
-				expect(result).a('array')
-				expect(result.length).equal(output.length)
-				for (let i = 0; i < result.length; i++)
-					expect(result[i].toString()).equal(output[i])
+				checkModuleIdArray(result, output)
 			}
 
 			it('[C, B] -> [B, C]', function() {
-				checkOrder([Cid, Bid], ['B', 'C'])
+				checkOrder([Cid, Bid], [Bid, Cid])
 			})
 
 			it('[H, B] -> [B, H]', function() {
-				checkOrder([Hid, Bid], ['B', 'H'])
+				checkOrder([Hid, Bid], [Bid, Hid])
 			})
 
-			it('[C, A, D, B] -> [A, B, C, D]', function() {
-				checkOrder([Cid, Aid, Did, Bid], ['A', 'B', 'C', 'D'])
+			it('[C, F, A, D, B] -> [A, B, C, D, F]', function() {
+				checkOrder([Cid, Fid, Aid, Did, Bid], [Aid, Bid, Cid, Did, Fid])
 			})
 
 			it('[D, C] -> [D, C]', function() {
-				checkOrder([Did, Cid], ['D', 'C'])
+				checkOrder([Did, Cid], [Did, Cid])
+			})
+		})
+
+		describe('reverseOrderByDepth', function() {
+			let x = new ModuleDepGraph(root)
+
+			function checkReverseOrder(input, output) {
+				let result = x.reverseOrderByDepth(input)
+				checkModuleIdArray(result, output)
+			}
+
+			it('[B, C] -> [C, B]', function() {
+				checkReverseOrder([Bid, Cid], [Cid, Bid])
+			})
+
+			it('[B, H] -> [H, B]', function() {
+				checkReverseOrder([Bid, Hid], [Hid, Bid])
+			})
+
+			it('[A, C, D, F, B] -> [F, C, D, A, B]', function() {
+				checkReverseOrder([Aid, Cid, Did, Fid, Bid], [Fid, Cid, Did, Aid, Bid])
+			})
+
+			it('[C, D] -> [C, D]', function() {
+				checkReverseOrder([Cid, Did], [Cid, Did])
 			})
 		})
 
 		describe('toNodes', function() {
 			let x = new ModuleDepGraph(root)
 			it('[A, F, G] returns those nodes', function() {
-				let result = x.toNodes([Aid, Fid, Gid])
-				expect(result).a('array')
-				expect(result.length).equal(3)
-				expect(result[0]).equal(A)
-				expect(result[1]).equal(F)
-				expect(result[2]).equal(G)
+				expect(x.toNodes([Aid, Fid, Gid])).eql([A, F, G])
 			})
 		})
 	})
