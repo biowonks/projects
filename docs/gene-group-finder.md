@@ -30,6 +30,19 @@ expected output:
 
 ## Example
 
+```javascript
+// load your input
+let genePositionStrand = require('./test-data/sample-gene-group')
+
+// start an instance of the class
+let geneGroupFinder = new GeneGroupFinder()
+
+//parse your input
+geneGroupFinder.parse(genePositionStrand)
+
+// your results will be in the **groups** method
+let results = geneGroupFinder.groups
+```
 
 
 ### Contact: Davi
