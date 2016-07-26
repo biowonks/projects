@@ -56,18 +56,28 @@ class NCBICoreData extends PerGenomePipelineModule {
 		)
 	}
 
+	/**
+	 * Does not remove any inserted Aseqs / Dseqs :\
+	 */
 	undo() {
-		// return this.models_.Component.destroy({
-		// 	where: {
-		// 		genome_id: this.genome_.id
-		// 	}
-		// })
-		// .then(() => this.models_.WorkerModule.destroy({
-		// 	where: {
-		// 		module: this.name(),
-		// 		genome_id: this.genome_.id
-		// 	}
-		// }))
+		return this.sequelize_.transaction((transaction) => {
+			this.logger_.info('Deleting genome references')
+			return this.models_.GenomeReference.destroy({
+				where: {
+					genome_id: this.genome_.id
+				},
+				transaction
+			})
+			.then(() => {
+				this.logger_.info('Deleting genome components (cascades to genes, components_features, etc)')
+				return this.models_.Component.destroy({
+					where: {
+						genome_id: this.genome_.id
+					},
+					transaction
+				})
+			})
+		})
 	}
 
 	run() {

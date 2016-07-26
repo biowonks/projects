@@ -1,5 +1,8 @@
 'use strict'
 
+// Core
+const assert = require('assert')
+
 module.exports =
 class AbstractPipelineModule {
 	constructor(app) {
@@ -48,31 +51,42 @@ class AbstractPipelineModule {
 
 	// ----------------------------------------------------
 	// Public methods
-	main(options = {}) {
+	main() {
 		let self = this
 		return Promise.coroutine(function *() {
+			yield self.setup();		self.shutdownCheck_()
 			let workerModules = yield self.createWorkerModules_()
 			try {
-				self.shutdownCheck_()
-				yield self.setup()
-				self.shutdownCheck_()
-				if (options.redo) {
-					yield self.undo()
-					self.shutdownCheck_()
-				}
 				yield self.run()
-				self.shutdownCheck_()
-				yield self.optimize()
-				self.shutdownCheck_()
-				yield self.teardown()
 			}
 			catch (error) {
-				if (workerModules)
-					yield self.updateWorkerModulesState_(workerModules, 'error')
+				yield self.updateWorkerModulesState_(workerModules, 'error')
 				throw error
 			}
 			yield self.updateWorkerModulesState_(workerModules, 'done')
+			self.shutdownCheck_()
+			yield self.optimize();	self.shutdownCheck_()
+			yield self.teardown()
 			return workerModules
+		})()
+	}
+
+	mainUndo(workerModules) {
+		let self = this
+		return Promise.coroutine(function *() {
+			yield self.setup();		self.shutdownCheck_()
+			let priorWorkerModuleStates = workerModules.map((x) => x.state)
+			yield self.updateWorkerModulesState_(workerModules, 'undo')
+			try {
+				yield self.undo()
+			}
+			catch (error) {
+				yield self.restorePriorState_(workerModules, priorWorkerModuleStates)
+				throw error
+			}
+			yield self.deleteWorkerModules_(workerModules)
+			yield self.optimize();	self.shutdownCheck_()
+			yield self.teardown()
 		})()
 	}
 
@@ -155,6 +169,18 @@ class AbstractPipelineModule {
 	}
 
 	/**
+	 * @param {Array.<WorkerModule>} workerModules
+	 * @returns {Promise}
+	 */
+	deleteWorkerModules_(workerModules) {
+		return this.sequelize_.transaction((transaction) => {
+			return Promise.each(workerModules, (workerModule) => {
+				return workerModule.destroy({transaction})
+			})
+		})
+	}
+
+	/**
 	 * Updates the state of multiple worker modules to ${newState}
 	 *
 	 * @param {Array.<WorkerModule>} workerModules
@@ -165,6 +191,16 @@ class AbstractPipelineModule {
 		return this.sequelize_.transaction((transaction) => {
 			return Promise.each(workerModules, (workerModule) => {
 				return workerModule.updateState(newState, transaction)
+			})
+		})
+	}
+
+	restorePriorState_(workerModules, priorWorkerModuleStates) {
+		assert(workerModules.length === priorWorkerModuleStates.length)
+
+		return this.sequelize_.transaction((transaction) => {
+			return Promise.each(workerModules, (workerModule, i) => {
+				return workerModule.updateState(priorWorkerModuleStates[i], transaction)
 			})
 		})
 	}

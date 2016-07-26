@@ -55,6 +55,43 @@ class ModuleDepGraph {
 	}
 
 	/**
+	 * Nulls the workerModules of nodes identified by ${workerModules}
+	 *
+	 * @param {Array.<WorkerModule>} workerModules
+	 */
+	removeState(workerModules) {
+		for (let workerModule of workerModules) {
+			let node = null
+			try {
+				node = this.nodeByName_(workerModule.module)
+			}
+			catch (error) {
+				if (this.logger_)
+					this.logger_.warn(`Database worker module, ${workerModule.module}, could not be found in the dependency graph. Ignoring...`)
+				else
+					throw error
+				continue
+			}
+			node.setWorkerModule(null)
+		}
+	}
+
+	/**
+	 * @param {...String} states - list of WorkerModule states to search dependency graph for
+	 * @returns {Array.<ModuleId>} - array of nested ModuleIds
+	 */
+	moduleIdsInStates(...states) {
+		let queryStates = new Set(states),
+			result = []
+		this.root_.traverse((node) => {
+			let workerModule = node.workerModule()
+			if (workerModule && queryStates.has(workerModule.state))
+				result.push(ModuleId.fromString(node.name()))
+		})
+		return ModuleId.nest(result)
+	}
+
+	/**
 	 * All parent modules that have not yet been computed or whose state is error.
 	 *
 	 * @param {ModuleId} moduleId
@@ -77,6 +114,40 @@ class ModuleDepGraph {
 	}
 
 	/**
+	 * This method helps determine if ${moduleIds} may be undone. If this method returns an empty
+	 * array, then all ${moduleIds} may be undone; however, if a downstream node depends on one of
+	 * the ${moduleIds} then they may not be undone.
+	 *
+	 * @param {ModuleId} moduleId
+	 * @returns {Array.<ModuleId>} - deeper module ids that depend on ${moduleIds}
+	 */
+	moduleIdsDependingOn(moduleId) {
+		let node = this.nodeByName_(moduleId.toString()),
+			moduleIdStrings = []
+		node.traverse((childNode) => {
+			if (childNode === node)
+				return
+
+			let workerModule = childNode.workerModule()
+			if (workerModule && workerModule.state === 'done')
+				moduleIdStrings.push(childNode.name())
+		})
+		return ModuleId.fromStrings(moduleIdStrings)
+	}
+
+	/**
+	 * "done" modules are those that have a worker module with a state of done.
+	 *
+	 * @param {Array.<ModuleId>} moduleIds
+	 * @returns {Array.<ModuleId>}
+	 */
+	doneModuleIds(moduleIds) {
+		return this.toNodes(moduleIds)
+			.filter((node) => node.workerModule() && node.workerModule().state === 'done')
+			.map((node) => ModuleId.fromString(node.name()))
+	}
+
+	/**
 	 * "incomplete" modules are those that either do not have an associated worker module or if
 	 * the worker module state is in error.
 	 *
@@ -91,12 +162,27 @@ class ModuleDepGraph {
 
 	/**
 	 * @param {Array.<ModuleId>} moduleIds
+	 * @param {Boolean} [sortDesc=false] sort in descending order
 	 * @returns {Array.<ModuleId>} - array of module names ordered with the most dependent modules occurring later
 	 */
-	orderByDepth(moduleIds) {
+	orderByDepth(moduleIds, sortDesc = false) {
+		function sortAscFn(a, b) {
+			return a.depth() - b.depth()
+		}
+
+		function sortDescFn(a, b) {
+			return b.depth() - a.depth()
+		}
+
+		let sortFn = !sortDesc ? sortAscFn : sortDescFn
+
 		return this.toNodes(moduleIds)
-			.sort((a, b) => a.depth() - b.depth())
+			.sort(sortFn)
 			.map((node) => ModuleId.fromString(node.name()))
+	}
+
+	reverseOrderByDepth(moduleIds) {
+		return this.orderByDepth(moduleIds, true)
 	}
 
 	/**

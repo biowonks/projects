@@ -45,6 +45,10 @@ class AseqCompute extends PerGenomePipelineModule {
 		return this.analyze(this.models_.Aseq.getTableName())
 	}
 
+	undo() {
+		this.logger_.info('Aseq computations are preserved regardless of undo. Skipping operation')
+	}
+
 	run() {
 		return this.aseqsMissingData_(this.toolIds_)
 		.then((aseqs) => {

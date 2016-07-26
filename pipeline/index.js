@@ -3,7 +3,8 @@
 'use strict'
 
 // Core
-const path = require('path')
+const assert = require('assert'),
+	path = require('path')
 
 // Vendor
 const program = require('commander'),
@@ -50,25 +51,32 @@ ${putil.modulesHelp(availableModules.perGenome)}
   module pipeline for all genomes in the database that have not yet been
   analyzed with at least one of the requested modules. Otherwise, it is only
   applied to the specified genomes with genome-ids.
+
+  # Undoing a module
+  Currently, only per-genome modules may be undone and these are done
+  in the reverse order as specified in the module dependency graph. Any
+  modules to be undone will be undone prior to running any per-genome
+  modules.
 `)
 .usage('[options] <module ...>')
-// .option('-o, --run-once <module,...>', 'CSV list of module names', (value) => value.split(','))
+.option('-u, --undo <module,...>', 'CSV list of module names', (value) => value.split(','))
 .option('-g, --genome-ids <genome id,...>', 'CSV list of genome ids', parseGenomeIds)
 .parse(process.argv)
 
-let requestedModuleIds = ModuleId.nest(ModuleId.fromStrings(program.args))
+let requestedModuleIds = ModuleId.nest(ModuleId.fromStrings(program.args)),
+	requestedModuleUndoIds = ModuleId.nest(ModuleId.fromStrings(program.undo || []))
 
-if (!requestedModuleIds.length) {
+if (!requestedModuleUndoIds.length && !requestedModuleIds.length) {
 	program.outputHelp()
 	process.exit(1)
 }
 
 dieIfRequestedInvalidModules()
+dieIfRequestedToUndoOnceModule()
 
 let requestedOnceModuleIds = putil.matchingModuleIds(requestedModuleIds, availableModules.once),
-	requestedPerGenomeModuleIds = putil.matchingModuleIds(requestedModuleIds, availableModules.perGenome)
-
-let bootService = new BootService({
+	requestedPerGenomeModuleIds = putil.matchingModuleIds(requestedModuleIds, availableModules.perGenome),
+	bootService = new BootService({
 		logger: {
 			name: 'pipeline',
 			streams: [
@@ -100,6 +108,7 @@ bootService.setup()
 	worker = workerService.buildWorker()
 	worker.job = {
 		genomeIds: program.genomeIds,
+		undo: requestedModuleUndoIds,
 		modules: {
 			once: requestedOnceModuleIds,
 			perGenome: requestedPerGenomeModuleIds
@@ -125,7 +134,7 @@ bootService.setup()
 	}
 
 	return runOnceModules(app, requestedOnceModuleIds)
-	.then(() => runPerGenomeModules(app, requestedPerGenomeModuleIds))
+	.then(() => runPerGenomeModules(app, requestedModuleUndoIds, requestedPerGenomeModuleIds))
 })
 .then(() => {
 	// Worker cleanup
@@ -144,10 +153,24 @@ bootService.setup()
 // --------------------------------------------------------
 // --------------------------------------------------------
 function dieIfRequestedInvalidModules() {
+	let invalidUndoModuleIds = putil.findInvalidModuleIds(requestedModuleUndoIds, availableModules.all)
+	if (invalidUndoModuleIds.length) {
+		die('the following "undo" modules (or submodules) are invalid\n\n' +
+			`  ${invalidUndoModuleIds.join('\n  ')}\n`)
+	}
+
 	let invalidModuleIds = putil.findInvalidModuleIds(requestedModuleIds, availableModules.all)
 	if (invalidModuleIds.length) {
 		die('the following modules (or submodules) are invalid\n\n' +
 			`  ${invalidModuleIds.join('\n  ')}\n`)
+	}
+}
+
+function dieIfRequestedToUndoOnceModule() {
+	let onceModuleIds = putil.matchingModuleIds(requestedModuleUndoIds, availableModules.once)
+	if (onceModuleIds.length) {
+		die('Undo is only supported for per-genome modules, but the following once modules were ' +
+			`specified for undo: ${onceModuleIds.join(', ')}`)
 	}
 }
 
@@ -271,14 +294,13 @@ function runOnceModules(app, moduleIds) {
 	})
 }
 
-function runPerGenomeModules(app, moduleIds) {
-	if (!moduleIds.length)
+function runPerGenomeModules(app, undoModuleIds, moduleIds) {
+	if (!undoModuleIds.length && !moduleIds.length)
 		return null
 
 	let moduleClassMap = putil.mapModuleClassesByName(availableModules.perGenome),
-		unnestedDeps = putil.unnestedDependencyArray(availableModules.perGenome),
-		rootDepNode = ModuleDepNode.createFromDepList(unnestedDeps),
-		depGraph = new ModuleDepGraph(rootDepNode, logger),
+		depGraph = createDepGraph(availableModules.perGenome),
+		unnestedUndoModuleIds = ModuleId.unnest(undoModuleIds),
 		unnestedModuleIds = ModuleId.unnest(moduleIds),
 		lastGenomeId = null
 
@@ -286,81 +308,81 @@ function runPerGenomeModules(app, moduleIds) {
 		// eslint-disable-next-line no-constant-condition
 		while (true) {
 			shutdownCheck()
-			let genome = yield lockNextAvailableGenome(app, unnestedModuleIds, lastGenomeId)
-			if (!genome)
+			let genome = yield lockNextAvailableGenome(app, unnestedUndoModuleIds, unnestedModuleIds, lastGenomeId),
+				nothingAvailableToDo = !genome
+			if (nothingAvailableToDo)
 				break
 
-			logger.info({genomeId: genome.id, name: genome.name}, `Locked genome: ${genome.name}`)
-
-			let genomeState = yield app.models.WorkerModule.findAll({
-				where: {
-					genome_id: genome.id
+			try {
+				yield loadGenomeState(app, genome, depGraph)
+				let activeUndoModuleIds = depGraph.moduleIdsInStates('active', 'undo')
+				if (activeUndoModuleIds.length) {
+					logger.warn({
+						genomeId: genome.id,
+						name: genome.name,
+						activeUndoModuleIds: activeUndoModuleIds.map((x) => x.toString())
+					}, `Cannot process genome until the following 'active' / 'undo' modules are resolved: ${activeUndoModuleIds.join(', ')}`)
 				}
-			})
-			depGraph.loadState(genomeState)
-			let incompleteModuleIds = depGraph.incompleteModuleIds(unnestedModuleIds)
-			incompleteModuleIds = depGraph.orderByDepth(incompleteModuleIds)
-			incompleteModuleIds = ModuleId.nest(incompleteModuleIds)
-
-			for (let moduleId of incompleteModuleIds) {
-				shutdownCheck()
-
-				// Dependency check. The Dep graph uses flat single subname
-				let repModuleId = moduleId.unnest()[0]
-				let missingDependencies = depGraph.missingDependencies(repModuleId)
-				if (missingDependencies.length) {
-					logger.info({missingDependencies}, `Unable to run: ${moduleId}. The following dependencies are not satisfied: ${missingDependencies.join(', ')}`)
-					continue
+				else {
+					yield undoModules(app, genome, unnestedUndoModuleIds, depGraph, moduleClassMap)
+					yield runModules(app, genome, unnestedModuleIds, depGraph, moduleClassMap)
 				}
-
-				let ModuleClass = moduleClassMap.get(moduleId.name())
-				app.logger = logger.child({
-					moduleId: moduleId.toString(),
-					genome: {
-						id: genome.id,
-						name: genome.name
-					}
-				})
-				logger.info(`Starting module: ${moduleId}`)
-				let moduleInstance = new ModuleClass(app, genome, moduleId.subNames()),
-					workerModules = yield moduleInstance.main()
-				depGraph.updateState(workerModules)
-				logger.info(`Module finished normally: ${moduleId}`)
+			}
+			catch (error) {
+				yield unlockGenome(genome)
+				throw error
 			}
 
 			yield unlockGenome(genome)
-			logger.info({genome: {id: genome.id, name: genome.name}}, `Unlocked genome: ${genome.name}`)
-
 			lastGenomeId = genome.id
 		}
 	})()
 }
 
+function createDepGraph(ModuleClasses) {
+	let	unnestedDeps = putil.unnestedDependencyArray(ModuleClasses),
+		rootDepNode = ModuleDepNode.createFromDepList(unnestedDeps)
+	return new ModuleDepGraph(rootDepNode, logger)
+}
+
 /**
  * Locks the next available (is not associated with another worker - dead or alive) genome that has
- * at least one of ${modules} incomplete (never started or in the error state).
+ * at least one of {$undoModuleIds} already completed or at least one of ${moduleIds} incomplete
+ * (never started or in the error state) and a genome id greater than ${lastGenomeId}.
  *
  * @param {Object} app
+ * @param {Array.<ModuleId>} undoModuleIds
  * @param {Array.<ModuleId>} moduleIds
  * @param {Number} [lastGenomeId=null]
  * @returns {Promise.<Genome>}
  */
-function lockNextAvailableGenome(app, moduleIds, lastGenomeId = null) {
+function lockNextAvailableGenome(app, undoModuleIds, moduleIds, lastGenomeId = null) {
+	assert(undoModuleIds.length + moduleIds.length > 0)
+
 	let genomesTable = app.models.Genome.tableName,
 		workerModulesTable = app.models.WorkerModule.tableName,
 		minGenomeIdClause = lastGenomeId ? `AND a.id > ${lastGenomeId} ` : '',
 		genomeIdClause = program.genomeIds ? `AND a.id IN (${program.genomeIds.join(',')}) ` : '',
+		queryUndoModuleArrayString = `ARRAY['${undoModuleIds.join("','")}']`,
 		queryModuleArrayString = `ARRAY['${moduleIds.join("','")}']`,
+		whereClauses = []
+
+	if (undoModuleIds.length)
+		whereClauses.push(`(b.genome_id is not null AND b.modules @> ${queryUndoModuleArrayString})`)
+	if (moduleIds.length)
+		whereClauses.push(`(b.genome_id is null OR NOT b.modules @> ${queryModuleArrayString})`)
+
+	let whereClauseSql = whereClauses.join(' OR '),
 		sql =
 `WITH done_genomes_modules AS (
 	SELECT b.genome_id, array_agg(module) as modules
 	FROM ${genomesTable} a JOIN ${workerModulesTable} b ON (a.id = b.genome_id)
-	WHERE a.worker_id is null AND (b.id is null OR b.redo is false) AND b.state = 'done'
+	WHERE a.worker_id is null AND b.redo is false AND b.state = 'done'
 	GROUP BY b.genome_id
 )
 SELECT a.*
 FROM ${genomesTable} a LEFT OUTER JOIN done_genomes_modules b ON (a.id = b.genome_id)
-WHERE a.worker_id is null ${minGenomeIdClause} ${genomeIdClause} AND (b.genome_id is null OR NOT b.modules @> ${queryModuleArrayString})
+WHERE a.worker_id is null ${minGenomeIdClause} ${genomeIdClause} AND (${whereClauseSql})
 ORDER BY a.id
 LIMIT 1
 FOR UPDATE`
@@ -377,12 +399,105 @@ FOR UPDATE`
 			return genomes[0].update({
 				worker_id: app.worker.id
 			}, {fields: ['worker_id']})
+			.then((genome) => {
+				logger.info({genomeId: genome.id, name: genome.name}, `Locked genome: ${genome.name}`)
+				return genome
+			})
 		})
 	})
+}
+
+function loadGenomeState(app, genome, depGraph) {
+	return app.models.WorkerModule.findAll({
+		where: {
+			genome_id: genome.id
+		}
+	})
+	.then((genomeState) => {
+		depGraph.loadState(genomeState)
+	})
+}
+
+function undoModules(app, genome, unnestedUndoModuleIds, depGraph, moduleClassMap) {
+	let effectiveUndoModuleIds = depGraph.doneModuleIds(unnestedUndoModuleIds)
+	effectiveUndoModuleIds = depGraph.reverseOrderByDepth(effectiveUndoModuleIds)
+	effectiveUndoModuleIds = ModuleId.nest(effectiveUndoModuleIds)
+	return Promise.coroutine(function *() {
+		for (let moduleId of effectiveUndoModuleIds) {
+			shutdownCheck()
+
+			let unnestedModuleIds = moduleId.unnest(),
+				dependentModuleIds = new Set()
+
+			unnestedModuleIds.forEach((unnestedModuleId) => {
+				for (let x of depGraph.moduleIdsDependingOn(unnestedModuleId))
+					dependentModuleIds.add(x)
+			})
+			if (dependentModuleIds.size) {
+				dependentModuleIds = Array.from(dependentModuleIds)
+				logger.info({dependentModuleIds: dependentModuleIds.map((x) => x.toString())},
+				`Unable to undo: ${moduleId}. The following modules must be undone first: ${dependentModuleIds.join(', ')}`)
+				continue
+			}
+
+			let ModuleClass = moduleClassMap.get(moduleId.name())
+			app.logger = logger.child({
+				action: 'undo',
+				moduleId: moduleId.toString(),
+				genome: {
+					id: genome.id,
+					name: genome.name
+				}
+			})
+			logger.info(`Undoing module: ${moduleId}`)
+			let moduleInstance = new ModuleClass(app, genome, moduleId.subNames()),
+				workerModules = depGraph.toNodes(unnestedModuleIds).map((x) => x.workerModule())
+			yield moduleInstance.mainUndo(workerModules)
+			depGraph.removeState(workerModules)
+			logger.info(`Undo finished normally: ${moduleId}`)
+		}
+	})()
+}
+
+function runModules(app, genome, unnestedModuleIds, depGraph, moduleClassMap) {
+	let incompleteModuleIds = depGraph.incompleteModuleIds(unnestedModuleIds)
+	incompleteModuleIds = depGraph.orderByDepth(incompleteModuleIds)
+	incompleteModuleIds = ModuleId.nest(incompleteModuleIds)
+
+	return Promise.coroutine(function *() {
+		for (let moduleId of incompleteModuleIds) {
+			shutdownCheck()
+
+			// Dependency check. The dep graph uses the first flat single subname
+			let repModuleId = moduleId.unnest()[0],
+				missingDependencies = depGraph.missingDependencies(repModuleId)
+			if (missingDependencies.length) {
+				logger.info({missingDependencies}, `Unable to run: ${moduleId}. The following dependencies are not satisfied: ${missingDependencies.join(', ')}`)
+				continue
+			}
+
+			let ModuleClass = moduleClassMap.get(moduleId.name())
+			app.logger = logger.child({
+				moduleId: moduleId.toString(),
+				genome: {
+					id: genome.id,
+					name: genome.name
+				}
+			})
+			logger.info(`Starting module: ${moduleId}`)
+			let moduleInstance = new ModuleClass(app, genome, moduleId.subNames()),
+				workerModules = yield moduleInstance.main()
+			depGraph.updateState(workerModules)
+			logger.info(`Module finished normally: ${moduleId}`)
+		}
+	})()
 }
 
 function unlockGenome(genome) {
 	return genome.update({
 		worker_id: null
 	}, {fields: ['worker_id']})
+	.then(() => {
+		logger.info({genome: {id: genome.id, name: genome.name}}, `Unlocked genome: ${genome.name}`)
+	})
 }

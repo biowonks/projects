@@ -14,7 +14,7 @@ const models = require('../../models').withDummyConnection(),
 const WorkerModule = models.WorkerModule
 
 describe('pipeline', function() {
-	describe('ModuleDepGraph', function() {
+	describe.only('ModuleDepGraph', function() {
 		let logger = bunyan.createLogger({name: 'ModuleDepGraph test'}),
 			depList = [
 				{name: 'A',		dependencies: []},
@@ -101,12 +101,69 @@ describe('pipeline', function() {
 				})
 			})
 
-			it('throws error if no logger and attempt to non-cognate worker module', function() {
+			it('throws error if no logger and attempt to update non-cognate worker module', function() {
 				let x = new ModuleDepGraph(root),
 					wm = WorkerModule.build({module: 'Doesnt exist'})
 				expect(function() {
 					x.updateState([wm])
 				}).throw(Error)
+			})
+		})
+
+		describe('removeState', function() {
+			it('removes any matching worker modules', function() {
+				let x = new ModuleDepGraph(root, logger),
+					wmA = WorkerModule.build({module: 'A'}),
+					wmH = WorkerModule.build({module: 'H'})
+				x.loadState([wmA])
+				x.removeState([wmH])
+				root.traverse((node) => {
+					if (node.name() === 'A')
+						expect(node.workerModule()).equal(wmA)
+					else
+						expect(node.workerModule()).null
+				})
+			})
+
+			it('throws error if no logger and attempt to remove non-cognate worker module', function() {
+				let x = new ModuleDepGraph(root),
+					wm = WorkerModule.build({module: 'Doesnt exist'})
+				expect(function() {
+					x.removeState([wm])
+				}).throw(Error)
+			})
+		})
+
+		describe('moduleIdsInStates', function() {
+			let x = new ModuleDepGraph(root, logger),
+				wmA = WorkerModule.build({module: 'A', state: 'done'}),
+				wmB = WorkerModule.build({module: 'B', state: 'done'}),
+				wmC = WorkerModule.build({module: 'C', state: 'active'}),
+				wmD = WorkerModule.build({module: 'D', state: 'undo'}),
+				wmE = WorkerModule.build({module: 'E', state: 'error'})
+
+			beforeEach(() => {
+				x.loadState([wmA, wmB, wmC, wmD, wmE])
+			})
+
+			it('no states listed, returns empty array', function() {
+				expect(x.moduleIdsInStates()).eql([])
+			})
+
+			it('done states', function() {
+				let result = x.moduleIdsInStates('done')
+				expect(result).a('array')
+				expect(result.length).equal(2)
+				expect(result[0].toString()).equal('A')
+				expect(result[1].toString()).equal('B')
+			})
+
+			it('mixed array of states', function() {
+				let result = x.moduleIdsInStates('active', 'undo')
+				expect(result).a('array')
+				expect(result.length).equal(2)
+				expect(result[0].toString()).equal('C')
+				expect(result[1].toString()).equal('D')
 			})
 		})
 
