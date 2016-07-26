@@ -14,7 +14,7 @@ const models = require('../../models').withDummyConnection(),
 const WorkerModule = models.WorkerModule
 
 describe('pipeline', function() {
-	describe.only('ModuleDepGraph', function() {
+	describe('ModuleDepGraph', function() {
 		let logger = bunyan.createLogger({name: 'ModuleDepGraph test'}),
 			depList = [
 				{name: 'A',		dependencies: []},
