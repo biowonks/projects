@@ -7,5 +7,5 @@ cd $DIR/seg
 set -e
 
 echo "Compiling"
-rm -f seg
+make clean
 make seg

@@ -13,15 +13,6 @@ const Aseq = models.Aseq
 describe('services', function() {
 	describe('AseqsService', function() {
 		describe('segs (tool runner)', function() {
-			let aseqs = null
-
-			beforeEach(() => {
-				aseqs = [
-					Aseq.build(testData[0].coreData),
-					Aseq.build(testData[1].coreData)
-				]
-			})
-
 			it('empty array resolves to empty result array', function() {
 				return segsToolRunner([])
 				.then((result) => {
@@ -29,7 +20,11 @@ describe('services', function() {
 				})
 			})
 
-			it('computes and updates aseqs segs (default target field)', function() {
+			it('computes and updates aseqs segs', function() {
+				let aseqs = [
+					Aseq.build(testData[0].coreData),
+					Aseq.build(testData[1].coreData)
+				]
 				expect(aseqs[0].segs).not.ok
 				expect(aseqs[1].segs).not.ok
 
@@ -38,20 +33,6 @@ describe('services', function() {
 					expect(aseqs === resultAseqs)
 					expect(aseqs[0].segs).eql(testData[0].segs)
 					expect(aseqs[1].segs).eql(testData[1].segs)
-				})
-			})
-
-			it('alternate target field', function() {
-				expect(aseqs[0].segs).not.ok
-				expect(aseqs[1].segs).not.ok
-
-				return segsToolRunner(aseqs, 'segssegs')
-				.then((resultAseqs) => {
-					expect(aseqs === resultAseqs)
-					expect(aseqs[0].segs).not.ok
-					expect(aseqs[0].segssegs).eql(testData[0].segs)
-					expect(aseqs[1].segs).not.ok
-					expect(aseqs[1].segssegs).eql(testData[1].segs)
 				})
 			})
 		})

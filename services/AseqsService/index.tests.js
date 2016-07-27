@@ -20,6 +20,7 @@
 // Local
 const AseqsService = require('./index'),
 	Seq = require('../../pipeline/lib/bio/Seq'),
+	config = require('../../config'),
 	models = require('../../models').withDummyConnection(),
 	testData = require('./tool-runners/test-data')
 
@@ -57,7 +58,7 @@ describe('services', function() {
 					Aseq.build(testData[1].coreData)
 				]
 
-				let x = new AseqsService(Aseq)
+				let x = new AseqsService(Aseq, config)
 				return x.compute(aseqs, ['coils', 'segs'])
 				.then((resultAseqs) => {
 					expect(resultAseqs).equal(aseqs)
@@ -77,7 +78,7 @@ describe('services', function() {
 				seq4 = new Seq('MLTND')
 
 			it('throws error if either argument is not an array', function() {
-				let x = new AseqsService(Aseq)
+				let x = new AseqsService(Aseq, config)
 				expect(function() {
 					x.groupByUndoneTools()
 				}).throw(Error)
@@ -88,7 +89,7 @@ describe('services', function() {
 			})
 
 			it('returns single element with all aseqs if all tools are done', function() {
-				let x = new AseqsService(Aseq),
+				let x = new AseqsService(Aseq, config),
 					toolIds = ['segs', 'coils'],
 					aseqs = [
 						Aseq.fromSeq(seq1),
@@ -111,7 +112,7 @@ describe('services', function() {
 			})
 
 			it('returns all possible groupings (and multiple members)', function() {
-				let x = new AseqsService(Aseq),
+				let x = new AseqsService(Aseq, config),
 					toolIds = ['segs', 'coils'],
 					aseqs = [
 						Aseq.fromSeq(seq1), // 0

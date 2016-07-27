@@ -2,7 +2,8 @@
 
 module.exports =
 class AbstractSeqsService {
-	constructor(model) {
+	constructor(model, config) {
+		this.config_ = config
 		this.model_ = model
 		this.sequelize_ = model.sequelize
 		this.attributes_ = Object.keys(this.model_.rawAttributes)
