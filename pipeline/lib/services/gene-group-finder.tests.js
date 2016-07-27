@@ -5,9 +5,9 @@ let path = require('path'),
 
 let genePositionStrand = require('./test-data/sample-gene-group')
 
-describe.only('Services', function() {
+describe('Services', function() {
 	describe.only('GeneGroupFinder', function() {
-		it('Show just parse the input in the right way', function() {
+		it('Should just parse the input in the right way', function() {
 			let geneGroupFinder = new GeneGroupFinder()
 			geneGroupFinder.parse(genePositionStrand)
 			let results = geneGroupFinder.groups
@@ -26,6 +26,37 @@ describe.only('Services', function() {
 						{start: 105412, stop: 106032, strand: '-'}
 					]
 				])
+		})
+		it('Should return empy if empty object is passed', function() {
+			let geneGroupFinder = new GeneGroupFinder()
+			let emptyObject = []
+			geneGroupFinder.parse(emptyObject)
+			let results = geneGroupFinder.groups
+			expect(results).deep.equal([])
+		})
+		it('Should fail if anything other than object is passed', function() {
+			let fixtures =
+				[
+					'Davi',
+					[
+						{start: 96849, stop: 99074, strand: '+'},
+						{start: 99161, stop: 99631, strand: '+'}
+					],
+					1234,
+					true,
+					undefined,
+					function() {
+						return false
+					}
+				]
+			let geneGroupFinder = new GeneGroupFinder()
+			let emptyObject = 'dadasda'
+			fixtures.forEach(function(fixture) {
+				expect(function() {
+					geneGroupFinder.parse(emptyObject)
+					let results = geneGroupFinder.groups
+				}).throw(Error)
+			})
 		})
 	})
 })

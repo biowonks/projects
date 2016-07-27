@@ -9,6 +9,12 @@ class GeneGroupFinder {
 		this.groups = []
 	}
 	parse(object) {
+		try {
+			this.isValidObject_(object)
+		}
+		catch (e) {
+			throw e
+		}
 		let groups = []
 		object.sort(function(a, b) {
 			return a.start - b.start
@@ -31,5 +37,16 @@ class GeneGroupFinder {
 			// console.log("")
 		})
 		this.groups = groups
+	}
+	isValidObject_(object) {
+		let properties = ['start', 'stop', 'strand']
+		object.forEach(function(item) {
+			properties.forEach(function(property) {
+				if (!(item.hasOwnProperty(property))) {
+					throw new Error('Not all elements have the properties required: start, stop and strand')
+				}
+			})
+		})
+		return true
 	}
 }
