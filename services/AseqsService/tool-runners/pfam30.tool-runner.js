@@ -28,7 +28,23 @@ module.exports = function(aseqs, pfamConfig) {
 
 		streamEach(hmmscan, (result, next) => {
 			let aseq = aseqs[i]
-			aseq.pfam30 = result.domains
+			aseq.pfam30 = result.domains.map((domain) => [
+				domain.name,
+				domain.score,
+				domain.bias,
+				domain.c_evalue,
+				domain.i_evalue,
+				domain.hmm_from,
+				domain.hmm_to,
+				domain.hmm_cov,
+				domain.ali_from,
+				domain.ali_to,
+				domain.ali_cov,
+				domain.env_from,
+				domain.env_to,
+				domain.env_cov,
+				domain.acc
+			])
 			i++
 			next()
 		}, (error) => {
