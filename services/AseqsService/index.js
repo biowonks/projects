@@ -54,9 +54,10 @@ class AseqsService extends AbstractSeqsService {
 			return Promise.reject(new Error(`invalid tool id: ${invalidToolId}`))
 
 		return Promise.each(toolIds, (toolId) => {
-			// eslint-disable-next-line global-require
-			let toolRunner = require(`./tool-runners/${toolId}.tool-runner`)
-			return toolRunner(aseqs, toolId)
+			// eslint-disable-next-line global-require, no-mixed-requires
+			let toolRunner = require(`./tool-runners/${toolId}.tool-runner`),
+				toolRunnerConfig = this.config_.pipeline.toolRunners[toolId]
+			return toolRunner(aseqs, toolRunnerConfig)
 		})
 		.then(() => aseqs)
 	}

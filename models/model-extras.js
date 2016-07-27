@@ -101,8 +101,8 @@ module.exports = function(Sequelize) {
 	let validate = {
 		bothNullOrBothNotEmpty: function(field1, field2) {
 			return function() {
-				let value1 = this.getDataValue(field1),
-					value2 = this.getDataValue(field2),
+				let value1 = this.get(field1),
+					value2 = this.get(field2),
 					value1Empty = !value1 || /^\s*$/.test(value1),
 					value2Empty = !value2 || /^\s*$/.test(value2)
 
@@ -118,8 +118,8 @@ module.exports = function(Sequelize) {
 		 */
 		referencedLength: function(lengthField, targetField) {
 			return function() {
-				let expectedLength = this.getDataValue(lengthField),
-					targetValue = this.getDataValue(targetField)
+				let expectedLength = this.get(lengthField),
+					targetValue = this.get(targetField)
 
 				if (typeof targetValue !== 'string')
 					throw new Error(`${targetField} is not a string`)

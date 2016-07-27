@@ -53,6 +53,12 @@ module.exports = function(kRootPath) {
 			}
 		},
 
+		toolRunners: {
+			pfam30: {
+				databasePath: path.resolve(paths.vendor, 'pfam', '30.0', 'Pfam-A.hmm')
+			}
+		},
+
 		// ----------------------------------------------------
 		// Specific module configuration
 		seedNewGenomes: {

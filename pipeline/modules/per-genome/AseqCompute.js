@@ -38,7 +38,7 @@ class AseqCompute extends PerGenomePipelineModule {
 	constructor(app, genome, toolIds) {
 		super(app, genome)
 		this.toolIds_ = toolIds
-		this.aseqsService_ = new AseqsService(this.models_.Aseq)
+		this.aseqsService_ = new AseqsService(this.models_.Aseq, app.config)
 		this.totalAseqsToProcess_ = null
 	}
 

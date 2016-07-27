@@ -14,10 +14,9 @@ const segStream = require('../../../pipeline/lib/streams/seg-stream')
  * Updates each ${aseqs} ${targetField} with the results of running the seg tool.
  *
  * @param {Array.<Aseq>} aseqs
- * @param {String} [targetField='segs'] - field to update on aseqs
  * @returns {Promise.<Array.<Aseq>>}
  */
-module.exports = function(aseqs, targetField = 'segs') {
+module.exports = function(aseqs) {
 	return new Promise((resolve, reject) => {
 		let seg = segStream(),
 			i = 0
@@ -25,7 +24,7 @@ module.exports = function(aseqs, targetField = 'segs') {
 		streamEach(seg, (result, next) => {
 			let aseq = aseqs[i]
 			assert(aseq.id === result.header)
-			aseq[targetField] = result.segs
+			aseq.segs = result.segs
 			i++
 			next()
 		}, (error) => {
