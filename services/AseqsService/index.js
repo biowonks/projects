@@ -86,7 +86,7 @@ WHERE id = ? AND (${nullClause})`
 
 		return Promise.each(aseqs, (aseq) => {
 			for (let i = 0; i < nToolIds; i++)
-				replacements[i] = JSON.stringify(aseq[toolIds[i]])
+				replacements[i] = JSON.stringify(aseq.getDataValue(toolIds[i]))
 			replacements[nToolIds] = aseq.id
 
 			return this.sequelize_.query(sql, {
