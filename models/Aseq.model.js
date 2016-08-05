@@ -7,10 +7,11 @@ const assert = require('assert')
 const seqUtil = require('../pipeline/lib/bio/seq-util')
 
 // Constants
-const kToolIdFieldNames = ['pfam30', 'segs', 'coils']
+const kToolIdFieldNames = ['pfam30', 'segs', 'coils'],
+	kPrecision = 6
 
 module.exports = function(Sequelize, models, extras) {
-	function toPrecision(value, places = 6) {
+	function toPrecision(value, places = kPrecision) {
 		return Number(value.toFixed(places))
 	}
 
