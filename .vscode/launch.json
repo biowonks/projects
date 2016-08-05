@@ -28,9 +28,11 @@
 			"stopOnEntry": false,
 			"cwd": "${workspaceRoot}/pipeline",
 			"args": [
-				"-o",
-				"SeedNewGenomes",
-				"NCBICoreData"
+				"-g",
+				"1",
+				"-r",
+				// "SeedNewGenomes"
+				"AseqCompute:pfam30"
 			],
 			"preLaunchTask": null,
 			"runtimeExecutable": null,
