@@ -20,7 +20,21 @@
   "pre-commit": [
     "eslint"
   ],
-  "author": "Luke Ulrich",
+  "author": "BioWonks",
+  "contributors": [
+    {
+      "name": "Luke Ulrich"
+    },
+    {
+      "name": "Ogun Adebali"
+    },
+    {
+      "name": "Davi Ortega"
+    },
+    {
+      "name": "Amit Upadhyay"
+    }
+  ],
   "license": "",
   "dependencies": {
     "bluebird": "3.x",
