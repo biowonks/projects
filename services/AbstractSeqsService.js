@@ -1,5 +1,8 @@
 'use strict'
 
+// Core
+const assert = require('assert')
+
 module.exports =
 class AbstractSeqsService {
 	constructor(model, config, logger) {
@@ -8,6 +11,8 @@ class AbstractSeqsService {
 		this.logger_ = logger
 		this.sequelize_ = model.sequelize
 		this.attributes_ = Object.keys(this.model_.rawAttributes)
+
+		assert(this.logger_, 'Missing logger argument')
 	}
 
 	insertIgnoreSeqs(seqs, fields, transaction) {

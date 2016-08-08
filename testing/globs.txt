@@ -1,0 +1,4 @@
+models/{,**/}*.tests.js
+services/{,**/}*.tests.js
+pipeline/{,**/}*.tests.js
+lib/*.tests.js

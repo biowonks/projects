@@ -59,6 +59,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 
 	/**
 	 * Does not remove any inserted Aseqs / Dseqs :\
+	 * @returns {Promise}
 	 */
 	undo() {
 		return this.sequelize_.transaction((transaction) => {

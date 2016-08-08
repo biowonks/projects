@@ -67,6 +67,7 @@ class AseqsService extends AbstractSeqsService {
 
 			return toolRunner.run(aseqs)
 		})
+		.then(() => aseqs)
 	}
 
 	/**
