@@ -7,14 +7,9 @@ const assert = require('assert')
 const seqUtil = require('../pipeline/lib/bio/seq-util')
 
 // Constants
-const kToolIdFieldNames = ['pfam30', 'segs', 'coils'],
-	kPrecision = 6
+const kToolIdFieldNames = ['pfam30', 'segs', 'coils']
 
 module.exports = function(Sequelize, models, extras) {
-	function toPrecision(value, places = kPrecision) {
-		return Number(value.toFixed(places))
-	}
-
 	let fields = {
 		length: extras.requiredPositiveInteger(),
 		sequence: extras.requiredSequence(),
@@ -55,8 +50,8 @@ module.exports = function(Sequelize, models, extras) {
 					domain.name,
 					domain.score,
 					domain.bias,
-					toPrecision(domain.c_evalue),
-					toPrecision(domain.i_evalue),
+					domain.c_evalue,
+					domain.i_evalue,
 					domain.hmm_from,
 					domain.hmm_to,
 					domain.hmm_cov,

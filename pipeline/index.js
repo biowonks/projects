@@ -446,7 +446,7 @@ function lockNextAvailableGenome(app, undoModuleIds, moduleIds, lastGenomeId = n
 		whereClauses = []
 
 	if (undoModuleIds.length)
-		whereClauses.push(`(b.genome_id is not null AND b.modules @> ${queryUndoModuleArrayString})`)
+		whereClauses.push(`(b.genome_id is not null AND b.modules && ${queryUndoModuleArrayString})`)
 	if (moduleIds.length)
 		whereClauses.push(`(b.genome_id is null OR NOT b.no_redo_modules @> ${queryModuleArrayString})`)
 
