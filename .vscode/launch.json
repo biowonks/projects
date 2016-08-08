@@ -28,11 +28,10 @@
 			"stopOnEntry": false,
 			"cwd": "${workspaceRoot}/pipeline",
 			"args": [
-				"-g",
-				"1",
-				"-r",
-				// "SeedNewGenomes"
-				"AseqCompute:pfam30"
+				// "-g",
+				// "1",
+				"NCBICoreData",
+				"AseqCompute:pfam30+segs+coils"
 			],
 			"preLaunchTask": null,
 			"runtimeExecutable": null,
@@ -77,20 +76,11 @@
 			"cwd": "${workspaceRoot}",
 			"args": [
 				"--no-timeouts",
-				"--require", "testing/test-setup.js",
+				"--require", "testing/setup.js",
 				"pipeline/**/*.tests.js",
 				"services/**/*.tests.js",
 				"models/**/*.tests.js"
 			],
-			"runtimeExecutable": null
-		},
-		{
-			"name": "Enqueue Genomes",
-			"type": "node",
-			"request": "launch",
-			"program": "${workspaceRoot}/pipeline/scripts/enqueueNewGenomes.js",
-			"stopOnEntry": false,
-			"cwd": "${workspaceRoot}",
 			"runtimeExecutable": null
 		},
 		{

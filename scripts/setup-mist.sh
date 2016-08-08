@@ -2,17 +2,12 @@
 
 set -e
 
-# Reference: http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
-# Get the directory of this script
-DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-cd $DIR/..
-
 npm install
+npm run install-coils
+npm run install-seg
+npm run install-hmmer3
+npm run install-pfam
 
-GULP=./node_modules/gulp/bin/gulp.js
-$GULP install-coils
-$GULP install-hmmer3
-$GULP install-seg
-
-$GULP install-pfam
+echo "\n"
+echo "-----------------------------------------------------------"
+echo "MiST setup complete"
