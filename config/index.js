@@ -2,12 +2,14 @@
 'use strict'
 
 // Core
-let _ = require('lodash'),
-	fs = require('fs'),
+const fs = require('fs'),
 	path = require('path')
 
+// Vendor
+const _ = require('lodash')
+
 // Local
-let packageJSON = require('../package.json')
+const packageJSON = require('../package.json')
 
 // Constants
 /**
@@ -60,7 +62,8 @@ let config = {
 
 	routing: {
 		ssl: false,
-		prefix: '/api/v1'
+		prefix: '/v1',
+		routesPath: path.resolve(kRootPath, 'routes')
 	}
 }
 

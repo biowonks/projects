@@ -2,17 +2,17 @@
 
 // Core
 let	cluster = require('cluster'),
-	path = require('path')
+	http = require('http')
 
 // Vendor
 let corser = require('corser'),
 	express = require('express'),
-	bodyParser = require('body-parser')
+	bodyParser = require('body-parser'),
+	httpShutdown = require('http-shutdown'),
+	pathRoutify = require('path-routify')
 
 // Local
 let	errorHandler = require('./lib/error-handler'),
-	toolbag = require('./lib/toolbag'),
-	pathRoutify = require('./lib/path-routify'),
 	loadServices = require('./services'),
 	ApiError = require('./lib/errors/api-error'),
 	BootService = require('./services/BootService'),
@@ -20,6 +20,11 @@ let	errorHandler = require('./lib/error-handler'),
 
 // Constants
 const kMsPerSecond = 1000
+
+// Other
+function exit(code = 0) {
+	process.exit(code)
+}
 
 module.exports = function() {
 	// Maintain reference to server variable because the handleUncaughtErrors middleware references it.
@@ -57,9 +62,8 @@ module.exports = function() {
 		app.set('errors', {ApiError, RestError})
 		app.set('config', config)
 		app.set('logger', logger)
-		app.set('toolbag', toolbag)
 		app.set('sequelize', bootService.sequelize())
-		app.set('models', bootService.models)
+		app.set('models', bootService.models())
 
 		if (config.routing.ssl) {
 			logger.info('Forcing all requests to use SSL')
@@ -76,12 +80,18 @@ module.exports = function() {
 
 		app.set('services', loadServices(app))
 
-		pathRoutify(app, path.resolve('./routes'), config.routing.prefix)
+		let router = pathRoutify(app, config.routing.routesPath)
+		if (config.routing.prefix)
+			app.use(config.routing.prefix, router)
+		else
+			app.use(router)
 
 		app.use(handleUncaughtErrors)
 		app.use(errorHandler(app))
 
-		server = app.listen(config.server.port, () => {
+		server = http.createServer(app)
+		server = httpShutdown(server)
+		server.listen(config.server.port, () => {
 			logger.info({port: config.server.port}, 'Listening for connections')
 
 			// Tell master that we are ready to go
@@ -96,33 +106,25 @@ module.exports = function() {
 		// Prevent multiple calls to
 		if (sigTermSignalReceived)
 			return
+		sigTermSignalReceived = true
+
+		if (!server)
+			exit()
 
 		// Close down any keep-alive connections
 		// https://github.com/nodejs/node-v0.x-archive/issues/9066
-		server.setTimeout(1)
-
-		sigTermSignalReceived = true
 		logger.info(`Received SIGTERM signal from master. Waiting ${config.server.workerExitGraceMs / kMsPerSecond} seconds for open connections to complete`)
-		if (server) {
-			server.close(() => {
-				logger.info('All connections done, exiting normally')
-				exit()
-			})
-
-			let failSafeTimer = setTimeout(() => {
-				logger.fatal('Timed out waiting for open connections to close normally, forcefully exiting')
-				exit(1)
-			}, config.server.workerExitGraceMs)
-
-			failSafeTimer.unref()
-		}
-		else {
+		server.shutdown(() => {
+			logger.info('All connections done, exiting normally')
 			exit()
-		}
-	}
+		})
 
-	function exit(optCode = 0) {
-		process.exit(optCode)
+		let failSafeTimer = setTimeout(() => {
+			logger.fatal('Timed out waiting for open connections to close normally, forcefully exiting')
+			exit(1)
+		}, config.server.workerExitGraceMs)
+
+		failSafeTimer.unref()
 	}
 
 	// --------------------------------------------------------
