@@ -17,6 +17,7 @@ let bodyParser = require('body-parser'),
 let	errorHandler = require('./lib/error-handler'),
 	loadServices = require('./services'),
 	ApiError = require('./lib/errors/api-error'),
+	RouteHelper = require('./lib/RouteHelper'),
 	BootService = require('./services/BootService'),
 	RestError = require('./lib/errors/rest-error')
 
@@ -89,6 +90,9 @@ module.exports = function() {
 		app.use(bodyParser.json())
 
 		app.set('services', loadServices(app))
+		app.set('lib', {
+			RouteHelper
+		})
 
 		let router = pathRoutify(app, config.routing.routesPath)
 		if (config.routing.prefix)
