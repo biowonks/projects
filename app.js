@@ -5,9 +5,11 @@ let	cluster = require('cluster'),
 	http = require('http')
 
 // Vendor
-let corser = require('corser'),
+let bodyParser = require('body-parser'),
+	compression = require('compression'), // Gzip support
+	corser = require('corser'), // CORS
 	express = require('express'),
-	bodyParser = require('body-parser'),
+	helmet = require('helmet'), // Security practices
 	httpShutdown = require('http-shutdown'),
 	pathRoutify = require('path-routify')
 
@@ -19,7 +21,8 @@ let	errorHandler = require('./lib/error-handler'),
 	RestError = require('./lib/errors/rest-error')
 
 // Constants
-const kMsPerSecond = 1000
+const kMsPerSecond = 1000,
+	kJsonPrettyPrintSpaces = 2
 
 // Other
 function exit(code = 0) {
@@ -59,6 +62,13 @@ module.exports = function() {
 		// --------------------------------------------------------
 		// Main setup
 		let app = express()
+		app.use(helmet())
+
+		// http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api#pretty-print-gzip
+		// Gzip output and pretty print JSON by default
+		app.use(compression())
+		app.set('json spaces', kJsonPrettyPrintSpaces)
+
 		app.set('errors', {ApiError, RestError})
 		app.set('config', config)
 		app.set('logger', logger)

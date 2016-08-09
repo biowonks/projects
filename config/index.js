@@ -54,8 +54,8 @@ let config = {
 	},
 
 	headerNames: {
-		apiToken: 'x-' + packageJSON.name + '-api-token',
-		version: 'x-' + packageJSON.name + '-api-version'
+		apiToken: 'X-' + packageJSON.name + '-token',
+		version: 'X-' + packageJSON.name + '-version'
 	},
 
 	package: packageJSON,
