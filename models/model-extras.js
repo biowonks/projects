@@ -101,8 +101,8 @@ module.exports = function(Sequelize) {
 	let validate = {
 		bothNullOrBothNotEmpty: function(field1, field2) {
 			return function() {
-				let value1 = this.getDataValue(field1),
-					value2 = this.getDataValue(field2),
+				let value1 = this.get(field1), // eslint-disable-line no-invalid-this
+					value2 = this.get(field2), // eslint-disable-line no-invalid-this
 					value1Empty = !value1 || /^\s*$/.test(value1),
 					value2Empty = !value2 || /^\s*$/.test(value2)
 
@@ -115,11 +115,12 @@ module.exports = function(Sequelize) {
 		 * Checks that the length of targetField equals the value in lengthField
 		 * @param {String} lengthField
 		 * @param {String} targetField
+		 * @returns {Function}
 		 */
 		referencedLength: function(lengthField, targetField) {
 			return function() {
-				let expectedLength = this.getDataValue(lengthField),
-					targetValue = this.getDataValue(targetField)
+				let expectedLength = this.get(lengthField), // eslint-disable-line no-invalid-this
+					targetValue = this.get(targetField) // eslint-disable-line no-invalid-this
 
 				if (typeof targetValue !== 'string')
 					throw new Error(`${targetField} is not a string`)

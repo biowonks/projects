@@ -10,7 +10,7 @@ module.exports = function(Sequelize, models, extras) {
 			allowNull: false,
 			validate: {
 				notEmpty: true,
-				isIn: [['active', 'done', 'error']]
+				isIn: [['active', 'done', 'error', 'undo']]
 			}
 		},
 		redo: {
@@ -46,7 +46,13 @@ module.exports = function(Sequelize, models, extras) {
 	return {
 		fields,
 		params: {
-			instanceMethods
+			instanceMethods,
+			indexes: [
+				{
+					unique: true,
+					fields: ['genome_id', 'module']
+				}
+			]
 		}
 	}
 }

@@ -16,10 +16,10 @@ const config = require('../../../config'),
 
 // Constants
 const kSegToolDir = config.pipeline.vendor.seg.basePath,
-	kSegToolFile = path.resolve(kSegToolDir, 'seg')
+	kSegToolPath = path.resolve(kSegToolDir, 'seg')
 
 module.exports = function(options) {
-	let segTool = duplexChildProcess.spawn(kSegToolFile, ['-', '-x']),
+	let segTool = duplexChildProcess.spawn(kSegToolPath, ['-', '-x']),
 		segParser = through2.obj(options, (fastaSeq, encoding, done) => {
 			done(null, {
 				header: fastaSeq.header(),

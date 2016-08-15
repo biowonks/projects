@@ -17,14 +17,19 @@
 
 'use strict'
 
+// Vendor
+const bunyan = require('bunyan')
+
 // Local
 const AseqsService = require('./index'),
 	Seq = require('../../pipeline/lib/bio/Seq'),
+	config = require('../../config'),
 	models = require('../../models').withDummyConnection(),
 	testData = require('./tool-runners/test-data')
 
 // Other
-const Aseq = models.Aseq
+const Aseq = models.Aseq,
+	logger = bunyan.createLogger({name: 'AseqsService-tests'})
 
 describe('services', function() {
 	describe('AseqsService', function() {
@@ -41,26 +46,24 @@ describe('services', function() {
 					if (tool.id === 'coils') {
 						Reflect.deleteProperty(tool, 'id')
 
-						let coilsToolRunner = require('./tool-runners/coils.tool-runner.js')
-						expect(tool).deep.equal(coilsToolRunner.meta)
-
-						tool.id = 'coils'
+						let CoilsToolRunner = require('./tool-runners/CoilsToolRunner')
+						expect(tool).deep.equal(CoilsToolRunner.meta)
 					}
 				}
 			})
 		})
 
 		describe('compute', function() {
-			it('runs coils and segs on the given aseqs', function() {
+			it('run coils and segs on the given aseqs', function() {
 				let aseqs = [
 					Aseq.build(testData[0].coreData),
 					Aseq.build(testData[1].coreData)
 				]
 
-				let x = new AseqsService(Aseq)
+				let x = new AseqsService(Aseq, config, logger)
 				return x.compute(aseqs, ['coils', 'segs'])
 				.then((resultAseqs) => {
-					expect(resultAseqs).equal(aseqs)
+					expect(resultAseqs === aseqs).ok
 					for (let i = 0; i < aseqs.length; i++) {
 						expect(resultAseqs[i] === aseqs[i]).true
 						expect(aseqs[i].coils).eql(testData[i].coils)
@@ -77,7 +80,7 @@ describe('services', function() {
 				seq4 = new Seq('MLTND')
 
 			it('throws error if either argument is not an array', function() {
-				let x = new AseqsService(Aseq)
+				let x = new AseqsService(Aseq, config, logger)
 				expect(function() {
 					x.groupByUndoneTools()
 				}).throw(Error)
@@ -88,7 +91,7 @@ describe('services', function() {
 			})
 
 			it('returns single element with all aseqs if all tools are done', function() {
-				let x = new AseqsService(Aseq),
+				let x = new AseqsService(Aseq, config, logger),
 					toolIds = ['segs', 'coils'],
 					aseqs = [
 						Aseq.fromSeq(seq1),
@@ -111,7 +114,7 @@ describe('services', function() {
 			})
 
 			it('returns all possible groupings (and multiple members)', function() {
-				let x = new AseqsService(Aseq),
+				let x = new AseqsService(Aseq, config, logger),
 					toolIds = ['segs', 'coils'],
 					aseqs = [
 						Aseq.fromSeq(seq1), // 0

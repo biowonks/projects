@@ -24,10 +24,8 @@ let streamEachPromise = Promise.promisify(streamEach)
 
 module.exports =
 class NCBICoreData extends PerGenomePipelineModule {
-	static cli() {
-		return {
-			description: 'load NCBI RefSeq genome data'
-		}
+	static description() {
+		return 'load NCBI RefSeq genome data'
 	}
 
 	constructor(app, genome) {
@@ -35,8 +33,9 @@ class NCBICoreData extends PerGenomePipelineModule {
 
 		this.ncbiDataHelper_ = new NCBIDataHelper(this.fileMapper_, this.logger_)
 		this.locationStringParser_ = new LocationStringParser()
-		this.aseqsService_ = new AseqsService(this.models_.Aseq)
-		this.dseqsService_ = new DseqsService(this.models_.Dseq)
+		let noConfig = null
+		this.aseqsService_ = new AseqsService(this.models_.Aseq, noConfig, this.logger_)
+		this.dseqsService_ = new DseqsService(this.models_.Dseq, noConfig, this.logger_)
 		// {RefSeq accession: {}}
 		this.assemblyReportMap_ = new Map()
 
@@ -58,18 +57,29 @@ class NCBICoreData extends PerGenomePipelineModule {
 		)
 	}
 
+	/**
+	 * Does not remove any inserted Aseqs / Dseqs :\
+	 * @returns {Promise}
+	 */
 	undo() {
-		// return this.models_.Component.destroy({
-		// 	where: {
-		// 		genome_id: this.genome_.id
-		// 	}
-		// })
-		// .then(() => this.models_.WorkerModule.destroy({
-		// 	where: {
-		// 		module: this.name(),
-		// 		genome_id: this.genome_.id
-		// 	}
-		// }))
+		return this.sequelize_.transaction((transaction) => {
+			this.logger_.info('Deleting genome references')
+			return this.models_.GenomeReference.destroy({
+				where: {
+					genome_id: this.genome_.id
+				},
+				transaction
+			})
+			.then(() => {
+				this.logger_.info('Deleting genome components (cascades to genes, components_features, etc)')
+				return this.models_.Component.destroy({
+					where: {
+						genome_id: this.genome_.id
+					},
+					transaction
+				})
+			})
+		})
 	}
 
 	run() {
