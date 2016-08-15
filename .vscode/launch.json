@@ -30,8 +30,7 @@
 			"args": [
 				// "-g",
 				// "1",
-				"NCBICoreData",
-				"AseqCompute:pfam30+segs+coils"
+				"Taxonomy"
 			],
 			"preLaunchTask": null,
 			"runtimeExecutable": null,

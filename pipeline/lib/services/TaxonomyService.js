@@ -1,22 +1,32 @@
 'use strict'
 
-// 3rd-party libraries
+// Vendor
 let Promise = require('bluebird'),
 	requestPromise = require('request-promise')
 
-// Local includes
+// Local
 let NCBITaxonomyXMLParser = require('./NCBITaxonomyXMLParser'),
-	BootService = require('../../services/BootService')
+	mutil = require('../mutil')
 
 // Constants
-const kNCBIPartialTaxonomyUrl = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=taxonomy&retmode=text&rettype=xml&id='
+const kNCBIPartialTaxonomyUrl = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=taxonomy&retmode=text&rettype=xml&id=',
 	kNCBIRootTaxonomyId = 1
+
+class IntermediateRankExistsError extends Error {
+}
+
 /**
  * @constructor
  */
 module.exports =
 class TaxonomyService {
-	constructor() {
+	/**
+	 * @constructor
+	 * @param {Model} taxonomyModel
+	 */
+	constructor(taxonomyModel, logger) {
+		this.taxonomyModel_ = taxonomyModel
+		this.logger_ = logger
 		this.taxonomyXMLParser_ = new NCBITaxonomyXMLParser()
 	}
 
@@ -33,11 +43,11 @@ class TaxonomyService {
 			return Promise.reject(new Error('Invalid taxonomy id - must be all digits'))
 
 		return requestPromise(this.eutilUrl(taxonomyId))
-			.then((xmlResponse) => {
-				return this.taxonomyXMLParser_.parse(xmlResponse)
-			})
+		.then((xmlResponse) => mutil.xmlToJs(xmlResponse))
+		.then((jsonTaxonomy) => this.taxonomyXMLParser_.parse(jsonTaxonomy))
 	}
 
+	// eslint-disable-next-line valid-jsdoc
 	/**
 	 * Given the phylum and class, return the major taxonomic group. In most cases,
 	 * this is simply the phlum; however, the class should be returned if the phylum
@@ -52,81 +62,70 @@ class TaxonomyService {
 		throw new Error('Not yet implemented')
 	}
 
-	 /**
-     * @param {number} taxonomyId numeric identifier
-     * @returns {Promise} with resolve as boolean true if the give node Taxonomy ID doesn't exist in the taxonomy table
-     */
-    nodeDoesNotExist_(taxonomyId) {
-		return this.bootService_.setup()
-		.then(() => {
-			this.sequelize_ = this.bootService_.sequelize()
-			this.models_ = this.bootService_.models()
-		})
-		.then(() => {
-			return this.models_.taxonomy.find({
-				where: {
-					id: taxonomyId
-				}
-        	})
-		})
-        .then((taxonomyRow) => {
-        	return requestPromise(!!taxonomyRow)
-        )}
-	}
-
-	/**
-	 * @param {object} taxonomyObject with id, name, rank, parent
-	 * It inserts the object in the Taxonomy table
-	 */
-	insertNode_(node) {
-		return this.sequelize_.transaction(() => {
-			return this.models_.Taxonomy.find({
-				where: {
-					id: taxonomyNode.id
-				}
-			})
-			.then((foundNode) => {
-				return !foundNode ? this.models_.Taxonomy.create(node) : null
-			})
-		})
-	}
-
 	/**
 	 * @param {int} taxonomyId
 	 * It fetches taxonomy information from NCBI and inserts the taxonomyNode in Taxonomy table
-	 * @returns taxonomyObject with id, name, rank, parent
+	 * @returns {Promise} taxonomyObject with id, name, rank, parent
 	 */
 	fetchTaxonomyAndUpdateTable(taxonomyId) {
-        return this.nodeDoesNotExist_()
-        .then((doesntExist) => {
-            this.fetch(taxonomyId)
-		})
-		.then((taxonomyObject) => {
-			for (let i = taxonomyObject.lineage.length(); i >= 0 ; i--) {
-				let taxonomyNode = taxonomyObject.lineage[i]
-				taxonomyNode.parentId = kNCBIRootTaxonomyId
-				taxonomyNode.hasParent = (i !== 0)
+		return this.nodeDoesNotExist_(taxonomyId)
+		.then((doesntExist) => {
+			if (doesntExist)
+				return this.fetchTaxonomyAndUpdateTable_(taxonomyId)
 
-				if (this.nodeDoesNotExist_(nodeTaxonomyId)) {
-					if (taxonomyNode.hasParent) {
-						taxonomyNode.parentId = taxonomyObject.lineage[i - 1].id
-					}
-					this.insertNode_(taxonomyNode)
-					.then((taxonomyNode) => {
-						this.logger_.info({
-							id: taxonomyNode.id,
-							parentId: taxonomyNode.parentId,
-							name: taxonomyNode.name,
-							rank: taxonomyNode.rank
-						}, 'Inserted a new taxonomy node')
-					})
-				}
-				else {
-					break //No need iterate insertion check for parents. If the node already exists, its parents must exist as well.
-				}
-			}
-			return taxonomyObject
+			return null
 		})
-    }
+	}
 
+	/**
+	 * @param {Number} taxonomyId - NCBI taxonomy id
+	 * @param {Transaction} transaction
+	 * @returns {Promise} with resolve as boolean true if the give node Taxonomy ID doesn't exist in the taxonomy table
+	 */
+	nodeDoesNotExist_(taxonomyId, transaction) {
+		return this.taxonomyModel_.find({
+			where: {
+				id: taxonomyId
+			},
+			transaction
+		})
+		.then((taxonomyRow) => {
+			return !taxonomyRow
+		})
+	}
+
+	fetchTaxonomyAndUpdateTable_(taxonomyId) {
+		return this.fetch(taxonomyId)
+		.then((ncbiTaxonomy) => {
+			ncbiTaxonomy.lineage.reverse()
+
+			return Promise.each(ncbiTaxonomy.lineage, (taxonomyNode, i) => {
+				taxonomyNode.parent_taxonomy_id = kNCBIRootTaxonomyId
+				let hasParent = i !== (ncbiTaxonomy.lineage.length - 1)
+				if (hasParent)
+					taxonomyNode.parent_taxonomy_id = ncbiTaxonomy.lineage[i + 1].id
+
+				return this.insertTaxonomyNode_(taxonomyNode)
+			})
+			.catch(IntermediateRankExistsError, () => {})
+			.then(() => ncbiTaxonomy)
+		})
+	}
+
+	insertTaxonomyNode_(taxonomyNode) {
+		return this.taxonomyModel_.sequelize.transaction((transaction) => {
+			return this.nodeDoesNotExist_(taxonomyNode.id, transaction)
+			.then((doesntExist) => {
+				let doesExist = !doesntExist
+				// No need iterate insertion check for parents. If the node already exists, its parents must exist as well.
+				if (doesExist)
+					throw new IntermediateRankExistsError()
+
+				return this.taxonomyModel_.create(taxonomyNode, {transaction})
+				.then((dbTaxonomyNode) => {
+					this.logger_.info(dbTaxonomyNode.get(), `Inserted new taxonomy node: ${dbTaxonomyNode.name}`)
+				})
+			})
+		})
+	}
 }

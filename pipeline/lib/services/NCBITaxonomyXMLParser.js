@@ -20,7 +20,7 @@ class NCBITaxonomyXMLParser {
 					rank: 'superkingdom'
 				}...
 			]
-	 *		
+	 *
 	 *		superkingdom
 	 *		kingdom
 	 *		phylum
@@ -40,7 +40,7 @@ class NCBITaxonomyXMLParser {
 	 * @return {Object}
 	 */
 
-	parse_(jsonTaxonomy) {
+	parse(ncbiTaxonomy) {
 		let taxonomyObject = {
 				taxid: null,
 				organism: null,
@@ -55,7 +55,7 @@ class NCBITaxonomyXMLParser {
 				species: null,
 				strain: null
 			},
-			taxon = jsonTaxonomy.TaxaSet.Taxon[0],
+			taxon = ncbiTaxonomy.TaxaSet.Taxon[0],
 			rankObjects = taxon.LineageEx[0].Taxon
 
 		taxonomyObject.taxid = parseInt(taxon.TaxId[0])
@@ -68,8 +68,8 @@ class NCBITaxonomyXMLParser {
 				rank: rankObject.Rank[0]
 			}
 			taxonomyObject.lineage.push(node)
-			if (taxonomyObject[rank] === null)
-				taxonomyObject[rank] = rankName
+			if (taxonomyObject[node.rank] === null)
+				taxonomyObject[node.rank] = node.name
 		})
 
 		let numberOfWordsInSpecies = 2
@@ -83,10 +83,8 @@ class NCBITaxonomyXMLParser {
 	}
 
 	getTaxonomy(xmlFile) {
-		return mutil.xmlFile2json(xmlFile)
-			.then((jsonTaxonomy) => {
-				return this.parse_(jsonTaxonomy)
-			})
+		return mutil.readFile(xmlFile)
+		.then((xml) => mutil.xmlToJs(xml))
+		.then((ncbiTaxonomy) => this.parse(ncbiTaxonomy))
 	}
 }
-

@@ -33,7 +33,7 @@ module.exports = {
 				rank: 'order'
 			},
 			{
-				id: 164,
+				id: 1643685,
 				name: 'Borreliaceae',
 				rank: 'family'
 			},
@@ -47,7 +47,7 @@ module.exports = {
 				name: 'Borreliella burgdorferi',
 				rank: 'species'
 			}
-		],	
+		],
 		superkingdom: 'Bacteria',
 		kingdom: null,
 		phylum: 'Spirochaetes',
