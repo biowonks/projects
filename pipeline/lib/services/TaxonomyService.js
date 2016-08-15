@@ -105,13 +105,12 @@ class TaxonomyService {
 			for (let i = taxonomyObject.lineage.length(); i >= 0 ; i--) {
 				let taxonomyNode = taxonomyObject.lineage[i]
 				taxonomyNode.parentId = kNCBIRootTaxonomyId
-				taxonomyNode.hasParent: (i !== 0)
+				taxonomyNode.hasParent = (i !== 0)
 
 				if (this.nodeDoesNotExist_(nodeTaxonomyId)) {
 					if (taxonomyNode.hasParent) {
 						taxonomyNode.parentId = taxonomyObject.lineage[i - 1].id
 					}
-					delete taxonomyNode.hasParent //No need for this value anymore
 					this.insertNode_(taxonomyNode)
 					.then((taxonomyNode) => {
 						this.logger_.info({
@@ -119,14 +118,14 @@ class TaxonomyService {
 							parentId: taxonomyNode.parentId,
 							name: taxonomyNode.name,
 							rank: taxonomyNode.rank
-						}, 'Inserted new taxonomy node')
+						}, 'Inserted a new taxonomy node')
 					})
 				}
 				else {
 					break //No need iterate insertion check for parents. If the node already exists, its parents must exist as well.
 				}
 			}
-			return requestPromise(taxonomyObject)
+			return taxonomyObject
 		})
     }
 

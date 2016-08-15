@@ -12,8 +12,10 @@ class TaxonomyTableModule extends PerGenomePipelineModule {
 	/**
 	 *
 	 */
-
-    taxonomyService = new TaxonomyService()
+    constructor() {
+        super()
+        this.taxonomyService_ = new TaxonomyService()
+    }
 
     static cli() {
 		return {
@@ -26,7 +28,7 @@ class TaxonomyTableModule extends PerGenomePipelineModule {
 	}
 
     run() {
-        return TaxonomyService.fetchTaxonomyAndUpdateTable(this.genome_.species.taxonomyId)
+        return this.taxonomyService_.fetchTaxonomyAndUpdateTable(this.genome_.species_taxonomy_id)
         .then((taxonomyObject) => {
             return this.genome_.update({
                 superkingdom: taxonomyObject.superkingdom,
