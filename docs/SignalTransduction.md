@@ -139,3 +139,14 @@ Thus, for generality, this mini-language should allow the user to limit the sear
 
 8) allow limit search in specific genomes.
 
+## Aquerium (by Ogun Adebali) as a precursor to the mini language.
+
+[Aquerium](aquerium.utk.edu) is a tool that does exactly what we want and pretty much how we want. It has already a mini language rather than a config file like `PhyPro`.
+
+Ogun's tool already takes care of all the 8 rules, PhyPro takes care of only a few.
+
+[Here](http://aquerium.utk.edu/documentation) is a list of the rules implemented in Aquerium.
+
+## Conclusion
+
+Whoever will do this, should talk to Ogun about it and port his algorithm for the mini language to MiST.
