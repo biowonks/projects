@@ -44,7 +44,7 @@ class TaxonomyService {
 
 		return requestPromise(this.eutilUrl(taxonomyId))
 		.then((xmlResponse) => mutil.xmlToJs(xmlResponse))
-		.then((jsonTaxonomy) => this.taxonomyXMLParser_.parse(jsonTaxonomy))
+		.then((jsonTaxonomy) => this.taxonomyXMLParser_.ncbiTaxonomyObject2mistTaxonomyObject(jsonTaxonomy))
 	}
 
 	// eslint-disable-next-line valid-jsdoc
@@ -67,11 +67,11 @@ class TaxonomyService {
 	 * It fetches taxonomy information from NCBI and inserts the taxonomyNode in Taxonomy table
 	 * @returns {Promise} taxonomyObject with id, name, rank, parent
 	 */
-	fetchTaxonomyAndUpdateTable(taxonomyId) {
+	fetchMissingTaxonomyAndSaveAssociatedNodes(taxonomyId) {
 		return this.nodeDoesNotExist_(taxonomyId)
 		.then((doesntExist) => {
 			if (doesntExist)
-				return this.fetchTaxonomyAndUpdateTable_(taxonomyId)
+				return this.fetchTaxonomyAndSaveNodes_(taxonomyId)
 
 			return null
 		})
@@ -94,7 +94,7 @@ class TaxonomyService {
 		})
 	}
 
-	fetchTaxonomyAndUpdateTable_(taxonomyId) {
+	fetchTaxonomyAndSaveNodes_(taxonomyId) {
 		return this.fetch(taxonomyId)
 		.then((ncbiTaxonomy) => {
 			ncbiTaxonomy.lineage.reverse()

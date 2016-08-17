@@ -20,7 +20,7 @@ class Taxonomy extends PerGenomePipelineModule {
 	}
 
 	run() {
-		return this.taxonomyService_.fetchTaxonomyAndUpdateTable(this.genome_.species_taxonomy_id)
+		return this.taxonomyService_.fetchMissingTaxonomyAndSaveAssociatedNodes(this.genome_.species_taxonomy_id)
 		.then((taxonomyObject) => {
 			return this.genome_.update({
 				superkingdom: taxonomyObject.superkingdom,

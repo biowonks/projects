@@ -40,7 +40,7 @@ class NCBITaxonomyXMLParser {
 	 * @return {Object}
 	 */
 
-	parse(ncbiTaxonomy) {
+	ncbiTaxonomyObject2mistTaxonomyObject(ncbiTaxonomy) {
 		let taxonomyObject = {
 				taxid: null,
 				organism: null,
@@ -80,11 +80,5 @@ class NCBITaxonomyXMLParser {
 		}
 
 		return taxonomyObject
-	}
-
-	getTaxonomy(xmlFile) {
-		return mutil.readFile(xmlFile)
-		.then((xml) => mutil.xmlToJs(xml))
-		.then((ncbiTaxonomy) => this.parse(ncbiTaxonomy))
 	}
 }
