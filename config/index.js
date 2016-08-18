@@ -38,7 +38,7 @@ const kEnvironmentName = process.env.NODE_ENV || 'develop',
 
 let config = {
 	cors: {
-		enabled: false
+		enabled: true
 	},
 
 	debug: {
@@ -58,13 +58,7 @@ let config = {
 		version: 'X-' + packageJSON.name + '-version'
 	},
 
-	package: packageJSON,
-
-	routing: {
-		ssl: false,
-		prefix: '/v1',
-		routesPath: path.resolve(kRootPath, 'routes')
-	}
+	package: packageJSON
 }
 
 // --------------------------------------------------------

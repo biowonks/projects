@@ -7,7 +7,9 @@ module.exports = function(models, optLogger) {
 	let {
 		Worker,
 		Genome,
-		WorkerModule
+		WorkerModule,
+		Component,
+		Gene
 	} = models
 
 	Worker.hasMany(WorkerModule)
@@ -15,6 +17,12 @@ module.exports = function(models, optLogger) {
 	Genome.hasMany(WorkerModule)
 	Genome.belongsTo(Worker)
 
+	Genome.hasMany(Component)
+	Component.belongsTo(Genome)
+
 	WorkerModule.belongsTo(Worker)
 	WorkerModule.belongsTo(Genome)
+
+	Component.hasMany(Gene)
+	Gene.belongsTo(Component)
 }

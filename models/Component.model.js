@@ -58,10 +58,23 @@ module.exports = function(Sequelize, models, extras) {
 		dnaLength: extras.validate.referencedLength('length', 'dna')
 	}
 
+	let cachedCriteriaAttributes = null
+
 	return {
 		fields,
 		params: {
 			instanceMethods,
+			classMethods: {
+				$criteriaAtrributes: function() {
+					if (!cachedCriteriaAttributes) {
+						let x = new Set(this.attributes)
+						x.delete('dna')
+						cachedCriteriaAttributes = [...x]
+					}
+
+					return cachedCriteriaAttributes
+				}
+			},
 			validate
 		}
 	}

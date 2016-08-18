@@ -93,8 +93,11 @@ class BootService {
 			throw new Error('Database enabled, but missing configuration (name)')
 		}
 
-		if (!this.sequelize_)
-			this.sequelize_ = new Sequelize(dbConfig.name, dbConfig.user, dbConfig.password, dbConfig.sequelizeOptions)
+		if (!this.sequelize_) {
+			let sequelizeOptions = dbConfig.sequelizeOptions
+			this.injectClassMethods_(sequelizeOptions)
+			this.sequelize_ = new Sequelize(dbConfig.name, dbConfig.user, dbConfig.password, sequelizeOptions)
+		}
 
 		if (!this.migrator_) {
 			let options = {
@@ -179,6 +182,18 @@ class BootService {
 			throw new Error('Stream property is not an allowed logger option. Please convert to use the streams array property. See: https://github.com/trentm/node-bunyan#streams')
 
 		return bunyan.createLogger(loggerOptions)
+	}
+
+	injectClassMethods_(sequelizeOptions) {
+		if (!sequelizeOptions.define)
+			sequelizeOptions.define = {}
+
+		if (!sequelizeOptions.define.classMethods)
+			sequelizeOptions.define.classMethods = {}
+
+		sequelizeOptions.define.classMethods.$excludeCriteriaFields = function() {
+			return null
+		}
 	}
 
 	setupSchema_() {
