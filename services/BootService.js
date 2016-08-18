@@ -191,7 +191,19 @@ class BootService {
 		if (!sequelizeOptions.define.classMethods)
 			sequelizeOptions.define.classMethods = {}
 
-		sequelizeOptions.define.classMethods.$excludeCriteriaFields = function() {
+		let classMethods = sequelizeOptions.define.classMethods
+
+		/**
+		 * @returns {Set} - those attributes which are excluded from selection via the CriteriaService
+		 */
+		classMethods.$excludedFromCriteria = function() {
+			return null
+		}
+
+		/**
+		 * @returns {Array.<String>} - attributes that may be selected via the CriteriaService; if null, indicates all attributes may be selected
+		 */
+		classMethods.$criteriaAttributes = function() {
 			return null
 		}
 	}

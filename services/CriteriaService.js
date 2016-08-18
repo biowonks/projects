@@ -95,8 +95,7 @@ class CriteriaService {
 				offset: this.offsetFromPage(page, perPage) || null,
 				order: [
 					primaryModel.primaryKeyAttributes
-				],
-				logging: console.log
+				]
 			},
 			rootModelNode = this.createModelTree_(queryObject)
 
@@ -159,6 +158,16 @@ class CriteriaService {
 			})
 		}
 
+		let excludedAttributes = this.excludedAttributes_(target.attributes, primaryModel)
+		if (excludedAttributes) {
+			errors.push({
+				type: 'InaccessibleFieldError',
+				fields: excludedAttributes,
+				model: primaryModel.name,
+				message: `Accessing the following ${primaryModel.name} fields is not supported: ${excludedAttributes.join(', ')}`
+			})
+		}
+
 		let inaccessibleModels = this.inaccessibleModels_(target.include, accessibleModels)
 		if (inaccessibleModels) {
 			let modelNames = inaccessibleModels.map((x) => x.name)
@@ -193,6 +202,25 @@ class CriteriaService {
 
 		let invalidAttributes = attributes.filter((attribute) => !model.attributes[attribute])
 		return invalidAttributes.length ? invalidAttributes : null
+	}
+
+	/**
+	 * @param {Array.<String>} attributes
+	 * @param {Model} model
+	 * @returns {Array.<String>} - requested attributes that are not permitted to be requested (the model definition marks them as excluded)
+	 */
+	excludedAttributes_(attributes, model) {
+		let excludeSet = model.$excludedFromCriteria(),
+			notRequestingAnyAttributes = attributes && attributes.length === 0
+		if (!excludeSet || excludeSet.size === 0 || notRequestingAnyAttributes)
+			return null
+
+		let requestingAllAttributes = attributes === null
+		if (requestingAllAttributes)
+			return [...excludeSet]
+
+		let excluded = attributes.filter((attribute) => excludeSet.has(attribute))
+		return excluded.length ? excluded : null
 	}
 
 	inaccessibleModels_(include, accessibleModels) {
@@ -335,8 +363,8 @@ class CriteriaService {
 	attributesValue_(model, value = null) {
 		if (value === 'false')
 			return []
-		else if (value === null || value === 'true')
-			return null
+		else if (value === null || value === 'true' || value === '')
+			return model.$criteriaAttributes()
 		else if (typeof value === 'string')
 			return this.nonEmptyFields_(value)
 
