@@ -51,6 +51,18 @@ describe('mutil', function() {
 		})
 	})
 
+	describe.only('xmlToJs', function() {
+		it('parseString', function() {
+			let xmlString = '<?xml version="1.0"?>\
+							<!DOCTYPE TaxaSet PUBLIC "-//NLM//DTD Taxon, 14th January 2002//EN" "http://www.ncbi.nlm.nih.gov/entrez/query/DTD/taxon.dtd">\
+							<a>b</a>'
+			mutil.xmlToJs(xmlString)
+			.then((result) => {
+				expect(result).deep.equal({'a':'b'})
+			})
+		})
+	})
+
 	describe('createDeferred', function() {
 		it('returns an object with resolve, reject, and the promise', function() {
 			let x = mutil.createDeferred()
