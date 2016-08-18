@@ -14,7 +14,7 @@ const kSampleXMLFileSpecies = path.resolve(__dirname, 'test-data', '476210_speci
 	kSampleXMLFileIntermediate = path.resolve(__dirname, 'test-data', '41253_intermediate.test.xml')
 
 
-describe.only('Services', function() {
+describe('Services', function() {
 	describe('TaxonomyService', function() {
 		let taxonomyService = new TaxonomyService()
 
