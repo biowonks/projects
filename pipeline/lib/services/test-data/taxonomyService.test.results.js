@@ -3,7 +3,7 @@
 
 
 module.exports = {
-	sampleXMLFileResults1:	{
+	kSampleXMLFileSpecies:	{
 		taxid: 476210,
 		organism: 'Borrelia burgdorferi 118a',
 		lineage: [
@@ -59,7 +59,7 @@ module.exports = {
 		strain: '118a'
 	},
 
-	sampleXMLFileResults2:	{
+	kSampleXMLFileIntermediate:	{
 		taxid: 41253,
 		organism: 'Dothideaceae',
 		lineage: [

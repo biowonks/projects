@@ -19,6 +19,10 @@ class Taxonomy extends PerGenomePipelineModule {
 		return ['NCBICoreData']
 	}
 
+	undo() {
+		this.logger_.info('Taxonomy undo does nothing.')
+	}
+
 	run() {
 		return this.taxonomyService_.fetchMissingTaxonomyAndSaveAssociatedNodes(this.genome_.species_taxonomy_id)
 		.then((taxonomyObject) => {

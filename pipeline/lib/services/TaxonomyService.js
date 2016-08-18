@@ -5,8 +5,7 @@ let Promise = require('bluebird'),
 	requestPromise = require('request-promise')
 
 // Local
-let NCBITaxonomyXMLParser = require('./NCBITaxonomyXMLParser'),
-	mutil = require('../mutil')
+let mutil = require('../mutil')
 
 // Constants
 const kNCBIPartialTaxonomyUrl = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=taxonomy&retmode=text&rettype=xml&id=',
@@ -23,11 +22,11 @@ class TaxonomyService {
 	/**
 	 * @constructor
 	 * @param {Model} taxonomyModel
+	 * @param {class} logger
 	 */
 	constructor(taxonomyModel, logger) {
 		this.taxonomyModel_ = taxonomyModel
 		this.logger_ = logger
-		this.taxonomyXMLParser_ = new NCBITaxonomyXMLParser()
 	}
 
 	eutilUrl(taxonomyId) {
@@ -38,28 +37,82 @@ class TaxonomyService {
 	 * @param {number} taxonomyId numeric identifier
 	 * @returns {Promise} resolves with an object describing the taxonomy
 	 */
-	fetch(taxonomyId) {
+	taxonomyId2mistTaxonomyObject(taxonomyId) {
 		if (!/^\d+$/.test(taxonomyId))
 			return Promise.reject(new Error('Invalid taxonomy id - must be all digits'))
-
 		return requestPromise(this.eutilUrl(taxonomyId))
 		.then((xmlResponse) => mutil.xmlToJs(xmlResponse))
-		.then((jsonTaxonomy) => this.taxonomyXMLParser_.ncbiTaxonomyObject2mistTaxonomyObject(jsonTaxonomy))
+		.then((jsonTaxonomy) => this.ncbiTaxonomyObject2mistTaxonomyObject(jsonTaxonomy))
 	}
 
-	// eslint-disable-next-line valid-jsdoc
 	/**
-	 * Given the phylum and class, return the major taxonomic group. In most cases,
-	 * this is simply the phlum; however, the class should be returned if the phylum
-	 * is proteobacteria (case insensitive) because the proteobacteria phylum is so
-	 * large and diverse.
+	 * @param {Object} ncbiTaxonomy Object derived from XML
+	 * @returns {Object}
+	 * 	{
+	 *		lineage: [ // Full lineage list with node id, name and rank
+	 *			{
+					id: 131567,
+					name: 'cellular organisms',
+					rank: 'no rank'
+				},
+				{
+					id: 2,
+					name: 'Bacteria',
+					rank: 'superkingdom'
+				}...
+			]
 	 *
-	 * @param {string} phylum organism's phylum
-	 * @param {string} classs organism's class (intentionally mispelled to avoid keyword)
-	 * @returns {string} the major taxnomic group
+	 *		superkingdom
+	 *		kingdom
+	 *		phylum
+	 *		class
+	 *		order
+	 *		family
+	 *		genus
+	 *		species
+	 *		strain
+	 *	}
 	 */
-	taxonomicGroup(phylum, classs) {
-		throw new Error('Not yet implemented')
+	ncbiTaxonomyObject2mistTaxonomyObject(ncbiTaxonomy) {
+		let taxonomyObject = {
+				taxid: null,
+				organism: null,
+				lineage: [],
+				superkingdom: null,
+				kingdom: null,
+				phylum: null,
+				class: null,
+				order: null,
+				family: null,
+				genus: null,
+				species: null,
+				strain: null
+			},
+			taxon = ncbiTaxonomy.TaxaSet.Taxon[0],
+			rankObjects = taxon.LineageEx[0].Taxon
+
+		taxonomyObject.taxid = parseInt(taxon.TaxId[0])
+		taxonomyObject.organism = taxon.ScientificName[0]
+
+		rankObjects.forEach((rankObject) => {
+			let node = {
+				id: parseInt(rankObject.TaxId[0]),
+				name: rankObject.ScientificName[0],
+				rank: rankObject.Rank[0]
+			}
+			taxonomyObject.lineage.push(node)
+			if (taxonomyObject[node.rank] === null)
+				taxonomyObject[node.rank] = node.name
+		})
+
+		let numberOfWordsInSpecies = 2
+		if (taxonomyObject.species !== null) {
+			taxonomyObject.strain = taxonomyObject.organism.split(/\s+/g).slice(numberOfWordsInSpecies)
+			.join(' ')
+			.trim()
+		}
+
+		return taxonomyObject
 	}
 
 	/**
