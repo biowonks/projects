@@ -46,6 +46,11 @@ module.exports = {
 				id: 139,
 				name: 'Borreliella burgdorferi',
 				rank: 'species'
+			},
+			{
+				id: 476210,
+				name: 'Borrelia burgdorferi 118a',
+				rank: 'no rank'
 			}
 		],
 		superkingdom: 'Bacteria',
@@ -127,6 +132,11 @@ module.exports = {
 				id: 5014,
 				name: 'Dothideales',
 				rank: 'order'
+			},
+			{
+				id: 41253,
+				name: "Dothideaceae",
+				rank: "family"
 			}
 		],
 		superkingdom: 'Eukaryota',
@@ -134,7 +144,7 @@ module.exports = {
 		phylum: 'Ascomycota',
 		class: 'Dothideomycetes',
 		order: 'Dothideales',
-		family: null,
+		family: 'Dothideaceae',
 		genus: null,
 		species: null,
 		strain: null

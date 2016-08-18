@@ -14,7 +14,7 @@ const kSampleXMLFileSpecies = path.resolve(__dirname, 'test-data', '476210_speci
 	kSampleXMLFileIntermediate = path.resolve(__dirname, 'test-data', '41253_intermediate.test.xml')
 
 
-describe('Services', function() {
+describe.only('Services', function() {
 	describe('TaxonomyService', function() {
 		let taxonomyService = new TaxonomyService()
 
@@ -25,9 +25,9 @@ describe('Services', function() {
 			})
 		})
 
-		describe('taxonomyId2mistTaxonomyObject', function() {
+		describe('taxonomyId2finalTaxonomyObject', function() {
 			it('undefined taxonomicId throws error', function() {
-				taxonomyService.taxonomyId2mistTaxonomyObject()
+				taxonomyService.taxonomyId2finalTaxonomyObject()
 				.then((result) => {
 					expect(() => {}).throw(Error)
 				})
@@ -35,18 +35,18 @@ describe('Services', function() {
 
 
 			it('invalid numeric taxonomicId throws error', function() {
-				taxonomyService.taxonomyId2mistTaxonomyObject('ab123')
+				taxonomyService.taxonomyId2finalTaxonomyObject('ab123')
 				.then((result) => {
 					expect(() => {}).throw(Error)
 				})
 			})
 		})
 
-		describe('taxonomyId2mistTaxonomyObject', function() {
+		describe('taxonomyId2finalTaxonomyObject', function() {
 			it('species XML', function() {
 				return mutil.readFile(kSampleXMLFileSpecies)
 					.then((xmlString) => mutil.xmlToJs(xmlString))
-					.then((jsonTaxonomy) => taxonomyService.ncbiTaxonomyObject2mistTaxonomyObject(jsonTaxonomy))
+					.then((jsonTaxonomy) => taxonomyService.ncbiTaxonomyObject2finalTaxonomyObject(jsonTaxonomy))
 					.then((result) => {
 						expect(result).deep.equal(testResults.kSampleXMLFileSpecies)
 					})
@@ -55,7 +55,7 @@ describe('Services', function() {
 			it('intermediate rank XML', function() {
 				return mutil.readFile(kSampleXMLFileIntermediate)
 					.then((xmlString) => mutil.xmlToJs(xmlString))
-					.then((jsonTaxonomy) => taxonomyService.ncbiTaxonomyObject2mistTaxonomyObject(jsonTaxonomy))
+					.then((jsonTaxonomy) => taxonomyService.ncbiTaxonomyObject2finalTaxonomyObject(jsonTaxonomy))
 					.then((result) => {
 						expect(result).deep.equal(testResults.kSampleXMLFileIntermediate)
 					})
@@ -68,7 +68,7 @@ describe('Services', function() {
 				it(fixture + ' (' + typeof fixture + ') works', function() {
 					let taxonomyId = fixture
 
-					return taxonomyService.taxonomyId2mistTaxonomyObject(taxonomyId)
+					return taxonomyService.taxonomyId2finalTaxonomyObject(taxonomyId)
 						.then((taxonomyResult) => {
 							expect(taxonomyResult).deep.equal(testResults.kSampleXMLFileIntermediate)
 						})

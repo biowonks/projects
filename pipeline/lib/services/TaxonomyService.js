@@ -33,87 +33,6 @@ class TaxonomyService {
 		return kNCBIPartialTaxonomyUrl + taxonomyId
 	}
 
-	/**
-	 * @param {number} taxonomyId numeric identifier
-	 * @returns {Promise} resolves with an object describing the taxonomy
-	 */
-	taxonomyId2mistTaxonomyObject(taxonomyId) {
-		if (!/^\d+$/.test(taxonomyId))
-			return Promise.reject(new Error('Invalid taxonomy id - must be all digits'))
-		return requestPromise(this.eutilUrl(taxonomyId))
-		.then((xmlResponse) => mutil.xmlToJs(xmlResponse))
-		.then((jsonTaxonomy) => this.ncbiTaxonomyObject2mistTaxonomyObject(jsonTaxonomy))
-	}
-
-	/**
-	 * @param {Object} ncbiTaxonomy Object derived from XML
-	 * @returns {Object}
-	 * 	{
-	 *		lineage: [ // Full lineage list with node id, name and rank
-	 *			{
-					id: 131567,
-					name: 'cellular organisms',
-					rank: 'no rank'
-				},
-				{
-					id: 2,
-					name: 'Bacteria',
-					rank: 'superkingdom'
-				}...
-			]
-	 *
-	 *		superkingdom
-	 *		kingdom
-	 *		phylum
-	 *		class
-	 *		order
-	 *		family
-	 *		genus
-	 *		species
-	 *		strain
-	 *	}
-	 */
-	ncbiTaxonomyObject2mistTaxonomyObject(ncbiTaxonomy) {
-		let taxonomyObject = {
-				taxid: null,
-				organism: null,
-				lineage: [],
-				superkingdom: null,
-				kingdom: null,
-				phylum: null,
-				class: null,
-				order: null,
-				family: null,
-				genus: null,
-				species: null,
-				strain: null
-			},
-			taxon = ncbiTaxonomy.TaxaSet.Taxon[0],
-			rankObjects = taxon.LineageEx[0].Taxon
-
-		taxonomyObject.taxid = parseInt(taxon.TaxId[0])
-		taxonomyObject.organism = taxon.ScientificName[0]
-
-		rankObjects.forEach((rankObject) => {
-			let node = {
-				id: parseInt(rankObject.TaxId[0]),
-				name: rankObject.ScientificName[0],
-				rank: rankObject.Rank[0]
-			}
-			taxonomyObject.lineage.push(node)
-			if (taxonomyObject[node.rank] === null)
-				taxonomyObject[node.rank] = node.name
-		})
-
-		let numberOfWordsInSpecies = 2
-		if (taxonomyObject.species !== null) {
-			taxonomyObject.strain = taxonomyObject.organism.split(/\s+/g).slice(numberOfWordsInSpecies)
-			.join(' ')
-			.trim()
-		}
-
-		return taxonomyObject
-	}
 
 	/**
 	 * @param {int} taxonomyId
@@ -148,22 +67,115 @@ class TaxonomyService {
 	}
 
 	fetchTaxonomyAndSaveNodes_(taxonomyId) {
-		return this.fetch(taxonomyId)
-		.then((ncbiTaxonomy) => {
-			ncbiTaxonomy.lineage.reverse()
+		return this.taxonomyId2finalTaxonomyObject(taxonomyId)
+		.then((finalTaxonomy) => {
+			finalTaxonomy.lineage.reverse()
 
-			return Promise.each(ncbiTaxonomy.lineage, (taxonomyNode, i) => {
+			return Promise.each(finalTaxonomy.lineage, (taxonomyNode, i) => {
 				taxonomyNode.parent_taxonomy_id = kNCBIRootTaxonomyId
-				let hasParent = i !== (ncbiTaxonomy.lineage.length - 1)
+				let hasParent = i !== (finalTaxonomy.lineage.length - 1)
 				if (hasParent)
-					taxonomyNode.parent_taxonomy_id = ncbiTaxonomy.lineage[i + 1].id
+					taxonomyNode.parent_taxonomy_id = finalTaxonomy.lineage[i + 1].id
 
 				return this.insertTaxonomyNode_(taxonomyNode)
 			})
 			.catch(IntermediateRankExistsError, () => {})
-			.then(() => ncbiTaxonomy)
+			.then(() => finalTaxonomy)
 		})
 	}
+
+	/**
+	 * @param {number} taxonomyId numeric identifier
+	 * @returns {Promise} resolves with an object describing the taxonomy
+	 */
+	taxonomyId2finalTaxonomyObject(taxonomyId) {
+		if (!/^\d+$/.test(taxonomyId))
+			return Promise.reject(new Error('Invalid taxonomy id - must be all digits'))
+		return requestPromise(this.eutilUrl(taxonomyId))
+		.then((xmlResponse) => mutil.xmlToJs(xmlResponse))
+		.then((jsonTaxonomy) => this.ncbiTaxonomyObject2finalTaxonomyObject(jsonTaxonomy))
+	}
+
+	/**
+	 * @param {Object} ncbiTaxonomy Object derived from XML
+	 * @returns {Object}
+	 * 	{
+	 *		lineage: [ // Full lineage list with node id, name and rank
+	 *			{
+					id: 131567,
+					name: 'cellular organisms',
+					rank: 'no rank'
+				},
+				{
+					id: 2,
+					name: 'Bacteria',
+					rank: 'superkingdom'
+				}...
+			]
+	 *
+	 *		superkingdom
+	 *		kingdom
+	 *		phylum
+	 *		class
+	 *		order
+	 *		family
+	 *		genus
+	 *		species
+	 *		strain
+	 *	}
+	 */
+	ncbiTaxonomyObject2finalTaxonomyObject(ncbiTaxonomy) {
+		let taxonomyObject = {
+				taxid: null,
+				organism: null,
+				lineage: [],
+				superkingdom: null,
+				kingdom: null,
+				phylum: null,
+				class: null,
+				order: null,
+				family: null,
+				genus: null,
+				species: null,
+				strain: null
+			},
+			taxon = ncbiTaxonomy.TaxaSet.Taxon[0],
+			currentNode = {
+				id: parseInt(taxon.TaxId[0]),
+				name: taxon.ScientificName[0],
+				rank: taxon.Rank[0]
+			},
+			rankObjects = taxon.LineageEx[0].Taxon
+
+		taxonomyObject.taxid = parseInt(taxon.TaxId[0])
+		taxonomyObject.organism = taxon.ScientificName[0]
+
+
+		rankObjects.forEach((rankObject) => {
+			let node = {
+				id: parseInt(rankObject.TaxId[0]),
+				name: rankObject.ScientificName[0],
+				rank: rankObject.Rank[0]
+			}
+			taxonomyObject.lineage.push(node)
+			if (taxonomyObject[node.rank] === null)
+				taxonomyObject[node.rank] = node.name
+		})
+
+		taxonomyObject.lineage.push(currentNode)
+		if (taxonomyObject[currentNode.rank] === null)
+			taxonomyObject[currentNode.rank] = currentNode.name
+
+		let numberOfWordsInSpecies = 2
+		if (taxonomyObject.species !== null) {
+			taxonomyObject.strain = taxonomyObject.organism.split(/\s+/g).slice(numberOfWordsInSpecies)
+			.join(' ')
+			.trim()
+		}
+
+		return taxonomyObject
+	}
+
 
 	insertTaxonomyNode_(taxonomyNode) {
 		return this.taxonomyModel_.sequelize.transaction((transaction) => {
