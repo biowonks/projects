@@ -2,12 +2,14 @@
 'use strict'
 
 // Core
-let _ = require('lodash'),
-	fs = require('fs'),
+const fs = require('fs'),
 	path = require('path')
 
+// Vendor
+const _ = require('lodash')
+
 // Local
-let packageJSON = require('../package.json')
+const packageJSON = require('../package.json')
 
 // Constants
 /**
@@ -52,15 +54,16 @@ let config = {
 	},
 
 	headerNames: {
-		apiToken: 'x-' + packageJSON.name + '-api-token',
-		version: 'x-' + packageJSON.name + '-api-version'
+		apiToken: 'X-' + packageJSON.name + '-token',
+		version: 'X-' + packageJSON.name + '-version'
 	},
 
 	package: packageJSON,
 
 	routing: {
 		ssl: false,
-		prefix: '/api/v1'
+		prefix: '/v1',
+		routesPath: path.resolve(kRootPath, 'routes')
 	}
 }
 

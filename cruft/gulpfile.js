@@ -33,7 +33,8 @@ let kWatchPatterns = [
 let kTestFiles = [
 	'pipeline/**/*.tests.js',
 	'services/**/*.tests.js',
-	'models/**/*.tests.js'
+	'models/**/*.tests.js',
+	'lib/*.tests.js'
 ]
 
 let kRunTimeFiles = [

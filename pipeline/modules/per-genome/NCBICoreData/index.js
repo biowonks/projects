@@ -33,8 +33,9 @@ class NCBICoreData extends PerGenomePipelineModule {
 
 		this.ncbiDataHelper_ = new NCBIDataHelper(this.fileMapper_, this.logger_)
 		this.locationStringParser_ = new LocationStringParser()
-		this.aseqsService_ = new AseqsService(this.models_.Aseq)
-		this.dseqsService_ = new DseqsService(this.models_.Dseq)
+		let noConfig = null
+		this.aseqsService_ = new AseqsService(this.models_.Aseq, noConfig, this.logger_)
+		this.dseqsService_ = new DseqsService(this.models_.Dseq, noConfig, this.logger_)
 		// {RefSeq accession: {}}
 		this.assemblyReportMap_ = new Map()
 
@@ -58,6 +59,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 
 	/**
 	 * Does not remove any inserted Aseqs / Dseqs :\
+	 * @returns {Promise}
 	 */
 	undo() {
 		return this.sequelize_.transaction((transaction) => {

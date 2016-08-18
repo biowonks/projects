@@ -47,10 +47,22 @@ ${putil.modulesHelp(availableModules.once)}
 
 ${putil.modulesHelp(availableModules.perGenome)}
 
+  # Genome filtering
   If no genome-ids are specified via the options, this script will iterate the
   module pipeline for all genomes in the database that have not yet been
   analyzed with at least one of the requested modules. Otherwise, it is only
   applied to the specified genomes with genome-ids.
+
+  # Redo'ing a module
+  It may make sense to "redo" a module (e.g. changes to the processing logic
+  such as how gene clusters are predicted). To leverage parallel pipeline
+  workers and progressively compute this data, all modules to be redone are
+  tagged in the database (redo = true). If redo'ing this module per genome
+  does not break any dependencies, this worker script will begin redoing each
+  of the specified modules. Since the redo flag is assigned to all matching
+  module ids, it is possible for another worker script to also join forces
+  with this script when redoing data. Moreover, if a script crashes, the redo
+  state is still present in the database for future workers.
 
   # Undoing a module
   Currently, only per-genome modules may be undone and these are done
@@ -59,19 +71,22 @@ ${putil.modulesHelp(availableModules.perGenome)}
   modules.
 `)
 .usage('[options] <module ...>')
-.option('-u, --undo <module,...>', 'CSV list of module names', (value) => value.split(','))
 .option('-g, --genome-ids <genome id,...>', 'CSV list of genome ids', parseGenomeIds)
+.option('-r, --redo <module,...>', 'CSV list of module names', (value) => value.split(','))
+.option('-u, --undo <module,...>', 'CSV list of module names', (value) => value.split(','))
 .parse(process.argv)
 
-let requestedModuleIds = ModuleId.nest(ModuleId.fromStrings(program.args)),
-	requestedModuleUndoIds = ModuleId.nest(ModuleId.fromStrings(program.undo || []))
+let requestedModuleIds = ModuleId.nest(ModuleId.fromStrings([...(program.redo || []), ...program.args])),
+	requestedRedoModuleIds = ModuleId.nest(ModuleId.fromStrings(program.redo || [])),
+	requestedUndoModuleIds = ModuleId.nest(ModuleId.fromStrings(program.undo || []))
 
-if (!requestedModuleUndoIds.length && !requestedModuleIds.length) {
+if (!requestedUndoModuleIds.length && !requestedModuleIds.length) {
 	program.outputHelp()
 	process.exit(1)
 }
 
 dieIfRequestedInvalidModules()
+dieIfRequestedToRedoOnceModule()
 dieIfRequestedToUndoOnceModule()
 
 let requestedOnceModuleIds = putil.matchingModuleIds(requestedModuleIds, availableModules.once),
@@ -108,7 +123,7 @@ bootService.setup()
 	worker = workerService.buildWorker()
 	worker.job = {
 		genomeIds: program.genomeIds,
-		undo: requestedModuleUndoIds,
+		undo: requestedUndoModuleIds,
 		modules: {
 			once: requestedOnceModuleIds,
 			perGenome: requestedPerGenomeModuleIds
@@ -134,7 +149,8 @@ bootService.setup()
 	}
 
 	return runOnceModules(app, requestedOnceModuleIds)
-	.then(() => runPerGenomeModules(app, requestedModuleUndoIds, requestedPerGenomeModuleIds))
+	.then(() => tagModulesForRedo(app, requestedRedoModuleIds))
+	.then(() => runPerGenomeModules(app, requestedUndoModuleIds, requestedPerGenomeModuleIds))
 })
 .then(() => {
 	// Worker cleanup
@@ -153,7 +169,7 @@ bootService.setup()
 // --------------------------------------------------------
 // --------------------------------------------------------
 function dieIfRequestedInvalidModules() {
-	let invalidUndoModuleIds = putil.findInvalidModuleIds(requestedModuleUndoIds, availableModules.all)
+	let invalidUndoModuleIds = putil.findInvalidModuleIds(requestedUndoModuleIds, availableModules.all)
 	if (invalidUndoModuleIds.length) {
 		die('the following "undo" modules (or submodules) are invalid\n\n' +
 			`  ${invalidUndoModuleIds.join('\n  ')}\n`)
@@ -167,10 +183,18 @@ function dieIfRequestedInvalidModules() {
 }
 
 function dieIfRequestedToUndoOnceModule() {
-	let onceModuleIds = putil.matchingModuleIds(requestedModuleUndoIds, availableModules.once)
+	let onceModuleIds = putil.matchingModuleIds(requestedUndoModuleIds, availableModules.once)
 	if (onceModuleIds.length) {
 		die('Undo is only supported for per-genome modules, but the following once modules were ' +
 			`specified for undo: ${onceModuleIds.join(', ')}`)
+	}
+}
+
+function dieIfRequestedToRedoOnceModule() {
+	let onceModuleIds = putil.matchingModuleIds(requestedRedoModuleIds, availableModules.once)
+	if (onceModuleIds.length) {
+		die('Redo is only supported for per-genome modules, but the following once modules were ' +
+			`specified for redo: ${onceModuleIds.join(', ')}`)
 	}
 }
 
@@ -294,6 +318,30 @@ function runOnceModules(app, moduleIds) {
 	})
 }
 
+function tagModulesForRedo(app, moduleIds) {
+	let where = {
+		redo: false,
+		state: 'done',
+		module: {
+			$in: ModuleId.unnest(moduleIds).map((x) => x.toString())
+		}
+	}
+	if (program.genomeIds) {
+		where.genome_id = {
+			$in: program.genomeIds
+		}
+	}
+
+	return app.models.WorkerModule.update({
+		redo: true
+	}, {where})
+	.then((result) => {
+		let affectedCount = result[0]
+		if (affectedCount)
+			logger.info(`Marked ${affectedCount} worker modules for redo`)
+	})
+}
+
 function runPerGenomeModules(app, undoModuleIds, moduleIds) {
 	if (!undoModuleIds.length && !moduleIds.length)
 		return null
@@ -324,6 +372,27 @@ function runPerGenomeModules(app, undoModuleIds, moduleIds) {
 					}, `Cannot process genome until the following 'active' / 'undo' modules are resolved: ${activeUndoModuleIds.join(', ')}`)
 				}
 				else {
+					// Safe to assume that all worker modules are:
+					// 1) done (redo = false)
+					// 2) done (redo = true): only these require special processing. In particular,
+					//    they need to be undone first. To capture this effect, we simply add these
+					//    to the unnestedUndoModuleIds array :) By leveraging the existing undo
+					//    logic, we reuse all the sanity checks and logic like ensuring that they
+					//    are undone in the proper order.
+					// 3) error
+
+					// The following pushes redo modules onto the undo stack :) Note that
+					// redoModuleIds are not necessarily the ones specified on the command line.
+					// They are based on the dependency graph which is build from the database
+					// state.
+					let redoModuleIds = depGraph.matchingModuleIds(unnestedModuleIds, (node) => {
+						let workerModule = node.workerModule()
+						return workerModule &&
+							workerModule.state === 'done' &&
+							workerModule.redo === true
+					})
+					unnestedUndoModuleIds = [...unnestedUndoModuleIds, ...redoModuleIds]
+
 					yield undoModules(app, genome, unnestedUndoModuleIds, depGraph, moduleClassMap)
 					yield runModules(app, genome, unnestedModuleIds, depGraph, moduleClassMap)
 				}
@@ -350,6 +419,15 @@ function createDepGraph(ModuleClasses) {
  * at least one of {$undoModuleIds} already completed or at least one of ${moduleIds} incomplete
  * (never started or in the error state) and a genome id greater than ${lastGenomeId}.
  *
+ * When undo'ing a module, the redo value is of no relevance (undo will be done either way);
+ * however, when assessing if a module needs to be run, the value of redo does matter. If redo is
+ * false and state is 'done', then it is safe to assume that this module does not need re-run.
+ * On the other hand, 'done' modules with a true redo value should not be considered as done when
+ * evaluating if the genome has outstanding data to be processed. To simultaneously handle these
+ * cases in one query, two array aggregates on the workers_modules table are performed. One for
+ * undo_modules and one for modules to be executed. After locking a genome, the state is then
+ * inspected application side to know which path to execute (see runPerGenomeModules)
+ *
  * @param {Object} app
  * @param {Array.<ModuleId>} undoModuleIds
  * @param {Array.<ModuleId>} moduleIds
@@ -359,30 +437,30 @@ function createDepGraph(ModuleClasses) {
 function lockNextAvailableGenome(app, undoModuleIds, moduleIds, lastGenomeId = null) {
 	assert(undoModuleIds.length + moduleIds.length > 0)
 
-	let genomesTable = app.models.Genome.tableName,
-		workerModulesTable = app.models.WorkerModule.tableName,
+	let genomesTable = app.models.Genome.getTableName(),
+		workerModulesTable = app.models.WorkerModule.getTableName(),
 		minGenomeIdClause = lastGenomeId ? `AND a.id > ${lastGenomeId} ` : '',
-		genomeIdClause = program.genomeIds ? `AND a.id IN (${program.genomeIds.join(',')}) ` : '',
+		// genomeIdClause = program.genomeIds ? `AND a.id IN (${program.genomeIds.join(',')}) ` : '',
 		queryUndoModuleArrayString = `ARRAY['${undoModuleIds.join("','")}']`,
 		queryModuleArrayString = `ARRAY['${moduleIds.join("','")}']`,
 		whereClauses = []
 
 	if (undoModuleIds.length)
-		whereClauses.push(`(b.genome_id is not null AND b.modules @> ${queryUndoModuleArrayString})`)
+		whereClauses.push(`(b.genome_id is not null AND b.modules && ${queryUndoModuleArrayString})`)
 	if (moduleIds.length)
-		whereClauses.push(`(b.genome_id is null OR NOT b.modules @> ${queryModuleArrayString})`)
+		whereClauses.push(`(b.genome_id is null OR NOT b.no_redo_modules @> ${queryModuleArrayString})`)
 
 	let whereClauseSql = whereClauses.join(' OR '),
 		sql =
 `WITH done_genomes_modules AS (
-	SELECT b.genome_id, array_agg(module) as modules
+	SELECT b.genome_id, array_agg(module) as modules, array_agg(case when redo is false then module else null end) as no_redo_modules
 	FROM ${genomesTable} a JOIN ${workerModulesTable} b ON (a.id = b.genome_id)
-	WHERE a.worker_id is null AND b.redo is false AND b.state = 'done'
+	WHERE a.worker_id is null AND b.state = 'done'
 	GROUP BY b.genome_id
 )
 SELECT a.*
 FROM ${genomesTable} a LEFT OUTER JOIN done_genomes_modules b ON (a.id = b.genome_id)
-WHERE a.worker_id is null ${minGenomeIdClause} ${genomeIdClause} AND (${whereClauseSql})
+WHERE ${genomeIdCondition()} a.worker_id is null ${minGenomeIdClause} AND (${whereClauseSql})
 ORDER BY a.id
 LIMIT 1
 FOR UPDATE`
@@ -405,6 +483,10 @@ FOR UPDATE`
 			})
 		})
 	})
+}
+
+function genomeIdCondition() {
+	return program.genomeIds ? `a.id IN (${program.genomeIds.join(',')}) AND ` : ''
 }
 
 function loadGenomeState(app, genome, depGraph) {
@@ -468,7 +550,10 @@ function runModules(app, genome, unnestedModuleIds, depGraph, moduleClassMap) {
 		for (let moduleId of incompleteModuleIds) {
 			shutdownCheck()
 
-			// Dependency check. The dep graph uses the first flat single subname
+			// Unlike undo'ing which must check every unnested module id for downstream dependencies
+			// running a module (and any submodules) only needs to check the first flat module /
+			// submodule. This is because a given module has the same dependencies for all
+			// submodules.
 			let repModuleId = moduleId.unnest()[0],
 				missingDependencies = depGraph.missingDependencies(repModuleId)
 			if (missingDependencies.length) {

@@ -10,12 +10,10 @@ module.exports = function(kRootPath) {
 	let pipelineRootPath = path.resolve(kRootPath, 'pipeline'),
 		paths = {
 			root: pipelineRootPath,
-			tmp: path.resolve(pipelineRootPath, 'tmp'),
 			data: path.resolve(pipelineRootPath, 'data'),
 			genomes: path.resolve(pipelineRootPath, 'data', 'genomes'),
 			scripts: path.resolve(pipelineRootPath, 'scripts'),
 			lib: path.resolve(pipelineRootPath, 'scripts', 'lib'),
-			logs: path.resolve(pipelineRootPath, 'logs'),
 			vendor: path.resolve(pipelineRootPath, 'vendor')
 		}
 
@@ -50,6 +48,19 @@ module.exports = function(kRootPath) {
 			pfam: {
 				version: '30.0',
 				basePath: path.resolve(paths.vendor, 'pfam', '30.0')
+			}
+		},
+
+		toolRunners: {
+			coils: {
+				ticksPerProgressEvent: 25000
+			},
+			segs: {
+				ticksPerProgressEvent: 25000
+			},
+			pfam30: {
+				databasePath: path.resolve(paths.vendor, 'pfam', '30.0', 'Pfam-A.hmm'),
+				ticksPerProgressEvent: 100
 			}
 		},
 

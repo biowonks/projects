@@ -259,6 +259,15 @@ describe('pipeline', function() {
 			})
 		})
 
+		describe('matchingModuleIds', function() {
+			it('returns matching modules based on our custom matching function', function() {
+				let x = new ModuleDepGraph(root),
+					result = x.matchingModuleIds([Aid, Bid, Hid], (node) => /^(A|H)$/.test(node.name()))
+
+				checkModuleIdArray(result, [Aid, Hid])
+			})
+		})
+
 		describe('incompleteModuleIds', function() {
 			let x = new ModuleDepGraph(root)
 			it('no worker module is incomplete', function() {

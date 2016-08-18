@@ -14,7 +14,8 @@ const AbstractSeqsService = require('../AbstractSeqsService')
 
 // Other
 const kToolRunners = discoverToolRunners(),
-	kValidToolIdSet = new Set(kToolRunners.map((x) => x.id))
+	kToolRunnerIdMap = new Map(kToolRunners.map((x) => [x.id, x]))
+	// kValidToolIdSet = new Set(kToolRunners.map((x) => x.id))
 
 module.exports =
 class AseqsService extends AbstractSeqsService {
@@ -54,9 +55,17 @@ class AseqsService extends AbstractSeqsService {
 			return Promise.reject(new Error(`invalid tool id: ${invalidToolId}`))
 
 		return Promise.each(toolIds, (toolId) => {
-			// eslint-disable-next-line global-require
-			let toolRunner = require(`./tool-runners/${toolId}.tool-runner`)
-			return toolRunner(aseqs, toolId)
+			// eslint-disable-next-line no-mixed-requires
+			let meta = kToolRunnerIdMap.get(toolId),
+				ToolRunner = require(meta.path), // eslint-disable-line global-require
+				toolRunnerConfig = this.config_.pipeline.toolRunners[toolId],
+				toolRunner = new ToolRunner(toolRunnerConfig)
+
+			toolRunner.on('progress', (progress) => {
+				this.logger_.info(progress, `${toolId} progress event: ${Math.floor(progress.percent)}%`)
+			})
+
+			return toolRunner.run(aseqs)
 		})
 		.then(() => aseqs)
 	}
@@ -85,7 +94,7 @@ WHERE id = ? AND (${nullClause})`
 
 		return Promise.each(aseqs, (aseq) => {
 			for (let i = 0; i < nToolIds; i++)
-				replacements[i] = JSON.stringify(aseq[toolIds[i]])
+				replacements[i] = JSON.stringify(aseq.getDataValue(toolIds[i]))
 			replacements[nToolIds] = aseq.id
 
 			return this.sequelize_.query(sql, {
@@ -139,7 +148,7 @@ WHERE id = ? AND (${nullClause})`
 	}
 
 	isValidToolId(toolId) {
-		return kValidToolIdSet.has(toolId)
+		return kToolRunnerIdMap.has(toolId)
 	}
 }
 
@@ -149,7 +158,7 @@ WHERE id = ? AND (${nullClause})`
 function discoverToolRunners() {
 	let basePath = 'tool-runners',
 		toolRunnersDir = path.join(__dirname, basePath),
-		suffix = '.tool-runner.js'
+		suffix = 'ToolRunner.js'
 
 	return fs.readdirSync(toolRunnersDir)
 	.filter((fileName) => {
@@ -159,12 +168,15 @@ function discoverToolRunners() {
 		return stat.isFile() && fileName.endsWith(suffix)
 	})
 	.map((fileName) => {
-		// eslint-disable-next-line global-require, no-mixed-requires
-		let runner = require(`./${basePath}/${fileName}`),
+		// eslint-disable-next-line no-mixed-requires
+		let runnerPath = `./${basePath}/${fileName}`,
+			runner = require(runnerPath), // eslint-disable-line global-require
 			meta = runner.meta || {}
 
-		meta.id = path.basename(fileName, suffix)
+		meta.path = runnerPath
 
 		return meta
 	})
+	// Only include those that have a non-null id
+	.filter((x) => !!x.id)
 }

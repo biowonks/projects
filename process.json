@@ -1,0 +1,22 @@
+{
+	apps: [
+		{
+			name: "mist-api",
+			script: "./index.js",
+			watch: [
+				"app.js",
+				"index.js",
+				"package.json",
+				"config",
+				"lib",
+				"models",
+				"routes",
+				"services"
+			],
+			instances: 1,
+			env: {
+				NODE_ENV: "develop"
+			}
+		}
+	]
+}
