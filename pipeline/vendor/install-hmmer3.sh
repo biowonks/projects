@@ -35,5 +35,7 @@ echo "Cleaning up"
 cd /tmp
 rm -r $TARBALL_BASENAME
 rm $TARBALL_FILENAME
+PATH=$BIN_PATH:$PATH
+export PATH
 
 echo "Successfully installed HMMER3 version $VERSION"
