@@ -4,8 +4,10 @@
 const CriteriaError = require('../lib/errors/criteria-error')
 
 // Constants
-const kDefaultPerPage = 30,
-	kMaxPerPage = 100
+const kDefaults = {
+	perPage: 30,
+	maxPerPage: 100
+}
 
 // --------------------------------------------------------
 class ModelNode {
@@ -47,11 +49,18 @@ class ModelNode {
 module.exports =
 class CriteriaService {
 	/**
+	 * Facilitates the construction of the criteria to use when querying with the Sequelize library.
+	 *
 	 * @constructor
 	 * @param {Array.<Model>} models
+	 * @param {Object} [options = {}]
+	 * @param {Number} [options.defaultPerPage = 30] - default number of records to return per page
+	 * @param {Number} [options.maxPerPage = 100] - absolute maximum number of records that may be returned per page
 	 */
-	constructor(models) {
+	constructor(models, options = {}) {
 		this.models_ = models
+		this.defaultPerPage_ = options.defaultPerPage || kDefaults.perPage
+		this.maxPerPage_ = options.maxPerPage || kDefaults.maxPerPage
 	}
 
 	/**
@@ -79,7 +88,8 @@ class CriteriaService {
 	 *
 	 * Will throw an error if references an invalid model.
 	 *
-	 * @param {Object} queryObject
+	 * @param {Model} primaryModel - the base model with which to analyze ${queryObject}
+	 * @param {Object} queryObject - a querystring (core module) compatible set of parameters; typically this originates from the query string of a URL
 	 * @returns {Object} - criteria object compatible with Sequelizejs find operations
 	 */
 	createFromQueryObject(primaryModel, queryObject = {}) {
@@ -105,28 +115,28 @@ class CriteriaService {
 	}
 
 	/**
-	 * @param {Number|String|null} dirtyPerPage - unvalidated value for the per page parameter
-	 * @returns {Number} - amount to expect per page; if invalid returns the default per page otherwise the result is clamped between 0 and the maximum per page
+	 * @param {Number|String|null} perPage
+	 * @returns {Number} - amount to expect per page; if invalid, returns the default per page otherwise the result is clamped between 0 and the maximum per page
 	 */
-	perPageFrom(dirtyPerPage) {
-		let perPage = Math.floor(Number(dirtyPerPage))
-		if (dirtyPerPage === '' || isNaN(perPage))
-			return kDefaultPerPage
+	perPageFrom(perPage) {
+		let result = Math.floor(Number(perPage))
+		if (perPage === '' || isNaN(result))
+			return this.defaultPerPage_
 
-		perPage = Math.max(0, Math.min(perPage, kMaxPerPage))
-		return perPage
+		result = Math.max(0, Math.min(result, this.maxPerPage_))
+		return result
 	}
 
 	/**
-	 * @param {Number|String|null} dirtyPage - unvalidated value for the page query parameter
+	 * @param {Number|String|null} page
 	 * @returns {Number} - 1-based page number; defaults to 1 if not specified or invalid
 	 */
-	pageFrom(dirtyPage) {
-		let page = Math.floor(Number(dirtyPage))
-		if (!page || isNaN(page) || page < 1)
+	pageFrom(page) {
+		let result = Math.floor(Number(page))
+		if (!result || isNaN(result) || result < 1)
 			return 1
 
-		return page
+		return result
 	}
 
 	/**
@@ -196,48 +206,11 @@ class CriteriaService {
 		return null
 	}
 
-	invalidAttributes_(attributes, model) {
-		if (!attributes || attributes.length === 0)
-			return null
-
-		let invalidAttributes = attributes.filter((attribute) => !model.attributes[attribute])
-		return invalidAttributes.length ? invalidAttributes : null
-	}
-
-	/**
-	 * @param {Array.<String>} attributes
-	 * @param {Model} model
-	 * @returns {Array.<String>} - requested attributes that are not permitted to be requested (the model definition marks them as excluded)
-	 */
-	excludedAttributes_(attributes, model) {
-		let excludeSet = model.$excludedFromCriteria(),
-			notRequestingAnyAttributes = attributes && attributes.length === 0
-		if (!excludeSet || excludeSet.size === 0 || notRequestingAnyAttributes)
-			return null
-
-		let requestingAllAttributes = attributes === null
-		if (requestingAllAttributes)
-			return [...excludeSet]
-
-		let excluded = attributes.filter((attribute) => excludeSet.has(attribute))
-		return excluded.length ? excluded : null
-	}
-
-	inaccessibleModels_(include, accessibleModels) {
-		if (!include || include.length === 0 || !accessibleModels || accessibleModels.length === 0)
-			return null
-
-		let inaccessibleModels = include
-			.filter((subInclude) => !accessibleModels.includes(subInclude.model))
-			.map((subInclude) => subInclude.model)
-		return inaccessibleModels.length ? inaccessibleModels : null
-	}
-
 	// ----------------------------------------------------
 	// Private methods
 	/**
-	 * Creates a tree structure of fields from all fields specified in ${queryObject} (which is
-	 * typically derived by the Node core querystring module).
+	 * Creates a tree structure of fields from all fields specified in ${queryObject} (such as that
+	 * derived by the core querystring module).
 	 *
 	 * Related model fields may be selected by separating the model names with a '.'. Any empty
 	 * model names are ignored. For example, "fields.=id" will be ignored.
@@ -319,9 +292,10 @@ class CriteriaService {
 	 *
 	 * @param {ModelNode} modelNode
 	 * @param {Object} target
+	 * @param {Model} primaryModel
 	 */
 	mapFieldsToCriteria_(modelNode, target, primaryModel) {
-		target.attributes = this.attributesValue_(primaryModel, modelNode.value)
+		target.attributes = this.decodeFieldValue_(primaryModel, modelNode.value)
 		if (target.attributes === false)
 			throw new CriteriaError(`Invalid value for ${modelNode.name}. Valid values include: 'true', 'false', or a CSV-list of field names.`)
 
@@ -351,24 +325,28 @@ class CriteriaService {
 	}
 
 	/**
-	 * Converts URL encoded field values into it's corresponding Sequelize attributes value.
+	 * Converts URL encoded field values into it's corresponding Sequelize attributes value. If a
+	 * null value is provided, include all attributes marked for inclusion via the criteria
+	 * attributes method.
 	 *
 	 * 'false' -> []
-	 * null OR 'true' => null (select all fields)
+	 * null, '', or 'true' => null (use all fields returned by ${model}.$criteriaAttributes())
 	 * 'id,name' (CSV string) -> ['id', 'name']
 	 *
+	 * @param {Model} model
 	 * @param {String} [value = null]
 	 * @returns {Array.<String>|false} - if successfully parsed returns an Array; false if an error occurred
 	 */
-	attributesValue_(model, value = null) {
+	decodeFieldValue_(model, value = null) {
 		if (value === 'false')
 			return []
-		else if (value === null || value === 'true' || value === '')
+		else if (value === null || value === '' || value === 'true')
 			return model.$criteriaAttributes()
 		else if (typeof value === 'string')
 			return this.nonEmptyFields_(value)
 
-		// ${value} is something other than null or a string
+		// ${value} is something other than null or a string; indicate this is invalid by returning
+		// false
 		return false
 	}
 
@@ -393,6 +371,10 @@ class CriteriaService {
 	 * belongsToMany associations will not have the related model name directly on the model
 	 * associations object. As such, this method both checks that the models are correctly related
 	 * and updates the include model reference if it is through a belongsToMany relationship.
+	 *
+	 * @param {Object} associations
+	 * @param {String} relatedModelName
+	 * @returns {Model}
 	 */
 	getRelatedModel_(associations, relatedModelName) {
 		let association = associations[relatedModelName]
@@ -410,5 +392,52 @@ class CriteriaService {
 		}
 
 		return null
+	}
+
+	/**
+	 * @param {Array.<String>} attributes
+	 * @param {Model} model
+	 * @returns {Array.<String>} - those attributes in ${attributes} that are not present in ${model}
+	 */
+	invalidAttributes_(attributes, model) {
+		if (!attributes || attributes.length === 0)
+			return null
+
+		let invalidAttributes = attributes.filter((attribute) => !model.attributes[attribute])
+		return invalidAttributes.length ? invalidAttributes : null
+	}
+
+	/**
+	 * @param {Array.<String>} attributes
+	 * @param {Model} model
+	 * @returns {Array.<String>} - requested attributes that are not permitted to be requested (the model definition marks them as excluded)
+	 */
+	excludedAttributes_(attributes, model) {
+		let excludeSet = model.$excludedFromCriteria(),
+			notRequestingAnyAttributes = attributes && attributes.length === 0
+		if (!excludeSet || excludeSet.size === 0 || notRequestingAnyAttributes)
+			return null
+
+		let requestingAllAttributes = attributes === null
+		if (requestingAllAttributes)
+			return [...excludeSet]
+
+		let excluded = attributes.filter((attribute) => excludeSet.has(attribute))
+		return excluded.length ? excluded : null
+	}
+
+	/**
+	 * @param {Object} include
+	 * @param {Array.<Model>} accessibleModels
+	 * @returns {Array.<Model>} - an associated model that has not been whitelisted for inclusion
+	 */
+	inaccessibleModels_(include, accessibleModels) {
+		if (!include || include.length === 0 || !accessibleModels || accessibleModels.length === 0)
+			return null
+
+		let inaccessibleModels = include
+			.filter((subInclude) => !accessibleModels.includes(subInclude.model))
+			.map((subInclude) => subInclude.model)
+		return inaccessibleModels.length ? inaccessibleModels : null
 	}
 }
