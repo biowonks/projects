@@ -120,7 +120,7 @@ class CriteriaService {
 	 */
 	perPageFrom(perPage) {
 		let result = Math.floor(Number(perPage))
-		if (perPage === '' || isNaN(result))
+		if (perPage === null || perPage === '' || isNaN(result) || perPage < 0)
 			return this.defaultPerPage_
 
 		result = Math.max(0, Math.min(result, this.maxPerPage_))
@@ -441,3 +441,6 @@ class CriteriaService {
 		return inaccessibleModels.length ? inaccessibleModels : null
 	}
 }
+
+// Expose the defaults
+module.exports.kDefaults = kDefaults
