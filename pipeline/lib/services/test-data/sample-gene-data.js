@@ -1,7 +1,6 @@
 'use strict'
 
-module.exports =
-[
+module.exports = [
 	{
 		start: 96849,
 		stop: 99074,
