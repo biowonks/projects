@@ -14,7 +14,7 @@ const kSampleXMLFileSpecies = path.resolve(__dirname, 'test-data', '476210_speci
 	kSampleXMLFileIntermediate = path.resolve(__dirname, 'test-data', '41253_intermediate.test.xml')
 
 
-describe('Services', function() {
+describe.only('Services', function() {
 	describe('TaxonomyService', function() {
 		let taxonomyService = new TaxonomyService()
 
@@ -27,18 +27,11 @@ describe('Services', function() {
 
 		describe('taxonomyId2finalTaxonomyObject', function() {
 			it('undefined taxonomicId throws error', function() {
-				taxonomyService.taxonomyId2finalTaxonomyObject()
-				.then((result) => {
-					expect(() => {}).throw(Error)
-				})
+				return expectRejection(taxonomyService.taxonomyId2finalTaxonomyObject())
 			})
 
-
 			it('invalid numeric taxonomicId throws error', function() {
-				taxonomyService.taxonomyId2finalTaxonomyObject('ab123')
-				.then((result) => {
-					expect(() => {}).throw(Error)
-				})
+				return expectRejection(taxonomyService.taxonomyId2finalTaxonomyObject('ab123'))
 			})
 		})
 
