@@ -196,6 +196,9 @@ class CriteriaService {
 	 * @returns {Array.<Object>}
 	 */
 	findErrors(target, primaryModel, accessibleModels = null) {
+		if (!primaryModel)
+			throw new Error('missing primaryModel argument')
+
 		let errors = [],
 			invalidAttributes = this.invalidAttributes_(target.attributes, primaryModel)
 		if (invalidAttributes) {
@@ -476,8 +479,11 @@ class CriteriaService {
 	 * @returns {Array.<Model>} - an associated model that has not been whitelisted for inclusion
 	 */
 	inaccessibleModels_(include, accessibleModels) {
-		if (!include || include.length === 0 || !accessibleModels || accessibleModels.length === 0)
+		if (!include || include.length === 0)
 			return null
+
+		if (!accessibleModels || accessibleModels.length === 0)
+			return include.map((x) => x.model)
 
 		let inaccessibleModels = include
 			.filter((subInclude) => !accessibleModels.includes(subInclude.model))

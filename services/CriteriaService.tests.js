@@ -147,10 +147,37 @@ describe('services', function() {
 				}).throw(Error)
 			})
 
-			it('defaults as expected', function() {
-				let x = service.createFromQueryObject(User)
+			it('throws error if attempting to access non-existent model', function() {
+				expect(function() {
+					queryObject['fields.BadModel'] = null
+					service.createFromQueryObject(User, queryObject)
+				}).throw(Error)
+			})
+
+			it('throws error if model is not related', function() {
+				expect(function() {
+					queryObject['fields.Account'] = null
+					service.createFromQueryObject(User, queryObject)
+				}).throw(Error)
+			})
+
+			it('Profile defaults as expected', function() {
+				let x = service.createFromQueryObject(Profile)
 				expect(x).eql({
 					attributes: null,
+					include: null,
+					limit: service.defaultPerPage(),
+					offset: null,
+					order: [
+						['id']
+					]
+				})
+			})
+
+			it('User defaults as expected', function() {
+				let x = service.createFromQueryObject(User)
+				expect(x).eql({
+					attributes: ['id', 'name', 'num_logins'],
 					include: null,
 					limit: service.defaultPerPage(),
 					offset: null,
@@ -474,7 +501,86 @@ describe('services', function() {
 		})
 
 		describe('findErrors', function() {
+			let service = null,
+				queryObject = null,
+				defaultPerPage = 10,
+				maxPerPage = 20,
+				maxPage = 50
+			beforeEach(() => {
+				queryObject = {}
+				service = new CriteriaService(models, {
+					defaultPerPage,
+					maxPerPage,
+					maxPage
+				})
+			})
+			afterEach(() => {
+				service = null
+			})
 
+			it('valid criteria returns null', function() {
+				let criteria = service.createFromQueryObject(User, {}),
+					x = service.findErrors(criteria, User)
+
+				expect(x).null
+			})
+
+			it('check for invalid attributes, excluded attributes, and inaccessible models', function() {
+				queryObject.fields = 'id,num_logins,bad_field,secret,another_bad_field'
+				queryObject['fields.Profile'] = 'false'
+				queryObject['fields.Post'] = 'true'
+				let criteria = service.createFromQueryObject(User, queryObject),
+					errors = service.findErrors(criteria, User)
+
+				expect(errors).instanceof(Array)
+				expect(errors.length).equal(3)
+				errors.forEach((error) => {
+					expect(error.message).a('string')
+					expect(error.message.length).above(0)
+				})
+				errors.forEach((error) => Reflect.deleteProperty(error, 'message'))
+				expect(errors).eql([
+					{
+						type: 'InvalidFieldError',
+						fields: [
+							'bad_field',
+							'another_bad_field'
+						],
+						model: 'User'
+					},
+					{
+						type: 'InaccessibleFieldError',
+						fields: [
+							'secret'
+						],
+						model: 'User'
+					},
+					{
+						type: 'InaccessibleModelError',
+						models: [
+							'Profile',
+							'Post'
+						]
+					}
+				])
+			})
+
+			it('check for invalid attributes in related model', function() {
+				queryObject['fields.Profile'] = 'missing-field'
+				let criteria = service.createFromQueryObject(User, queryObject),
+					errors = service.findErrors(criteria, User, [Profile])
+
+				expect(errors).instanceof(Array)
+				expect(errors.length).equal(1)
+				Reflect.deleteProperty(errors[0], 'message')
+				expect(errors[0]).eql({
+					type: 'InvalidFieldError',
+					fields: [
+						'missing-field'
+					],
+					model: 'Profile'
+				})
+			})
 		})
 	})
 })
