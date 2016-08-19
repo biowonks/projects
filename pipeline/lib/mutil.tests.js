@@ -51,7 +51,7 @@ describe('mutil', function() {
 		})
 	})
 
-	describe.only('xmlToJs', function() {
+	describe('xmlToJs', function() {
 		it('parseString', function() {
 			let xmlString = '<?xml version="1.0"?><!DOCTYPE TaxaSet PUBLIC "-//NLM//DTD Taxon, 14th January 2002//EN" "http://www.ncbi.nlm.nih.gov/entrez/query/DTD/taxon.dtd"><a>b</a>'
 			mutil.xmlToJs(xmlString)
