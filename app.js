@@ -17,9 +17,10 @@ let bodyParser = require('body-parser'),
 let	errorHandler = require('./lib/error-handler'),
 	loadServices = require('./services'),
 	ApiError = require('./lib/errors/api-error'),
-	RouteHelper = require('./lib/RouteHelper'),
 	BootService = require('./services/BootService'),
-	RestError = require('./lib/errors/rest-error')
+	CriteriaError = require('./lib/errors/criteria-error'),
+	RestError = require('./lib/errors/rest-error'),
+	RouteHelper = require('./lib/RouteHelper')
 
 // Constants
 const kMsPerSecond = 1000,
@@ -63,14 +64,19 @@ module.exports = function() {
 		// --------------------------------------------------------
 		// Main setup
 		let app = express()
+		// Add in some good security measures
 		app.use(helmet())
+
+		// Use the native queryparser module (vs the qs module). Thus, nested objects are no longer
+		// automaticallky constructed when brackets are used in the query string.
+		app.set('query parser', 'simple')
 
 		// http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api#pretty-print-gzip
 		// Gzip output and pretty print JSON by default
 		app.use(compression())
 		app.set('json spaces', kJsonPrettyPrintSpaces)
 
-		app.set('errors', {ApiError, RestError})
+		app.set('errors', {ApiError, CriteriaError, RestError})
 		app.set('config', config)
 		app.set('logger', logger)
 		app.set('sequelize', bootService.sequelize())
@@ -94,7 +100,11 @@ module.exports = function() {
 			RouteHelper
 		})
 
-		let router = pathRoutify(app, config.routing.routesPath)
+		let router = pathRoutify(app, config.routing.routesPath, {
+			autoNameAnonymousMiddleware: true, // helps when debugging errors
+			middlewaresPath: config.routing.middlewaresPath,
+			logger // Log all generated routes
+		})
 		if (config.routing.prefix)
 			app.use(config.routing.prefix, router)
 		else

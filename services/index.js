@@ -4,7 +4,8 @@
 let path = require('path')
 
 // Local
-let AnalyticsService = require('./AnalyticsService')
+let AnalyticsService = require('./AnalyticsService'),
+	CriteriaService = require('./CriteriaService')
 
 module.exports = function(app) {
 	let config = app.get('config')
@@ -13,6 +14,7 @@ module.exports = function(app) {
 		analytics: new AnalyticsService(config.analytics.gaTrackingId, {
 			baseUrl: config.server.baseUrl,
 			beaconImageFile: path.resolve(__dirname, '..', 'assets', 'img', 'beacon.gif')
-		})
+		}),
+		criteria: new CriteriaService(app.get('models'))
 	}
 }

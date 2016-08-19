@@ -58,10 +58,33 @@ module.exports = function(Sequelize, models, extras) {
 		dnaLength: extras.validate.referencedLength('length', 'dna')
 	}
 
+	// Prevent selection of the dna field. This avoids sending many megabytes of data in an
+	// un-regulated manner.
+	let excludedCriteriaAttributeSet = new Set(['dna']),
+		criteriaAttributes = new Set(['id', ...Object.keys(fields)])
+	for (let attribute of excludedCriteriaAttributeSet)
+		criteriaAttributes.delete(attribute)
+	criteriaAttributes = Array.from(criteriaAttributes)
+
 	return {
 		fields,
 		params: {
 			instanceMethods,
+			classMethods: {
+				/**
+				 * @returns {Set.<String>}
+				 */
+				$excludedFromCriteria: function() {
+					return excludedCriteriaAttributeSet
+				},
+
+				/**
+				 * @returns {Array.<String>}
+				 */
+				$criteriaAttributes: function() {
+					return criteriaAttributes
+				}
+			},
 			validate
 		}
 	}
