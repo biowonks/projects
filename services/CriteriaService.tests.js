@@ -5,17 +5,7 @@
 const CriteriaService = require('./CriteriaService'),
 	mistSequelize = require('../lib/mist-sequelize')
 
-/**
- * For testing purposes, use the following mock models:
- *
- * User
- * - id (primary key)
- * - name
- * - age
- *
- * Profile
- * -
- */
+// Other
 let sequelize = mistSequelize(), // This adds created_at, updated_at to each model
 	Sequelize = sequelize.Sequelize,
 	User = sequelize.define('User', {
@@ -51,6 +41,11 @@ let sequelize = mistSequelize(), // This adds created_at, updated_at to each mod
 			type: Sequelize.INTEGER
 		},
 		title: {
+			type: Sequelize.TEXT
+		}
+	}),
+	Account = sequelize.define('Account', {
+		description: {
 			type: Sequelize.TEXT
 		}
 	}),
@@ -159,6 +154,12 @@ describe('services', function() {
 					queryObject['fields.Account'] = null
 					service.createFromQueryObject(User, queryObject)
 				}).throw(Error)
+			})
+
+			it('throws error if model is not part of models supplied to constructor', function() {
+				expect(function() {
+					service.createFromQueryObject(Account)
+				})
 			})
 
 			it('Profile defaults as expected', function() {
@@ -516,6 +517,15 @@ describe('services', function() {
 			})
 			afterEach(() => {
 				service = null
+			})
+
+			it('throws error if model is not part of models supplied to constructor', function() {
+				expect(function() {
+					let criteria = service.createFromQueryObject(Profile)
+					expect(function() {
+						service.findErrors(criteria, Account)
+					}).throw(Error)
+				})
 			})
 
 			it('valid criteria returns null', function() {

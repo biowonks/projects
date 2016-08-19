@@ -130,6 +130,9 @@ class CriteriaService {
 		if (!primaryModel)
 			throw new Error('unable to parse criteria without a primary model')
 
+		if (!this.models_[primaryModel.name])
+			throw new Error(`${primaryModel.name} is not one of the models supplied to this service during construction`)
+
 		let perPage = this.perPageFrom(queryObject.per_page),
 			page = this.pageFrom(queryObject.page),
 			criteria = {
@@ -198,6 +201,9 @@ class CriteriaService {
 	findErrors(target, primaryModel, accessibleModels = null) {
 		if (!primaryModel)
 			throw new Error('missing primaryModel argument')
+
+		if (!this.models_[primaryModel.name])
+			throw new Error(`${primaryModel.name} is not one of the models supplied to this service during construction`)
 
 		let errors = [],
 			invalidAttributes = this.invalidAttributes_(target.attributes, primaryModel)
