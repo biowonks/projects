@@ -1,34 +1,22 @@
-/* eslint-disable no-unused-expressions, no-mixed-requires */
+/* eslint-disable no-unused-expressions */
 
 'use strict'
 
-// Core
-let path = require('path'),
-	url = require('url')
+// 3rd party includes
+let path = require('path')
 
-// Vendor
-let nock = require('nock')
+// Local includes
+let TaxonomyService = require('./TaxonomyService'),
+	testResults = require(path.resolve(__dirname, 'test-data', 'taxonomyService.test.results.js')),
+	mutil = require('../mutil')
 
-// Local
-let mutil = require('../mutil'),
-	TaxonomyService = require('./TaxonomyService')
+const kSampleXMLFileSpecies = path.resolve(__dirname, 'test-data', '476210_species.test.xml'),
+	kSampleXMLFileIntermediate = path.resolve(__dirname, 'test-data', '41253_intermediate.test.xml')
 
-// Constants
-let kSampleXMLFile = path.resolve(__dirname, 'test-data', 'sample-taxonomy2.xml')
 
 describe('Services', function() {
 	describe('TaxonomyService', function() {
 		let taxonomyService = new TaxonomyService()
-
-		function urlNockParts(sourceUrl) {
-			let parts = url.parse(sourceUrl, true /* parseQueryString */)
-
-			return {
-				baseUrl: parts.protocol + '//' + parts.host,
-				pathName: parts.pathname,
-				query: parts.query
-			}
-		}
 
 		describe('eutilUrl', function() {
 			it('returns taxonomyId appended', function() {
@@ -37,59 +25,54 @@ describe('Services', function() {
 			})
 		})
 
-		describe('fetch', function() {
-			let sampleTaxonomyXml = null
-			before(() => {
-				return mutil.readFile(kSampleXMLFile)
-				.then((xml) => {
-					sampleTaxonomyXml = xml
+		describe('taxonomyId2finalTaxonomyObject', function() {
+			it('undefined taxonomicId throws error', function() {
+				taxonomyService.taxonomyId2finalTaxonomyObject()
+				.then((result) => {
+					expect(() => {}).throw(Error)
 				})
 			})
 
-			it('undefined taxonomicId returns rejected promise', function() {
-				return expectRejection(taxonomyService.fetch())
-			})
 
 			it('invalid numeric taxonomicId throws error', function() {
-				return expectRejection(taxonomyService.fetch('ab123'))
-			})
-
-			let taxonomyIdString = '41253',
-				taxonomyIdInteger = 41253,
-				taxonomyIds = [taxonomyIdString, taxonomyIdInteger]
-			taxonomyIds.forEach((taxonomyId) => {
-				it(`${taxonomyId} (${typeof taxonomyId}) works`, function() {
-					let eutilUrl = taxonomyService.eutilUrl(taxonomyId),
-						urlParts = urlNockParts(eutilUrl),
-						nockEutilRequest = nock(urlParts.baseUrl),
-						// eslint-disable-next-line global-require
-						expectedResult = require('./test-data/sample-taxonomy2')
-
-					nockEutilRequest
-						.get(urlParts.pathName)
-						.query(urlParts.query)
-						.reply(200, sampleTaxonomyXml) // eslint-disable-line no-magic-numbers
-
-					return taxonomyService.fetch(taxonomyId)
-					.then((taxonomyResult) => {
-						nockEutilRequest.done()
-						expect(taxonomyResult).deep.equal(expectedResult)
-					})
+				taxonomyService.taxonomyId2finalTaxonomyObject('ab123')
+				.then((result) => {
+					expect(() => {}).throw(Error)
 				})
 			})
 		})
 
-		describe('taxonomicGroup', function() {
-			it('non-proteobacteria phylum returns phylum', function() {
-				expect(taxonomyService.taxonomicGroup('Chlorobi', 'Chlorobia')).equal('Chlorobi')
+		describe('taxonomyId2finalTaxonomyObject', function() {
+			it('species XML', function() {
+				return mutil.readFile(kSampleXMLFileSpecies)
+					.then((xmlString) => mutil.xmlToJs(xmlString))
+					.then((jsonTaxonomy) => taxonomyService.ncbiTaxonomyObject2finalTaxonomyObject(jsonTaxonomy))
+					.then((result) => {
+						expect(result).deep.equal(testResults.kSampleXMLFileSpecies)
+					})
 			})
 
-			it('Proteobacteria phylum returns class', function() {
-				expect(taxonomyService.taxonomicGroup('Proteobacteria', 'Zetaproteobacteria')).equal('Zetaproteobacteria')
+			it('intermediate rank XML', function() {
+				return mutil.readFile(kSampleXMLFileIntermediate)
+					.then((xmlString) => mutil.xmlToJs(xmlString))
+					.then((jsonTaxonomy) => taxonomyService.ncbiTaxonomyObject2finalTaxonomyObject(jsonTaxonomy))
+					.then((result) => {
+						expect(result).deep.equal(testResults.kSampleXMLFileIntermediate)
+					})
 			})
 
-			it('prOteobacteriA case returns class', function() {
-				expect(taxonomyService.taxonomicGroup('prOteobacteriA', 'Zetaproteobacteria')).equal('Zetaproteobacteria')
+			let fixtureString = '41253',
+				fixtureInteger = 41253,
+				fixtures = [fixtureString, fixtureInteger]
+			fixtures.forEach((fixture) => {
+				it(fixture + ' (' + typeof fixture + ') works', function() {
+					let taxonomyId = fixture
+
+					return taxonomyService.taxonomyId2finalTaxonomyObject(taxonomyId)
+						.then((taxonomyResult) => {
+							expect(taxonomyResult).deep.equal(testResults.kSampleXMLFileIntermediate)
+						})
+				})
 			})
 		})
 	})
