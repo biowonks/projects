@@ -3,8 +3,7 @@
 // Vendor
 const _ = require('lodash'),
 	bunyan = require('bunyan'),
-	Promise = require('bluebird'),
-	Sequelize = require('sequelize')
+	Promise = require('bluebird')
 
 // Vendor
 const publicIp = require('public-ip'),
@@ -12,7 +11,8 @@ const publicIp = require('public-ip'),
 
 // Local
 const config = require('../config'),
-	loadModels = require('../models')
+	loadModels = require('../models'),
+	mistSequelize = require('../lib/mist-sequelize')
 
 /**
  * Encapsulates a common configuration and all boot strapping methods. May be used to call
@@ -93,11 +93,8 @@ class BootService {
 			throw new Error('Database enabled, but missing configuration (name)')
 		}
 
-		if (!this.sequelize_) {
-			let sequelizeOptions = dbConfig.sequelizeOptions
-			this.injectClassMethods_(sequelizeOptions)
-			this.sequelize_ = new Sequelize(dbConfig.name, dbConfig.user, dbConfig.password, sequelizeOptions)
-		}
+		if (!this.sequelize_)
+			this.sequelize_ = mistSequelize(dbConfig)
 
 		if (!this.migrator_) {
 			let options = {
@@ -184,30 +181,6 @@ class BootService {
 		return bunyan.createLogger(loggerOptions)
 	}
 
-	injectClassMethods_(sequelizeOptions) {
-		if (!sequelizeOptions.define)
-			sequelizeOptions.define = {}
-
-		if (!sequelizeOptions.define.classMethods)
-			sequelizeOptions.define.classMethods = {}
-
-		let classMethods = sequelizeOptions.define.classMethods
-
-		/**
-		 * @returns {Set} - those attributes which are excluded from selection via the CriteriaService
-		 */
-		classMethods.$excludedFromCriteria = function() {
-			return null
-		}
-
-		/**
-		 * @returns {Array.<String>} - attributes that may be selected via the CriteriaService; if null, indicates all attributes may be selected
-		 */
-		classMethods.$criteriaAttributes = function() {
-			return null
-		}
-	}
-
 	setupSchema_() {
 		let schema = null
 		try {
@@ -245,6 +218,6 @@ class BootService {
 // Expose the configuration and Sequelize definition directly on the BootService class as a static
 // property
 BootService.config = config
-BootService.Sequelize = Sequelize
+BootService.Sequelize = mistSequelize.Sequelize
 
 module.exports = BootService

@@ -27,11 +27,11 @@ const fs = require('fs'),
 
 // Vendor
 const _ = require('lodash'),
-	inflection = require('inflection'),
-	Sequelize = require('sequelize')
+	inflection = require('inflection')
 
 // Local
-const modelExtras = require('./model-extras')(Sequelize), // eslint-disable-line no-mixed-requires
+const mistSequelize = require('../lib/mist-sequelize'), // eslint-disable-line no-mixed-requires
+	modelExtras = require('./model-extras')(mistSequelize.Sequelize), // eslint-disable-line no-mixed-requires
 	setupAssociations = require('./associations')
 
 // Constants
@@ -43,8 +43,14 @@ module.exports = function(sequelize, optLogger) {
 	return models
 }
 
-module.exports.withDummyConnection = function(optLogger) {
-	return module.exports(new Sequelize(null, null, null, {dialect: 'postgres'}), optLogger)
+/**
+ * Loads all models using a dummy connection
+ *
+ * @param {Object} [optLogger = null]
+ * @returns {Object.<String,Model>}
+ */
+module.exports.withDummyConnection = function(optLogger = null) {
+	return module.exports(mistSequelize(), optLogger)
 }
 
 // ----------------------------------------------------------------------------
@@ -57,7 +63,7 @@ function loadModels(sequelize, optLogger) {
 	getModelFileNames()
 	.forEach((modelFileName) => {
 		// eslint-disable-next-line global-require
-		let definition = require('./' + modelFileName)(Sequelize, models, modelExtras)
+		let definition = require('./' + modelFileName)(mistSequelize.Sequelize, models, modelExtras)
 		if (!definition)
 			throw new Error(`Missing return value from model file, ${modelFileName}`)
 

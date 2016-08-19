@@ -22,10 +22,6 @@ module.exports = function(rootPath, packageJSON) {
 				ssl: true
 			},
 			logging: false,
-			define: {
-				underscored: true,
-				timestamps: true
-			},
 			pool: {
 				maxConnections: 10,
 				maxIdleTime: 1000
