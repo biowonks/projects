@@ -24,6 +24,18 @@ let sequelize = mistSequelize(), // This adds created_at, updated_at to each mod
 		},
 		num_logins: {
 			type: Sequelize.INTEGER
+		},
+		secret: {
+			type: Sequelize.TEXT
+		}
+	}, {
+		classMethods: {
+			$excludedFromCriteria: function() {
+				return new Set(['secret'])
+			},
+			$criteriaAttributes: function() {
+				return ['id', 'name', 'num_logins']
+			}
 		}
 	}),
 	Profile = sequelize.define('Profile', {
@@ -47,6 +59,8 @@ let sequelize = mistSequelize(), // This adds created_at, updated_at to each mod
 		Profile,
 		Post
 	}
+
+	// TODO: handle belongsToMany
 	// Tags = sequelize.define('Tag', {
 	// 	label: {
 	// 		type: Sequelize.TEXT
@@ -60,7 +74,7 @@ User.hasMany(Post)
 Post.belongsTo(User)
 
 describe('services', function() {
-	describe.only('CriteriaService', function() {
+	describe('CriteriaService', function() {
 		describe('defaultPerPage', function() {
 			it('setting to default + 10 works', function() {
 				let newDefaultPerPage = CriteriaService.kDefaults.perPage + 10,
@@ -147,7 +161,121 @@ describe('services', function() {
 			})
 
 			describe('fields parameter', function() {
+				it('CSV list of all profile attributes', function() {
+					queryObject.fields = 'id,user_id,street'
+					let x = service.createFromQueryObject(Profile, queryObject)
+					expect(x.attributes).eql([
+						'id',
+						'user_id',
+						'street'
+					])
+				})
 
+				it('subset of profile attributes', function() {
+					queryObject.fields = 'street'
+					let x = service.createFromQueryObject(Profile, queryObject)
+					expect(x.attributes).eql([
+						'street'
+					])
+				})
+
+				it('null returns all attributes by setting its value to null', function() {
+					queryObject.fields = null
+					let x = service.createFromQueryObject(Profile, queryObject)
+					expect(x.attributes).null
+				})
+
+				it('"true" returns all attributes by setting its value to null', function() {
+					queryObject.fields = 'true'
+					let x = service.createFromQueryObject(Profile, queryObject)
+					expect(x.attributes).null
+				})
+
+				it('"false" returns no attributes', function() {
+					queryObject.fields = 'false'
+					let x = service.createFromQueryObject(Profile, queryObject)
+					expect(x.attributes).eql([])
+				})
+
+				it('boolean throws error', function() {
+					let bools = [true, false]
+					bools.forEach((bool) => {
+						queryObject.fields = bool
+						expect(function() {
+							service.createFromQueryObject(Profile, queryObject)
+						}).throw(Error)
+					})
+				})
+
+				it('returns list of accessible attributes if model contains excluded attribute', function() {
+					let x = service.createFromQueryObject(User, {})
+					expect(x.attributes).eql(['id', 'name', 'num_logins'])
+				})
+
+				// Errors are captured elsewheres via findErrors
+				it('does not throw error if specifying excluded attribute', function() {
+					queryObject.fields = 'secret'
+					let x = service.createFromQueryObject(User, queryObject)
+					expect(x.attributes).eql(['secret'])
+				})
+
+				function modelsToNames(criteria) {
+					if (!criteria.include)
+						return criteria
+
+					criteria.include.forEach((include) => {
+						if (include.model)
+							include.model = include.model.name
+
+						modelsToNames(include)
+					})
+
+					return criteria
+				}
+
+				it('select both user and profile attributes', function() {
+					queryObject['fields.Profile'] = null
+					let x = modelsToNames(service.createFromQueryObject(User, queryObject))
+					expect(x.attributes).eql(['id', 'name', 'num_logins'])
+					expect(x.include).eql([
+						{
+							model: 'Profile'
+						}
+					])
+				})
+
+				it('select fields for User, Profile, and Post', function() {
+					queryObject['fields.Profile'] = null
+					queryObject['fields.Post'] = 'title'
+					let x = modelsToNames(service.createFromQueryObject(User, queryObject))
+					expect(x.attributes).eql(['id', 'name', 'num_logins'])
+					expect(x.include).eql([
+						{
+							model: 'Profile'
+						},
+						{
+							model: 'Post',
+							attributes: ['title']
+						}
+					])
+				})
+
+				it('select specific field for User, none for Profile, and all for Post', function() {
+					queryObject.fields = 'num_logins,id'
+					queryObject['fields.Profile'] = 'false'
+					queryObject['fields.Post'] = 'true'
+					let x = modelsToNames(service.createFromQueryObject(User, queryObject))
+					expect(x.attributes).eql(['num_logins', 'id'])
+					expect(x.include).eql([
+						{
+							model: 'Profile',
+							attributes: []
+						},
+						{
+							model: 'Post'
+						}
+					])
+				})
 			})
 
 			describe('per_page parameter', function() {

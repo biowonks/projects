@@ -336,9 +336,12 @@ class CriteriaService {
 	 * @param {Model} primaryModel
 	 */
 	mapFieldsToCriteria_(modelNode, target, primaryModel) {
-		target.attributes = this.decodeFieldValue_(primaryModel, modelNode.value)
-		if (target.attributes === false)
-			throw new CriteriaError(`Invalid value for ${modelNode.name}. Valid values include: 'true', 'false', or a CSV-list of field names.`)
+		let attributes = this.decodeFieldValue_(primaryModel, modelNode.value)
+		if (attributes === false)
+			throw new CriteriaError(`Invalid field value for the ${primaryModel.name} model. Valid values include: 'true', 'false', or a CSV-list of field names.`)
+
+		if (attributes)
+			target.attributes = attributes
 
 		let includes = []
 		for (let [relatedModelName, childNode] of modelNode.children) {
