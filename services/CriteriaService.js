@@ -5,8 +5,9 @@ const CriteriaError = require('../lib/errors/criteria-error')
 
 // Constants
 const kDefaults = {
-	perPage: 30,
-	maxPerPage: 100
+	perPage: 30,	// Number of records to return per page
+	maxPage: 100,	// Maximum page that may be retrieved
+	maxPerPage: 100 // Maximum per page value that may be accepted
 }
 
 // --------------------------------------------------------
@@ -55,15 +56,47 @@ class CriteriaService {
 	 * @param {Array.<Model>} models
 	 * @param {Object} [options = {}]
 	 * @param {Number} [options.defaultPerPage = 30] - default number of records to return per page
+	 * @param {Number} [options.maxPage = 100] - maximum page that may be fetched
 	 * @param {Number} [options.maxPerPage = 100] - absolute maximum number of records that may be returned per page
 	 */
 	constructor(models, options = {}) {
 		this.models_ = models
-		this.defaultPerPage_ = options.defaultPerPage || kDefaults.perPage
-		this.maxPerPage_ = options.maxPerPage || kDefaults.maxPerPage
+		this.defaultPerPage_ = Number(options.defaultPerPage) || kDefaults.perPage
+		this.maxPage_ = Number(options.maxPage) || kDefaults.maxPage
+		this.maxPerPage_ = Number(options.maxPerPage) || kDefaults.maxPerPage
 	}
 
 	/**
+	 * @returns {Number}
+	 */
+	defaultPerPage() {
+		return this.defaultPerPage_
+	}
+
+	/**
+	 * @returns {Number}
+	 */
+	maxPage() {
+		return this.maxPage_
+	}
+
+	/**
+	 * @returns {Number}
+	 */
+	maxPerPage() {
+		return this.maxPerPage_
+	}
+
+	/**
+	 * # Per page (URL parameter name: per_page)
+	 * A positive number of primary records to return per page. Defaults to 30 (or the amount
+	 * passed into the constructor options). If anything other than a positive integer, returns the
+	 * default. Capped to the configured maximum per page (default of 100, may be modified via the
+	 * constructor options).
+	 *
+	 * # Page (URL parameter name: page)
+	 * A positive integer indicating which page of results to fetch. If not provided, defaults to 1.
+	 *
 	 * # Fields (URL parameter name: fields)
 	 * If the fields parameter is not defined, all fields are returned. To limit the response to
 	 * a set of primary modelattributes, use a CSV list of the desired model field names:
@@ -86,7 +119,8 @@ class CriteriaService {
 	 *     fields.Component.Gene=accession,start,stop,strand (returns the specified gene attributes,
 	 *       however, it will also retrieve all Component fields unless otherwise specified).
 	 *
-	 * Will throw an error if references an invalid model.
+	 * Throws a CriteriaError if an invalid attribute, inaccessible attribute, or model is
+	 * encountered.
 	 *
 	 * @param {Model} primaryModel - the base model with which to analyze ${queryObject}
 	 * @param {Object} queryObject - a querystring (core module) compatible set of parameters; typically this originates from the query string of a URL
@@ -119,24 +153,25 @@ class CriteriaService {
 	 * @returns {Number} - amount to expect per page; if invalid, returns the default per page otherwise the result is clamped between 0 and the maximum per page
 	 */
 	perPageFrom(perPage) {
-		let result = Math.floor(Number(perPage))
-		if (perPage === null || perPage === '' || isNaN(result) || perPage < 0)
-			return this.defaultPerPage_
+		let isValidPerPage = !perPage || /^\d+$/.test(perPage)
+		if (!isValidPerPage)
+			throw new CriteriaError('invalid per_page query parameter: must be greater than or equal to 0')
 
-		result = Math.max(0, Math.min(result, this.maxPerPage_))
-		return result
+		let result = perPage || perPage === 0 ? Number(perPage) : Math.min(this.defaultPerPage_, this.maxPerPage_)
+		return Math.max(0, Math.min(result, this.maxPerPage_))
 	}
 
 	/**
 	 * @param {Number|String|null} page
-	 * @returns {Number} - 1-based page number; defaults to 1 if not specified or invalid
+	 * @returns {Number} - 1-based page number; defaults to 1
 	 */
 	pageFrom(page) {
-		let result = Math.floor(Number(page))
-		if (!result || isNaN(result) || result < 1)
-			return 1
+		let isValidPage = (!page && page !== 0) || /^[1-9]\d*$/.test(page)
+		if (!isValidPage)
+			throw new CriteriaError('invalid page query parameter: must be greater than or equal to 1')
 
-		return result
+		let result = !page ? 1 : Number(page)
+		return Math.min(result, this.maxPage_)
 	}
 
 	/**
@@ -145,7 +180,13 @@ class CriteriaService {
 	 * @returns {Number}
 	 */
 	offsetFromPage(currentPage, perPage) {
-		return (currentPage - 1) * perPage
+		let effectiveCurrentPage = Math.max(1, currentPage),
+			effectivePerPage = Math.max(0, perPage)
+
+		if (!isNaN(effectiveCurrentPage) && !isNaN(effectivePerPage))
+			return (effectiveCurrentPage - 1) * effectivePerPage
+
+		return 0
 	}
 
 	/**
