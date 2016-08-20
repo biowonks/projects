@@ -24,30 +24,29 @@ class Taxonomy extends PerGenomePipelineModule {
 	}
 
 	run() {
-		return this.taxonomyService_.fetchMissingTaxonomyAndSaveAssociatedNodes(this.genome_.species_taxonomy_id)
-		.then((taxonomyObject) => {
+		return this.taxonomyService_.updateTaxonomy(this.genome_.species_taxonomy_id)
+		.then((rawTaxonomy) => {
 			return this.genome_.update({
-				superkingdom: taxonomyObject.superkingdom,
-				phylum: taxonomyObject.phylum,
-				class: taxonomyObject.class,
-				orderr: taxonomyObject.order,
-				family: taxonomyObject.family,
-				genus: taxonomyObject.genus,
-				species: taxonomyObject.species,
-				strain: taxonomyObject.strain
-			},
-				{
-					fields: [
-						'superkingdom',
-						'phylum',
-						'class',
-						'orderr',
-						'family',
-						'genus',
-						'species',
-						'strain'
-					]
-				})
+				superkingdom: rawTaxonomy.superkingdom,
+				phylum: rawTaxonomy.phylum,
+				class: rawTaxonomy.class,
+				orderr: rawTaxonomy.order,
+				family: rawTaxonomy.family,
+				genus: rawTaxonomy.genus,
+				species: rawTaxonomy.species,
+				strain: rawTaxonomy.strain
+			}, {
+				fields: [
+					'superkingdom',
+					'phylum',
+					'class',
+					'orderr',
+					'family',
+					'genus',
+					'species',
+					'strain'
+				]
+			})
 			.then(() => {
 				this.logger_.info('Updated taxonomy fields')
 			})

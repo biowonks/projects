@@ -1,22 +1,23 @@
-/* eslint-disable no-unused-expressions */
+/* eslint-disable no-mixed-requires, no-unused-expressions, no-magic-numbers */
 
 'use strict'
 
-// 3rd party includes
+// Core
 let path = require('path')
 
-// Local includes
+// Local
 let TaxonomyService = require('./TaxonomyService'),
 	testResults = require(path.resolve(__dirname, 'test-data', 'taxonomyService.test.results.js')),
+	models = require('../../../models').withDummyConnection(),
 	mutil = require('../mutil')
 
+// Constants
 const kSampleXMLFileSpecies = path.resolve(__dirname, 'test-data', '476210_species.test.xml'),
 	kSampleXMLFileIntermediate = path.resolve(__dirname, 'test-data', '41253_intermediate.test.xml')
 
-
-describe.only('Services', function() {
-	describe('TaxonomyService', function() {
-		let taxonomyService = new TaxonomyService()
+describe('Services', function() {
+	describe.only('TaxonomyService', function() {
+		let taxonomyService = new TaxonomyService(models.Taxonomy)
 
 		describe('eutilUrl', function() {
 			it('returns taxonomyId appended', function() {
@@ -25,48 +26,60 @@ describe.only('Services', function() {
 			})
 		})
 
-		describe('taxonomyId2finalTaxonomyObject', function() {
+		describe('fetchFromNCBI', function() {
 			it('undefined taxonomicId throws error', function() {
-				return expectRejection(taxonomyService.taxonomyId2finalTaxonomyObject())
+				return expectRejection(taxonomyService.fetchFromNCBI())
 			})
 
 			it('invalid numeric taxonomicId throws error', function() {
-				return expectRejection(taxonomyService.taxonomyId2finalTaxonomyObject('ab123'))
-			})
-		})
-
-		describe('taxonomyId2finalTaxonomyObject', function() {
-			it('species XML', function() {
-				return mutil.readFile(kSampleXMLFileSpecies)
-					.then((xmlString) => mutil.xmlToJs(xmlString))
-					.then((jsonTaxonomy) => taxonomyService.ncbiTaxonomyObject2finalTaxonomyObject(jsonTaxonomy))
-					.then((result) => {
-						expect(result).deep.equal(testResults.kSampleXMLFileSpecies)
-					})
+				return expectRejection(taxonomyService.fetchFromNCBI('ab123'))
 			})
 
-			it('intermediate rank XML', function() {
-				return mutil.readFile(kSampleXMLFileIntermediate)
-					.then((xmlString) => mutil.xmlToJs(xmlString))
-					.then((jsonTaxonomy) => taxonomyService.ncbiTaxonomyObject2finalTaxonomyObject(jsonTaxonomy))
-					.then((result) => {
-						expect(result).deep.equal(testResults.kSampleXMLFileIntermediate)
-					})
-			})
-
-			let fixtureString = '41253',
-				fixtureInteger = 41253,
-				fixtures = [fixtureString, fixtureInteger]
+			let fixtures = ['41253', 41253]
 			fixtures.forEach((fixture) => {
 				it(fixture + ' (' + typeof fixture + ') works', function() {
 					let taxonomyId = fixture
 
-					return taxonomyService.taxonomyId2finalTaxonomyObject(taxonomyId)
-						.then((taxonomyResult) => {
-							expect(taxonomyResult).deep.equal(testResults.kSampleXMLFileIntermediate)
-						})
+					return taxonomyService.fetchFromNCBI(taxonomyId)
+					.then((result) => {
+						expect(result).eql(testResults.kSampleXMLFileIntermediate)
+					})
 				})
 			})
+
+			it('nock tests')
+		})
+
+		describe('updateTaxonomy', function() {
+
+		})
+
+		describe('parseNCBITaxonomyXML', function() {
+
+		})
+
+		describe('reshapeNCBITaxonomy', function() {
+			it('species XML', function() {
+				return mutil.readFile(kSampleXMLFileSpecies)
+				.then((xml) => mutil.xmlToJs(xml))
+				.then((ncbiTaxonomy) => taxonomyService.reshapeNCBITaxonomy(ncbiTaxonomy))
+				.then((result) => {
+					expect(result).eql(testResults.kSampleXMLFileSpecies)
+				})
+			})
+
+			it('intermediate rank XML', function() {
+				return mutil.readFile(kSampleXMLFileIntermediate)
+				.then((xml) => mutil.xmlToJs(xml))
+				.then((ncbiTaxonomy) => taxonomyService.reshapeNCBITaxonomy(ncbiTaxonomy))
+				.then((result) => {
+					expect(result).eql(testResults.kSampleXMLFileIntermediate)
+				})
+			})
+		})
+
+
+		describe('taxonomyId2finalTaxonomyObject', function() {
 		})
 	})
 })
