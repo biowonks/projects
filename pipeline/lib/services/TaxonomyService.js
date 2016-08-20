@@ -50,8 +50,6 @@ class TaxonomyService {
 		let url = this.eutilUrl(taxonomyId)
 		return requestPromise(url)
 		.then(this.parseNCBITaxonomyXML.bind(this))
-		// .then((xmlResponse) => mutil.xmlToJs(xmlResponse))
-		// .then((ncbiTaxonomy) => this.reshapeNCBITaxonomy(ncbiTaxonomy))
 	}
 
 	/**
