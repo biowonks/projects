@@ -42,7 +42,6 @@ class TaxonomyService {
 	 * @param {Number} taxonomyId - NCBI taxonomy identifier
 	 * @returns {Promise} resolves with an object describing the taxonomy
 	 */
-	// taxonomyId2finalTaxonomyObject(taxonomyId) {
 	fetchFromNCBI(taxonomyId) {
 		if (!/^[1-9]\d*$/.test(taxonomyId))
 			return Promise.reject(new Error('invalid taxonomy id: must be positive integer'))
