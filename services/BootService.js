@@ -3,8 +3,7 @@
 // Vendor
 const _ = require('lodash'),
 	bunyan = require('bunyan'),
-	Promise = require('bluebird'),
-	Sequelize = require('sequelize')
+	Promise = require('bluebird')
 
 // Vendor
 const publicIp = require('public-ip'),
@@ -12,7 +11,8 @@ const publicIp = require('public-ip'),
 
 // Local
 const config = require('../config'),
-	loadModels = require('../models')
+	loadModels = require('../models'),
+	mistSequelize = require('../lib/mist-sequelize')
 
 /**
  * Encapsulates a common configuration and all boot strapping methods. May be used to call
@@ -94,7 +94,7 @@ class BootService {
 		}
 
 		if (!this.sequelize_)
-			this.sequelize_ = new Sequelize(dbConfig.name, dbConfig.user, dbConfig.password, dbConfig.sequelizeOptions)
+			this.sequelize_ = mistSequelize(dbConfig)
 
 		if (!this.migrator_) {
 			let options = {
@@ -218,6 +218,6 @@ class BootService {
 // Expose the configuration and Sequelize definition directly on the BootService class as a static
 // property
 BootService.config = config
-BootService.Sequelize = Sequelize
+BootService.Sequelize = mistSequelize.Sequelize
 
 module.exports = BootService
