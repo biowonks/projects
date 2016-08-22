@@ -72,7 +72,6 @@ comment on column genomes.version_status is 'latest: most recent version; replac
 comment on column genomes.assembly_level is 'complete, scaffold, contig, or chromosome';
 comment on column genomes.release_type is 'major or minor';
 comment on column genomes.assembly_name is 'not necessarily different between genome versions';
-comment on column genomes.taxonomic_group is 'phylum; if proteobacteria, then its class';
 comment on column genomes.orderr is 'intentional typo because order is a reserved word';
 
 create table workers_modules (
