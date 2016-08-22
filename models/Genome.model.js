@@ -59,8 +59,9 @@ module.exports = function(Sequelize, models, extras) {
 		class: {
 			type: Sequelize.TEXT
 		},
-		orderr: {
-			type: Sequelize.TEXT
+		order: {
+			type: Sequelize.TEXT,
+			field: 'orderr' // order is a reserved word in the database
 		},
 		family: {
 			type: Sequelize.TEXT
@@ -72,9 +73,6 @@ module.exports = function(Sequelize, models, extras) {
 			type: Sequelize.TEXT
 		},
 		strain: {
-			type: Sequelize.TEXT
-		},
-		taxonomic_group: {
 			type: Sequelize.TEXT
 		},
 		stats: {

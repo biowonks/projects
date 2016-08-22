@@ -48,9 +48,6 @@ create table genomes (
 	species text,
 	strain text,
 
-	-- Determined programmatically after fetching the NCBI taxonomy fields
-	taxonomic_group text,
-
 	-- ** Genome stats (derived programmatically later) **
 	-- bp
 	-- gc_fraction
