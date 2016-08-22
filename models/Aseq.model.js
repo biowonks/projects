@@ -126,7 +126,8 @@ module.exports = function(Sequelize, models, extras) {
 			classMethods,
 			instanceMethods,
 			validate,
-			schema: 'seqdepot'
+			schema: 'seqdepot',
+			timestamps: false
 		}
 	}
 }
