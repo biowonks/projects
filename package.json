@@ -10,7 +10,7 @@
     "install-coils": "pipeline/vendor/install-coils.sh",
     "install-seg": "pipeline/vendor/install-seg.sh",
     "install-hmmer3": "pipeline/vendor/install-hmmer3.sh $(scripts/get-config.js pipeline.vendor.hmmer3.version pipeline.vendor.hmmer3.basePath)",
-    "install-pfam": "npm run install-hmmer3 && pipeline/vendor/install-pfam.sh $(scripts/get-config.js pipeline.vendor.pfam.version pipeline.vendor.pfam.basePath)",
+    "install-pfam": "npm run install-hmmer3 && pipeline/vendor/install-pfam.sh $(scripts/get-config.js pipeline.vendor.pfam.version pipeline.vendor.pfam.basePath pipeline.vendor.hmmer3.binPath)",
     "eslint": "node_modules/.bin/eslint 'models/**/*.js' 'services/**/*.js' 'pipeline/**/*.js'",
     "coverage": "node_modules/.bin/istanbul cover --dir testing/coverage node_modules/mocha/bin/_mocha -- --opts testing/mocha.opts $(cat testing/globs.txt)",
     "test": "node_modules/.bin/mocha --opts testing/mocha.opts $(cat testing/globs.txt)",

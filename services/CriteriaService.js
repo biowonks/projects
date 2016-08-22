@@ -1,7 +1,7 @@
 'use strict'
 
 // Local
-const CriteriaError = require('../lib/errors/criteria-error')
+const CriteriaError = require('../lib/errors/CriteriaError')
 
 // Constants
 const kDefaults = {
@@ -51,6 +51,9 @@ module.exports =
 class CriteriaService {
 	/**
 	 * Facilitates the construction of the criteria to use when querying with the Sequelize library.
+	 * If both ${options.defaultPerPage} and ${options.maxPerPage} are defined,
+	 * ${options.defaultPerPage} will be set as the minimum value of itself or the
+	 * ${options.maxPerPage} values.
 	 *
 	 * @constructor
 	 * @param {Array.<Model>} models
@@ -61,13 +64,13 @@ class CriteriaService {
 	 */
 	constructor(models, options = {}) {
 		this.models_ = models
-		this.defaultPerPage_ = Number(options.defaultPerPage) || kDefaults.perPage
 		this.maxPage_ = Number(options.maxPage) || kDefaults.maxPage
 		this.maxPerPage_ = Number(options.maxPerPage) || kDefaults.maxPerPage
+		this.defaultPerPage_ = Math.min(this.maxPerPage_, Number(options.defaultPerPage) || kDefaults.perPage)
 	}
 
 	/**
-	 * @returns {Number}
+	 * @returns {Number} - minimum of the max per page or default per page values passed to the constructor
 	 */
 	defaultPerPage() {
 		return this.defaultPerPage_
@@ -88,14 +91,8 @@ class CriteriaService {
 	}
 
 	/**
-	 * # Per page (URL parameter name: per_page)
-	 * A positive number of primary records to return per page. Defaults to 30 (or the amount
-	 * passed into the constructor options). If anything other than a positive integer, returns the
-	 * default. Capped to the configured maximum per page (default of 100, may be modified via the
-	 * constructor options).
-	 *
-	 * # Page (URL parameter name: page)
-	 * A positive integer indicating which page of results to fetch. If not provided, defaults to 1.
+	 * Transforms ${queryObject} into a Sequelize criteria object fr retrieving a single record. See
+	 * createFromQueryObjectForMany() when building the crieria for retrieving many records.
 	 *
 	 * # Fields (URL parameter name: fields)
 	 * If the fields parameter is not defined, all fields are returned. To limit the response to
@@ -127,26 +124,50 @@ class CriteriaService {
 	 * @returns {Object} - criteria object compatible with Sequelizejs find operations
 	 */
 	createFromQueryObject(primaryModel, queryObject = {}) {
-		if (!primaryModel)
-			throw new Error('unable to parse criteria without a primary model')
+		this.throwIfInvalidModel_(primaryModel)
 
-		if (!this.models_[primaryModel.name])
-			throw new Error(`${primaryModel.name} is not one of the models supplied to this service during construction`)
-
-		let perPage = this.perPageFrom(queryObject.per_page),
-			page = this.pageFrom(queryObject.page),
-			criteria = {
+		let criteria = {
 				attributes: null,
+				where: null,
 				include: null,
-				limit: perPage,
-				offset: this.offsetFromPage(page, perPage) || null,
-				order: [
-					primaryModel.primaryKeyAttributes
-				]
+				limit: this.defaultPerPage_,
+				offset: null,
+				order: null
 			},
 			rootModelNode = this.createModelTree_(queryObject)
 
 		this.mapFieldsToCriteria_(rootModelNode, criteria, primaryModel)
+
+		return criteria
+	}
+
+	/**
+	 * Augments the criteria parsed from createFromQueryObject with additional capabilities to
+	 * specify the page and per_page parameters as well as ordering by the primary key attributes.
+	 *
+ 	 * # Per page (URL parameter name: per_page)
+	 * A positive number of primary records to return per page. Defaults to 30 (or the amount
+	 * passed into the constructor options). If anything other than a positive integer, returns the
+	 * default. Capped to the configured maximum per page (default of 100, may be modified via the
+	 * constructor options).
+	 *
+	 * # Page (URL parameter name: page)
+	 * A positive integer indicating which page of results to fetch. If not provided, defaults to 1.
+	 *
+	 * @param {Model} primaryModel - the base model with which to analyze ${queryObject}
+	 * @param {Object} queryObject - a querystring (core module) compatible set of parameters; typically this originates from the query string of a URL
+	 * @returns {Object} - criteria object compatible with Sequelizejs find operations
+	 */
+	createFromQueryObjectForMany(primaryModel, queryObject = {}) {
+		let criteria = this.createFromQueryObject(primaryModel, queryObject),
+			perPage = this.perPageFrom(queryObject.per_page),
+			page = this.pageFrom(queryObject.page)
+
+		criteria.limit = perPage
+		criteria.offset = this.offsetFromPage(page, perPage) || null
+		criteria.order = [
+			primaryModel.primaryKeyAttributes
+		]
 
 		return criteria
 	}
@@ -160,7 +181,7 @@ class CriteriaService {
 		if (!isValidPerPage)
 			throw new CriteriaError('invalid per_page query parameter: must be greater than or equal to 0')
 
-		let result = perPage || perPage === 0 ? Number(perPage) : Math.min(this.defaultPerPage_, this.maxPerPage_)
+		let result = perPage || perPage === 0 ? Number(perPage) : this.defaultPerPage_
 		return Math.max(0, Math.min(result, this.maxPerPage_))
 	}
 
@@ -199,11 +220,7 @@ class CriteriaService {
 	 * @returns {Array.<Object>}
 	 */
 	findErrors(target, primaryModel, accessibleModels = null) {
-		if (!primaryModel)
-			throw new Error('missing primaryModel argument')
-
-		if (!this.models_[primaryModel.name])
-			throw new Error(`${primaryModel.name} is not one of the models supplied to this service during construction`)
+		this.throwIfInvalidModel_(primaryModel)
 
 		let errors = [],
 			invalidAttributes = this.invalidAttributes_(target.attributes, primaryModel)
@@ -258,6 +275,14 @@ class CriteriaService {
 
 	// ----------------------------------------------------
 	// Private methods
+	throwIfInvalidModel_(model) {
+		if (!model)
+			throw new Error('model cannot be undefined')
+
+		if (!this.models_[model.name])
+			throw new Error(`${model.name} is not one of the models supplied to this service during construction`)
+	}
+
 	/**
 	 * Creates a tree structure of fields from all fields specified in ${queryObject} (such as that
 	 * derived by the core querystring module).

@@ -1,16 +1,17 @@
 #!/bin/bash
 #
 # Installs the specified Pfam <database version> to <target directory>. Assumes
-# that the hmmpress binary (part of HMMER3) is  in the $PATH environment variable. 
+# that the hmmpress binary (part of HMMER3) is  in the $PATH environment variable.
 
 # exit immediately if any command fails
-set -e 
+set -e
 
 VERSION=$1
 TARGET_DIR=$2
+HMMER3_BINDIR=$3
 
-if [[ -z "$VERSION" || -z "$TARGET_DIR" ]]; then
-	echo "Usage: $0 <pfam version> <target directory>"
+if [[ -z "$VERSION" || -z "$TARGET_DIR" || -z "$HMMER3_BINDIR" ]]; then
+	echo "Usage: $0 <pfam version> <target directory> <hmmer3 bindir>"
 	exit 1
 fi
 
@@ -29,7 +30,7 @@ if [[ -s "$TARGET_DIR/$PFAM_HMM_NAME" &&
 	-s "$TARGET_DIR/$PFAM_HMM_NAME.h3m" &&
 	-s "$TARGET_DIR/$PFAM_HMM_NAME.h3p" ]]; then
 	echo "Pfam $VERSION database is already installed"
-	exit 
+	exit
 fi
 
 if [[ ! -s "$TARGET_DIR/$PFAM_HMM_NAME" ]]; then
@@ -44,6 +45,6 @@ fi
 
 cd $TARGET_DIR
 echo "Preparing Pfam HMM database"
-hmmpress -f ./$PFAM_HMM_NAME
+$HMMER3_BINDIR/hmmpress -f ./$PFAM_HMM_NAME
 
 echo "Successfully installed Pfam $VERSION database"

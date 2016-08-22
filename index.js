@@ -94,6 +94,11 @@ if (cluster.isMaster) {
 					logger.fatal('Database initialization error. Please check the logs and restart the application')
 					disconnectAndExit(kAppExitCode)
 				}
+				else if (message.startsWith('error other:')) {
+					let messageIdLength = 'error other:'.length
+					logger.fatal('Unhandled startup error: ' + message.substr(messageIdLength))
+					disconnectAndExit(kAppExitCode)
+				}
 				else if (message === 'ready') {
 					logger.info('Worker is ready')
 					startWorker()
