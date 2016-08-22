@@ -84,6 +84,13 @@ describe('services', function() {
 
 				expect(x.defaultPerPage()).equal(newDefaultPerPage)
 			})
+
+			it('defaultPerPage set to maxPerPage if both are defined and is > maxPerPage', function() {
+				let newDefaultPerPage = CriteriaService.kDefaults.maxPerPage + 1,
+					x = new CriteriaService(models, {defaultPerPage: newDefaultPerPage})
+
+				expect(x.defaultPerPage()).equal(CriteriaService.kDefaults.maxPerPage)
+			})
 		})
 
 		describe('maxPerPage', function() {
@@ -162,29 +169,27 @@ describe('services', function() {
 				})
 			})
 
-			it('Profile defaults as expected', function() {
+			it('defaults as expected', function() {
 				let x = service.createFromQueryObject(Profile)
 				expect(x).eql({
+					where: null,
 					attributes: null,
 					include: null,
 					limit: service.defaultPerPage(),
 					offset: null,
-					order: [
-						['id']
-					]
+					order: null
 				})
 			})
 
 			it('User defaults as expected', function() {
 				let x = service.createFromQueryObject(User)
 				expect(x).eql({
+					where: null,
 					attributes: ['id', 'name', 'num_logins'],
 					include: null,
 					limit: service.defaultPerPage(),
 					offset: null,
-					order: [
-						['id']
-					]
+					order: null
 				})
 			})
 
@@ -305,31 +310,64 @@ describe('services', function() {
 					])
 				})
 			})
+		})
+
+		describe('createFromQueryObjectForMany', function() {
+			let service = null,
+				queryObject = null,
+				defaultPerPage = 10,
+				maxPerPage = 20,
+				maxPage = 50
+			beforeEach(() => {
+				queryObject = {}
+				service = new CriteriaService(models, {
+					defaultPerPage,
+					maxPerPage,
+					maxPage
+				})
+			})
+			afterEach(() => {
+				service = null
+			})
+
+			it('order is specified', function() {
+				let x = service.createFromQueryObjectForMany(Profile)
+				expect(x).eql({
+					where: null,
+					attributes: null,
+					include: null,
+					limit: service.defaultPerPage(),
+					offset: null,
+					order: [
+						['id']
+					]
+				})
+			})
 
 			describe('per_page parameter', function() {
 				it('null returns default limit', function() {
 					queryObject.per_page = null
-					let x = service.createFromQueryObject(User, queryObject)
+					let x = service.createFromQueryObjectForMany(User, queryObject)
 					expect(x.limit).equal(service.defaultPerPage())
 				})
 
 				it('"" returns default limit', function() {
 					queryObject.per_page = ''
-					let x = service.createFromQueryObject(User, queryObject)
+					let x = service.createFromQueryObjectForMany(User, queryObject)
 					expect(x.limit).equal(service.defaultPerPage())
 				})
 
 				it('"abc" throws error', function() {
 					expect(function() {
 						queryObject.per_page = 'abc'
-						service.createFromQueryObject(User, queryObject)
+						service.createFromQueryObjectForMany(User, queryObject)
 					}).throw(Error)
 				})
 
 				it('-1 throws error', function() {
 					expect(function() {
 						queryObject.per_page = -1
-						service.createFromQueryObject(User, queryObject)
+						service.createFromQueryObjectForMany(User, queryObject)
 					}).throw(Error)
 				})
 
@@ -338,7 +376,7 @@ describe('services', function() {
 					let expectedLimit = Math.min(Number(perPage), maxPerPage)
 					it(`per_page=${perPage} (${typeof perPage}) should set limit of ${expectedLimit}`, function() {
 						queryObject.per_page = perPage
-						let x = service.createFromQueryObject(User, queryObject)
+						let x = service.createFromQueryObjectForMany(User, queryObject)
 						expect(x.limit).equal(expectedLimit)
 					})
 				})
@@ -347,27 +385,27 @@ describe('services', function() {
 			describe('page parameter', function() {
 				it('null uses no offset', function() {
 					queryObject.page = null
-					let x = service.createFromQueryObject(User, queryObject)
+					let x = service.createFromQueryObjectForMany(User, queryObject)
 					expect(x.offset).null
 				})
 
 				it('"" uses no offset', function() {
 					queryObject.page = ''
-					let x = service.createFromQueryObject(User, queryObject)
+					let x = service.createFromQueryObjectForMany(User, queryObject)
 					expect(x.offset).null
 				})
 
 				it('"abc" throws error', function() {
 					expect(function() {
 						queryObject.page = 'abc'
-						service.createFromQueryObject(User, queryObject)
+						service.createFromQueryObjectForMany(User, queryObject)
 					}).throw(Error)
 				})
 
 				it('0 throws error', function() {
 					expect(function() {
 						queryObject.page = 0
-						service.createFromQueryObject(User, queryObject)
+						service.createFromQueryObjectForMany(User, queryObject)
 					}).throw(Error)
 				})
 
@@ -381,14 +419,14 @@ describe('services', function() {
 
 					it(`page=${page} (${typeof page}) should set offset of ${expectedOffset}`, function() {
 						queryObject.page = page
-						let x = service.createFromQueryObject(User, queryObject)
+						let x = service.createFromQueryObjectForMany(User, queryObject)
 						expect(x.offset).equal(expectedOffset)
 					})
 				})
 
 				it('any pages over the max page returns offset of last page', function() {
 					queryObject.page = maxPage + 1
-					let x = service.createFromQueryObject(User, queryObject)
+					let x = service.createFromQueryObjectForMany(User, queryObject)
 					expect(x.offset).equal((maxPage * defaultPerPage) - defaultPerPage)
 				})
 			})

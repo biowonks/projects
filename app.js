@@ -1,11 +1,11 @@
 'use strict'
 
 // Core
-let	cluster = require('cluster'),
+const cluster = require('cluster'),
 	http = require('http')
 
 // Vendor
-let bodyParser = require('body-parser'),
+const bodyParser = require('body-parser'),
 	compression = require('compression'), // Gzip support
 	corser = require('corser'), // CORS
 	express = require('express'),
@@ -14,12 +14,10 @@ let bodyParser = require('body-parser'),
 	pathRoutify = require('path-routify')
 
 // Local
-let	errorHandler = require('./lib/error-handler'),
+const errorHandler = require('./lib/error-handler'),
 	loadServices = require('./services'),
-	ApiError = require('./lib/errors/api-error'),
+	errors = require('./lib/errors'),
 	BootService = require('./services/BootService'),
-	CriteriaError = require('./lib/errors/criteria-error'),
-	RestError = require('./lib/errors/rest-error'),
 	RouteHelper = require('./lib/RouteHelper')
 
 // Constants
@@ -76,7 +74,7 @@ module.exports = function() {
 		app.use(compression())
 		app.set('json spaces', kJsonPrettyPrintSpaces)
 
-		app.set('errors', {ApiError, CriteriaError, RestError})
+		app.set('errors', errors)
 		app.set('config', config)
 		app.set('logger', logger)
 		app.set('sequelize', bootService.sequelize())
@@ -123,6 +121,9 @@ module.exports = function() {
 		})
 
 		return app
+	})
+	.catch((error) => {
+		process.send('error other:' + error.message)
 	})
 
 	// --------------------------------------------------------

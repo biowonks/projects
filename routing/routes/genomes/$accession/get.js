@@ -5,10 +5,10 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		helper = app.get('lib').RouteHelper.for(models.Genome)
 
 	return [
-		middlewares.parseCriteriaForMany(models.Genome, [
+		middlewares.parseCriteria(models.Genome, [
 			models.WorkerModule,
 			models.Component
 		]),
-		helper.findManyHandler()
+		helper.findHandler('accession')
 	]
 }
