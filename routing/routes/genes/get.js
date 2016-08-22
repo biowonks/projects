@@ -6,7 +6,9 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 
 	return [
 		middlewares.parseCriteriaForMany(models.Gene, [
-			models.Component
+			models.Component,
+			models.Aseq,
+			models.Dseq
 		]),
 		helper.findManyHandler()
 	]

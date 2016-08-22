@@ -5,7 +5,9 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		helper = app.get('lib').RouteHelper.for(models.Aseq)
 
 	return [
-		middlewares.parseCriteria(models.Aseq),
+		middlewares.parseCriteria(models.Aseq, [
+			models.Gene
+		]),
 		helper.findHandler()
 	]
 }

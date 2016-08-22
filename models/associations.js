@@ -9,7 +9,9 @@ module.exports = function(models, optLogger) {
 		Genome,
 		WorkerModule,
 		Component,
-		Gene
+		Gene,
+		Aseq,
+		Dseq
 	} = models
 
 	Worker.hasMany(WorkerModule)
@@ -25,4 +27,10 @@ module.exports = function(models, optLogger) {
 
 	Component.hasMany(Gene)
 	Gene.belongsTo(Component)
+
+	Gene.belongsTo(Aseq)
+	Gene.belongsTo(Dseq)
+
+	Aseq.hasMany(Gene)
+	Dseq.hasMany(Gene)
 }
