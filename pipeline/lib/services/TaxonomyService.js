@@ -62,7 +62,7 @@ class TaxonomyService {
 		return this.nodeExists_(taxonomyId)
 		.then((nodeExists) => {
 			if (nodeExists)
-				return null // TODO: Fetch taxonomy from taxonomy table and return here
+				return this.fetchLocal_(taxonomyId) // TODO: Fetch taxonomy from taxonomy table and return here
 
 			return this.fetchFromNCBI(taxonomyId)
 			.then((rawTaxonomy) => {
@@ -215,6 +215,45 @@ class TaxonomyService {
 						this.logger_.info(taxonomy.get(), `Inserted new taxonomy node: ${taxonomy.name}`)
 				})
 			})
+		})
+	}
+
+	fetchLocal_(taxonomyId) {
+		let taxonomyTableName = this.taxonomyModel_.getTableName(),
+			sql = `with recursive tree_nodes as (
+    select * from ${taxonomyTableName} where id = ?
+    union all
+    select a.* from ${taxonomyTableName} a, tree_nodes where tree_nodes.parent_taxonomy_id = a.id
+)
+select * from tree_nodes`
+
+		return this.taxonomyModel_.sequelize.query(sql, {
+			replacements: [taxonomyId],
+			type: this.taxonomyModel_.sequelize.QueryTypes.SELECT
+		})
+		.then((rows) => {
+			if (!rows.length)
+				return null
+
+			let result = {
+				lineage: rows,
+				superkingdom: null,
+				kingdom: null,
+				phylum: null,
+				class: null,
+				order: null,
+				family: null,
+				genus: null,
+				species: null,
+				strain: null
+			}
+
+			for (let row of rows) {
+				if (Reflect.has(result, row.rank))
+					result[row.rank] = row.name
+			}
+
+			return result
 		})
 	}
 }

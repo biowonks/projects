@@ -3,10 +3,14 @@
 'use strict'
 
 // Core
-let path = require('path')
+const path = require('path'),
+	url = require('url')
+
+// Vendor
+const nock = require('nock')
 
 // Local
-let TaxonomyService = require('./TaxonomyService'),
+const TaxonomyService = require('./TaxonomyService'),
 	testResults = require(path.resolve(__dirname, 'test-data', 'taxonomyService.test.results.js')),
 	models = require('../../../models').withDummyConnection(),
 	mutil = require('../mutil')
@@ -17,7 +21,20 @@ const kSampleXMLFileSpecies = path.resolve(__dirname, 'test-data', '476210_speci
 
 describe('Services', function() {
 	describe.only('TaxonomyService', function() {
-		let taxonomyService = new TaxonomyService(models.Taxonomy)
+		let taxonomyService = new TaxonomyService(models.Taxonomy),
+			speciesXML = null,
+			intermediateXML = null
+
+		before(() => {
+			return mutil.readFile(kSampleXMLFileSpecies)
+			.then((xml) => {
+				speciesXML = xml
+				return mutil.readFile(kSampleXMLFileIntermediate)
+			})
+			.then((xml) => {
+				intermediateXML = xml
+			})
+		})
 
 		describe('eutilUrl', function() {
 			it('returns taxonomyId appended', function() {
@@ -38,30 +55,29 @@ describe('Services', function() {
 			let fixtures = ['41253', 41253]
 			fixtures.forEach((fixture) => {
 				it(fixture + ' (' + typeof fixture + ') works', function() {
-					let taxonomyId = fixture
+					let taxonomyId = fixture,
+						nockUrl = taxonomyService.eutilUrl(taxonomyId),
+						parsedUrl = url.parse(nockUrl),
+						ncbiTaxonomyNock = nock(parsedUrl.protocol + '//' + parsedUrl.host)
+							.get(parsedUrl.path)
+							.reply(200, intermediateXML)
 
 					return taxonomyService.fetchFromNCBI(taxonomyId)
 					.then((result) => {
+						ncbiTaxonomyNock.done()
 						expect(result).eql(testResults.kSampleXMLFileIntermediate)
 					})
 				})
 			})
-
-			it('nock tests')
 		})
 
 		describe('updateTaxonomy', function() {
 
 		})
 
-		describe('parseNCBITaxonomyXML', function() {
-
-		})
-
 		describe('reshapeNCBITaxonomy', function() {
 			it('species XML', function() {
-				return mutil.readFile(kSampleXMLFileSpecies)
-				.then((xml) => mutil.xmlToJs(xml))
+				return mutil.xmlToJs(speciesXML)
 				.then((ncbiTaxonomy) => taxonomyService.reshapeNCBITaxonomy(ncbiTaxonomy))
 				.then((result) => {
 					expect(result).eql(testResults.kSampleXMLFileSpecies)
@@ -69,18 +85,12 @@ describe('Services', function() {
 			})
 
 			it('intermediate rank XML', function() {
-				return mutil.readFile(kSampleXMLFileIntermediate)
-				.then((xml) => mutil.xmlToJs(xml))
+				return mutil.xmlToJs(intermediateXML)
 				.then((ncbiTaxonomy) => taxonomyService.reshapeNCBITaxonomy(ncbiTaxonomy))
 				.then((result) => {
 					expect(result).eql(testResults.kSampleXMLFileIntermediate)
 				})
 			})
 		})
-
-
-		describe('taxonomyId2finalTaxonomyObject', function() {
-		})
 	})
 })
-
