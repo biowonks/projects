@@ -7,6 +7,11 @@ const kDefaultDistanceCutoffBp = 200,
 module.exports =
 class GeneGroupFinder {
 	/**
+	 * Groups genes that are cluster together in the chromosome under a certain distance cutoff (in bp) and has the same strand.
+	 *
+	 * The default distance cutoff (200 bp) is based in the findings of the following publication:
+	 * Moreno-Hagelsieb, G. & Collado-Vides, J. A powerful non-homology method for the prediction of operons in prokaryotes. Bioinformatics 18, S329–S336 (2002).
+	 *
 	 * @constructor
 	 * @param {Number} [distanceCutoffBp = 200] - maximum inter-gene distance for two genes to be consolidated into a group
 	 */
@@ -42,6 +47,7 @@ class GeneGroupFinder {
 			strand: ''
 		}
 
+		console.log ( '=>' + JSON.stringify(genes))
 		genes.forEach((gene, i) => {
 			if (tempGroup.items.length === 0) {
 				tempGroup = {items: [gene], strand: gene.strand}
@@ -55,8 +61,13 @@ class GeneGroupFinder {
 
 				tempGroup = {items: [gene], strand: gene.strand}
 			}
+			console.log('==>')
+			console.log(tempGroup)
+			console.log(gene)
+			console.log(groups)
 		})
-
+		if (tempGroup.items.length >= kMinGroupSize)
+			groups.push(tempGroup.items)
 		return groups
 	}
 

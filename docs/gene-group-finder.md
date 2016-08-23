@@ -6,6 +6,11 @@ This method will take an object with information about start, stop and strand of
 
 Moreno-Hagelsieb, G. & Collado-Vides, J. A powerful non-homology method for the prediction of operons in prokaryotes. Bioinformatics 18, S329–S336 (2002).
 
+## Rules
+
+1) Genes are grouped together if they are less than 200bp apart from each other, in sequence.
+2) They all need to be in the same strand
+
 ## Usage
 
 Expected input:
