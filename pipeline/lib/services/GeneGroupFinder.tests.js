@@ -6,7 +6,7 @@ let GeneGroupFinder = require('./GeneGroupFinder'),
 	sampleGeneData = require('./test-data/sample-gene-data')
 
 describe('Services', function() {
-	describe('GeneGroupFinder', function() {
+	describe.only('GeneGroupFinder', function() {
 		describe('distanceCutoffBp', function() {
 			it('default constructor returns the default cutoff', function() {
 				let x = new GeneGroupFinder()
@@ -288,26 +288,9 @@ describe('Services', function() {
 				expect(results).deep.equal([])
 			})
 
-			it.only('Dealing with circular chromosomes - If same strand, then they should cluster together', function() {
-				let results = geneGroupFinder.findGroups([
-					{
-						start: 10,
-						stop: 50,
-						strand: '-'
-					},
-					{
-						start: 60,
-						stop: 100,
-						strand: '-'
-					},
-					{
-						start: 400,
-						stop: 5,
-						strand: '-'
-					}
-				])
-				expect(results).deep.equal([
-					[
+			describe('Dealing with circular chromosomes and genes crossing origins', function() {
+				it('If same strand, all genes at the end of chromosome should cluster together with the first group', function() {
+					let results = geneGroupFinder.findGroups([
 						{
 							start: 10,
 							stop: 50,
@@ -323,11 +306,111 @@ describe('Services', function() {
 							stop: 5,
 							strand: '-'
 						}
-					]
-				])
+					])
+					expect(results).deep.equal([
+						[
+							{
+								start: 400,
+								stop: 5,
+								strand: '-'
+							},
+							{
+								start: 10,
+								stop: 50,
+								strand: '-'
+							},
+							{
+								start: 60,
+								stop: 100,
+								strand: '-'
+							}
+						]
+					])
+				})
+				it('If not the same strand, all genes at the end of chromosome should NOT cluster together with the first group', function() {
+					let results = geneGroupFinder.findGroups([
+						{
+							start: 10,
+							stop: 50,
+							strand: '-'
+						},
+						{
+							start: 60,
+							stop: 100,
+							strand: '-'
+						},
+						{
+							start: 400,
+							stop: 5,
+							strand: '+'
+						}
+					])
+					expect(results).deep.equal([
+						[
+							{
+								start: 10,
+								stop: 50,
+								strand: '-'
+							},
+							{
+								start: 60,
+								stop: 100,
+								strand: '-'
+							}
+						]
+					])
+				})
+				it('If same strand and under cutoff, the group at the end of chromosome should cluster together with the first gene', function() {
+					let results = geneGroupFinder.findGroups([
+						{
+							start: 10,
+							stop: 50,
+							strand: '-'
+						},
+						{
+							start: 260,
+							stop: 300,
+							strand: '-'
+						},
+						{
+							start: 400,
+							stop: 500,
+							strand: '-'
+						},
+						{
+							start: 700,
+							stop: 5,
+							strand: '-'
+						}
+					])
+					expect(results).deep.equal([
+						[
+							{
+								start: 700,
+								stop: 5,
+								strand: '-'
+							},
+							{
+								start: 10,
+								stop: 50,
+								strand: '-'
+							}
+						],
+						[
+							{
+								start: 260,
+								stop: 300,
+								strand: '-'
+							},
+							{
+								start: 400,
+								stop: 500,
+								strand: '-'
+							}
+						]
+					])
+				})
 			})
-
-
 			it('Should just parse the input in the right way', function() {
 				let results = geneGroupFinder.findGroups(sampleGeneData)
 				expect(results).deep.equal(
