@@ -49,21 +49,14 @@ class GeneGroupFinder {
 			strand: ''
 		}
 
-
-		//console.log ( '=>' + JSON.stringify(genes))
-
 		// Initialize from the back
-
 		let lastGroupDone = false
 
 		if (crossingOrigin) {
-			//console.log('Crossed')
 			let lastGene = genes.pop()
 			tempGroup = {items: [lastGene], strand: lastGene.strand}
-			//console.log(tempGroup)
 			while (!lastGroupDone && genes.length > 1) {
 				lastGene = genes.pop()
-				//console.log(lastGene)
 				if (this.geneBelongsToGroup_(lastGene, tempGroup, true)) {
 					tempGroup.items.push(lastGene)
 				}
@@ -73,10 +66,7 @@ class GeneGroupFinder {
 				}
 			}
 		}
-
 		tempGroup.items.reverse()
-		//console.log(tempGroup)
-
 		genes.forEach((gene, i) => {
 			if (tempGroup.items.length === 0) {
 				tempGroup = {items: [gene], strand: gene.strand}
@@ -90,10 +80,6 @@ class GeneGroupFinder {
 
 				tempGroup = {items: [gene], strand: gene.strand}
 			}
-/*			console.log('==>')
-			console.log(tempGroup)
-			console.log(gene)
-			console.log(groups)*/
 		})
 		if (tempGroup.items.length >= kMinGroupSize)
 			groups.push(tempGroup.items)
