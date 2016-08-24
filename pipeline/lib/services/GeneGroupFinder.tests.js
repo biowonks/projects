@@ -197,22 +197,9 @@ describe('Services', function() {
 					]
 				])
 			})
-
-			it('Dealing with overlapping genes - case: patial overlap. If same strand, then they should cluster together', function() {
-				let results = geneGroupFinder.findGroups([
-					{
-						start: 1,
-						stop: 10,
-						strand: '-'
-					},
-					{
-						start: 5,
-						stop: 30,
-						strand: '-'
-					}
-				])
-				expect(results).deep.equal([
-					[
+			describe('Dealing with overlapping genes', function() {
+				it('case: patial overlap. If same strand, then they should cluster together', function() {
+					let results = geneGroupFinder.findGroups([
 						{
 							start: 1,
 							stop: 10,
@@ -223,41 +210,41 @@ describe('Services', function() {
 							stop: 30,
 							strand: '-'
 						}
-					]
-				])
-			})
+					])
+					expect(results).deep.equal([
+						[
+							{
+								start: 1,
+								stop: 10,
+								strand: '-'
+							},
+							{
+								start: 5,
+								stop: 30,
+								strand: '-'
+							}
+						]
+					])
+				})
 
-			it('Dealing with overlapping genes - case: patial overlap. If different strand, then they should NOT cluster together', function() {
-				let results = geneGroupFinder.findGroups([
-					{
-						start: 1,
-						stop: 10,
-						strand: '-'
-					},
-					{
-						start: 5,
-						stop: 30,
-						strand: '+'
-					}
-				])
-				expect(results).deep.equal([])
-			})
+				it('case: patial overlap. If different strand, then they should NOT cluster together', function() {
+					let results = geneGroupFinder.findGroups([
+						{
+							start: 1,
+							stop: 10,
+							strand: '-'
+						},
+						{
+							start: 5,
+							stop: 30,
+							strand: '+'
+						}
+					])
+					expect(results).deep.equal([])
+				})
 
-			it('Dealing with overlapping genes - case: full overlap. If same strand, then they should cluster together', function() {
-				let results = geneGroupFinder.findGroups([
-					{
-						start: 1,
-						stop: 50,
-						strand: '-'
-					},
-					{
-						start: 5,
-						stop: 30,
-						strand: '-'
-					}
-				])
-				expect(results).deep.equal([
-					[
+				it('case: full overlap. If same strand, then they should cluster together', function() {
+					let results = geneGroupFinder.findGroups([
 						{
 							start: 1,
 							stop: 50,
@@ -268,26 +255,39 @@ describe('Services', function() {
 							stop: 30,
 							strand: '-'
 						}
-					]
-				])
-			})
+					])
+					expect(results).deep.equal([
+						[
+							{
+								start: 1,
+								stop: 50,
+								strand: '-'
+							},
+							{
+								start: 5,
+								stop: 30,
+								strand: '-'
+							}
+						]
+					])
+				})
 
-			it('Dealing with overlapping genes - case: full overlap. If different strand, then they should NOT cluster together', function() {
-				let results = geneGroupFinder.findGroups([
-					{
-						start: 1,
-						stop: 50,
-						strand: '-'
-					},
-					{
-						start: 5,
-						stop: 30,
-						strand: '+'
-					}
-				])
-				expect(results).deep.equal([])
+				it('case: full overlap. If different strand, then they should NOT cluster together', function() {
+					let results = geneGroupFinder.findGroups([
+						{
+							start: 1,
+							stop: 50,
+							strand: '-'
+						},
+						{
+							start: 5,
+							stop: 30,
+							strand: '+'
+						}
+					])
+					expect(results).deep.equal([])
+				})
 			})
-
 			describe('Dealing with circular chromosomes and genes crossing origins', function() {
 				it('If same strand, all genes at the end of chromosome should cluster together with the first group', function() {
 					let results = geneGroupFinder.findGroups([
@@ -306,7 +306,7 @@ describe('Services', function() {
 							stop: 5,
 							strand: '-'
 						}
-					])
+					], true)
 					expect(results).deep.equal([
 						[
 							{
@@ -344,7 +344,7 @@ describe('Services', function() {
 							stop: 5,
 							strand: '+'
 						}
-					])
+					], true)
 					expect(results).deep.equal([
 						[
 							{
@@ -382,8 +382,20 @@ describe('Services', function() {
 							stop: 5,
 							strand: '-'
 						}
-					])
+					], true)
 					expect(results).deep.equal([
+						[
+							{
+								start: 260,
+								stop: 300,
+								strand: '-'
+							},
+							{
+								start: 400,
+								stop: 500,
+								strand: '-'
+							}
+						],
 						[
 							{
 								start: 700,
@@ -395,8 +407,39 @@ describe('Services', function() {
 								stop: 50,
 								strand: '-'
 							}
-						],
+						]
+					])
+				})
+				it('all genes are part of the 1 group from backwards, return should be in order', function() {
+					let results = geneGroupFinder.findGroups([
+						{
+							start: 210,
+							stop: 240,
+							strand: '-'
+						},
+						{
+							start: 260,
+							stop: 300,
+							strand: '-'
+						},
+						{
+							start: 400,
+							stop: 510,
+							strand: '-'
+						},
+						{
+							start: 700,
+							stop: 5,
+							strand: '-'
+						}
+					], true)
+					expect(results).deep.equal([
 						[
+							{
+								start: 210,
+								stop: 240,
+								strand: '-'
+							},
 							{
 								start: 260,
 								stop: 300,
@@ -404,7 +447,134 @@ describe('Services', function() {
 							},
 							{
 								start: 400,
-								stop: 500,
+								stop: 510,
+								strand: '-'
+							},
+							{
+								start: 700,
+								stop: 5,
+								strand: '-'
+							}
+						]
+					])
+				})
+				it('If same strand but not under cutoff, the last group should be at the end of the returned groups', function() {
+					let results = geneGroupFinder.findGroups([
+						{
+							start: 210,
+							stop: 240,
+							strand: '-'
+						},
+						{
+							start: 260,
+							stop: 300,
+							strand: '-'
+						},
+						{
+							start: 510,
+							stop: 610,
+							strand: '-'
+						},
+						{
+							start: 700,
+							stop: 5,
+							strand: '-'
+						}
+					], true)
+					expect(results).deep.equal([
+						[
+							{
+								start: 210,
+								stop: 240,
+								strand: '-'
+							},
+							{
+								start: 260,
+								stop: 300,
+								strand: '-'
+							}
+						],
+						[
+							{
+								start: 510,
+								stop: 610,
+								strand: '-'
+							},
+							{
+								start: 700,
+								stop: 5,
+								strand: '-'
+							}
+						]
+					])
+				})
+			})
+			describe(' Circular and overlapping', function() {
+				it('Should handle this example with Circular and overlapping together', function() {
+					let results = geneGroupFinder.findGroups([
+						{
+							start: 1,
+							stop: 50,
+							strand: '-'
+						},
+						{
+							start: 5,
+							stop: 30,
+							strand: '-'
+						},
+						{
+							start: 250,
+							stop: 255,
+							strand: '-'
+						},
+						{
+							start: 260,
+							stop: 300,
+							strand: '-'
+						},
+						{
+							start: 510,
+							stop: 610,
+							strand: '-'
+						},
+						{
+							start: 700,
+							stop: 5,
+							strand: '-'
+						}
+					], true)
+					expect(results).deep.equal([
+						[
+							{
+								start: 250,
+								stop: 255,
+								strand: '-'
+							},
+							{
+								start: 260,
+								stop: 300,
+								strand: '-'
+							}
+						],
+						[
+							{
+								start: 510,
+								stop: 610,
+								strand: '-'
+							},
+							{
+								start: 700,
+								stop: 5,
+								strand: '-'
+							},
+							{
+								start: 1,
+								stop: 50,
+								strand: '-'
+							},
+							{
+								start: 5,
+								stop: 30,
 								strand: '-'
 							}
 						]
