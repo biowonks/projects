@@ -8,7 +8,6 @@ module.exports = function(Sequelize, models, extras) {
 		genbank_assembly_accession: extras.accessionWithoutVersion(),
 		genbank_assembly_version: extras.positiveInteger(),
 		taxonomy_id: extras.positiveInteger(),
-		species_taxonomy_id: extras.positiveInteger(),
 		name: extras.requiredText(),
 		refseq_category: {
 			type: Sequelize.TEXT

@@ -23,7 +23,6 @@ create table genomes (
 	genbank_assembly_accession text,
 	genbank_assembly_version integer,
 	taxonomy_id integer,
-	species_taxonomy_id integer,
 	name text not null,
 	refseq_category text,
 	bioproject text,
