@@ -66,7 +66,9 @@ class TaxonomyService {
 
 			return this.fetchFromNCBI(taxonomyId)
 			.then((rawTaxonomy) => {
-				return Promise.each(rawTaxonomy.lineage, this.insertNodeIfNew_.bind(this))
+				let reversedLineage = rawTaxonomy.lineage.slice().reverse()
+
+				return Promise.each(reversedLineage, this.insertNodeIfNew_.bind(this))
 				.catch(IntermediateRankExistsError, () => {}) // noop, helps break out of the each loop
 				.then(() => rawTaxonomy)
 			})

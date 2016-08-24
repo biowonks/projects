@@ -24,7 +24,7 @@ class Taxonomy extends PerGenomePipelineModule {
 	}
 
 	run() {
-		return this.taxonomyService_.updateTaxonomy(this.genome_.species_taxonomy_id)
+		return this.taxonomyService_.updateTaxonomy(this.genome_.taxonomy_id)
 		.then((rawTaxonomy) => {
 			return this.genome_.update({
 				superkingdom: rawTaxonomy.superkingdom,
