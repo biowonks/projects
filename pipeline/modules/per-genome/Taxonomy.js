@@ -16,7 +16,7 @@ class Taxonomy extends PerGenomePipelineModule {
 	}
 
 	static dependencies() {
-		return ['NCBICoreData']
+		return []
 	}
 
 	undo() {
