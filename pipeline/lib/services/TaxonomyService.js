@@ -178,6 +178,43 @@ class TaxonomyService {
 		return result
 	}
 
+	/**
+	 * @param {Number} taxonomyId - NCBI taxonomy id
+	 * @returns {List} genomic children of given taxonomy id
+	 */
+	fetchGenomicChildren(taxonomyId) {
+		// TODO: return only genomic taxonomy IDs AND return itself (if genomic)
+		let taxonomyTableName = this.taxonomyModel_.getTableName(),
+			sql = `with recursive tree_nodes as (
+	select * from ${taxonomyTableName} where parent_taxonomy_id = ?
+	union all
+	select a.* from ${taxonomyTableName} a, tree_nodes where tree_nodes.id = a.parent_taxonomy_id
+)
+select * from tree_nodes`
+		return this.taxonomyModel_.sequelize.query(sql, {
+			replacements: [taxonomyId],
+			type: this.taxonomyModel_.sequelize.QueryTypes.SELECT
+		})
+		.then((rows) => {
+			if (!rows.length)
+				return null
+
+			let result = rows
+			return result
+		})
+	}
+
+	/**
+	 * @param {Number} taxonomyId - NCBI taxonomy id
+	 * @returns {List} lineage of taxonomic nodes - objects
+	 */
+	fetchLineage(taxonomyId) {
+		return this.fetchLocal_(taxonomyId)
+			.then((result) => {
+				return result.lineage.slice().reverse()
+			})
+	}
+
 	// ----------------------------------------------------
 	// Private methods
 	/**

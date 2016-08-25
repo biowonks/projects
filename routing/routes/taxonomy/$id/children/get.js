@@ -5,7 +5,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 
 	return [
 		(req, res, next) => {
-			taxonomyService.fetchLineage(req.params.id)
+			taxonomyService.fetchGenomicChildren(req.params.id)
 			.then((result) => {
 				res.json(result)
 			})
