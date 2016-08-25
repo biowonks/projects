@@ -59,19 +59,17 @@ class TaxonomyService {
 	 * @returns {Promise} taxonomyObject with id, name, rank, parent
 	 */
 	updateTaxonomy(taxonomyId) {
-<<<<<<< Updated upstream
 		return this.fetchLocal_(taxonomyId)
 		.then((localRawTaxonomy) => {
 			if (localRawTaxonomy)
 				return localRawTaxonomy
-=======
-		return this.nodeExists_(taxonomyId)
+			return this.nodeExists_(taxonomyId)
+		})
 		.then((nodeExists) => {
 			if (nodeExists) {
 				this.logger_.info(`Node exists: ${taxonomyId}`)
 				return this.fetchLocal_(taxonomyId)
 			}
->>>>>>> Stashed changes
 
 			return this.fetchFromNCBI(taxonomyId)
 			.then((rawTaxonomy) => {
