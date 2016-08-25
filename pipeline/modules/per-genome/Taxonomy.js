@@ -19,9 +19,40 @@ class Taxonomy extends PerGenomePipelineModule {
 		return ['NCBICoreData']
 	}
 
+	/**
+	 * Does not remove any inserted Aseqs / Dseqs :\
+	 * @returns {Promise}
+	 */
 	undo() {
-		this.logger_.info('Taxonomy undo does nothing.')
+		return this.sequelize_.transaction((transaction) => {
+			this.logger_.info('Deleting taxonomy fields from genome record')
+			return this.genome_.update({
+				superkingdom: null,
+				phylum: null,
+				class: null,
+				order: null,
+				family: null,
+				genus: null,
+				species: null,
+				strain: null
+			}, {
+				fields: [
+					'superkingdom',
+					'phylum',
+					'class',
+					'order',
+					'family',
+					'genus',
+					'species',
+					'strain'
+				]
+			})
+			.then(() => {
+				this.logger_.info('Deleted taxonomy fields')
+			})
+		})
 	}
+
 
 	run() {
 		return this.taxonomyService_.updateTaxonomy(this.genome_.species_taxonomy_id)
