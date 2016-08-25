@@ -161,7 +161,6 @@ class SeedNewGenomes extends OncePipelineModule {
 				genbank_assembly_accession: genbankAccessionParts[0],
 				genbank_assembly_version: genbankAccessionParts[1],
 				taxonomy_id: row.taxid,
-				species_taxonomy_id: row.species_taxid,
 				name: row.organism_name,
 				refseq_category: row.refseq_category,
 				bioproject: row.bioproject,

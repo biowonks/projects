@@ -59,14 +59,16 @@ class TaxonomyService {
 	 * @returns {Promise} taxonomyObject with id, name, rank, parent
 	 */
 	updateTaxonomy(taxonomyId) {
-		return this.nodeExists_(taxonomyId)
-		.then((nodeExists) => {
-			if (nodeExists)
-				return this.fetchLocal_(taxonomyId) // TODO: Fetch taxonomy from taxonomy table and return here
+		return this.fetchLocal_(taxonomyId)
+		.then((localRawTaxonomy) => {
+			if (localRawTaxonomy)
+				return localRawTaxonomy
 
 			return this.fetchFromNCBI(taxonomyId)
 			.then((rawTaxonomy) => {
-				return Promise.each(rawTaxonomy.lineage, this.insertNodeIfNew_.bind(this))
+				let reversedLineage = rawTaxonomy.lineage.slice().reverse()
+
+				return Promise.each(reversedLineage, this.insertNodeIfNew_.bind(this))
 				.catch(IntermediateRankExistsError, () => {}) // noop, helps break out of the each loop
 				.then(() => rawTaxonomy)
 			})
