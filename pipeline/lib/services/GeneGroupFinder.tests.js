@@ -21,9 +21,11 @@ describe('Services', function() {
 		})
 
 		describe('findGroups', function() {
-			let geneGroupFinder = null
+			let geneGroupFinder = null,
+				cutoff = null
 			beforeEach(() => {
 				geneGroupFinder = new GeneGroupFinder()
+				cutoff = geneGroupFinder.distanceCutoffBp()
 			})
 
 			it('throw error if gene does not have a + or - strand')
@@ -36,13 +38,13 @@ describe('Services', function() {
 
 			it('multiple genes that do not group together on circular chromosome', function() {
 				let gene1 = {
-					start: geneGroupFinder.distanceCutoffBp() + 1,
+					start: cutoff + 1,
 					stop: null,
 					strand: '+'
 				}
 				gene1.stop = gene1.start + 100
 				let gene2 = {
-					start: gene1.stop + geneGroupFinder.distanceCutoffBp() + 1,
+					start: gene1.stop + cutoff + 1,
 					stop: null,
 					strand: '+'
 				}
@@ -68,30 +70,34 @@ describe('Services', function() {
 			})
 
 			it('gene on + strand followed by gene on + strand that is < cutoff should be grouped', function() {
+				// Define the genes as variables so that referencing from the group results is more
+				// straightforward.
+				//
+				// Also note how we use the cutoff variable to define our separation. This ensures
+				// that our test continues to work as expected even if the default is changed in the
+				// GeneGroupFinder definition.
+				let gene1 = {
+						start: 1,
+						stop: 10,
+						strand: '+'
+					},
+					gene2 = {
+						start: gene1.stop + cutoff - 1,
+						stop: null,
+						strand: '+'
+					}
+				gene2.stop = gene2.start + 10
+
 				let results = geneGroupFinder.findGroups([
-					{
-						start: 1,
-						stop: 10,
-						strand: '+'
-					},
-					{
-						start: 20,
-						stop: 30,
-						strand: '+'
-					}
+					gene1,
+					gene2
 				])
-				expect(results).deep.equal([[
-					{
-						start: 1,
-						stop: 10,
-						strand: '+'
-					},
-					{
-						start: 20,
-						stop: 30,
-						strand: '+'
-					}
-				]])
+				expect(results).deep.equal([
+					[
+						gene1,
+						gene2
+					]
+				])
 			})
 
 			it('gene on - strand followed by gene on - strand that is < cutoff should be grouped', function() {
