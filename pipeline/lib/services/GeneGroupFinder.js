@@ -1,5 +1,8 @@
 'use strict'
 
+// Core
+const assert = require('assert')
+
 // Constants
 const kDefaultDistanceCutoffBp = 200,
 	kMinGroupSize = 2
@@ -31,73 +34,101 @@ class GeneGroupFinder {
 	 * @param {Number} gene.start - 1-based
 	 * @param {Number} gene.stop - 1-based
 	 * @param {String} gene.strand - '-' or '+''
-	 * @param {Boolean} circular
+	 * @param {Boolean} [isCircular = false]
 	 * @returns {Array.<Array.<Object>>}
 	 */
-	findGroups(genes, circular = false) {
+	findGroups(genes, isCircular = false) {
 		if (!Array.isArray(genes))
 			throw new Error('invalid genes argument: expected array of objects')
 
 		if (genes.length === 0)
 			return []
 
-		let groups = []
-		genes.sort(function(a, b) {
+		let genesCopy = genes.slice(),
+			groups = [],
+			lastGroup = []
+
+		genesCopy.sort(function(a, b) {
 			return a.start - b.start
 		})
 
-		let tempGroup = {
-			items: [],
-			strand: ''
-		}
+		if (isCircular)
+			lastGroup = this.lookBackwardsForGroup_(genesCopy)
 
-		// Initialize from the back
-		let lastGroupDone = false
+		if (genesCopy.length)
+			groups = this.lookForwardsForGroups_(genesCopy, lastGroup)
+		else if (lastGroup.length >= kMinGroupSize)
+			groups = [lastGroup]
 
-		if (circular) {
-			let lastGene = genes.pop()
-			tempGroup = {items: [lastGene], strand: lastGene.strand}
-			while (!lastGroupDone && genes.length > 0) {
-				lastGene = genes.pop()
-				if (this.geneBelongsToGroup_(lastGene, tempGroup, true)) {
-					tempGroup.items.push(lastGene)
-				}
-				else {
-					genes.push(lastGene)
-					lastGroupDone = true
-				}
-			}
-			tempGroup.items.reverse()
-		}
-
-		if (genes.length > 0) {
-			genes.forEach((gene, i) => {
-				if (tempGroup.items.length === 0) {
-					tempGroup = {items: [gene], strand: gene.strand}
-				}
-				else if (this.geneBelongsToGroup_(gene, tempGroup, false)) {
-					tempGroup.items.push(gene)
-				}
-				else {
-					if (tempGroup.items.length >= kMinGroupSize)
-						groups.push(tempGroup.items)
-					tempGroup = {items: [gene], strand: gene.strand}
-				}
-			})
-			if (tempGroup.items.length >= kMinGroupSize)
-				groups.push(tempGroup.items)
-		}
-		else if (tempGroup.items.length >= kMinGroupSize) {
-			groups.push(tempGroup.items)
-		}
 		groups.sort(function(a, b) {
 			return a[0].start - b[0].start
 		})
+
 		return groups
 	}
 
 	// ----------------------------------------------------
 	// Private methods
+	/**
+	 * Progressively pops genes off of ${genes} to build the terminal group.
+	 *
+	 * @param {Array.<Object>} genes
+	 * @returns {Array.<Object>} - a group containing at least one gene (the very last one in the array)
+	 */
+	lookBackwardsForGroup_(genes) {
+		assert(genes.length)
+
+		let group = [
+			genes.pop()
+		]
+
+		while (genes.length) {
+			let lastGene = genes.pop()
+			if (this.geneBelongsToGroup_(lastGene, group, true)) {
+				group.push(lastGene)
+				continue
+			}
+
+			genes.push(lastGene)
+			break
+		}
+
+		group.reverse()
+
+		return group
+	}
+
+	/**
+	 * Put more documentation here! For example, why do we need the ${backwardsGroup} argument?
+	 *
+	 * @param {Array.<Object>} genes
+	 * @param {Array.<Array.<Object>>} backwardsGroup
+	 * @returns {Array.<Array.<Object>>} - array of groups
+	 */
+	lookForwardsForGroups_(genes, backwardsGroup) {
+		let groups = [],
+			lastGroup = backwardsGroup
+
+		genes.forEach((gene, i) => {
+			if (lastGroup.length === 0) {
+				lastGroup = [gene]
+			}
+			else if (this.geneBelongsToGroup_(gene, lastGroup, false)) {
+				lastGroup.push(gene)
+			}
+			else {
+				if (lastGroup.length >= kMinGroupSize)
+					groups.push(lastGroup)
+				lastGroup = [gene]
+			}
+		})
+
+		if (lastGroup.length >= kMinGroupSize)
+			groups.push(lastGroup)
+
+		return groups
+	}
+
 	/**
 	 * Returns true if gene belongs to group. It checks two aspects:
 	 *  1) Gene's start position is under the distance cutoff of the stop position of the last gene in the group
@@ -114,12 +145,12 @@ class GeneGroupFinder {
 	 * @returns {Boolean}
 	 */
 	geneBelongsToGroup_(gene, group, backwards = false) {
-		let onSameStrand = group.strand === gene.strand,
+		let onSameStrand = group[0].strand === gene.strand,
 			closerThanCutoff = true
 		if (backwards)
-			closerThanCutoff = group.items[group.items.length - 1].start - gene.stop < this.distanceCutoffBp_
+			closerThanCutoff = group[group.length - 1].start - gene.stop < this.distanceCutoffBp_
 		else
-			closerThanCutoff = gene.start - group.items[group.items.length - 1].stop < this.distanceCutoffBp_
+			closerThanCutoff = gene.start - group[group.length - 1].stop < this.distanceCutoffBp_
 		return onSameStrand && closerThanCutoff
 	}
 }

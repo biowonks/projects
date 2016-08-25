@@ -26,6 +26,31 @@ describe('Services', function() {
 				geneGroupFinder = new GeneGroupFinder()
 			})
 
+			it('throw error if gene does not have a + or - strand')
+
+			it('does not mutate source genes array')
+
+			it('linear chromosome with one gene does not return any groups')
+
+			it('circular chromosome with one gene does not return any groups')
+
+			it('multiple genes that do not group together on circular chromosome', function() {
+				let gene1 = {
+					start: geneGroupFinder.distanceCutoffBp() + 1,
+					stop: null,
+					strand: '+'
+				}
+				gene1.stop = gene1.start + 100
+				let gene2 = {
+					start: gene1.stop + geneGroupFinder.distanceCutoffBp() + 1,
+					stop: null,
+					strand: '+'
+				}
+				gene2.stop = gene2.start + 100
+				let results = geneGroupFinder.findGroups([gene1, gene2], true)
+				expect(results).eql([])
+			})
+
 			it('gene on + strand followed by gene on - strand that is < cutoff should not be grouped', function() {
 				let results = geneGroupFinder.findGroups([
 					{
