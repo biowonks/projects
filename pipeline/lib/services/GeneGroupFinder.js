@@ -67,8 +67,9 @@ class GeneGroupFinder {
 					lastGroupDone = true
 				}
 			}
+			tempGroup.items.reverse()
 		}
-		tempGroup.items.reverse()
+
 		if (genes.length > 0) {
 			genes.forEach((gene, i) => {
 				if (tempGroup.items.length === 0) {
@@ -121,14 +122,6 @@ class GeneGroupFinder {
 			closerThanCutoff = gene.start - group.items[group.items.length - 1].stop < this.distanceCutoffBp_
 		return onSameStrand && closerThanCutoff
 	}
-	/**
-	 * Returns true if there is a gene that crosses the origin
-	 * Assumption: 	1) After sorting based on starting positions, the only gene that could cross origin is the last one.
-	 * 				2) Gene crossing the origin has the stop position smaller than the start position.
-	 * @param {Array.<Object>} genes
-	 * @returns {Boolean}
-	 */
-
 }
 
 module.exports.kDefaultDistanceCutoffBp = kDefaultDistanceCutoffBp
