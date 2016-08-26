@@ -24,33 +24,102 @@ describe('Services', function() {
 			let geneGroupFinder = null,
 				cutoff = null
 			beforeEach(() => {
-				geneGroupFinder = new GeneGroupFinder()
-				cutoff = geneGroupFinder.distanceCutoffBp()
+				geneGroupFinder = new GeneGroupFinder(200)
 			})
 
-			it('throw error if gene does not have a + or - strand')
+			it('does not mutate source genes array', function() {
+				let genes = [
+					{
+						start: 1,
+						stop: 10,
+						strand: '+'
+					},
+					{
+						start: 20,
+						stop: 30,
+						strand: '-'
+					}
+				]
+				let oldGenes = genes.slice()
+				geneGroupFinder.findGroups(genes)
+				expect(genes).eql(oldGenes)
+			})
 
-			it('does not mutate source genes array')
+			it('linear chromosome with one gene does not return any groups', function() {
+				let genes = [
+					{
+						start: 1,
+						stop: 10,
+						strand: '+'
+					}
+				]
+				let results = geneGroupFinder.findGroups(genes)
+				expect(results).eql([])
+			})
 
-			it('linear chromosome with one gene does not return any groups')
-
-			it('circular chromosome with one gene does not return any groups')
+			it('circular chromosome with one gene does not return any groups', function() {
+				let genes = [
+					{
+						start: 1,
+						stop: 10,
+						strand: '+'
+					}
+				]
+				let results = geneGroupFinder.findGroups(genes, {isCircular: true, repliconLength: 30})
+				expect(results).eql([])
+			})
 
 			it('multiple genes that do not group together on circular chromosome', function() {
-				let gene1 = {
-					start: cutoff + 1,
-					stop: null,
-					strand: '+'
-				}
-				gene1.stop = gene1.start + 100
-				let gene2 = {
-					start: gene1.stop + cutoff + 1,
-					stop: null,
-					strand: '+'
-				}
-				gene2.stop = gene2.start + 100
-				let results = geneGroupFinder.findGroups([gene1, gene2], true)
+				let genes = [
+					{
+						start: 301,
+						stop: 400,
+						strand: '+'
+					},
+					{
+						start: 700,
+						stop: 800,
+						strand: '+'
+					}
+				]
+				let results = geneGroupFinder.findGroups(genes, {isCircular: true, repliconLength: 850})
 				expect(results).eql([])
+			})
+			describe('Cutoff should be inclusive', function() {
+				it('same distance of cutoff should be grouped', function() {
+					cutoff = geneGroupFinder.distanceCutoffBp()
+					let genes = [
+						{
+							start: 1,
+							stop: 10,
+							strand: '+'
+						},
+						{
+							start: 10 + cutoff,
+							stop: 20 + cutoff,
+							strand: '+'
+						}
+					]
+					let results = geneGroupFinder.findGroups(genes, {isCircular: true, repliconLength: 850})
+					expect(results).eql([genes])
+				})
+				it('1bp more than the cutoff should not be grouped', function() {
+					cutoff = geneGroupFinder.distanceCutoffBp()
+					let genes = [
+						{
+							start: 1,
+							stop: 10,
+							strand: '+'
+						},
+						{
+							start: 11 + cutoff,
+							stop: 20 + cutoff,
+							strand: '+'
+						}
+					]
+					let results = geneGroupFinder.findGroups(genes, {isCircular: true, repliconLength: 850})
+					expect(results).eql([])
+				})
 			})
 
 			it('gene on + strand followed by gene on - strand that is < cutoff should not be grouped', function() {
@@ -70,32 +139,32 @@ describe('Services', function() {
 			})
 
 			it('gene on + strand followed by gene on + strand that is < cutoff should be grouped', function() {
-				// Define the genes as variables so that referencing from the group results is more
-				// straightforward.
-				//
-				// Also note how we use the cutoff variable to define our separation. This ensures
-				// that our test continues to work as expected even if the default is changed in the
-				// GeneGroupFinder definition.
-				let gene1 = {
+				let genes = [
+					{
 						start: 1,
 						stop: 10,
 						strand: '+'
 					},
-					gene2 = {
-						start: gene1.stop + cutoff - 1,
-						stop: null,
+					{
+						start: 20,
+						stop: 30,
 						strand: '+'
 					}
-				gene2.stop = gene2.start + 10
+				]
 
-				let results = geneGroupFinder.findGroups([
-					gene1,
-					gene2
-				])
+				let results = geneGroupFinder.findGroups(genes)
 				expect(results).deep.equal([
 					[
-						gene1,
-						gene2
+						{
+							start: 1,
+							stop: 10,
+							strand: '+'
+						},
+						{
+							start: 20,
+							stop: 30,
+							strand: '+'
+						}
 					]
 				])
 			})
@@ -337,7 +406,7 @@ describe('Services', function() {
 							stop: 5,
 							strand: '-'
 						}
-					], true)
+					], {isCircular: true, repliconLength: 450})
 					expect(results).deep.equal([
 						[
 							{
@@ -375,7 +444,7 @@ describe('Services', function() {
 							stop: 5,
 							strand: '+'
 						}
-					], true)
+					], {isCircular: true, repliconLength: 450})
 					expect(results).deep.equal([
 						[
 							{
@@ -409,11 +478,11 @@ describe('Services', function() {
 							strand: '-'
 						},
 						{
-							start: 700,
+							start: 701,
 							stop: 5,
 							strand: '-'
 						}
-					], true)
+					], {isCircular: true, repliconLength: 750})
 					expect(results).deep.equal([
 						[
 							{
@@ -429,7 +498,7 @@ describe('Services', function() {
 						],
 						[
 							{
-								start: 700,
+								start: 701,
 								stop: 5,
 								strand: '-'
 							},
@@ -463,7 +532,7 @@ describe('Services', function() {
 							stop: 5,
 							strand: '-'
 						}
-					], true)
+					], {isCircular: true, repliconLength: 750})
 					expect(results).deep.equal([
 						[
 							{
@@ -511,7 +580,7 @@ describe('Services', function() {
 							stop: 5,
 							strand: '-'
 						}
-					], true)
+					], {isCircular: true, repliconLength: 750})
 					expect(results).deep.equal([
 						[
 							{
@@ -539,8 +608,42 @@ describe('Services', function() {
 						]
 					])
 				})
+				it('circular but the last gene ends far from the end of the replicon should not group with first gene', function() {
+					let genes = [
+						{
+							start: 1,
+							stop: 10,
+							strand: '+'
+						},
+						{
+							start: 20,
+							stop: 30,
+							strand: '+'
+						},
+						{
+							start: 500,
+							stop: 510,
+							strand: '+'
+						}
+					]
+					let results = geneGroupFinder.findGroups(genes, {isCircular: true, repliconLength: 800})
+					expect(results).eql([
+						[
+							{
+								start: 1,
+								stop: 10,
+								strand: '+'
+							},
+							{
+								start: 20,
+								stop: 30,
+								strand: '+'
+							}
+						]
+					])
+				})
 			})
-			describe(' Circular and overlapping', function() {
+			describe('Circular and overlapping', function() {
 				it('Should handle this example with Circular and overlapping together', function() {
 					let results = geneGroupFinder.findGroups([
 						{
@@ -573,7 +676,7 @@ describe('Services', function() {
 							stop: 5,
 							strand: '-'
 						}
-					], true)
+					], {isCircular: true, repliconLength: 750})
 					expect(results).deep.equal([
 						[
 							{

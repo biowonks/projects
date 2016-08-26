@@ -34,10 +34,15 @@ class GeneGroupFinder {
 	 * @param {Number} gene.start - 1-based
 	 * @param {Number} gene.stop - 1-based
 	 * @param {String} gene.strand - '-' or '+''
-	 * @param {Boolean} [isCircular = false]
+	 * @param {Array.<Object>} options
+	 * @param {Boolean} [options.isCircular = false]
+	 * @param {Number} [options.repliconLength = 0]
 	 * @returns {Array.<Array.<Object>>}
 	 */
-	findGroups(genes, isCircular = false) {
+	findGroups(genes, options = {isCircular: false, repliconLength: 0}) {
+		let isCircular = options.isCircular,
+			repliconLength = options.repliconLength
+
 		if (!Array.isArray(genes))
 			throw new Error('invalid genes argument: expected array of objects')
 
@@ -56,7 +61,7 @@ class GeneGroupFinder {
 			lastGroup = this.lookBackwardsForGroup_(genesCopy)
 
 		if (genesCopy.length)
-			groups = this.lookForwardsForGroups_(genesCopy, lastGroup)
+			groups = this.lookForwardsForGroups_(genesCopy, lastGroup, repliconLength)
 		else if (lastGroup.length >= kMinGroupSize)
 			groups = [lastGroup]
 
@@ -73,7 +78,7 @@ class GeneGroupFinder {
 	 * Progressively pops genes off of ${genes} to build the terminal group.
 	 *
 	 * @param {Array.<Object>} genes
-	 * @returns {Array.<Object>} - a group containing at least one gene (the very last one in the array)
+	 * @returns {Array.<Object>} - a pseudo group containing at least one gene (the very last one in the array)
 	 */
 	lookBackwardsForGroup_(genes) {
 		assert(genes.length)
@@ -82,9 +87,11 @@ class GeneGroupFinder {
 			genes.pop()
 		]
 
+		let backwardsCounting = true
+
 		while (genes.length) {
 			let lastGene = genes.pop()
-			if (this.geneBelongsToGroup_(lastGene, group, true)) {
+			if (this.geneBelongsToGroup_(lastGene, group, backwardsCounting)) {
 				group.push(lastGene)
 				continue
 			}
@@ -99,21 +106,25 @@ class GeneGroupFinder {
 	}
 
 	/**
-	 * Put more documentation here! For example, why do we need the ${backwardsGroup} argument?
+	 * This will search for groups going forward in the chromosome. However, in circular chromosomes it gets tricky as the calculation of the distance between the genes depend on the size of the replicon, thus the ${repliconLength}, if the current group contains the terminal group in the chromosome, thus ${isLastGene}.
+	 * 1) ${isLastGene} in the group? If true
 	 *
 	 * @param {Array.<Object>} genes
-	 * @param {Array.<Array.<Object>>} backwardsGroup
+	 * @param {Array.<Array.<Object>>} currentGroup
 	 * @returns {Array.<Array.<Object>>} - array of groups
+	 * @param {Number} repliconLength - Total length of the replicon
 	 */
-	lookForwardsForGroups_(genes, backwardsGroup) {
+	lookForwardsForGroups_(genes, currentGroup, repliconLength = 0) {
 		let groups = [],
-			lastGroup = backwardsGroup
+			lastGroup = currentGroup,
+			backwardsCounting = false,
+			isLastGene = true
 
 		genes.forEach((gene, i) => {
 			if (lastGroup.length === 0) {
 				lastGroup = [gene]
 			}
-			else if (this.geneBelongsToGroup_(gene, lastGroup, false)) {
+			else if (this.geneBelongsToGroup_(gene, lastGroup, backwardsCounting, isLastGene, repliconLength)) {
 				lastGroup.push(gene)
 			}
 			else {
@@ -121,11 +132,11 @@ class GeneGroupFinder {
 					groups.push(lastGroup)
 				lastGroup = [gene]
 			}
+			isLastGene = false
 		})
 
 		if (lastGroup.length >= kMinGroupSize)
 			groups.push(lastGroup)
-
 		return groups
 	}
 
@@ -142,16 +153,31 @@ class GeneGroupFinder {
 	 * @param {Array.<Object>} gene
 	 * @param {Array.<Array.<Object>>} group
 	 * @param {Boolean} backwards
+	 * @param {Boolean} isLastGene - Is the last gene in the chromosome in the current group?
+	 * @param {Number} repliconLength - Total length of the replicon
 	 * @returns {Boolean}
 	 */
-	geneBelongsToGroup_(gene, group, backwards = false) {
+	geneBelongsToGroup_(gene, group, backwards = false, isLastGene = false, repliconLength = 0) {
 		let onSameStrand = group[0].strand === gene.strand,
-			closerThanCutoff = true
+			closerThanCutoff = true,
+			isCrossing = this.isCrossing_(group)
+
 		if (backwards)
-			closerThanCutoff = group[group.length - 1].start - gene.stop < this.distanceCutoffBp_
+			closerThanCutoff = group[group.length - 1].start - gene.stop <= this.distanceCutoffBp_
+		else if (isLastGene && !isCrossing)
+			closerThanCutoff = gene.start + repliconLength - group[group.length - 1].stop <= this.distanceCutoffBp_
 		else
-			closerThanCutoff = gene.start - group[group.length - 1].stop < this.distanceCutoffBp_
+			closerThanCutoff = gene.start - group[group.length - 1].stop <= this.distanceCutoffBp_
 		return onSameStrand && closerThanCutoff
+	}
+	/**
+	 * Test if still needs to run test grouping backwards one more time. It depends if the last gene of the last group cross the origin (false) or not (true)
+	 *
+	 * @param {Array.<Array.<Object>>} group
+	 * @returns {Boolean}
+	 */
+	isCrossing_(group) {
+		return group[group.length - 1].start > group[group.length - 1].stop
 	}
 }
 
