@@ -183,14 +183,13 @@ class TaxonomyService {
 	 * @returns {List} genomic children of given taxonomy id
 	 */
 	fetchGenomicChildren(taxonomyId) {
-		// TODO: return only genomic taxonomy IDs AND return itself (if genomic)
 		let taxonomyTableName = this.taxonomyModel_.getTableName(),
 			sql = `with recursive tree_nodes as (
-	select * from ${taxonomyTableName} where parent_taxonomy_id = ?
+	select * from ${taxonomyTableName} where id = ?
 	union all
 	select a.* from ${taxonomyTableName} a, tree_nodes where tree_nodes.id = a.parent_taxonomy_id
 )
-select * from tree_nodes`
+select a.* from tree_nodes a join genomes b ON (a.id = b.taxonomy_id)`
 		return this.taxonomyModel_.sequelize.query(sql, {
 			replacements: [taxonomyId],
 			type: this.taxonomyModel_.sequelize.QueryTypes.SELECT
@@ -272,6 +271,7 @@ select * from tree_nodes`
     select a.* from ${taxonomyTableName} a, tree_nodes where tree_nodes.parent_taxonomy_id = a.id
 )
 select * from tree_nodes`
+
 
 		return this.taxonomyModel_.sequelize.query(sql, {
 			replacements: [taxonomyId],
