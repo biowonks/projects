@@ -6,7 +6,7 @@ let GeneGroupFinder = require('./GeneGroupFinder'),
 	sampleGeneData = require('./test-data/sample-gene-data')
 
 describe('Services', function() {
-	describe.only('GeneGroupFinder', function() {
+	describe('GeneGroupFinder', function() {
 		describe('distanceCutoffBp', function() {
 			it('default constructor returns the default cutoff', function() {
 				let x = new GeneGroupFinder()
@@ -44,7 +44,6 @@ describe('Services', function() {
 				geneGroupFinder.findGroups(genes)
 				expect(genes).eql(oldGenes)
 			})
-
 			it('linear chromosome with one gene does not return any groups', function() {
 				let genes = [
 					{
