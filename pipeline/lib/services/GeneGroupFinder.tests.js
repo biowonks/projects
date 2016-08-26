@@ -389,6 +389,62 @@ describe('Services', function() {
 				})
 			})
 			describe('Dealing with circular chromosomes and genes crossing origins', function() {
+				it('If passed circular chromosome, throw Error if repliconLength  is not larger than the stop of last stop position', function() {
+					let genes = [
+						{
+							start: 1,
+							stop: 10,
+							strand: '+'
+						},
+						{
+							start: 20,
+							stop: 30,
+							strand: '+'
+						},
+						{
+							start: 500,
+							stop: 510,
+							strand: '+'
+						}
+					]
+					expect(function() {
+						geneGroupFinder.findGroups(genes, {isCircular: true})
+					}).throw(Error)
+				})
+				it('If not circular chromosome, repliconLength should not matter', function() {
+					let genes = [
+						{
+							start: 1,
+							stop: 10,
+							strand: '+'
+						},
+						{
+							start: 20,
+							stop: 30,
+							strand: '+'
+						},
+						{
+							start: 500,
+							stop: 510,
+							strand: '+'
+						}
+					]
+					let results = geneGroupFinder.findGroups(genes, {isCircular: false})
+					expect(results).eql([
+						[
+							{
+								start: 1,
+								stop: 10,
+								strand: '+'
+							},
+							{
+								start: 20,
+								stop: 30,
+								strand: '+'
+							}
+						]
+					])
+				})
 				it('If same strand, all genes at the end of chromosome should cluster together with the first group', function() {
 					let results = geneGroupFinder.findGroups([
 						{

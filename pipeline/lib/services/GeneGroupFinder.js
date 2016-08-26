@@ -39,7 +39,7 @@ class GeneGroupFinder {
 	 * @param {Number} [options.repliconLength = 0]
 	 * @returns {Array.<Array.<Object>>}
 	 */
-	findGroups(genes, options = {isCircular: false, repliconLength: 0}) {
+	findGroups(genes, options = {isCircular: false, repliconLength: 1}) {
 		let isCircular = options.isCircular,
 			repliconLength = options.repliconLength
 
@@ -56,6 +56,9 @@ class GeneGroupFinder {
 		genesCopy.sort(function(a, b) {
 			return a.start - b.start
 		})
+
+		if (isCircular && !options.repliconLength)
+			throw new Error('If chromosome is circular replicon length must be passed the in options')
 
 		if (isCircular)
 			lastGroup = this.lookBackwardsForGroup_(genesCopy)
