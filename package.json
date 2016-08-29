@@ -16,6 +16,7 @@
     "test": "node_modules/.bin/mocha --opts testing/mocha.opts $(cat testing/globs.txt)",
     "undo-migration": "node db/undo-migration.js | node_modules/.bin/bunyan",
 
+    "debug": "node --debug app.js | node_modules/.bin/bunyan",
     "start": "node index.js | node_modules/.bin/bunyan",
     "stop": "node_modules/.bin/pm2 stop mist-api",
     "monitor": "node_modules/.bin/pm2 monit mist-api",

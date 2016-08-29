@@ -121,7 +121,7 @@ function shutdown() {
 
 	// Close down any keep-alive connections
 	// https://github.com/nodejs/node-v0.x-archive/issues/9066
-	logger.info(`Waiting ${config.server.workerExitGraceMs / kMsPerSecond} seconds for open connections to complete`)
+	logger.info(`Waiting ${config.server.killTimeoutMs / kMsPerSecond} seconds for open connections to complete`)
 	server.shutdown(() => {
 		logger.info('All connections done, exiting normally')
 		exit()
@@ -130,7 +130,7 @@ function shutdown() {
 	let failSafeTimer = setTimeout(() => {
 		logger.fatal('Timed out waiting for open connections to close normally, forcefully exiting')
 		exit(kErrorExitCode)
-	}, config.server.workerExitGraceMs)
+	}, config.server.killTimeoutMs)
 
 	failSafeTimer.unref()
 }
