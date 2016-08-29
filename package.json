@@ -14,10 +14,9 @@
     "eslint": "node_modules/.bin/eslint 'models/**/*.js' 'services/**/*.js' 'pipeline/**/*.js'",
     "coverage": "node_modules/.bin/istanbul cover --dir testing/coverage node_modules/mocha/bin/_mocha -- --opts testing/mocha.opts $(cat testing/globs.txt)",
     "test": "node_modules/.bin/mocha --opts testing/mocha.opts $(cat testing/globs.txt)",
-    "start": "node index.js | node_modules/.bin/bunyan",
     "undo-migration": "node db/undo-migration.js | node_modules/.bin/bunyan",
 
-    "watch": "node_modules/.bin/pm2 start process.json --only mist-api",
+    "start": "node index.js | node_modules/.bin/bunyan",
     "stop": "node_modules/.bin/pm2 stop mist-api",
     "monitor": "node_modules/.bin/pm2 monit mist-api",
     "logs": "node_modules/.bin/pm2 logs --raw mist-api | node_modules/.bin/bunyan"

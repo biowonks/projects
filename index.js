@@ -7,17 +7,16 @@ const pm2 = require('pm2')
 // Local
 const config = require('./config')
 
-// Constants
-const kDefaultMaxMemory = 512, // MB
-	kMaxMemory = process.env.WEB_MEMORY || kDefaultMaxMemory
-
 pm2.connect(() => {
 	pm2.start({
-		script: 'app.js',
 		name: 'mist-api',
-		exec_mode: 'cluster',
+		script: 'app.js',
+		execMode: 'cluster',
 		instances: config.server.cpus,
-		max_memory_restart: kMaxMemory + 'M'
+		maxMemoryRestart: config.server.maxMemory + 'M',
+		killTimeout: config.server.killTimeoutMs,
+		restartDelay: config.server.restartDelayMs,
+		watch: config.server.watch
 	}, (startError) => {
 		if (startError) {
 			console.error('Error while launching applications', startError.stack || startError)
@@ -33,12 +32,12 @@ pm2.connect(() => {
 
 			bus.on('log:out', (packet) => {
 				// console.log('[%s] %s', packet.process.name, packet.data)
-				console.log(packet.data)
+				process.stdout.write(packet.data)
 			})
 
 			bus.on('log:err', (packet) => {
 				// console.error('[%s](Error) %s', packet.process.name, packet.data)
-				console.log(packet.data)
+				process.stderr.write(packet.data)
 			})
 		})
 	})
