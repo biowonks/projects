@@ -8,9 +8,10 @@ const Promise = require('bluebird'),
 const mutil = require('../mutil')
 
 // Constants
-const kNCBIPartialTaxonomyUrl = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?db=taxonomy&retmode=text&rettype=xml&id=',
+const kNCBIPartialTaxonomyUrl = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?tool=mistdb&email=biowonks@gmail.com&db=taxonomy&retmode=text&rettype=xml&id=',
 	kNCBIRootTaxonomyId = 1, // Absolute root taxonomic node defined by NCBI
-	kNumberOfWordsInSpecies = 2
+	kNumberOfWordsInSpecies = 2,
+	kDelayTimeBetweenEutilRequest = 251 // No more than three requests per second allowed
 
 /**
  * Private error used for indicating that a given taxonomic node already exists and breaking out of
@@ -47,8 +48,10 @@ class TaxonomyService {
 			return Promise.reject(new Error('invalid taxonomy id: must be positive integer'))
 
 		let url = this.eutilUrl(taxonomyId)
+
 		return requestPromise(url)
 		.then(this.parseNCBITaxonomyXML.bind(this))
+		.delay(kDelayTimeBetweenEutilRequest)
 	}
 
 	/**
