@@ -164,7 +164,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 	loadMistData_(mistData, transaction) {
 		let artificialGeneIds = []
 		return Promise.try(() => {
-			return this.loadGenomeReferences_(mistData.genomeReferences)
+			return this.loadGenomeReferences_(mistData.genomeReferences, transaction)
 			.then(() => this.loadComponent_(mistData.component, transaction))
 			.then((dbComponent) => {
 				this.setForeignKeyIds_(mistData.genes, 'component_id', dbComponent.id)
