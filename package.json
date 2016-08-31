@@ -1,9 +1,12 @@
 {
-  "name": "mist3-api",
+  "name": "mist-api",
   "version": "0.0.1",
   "description": "The MiST computational pipeline and API",
   "private": true,
   "main": "index.js",
+  "engines": {
+    "node": "6.4"
+  },
   "repository": {},
   "scripts": {
     "setup": "scripts/setup-mist.sh",
