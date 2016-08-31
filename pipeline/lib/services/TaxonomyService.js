@@ -11,7 +11,7 @@ const mutil = require('../mutil')
 const kNCBIPartialTaxonomyUrl = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?tool=mistdb&email=biowonks@gmail.com&db=taxonomy&retmode=text&rettype=xml&id=',
 	kNCBIRootTaxonomyId = 1, // Absolute root taxonomic node defined by NCBI
 	kNumberOfWordsInSpecies = 2,
-	kDelayTimeBetweenEutilRequest = 251 // No more than three requests per second allowed
+	kDelayTimeBetweenEutilRequest = 334 // No more than three requests per second allowed
 
 /**
  * Private error used for indicating that a given taxonomic node already exists and breaking out of
@@ -44,6 +44,7 @@ class TaxonomyService {
 	 * @returns {Promise} resolves with an object describing the taxonomy
 	 */
 	fetchFromNCBI(taxonomyId) {
+		let startTime = new Date().getTime()
 		if (!/^[1-9]\d*$/.test(taxonomyId))
 			return Promise.reject(new Error('invalid taxonomy id: must be positive integer'))
 
@@ -51,7 +52,15 @@ class TaxonomyService {
 
 		return requestPromise(url)
 		.then(this.parseNCBITaxonomyXML.bind(this))
-		.delay(kDelayTimeBetweenEutilRequest)
+		.then((result) => {
+			let endTime = new Date().getTime(),
+				spentTime = endTime - startTime,
+				waitTime = spentTime > kDelayTimeBetweenEutilRequest ? 0 : kDelayTimeBetweenEutilRequest - spentTime
+			return Promise.delay(waitTime)
+			.then(() => {
+				return result
+			})
+		})
 	}
 
 	/**
@@ -62,6 +71,7 @@ class TaxonomyService {
 	 * @returns {Promise} taxonomyObject with id, name, rank, parent
 	 */
 	updateTaxonomy(taxonomyId) {
+
 		return this.fetchLocal_(taxonomyId)
 		.then((localRawTaxonomy) => {
 			if (localRawTaxonomy)
