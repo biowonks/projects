@@ -1,0 +1,21 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Unit tests (local)",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/node_modules/.bin/_mocha",
+			"stopOnEntry": false,
+			"cwd": "${workspaceRoot}",
+			"args": [
+				"--no-timeouts",
+				"--require", "testing/setup.js",
+				"pipeline/**/*.tests.js",
+				"services/**/*.tests.js",
+				"models/**/*.tests.js"
+			],
+			"runtimeExecutable": null
+		}
+	]
+}
