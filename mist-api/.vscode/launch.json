@@ -14,30 +14,6 @@
 			"remoteRoot": "/home/biowonk/mist-api"
 		},
 		{
-			"name": "Pipeline",
-			"type": "node",
-			"request": "launch",
-			"program": "${workspaceRoot}/pipeline/index.js",
-			"stopOnEntry": false,
-			"cwd": "${workspaceRoot}/pipeline",
-			"args": [
-				// "-g",
-				// "1",
-				"Taxonomy"
-			],
-			"preLaunchTask": null,
-			"runtimeExecutable": null,
-			"runtimeArgs": [
-				"--nolazy"
-			],
-			"env": {
-				"NODE_ENV": "develop"
-			},
-			"externalConsole": false,
-			"sourceMaps": false,
-			"outDir": null
-		},
-		{
 			"name": "Undo migration",
 			"type": "node",
 			"request": "launch",

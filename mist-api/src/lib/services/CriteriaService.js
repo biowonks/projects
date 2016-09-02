@@ -1,7 +1,7 @@
 'use strict'
 
 // Local
-const CriteriaError = require('../lib/errors/CriteriaError')
+const CriteriaError = require('lib/errors/CriteriaError')
 
 // Constants
 const kDefaults = {

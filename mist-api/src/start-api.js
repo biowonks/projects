@@ -5,7 +5,7 @@
 const pm2 = require('pm2')
 
 // Local
-const config = require('./config')
+const config = require('../config')
 
 pm2.connect(() => {
 	pm2.start({

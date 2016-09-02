@@ -13,11 +13,12 @@ const bodyParser = require('body-parser'),
 	pathRoutify = require('path-routify')
 
 // Local
-const errorHandler = require('./lib/error-handler'),
+const config = require('../config'),
+	errorHandler = require('lib/error-handler'),
 	loadServices = require('./services'),
-	errors = require('./lib/errors'),
-	BootService = require('./services/BootService'),
-	RouteHelper = require('./lib/RouteHelper')
+	errors = require('lib/errors'),
+	BootService = require('mist-lib/services/BootService'),
+	RouteHelper = require('lib/RouteHelper')
 
 // Constants
 const kMsPerSecond = 1000,
@@ -26,9 +27,18 @@ const kMsPerSecond = 1000,
 
 // Maintain reference to server variable because the handleUncaughtErrors middleware references it.
 let server = null,
-	bootService = new BootService(),
+	bootService = new BootService(config.database, {
+		logger: {
+			name: 'mist-api',
+			streams: [
+				{
+					level: 'info',
+					stream: process.stdout
+				}
+			]
+		}
+	}),
 	logger = bootService.logger(),
-	config = BootService.config,
 	shutdownRequestReceived = false
 
 process.on('SIGINT', shutdown) // React to user interruptions (e.g. Ctrl-C)

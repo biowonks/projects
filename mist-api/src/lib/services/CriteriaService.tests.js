@@ -3,7 +3,7 @@
 
 // Local
 const CriteriaService = require('./CriteriaService'),
-	mistSequelize = require('../lib/mist-sequelize')
+	mistSequelize = require('mist-lib/mist-sequelize')
 
 // Other
 let sequelize = mistSequelize(), // This adds created_at, updated_at to each model
