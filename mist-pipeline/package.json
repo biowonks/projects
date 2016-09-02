@@ -9,7 +9,7 @@
     "preinstall": "node ../_common/merge-deps.js -i ../mist-lib/package.json ./package.json",
     "postinstall": "bin/install-symlinks.sh",
     "test": "find src -name '*.tests.js' | NODE_PATH=node_modules xargs node_modules/.bin/mocha -r ../_common/test.globals.js",
-    "coverage": "NODE_PATH=node_modules node_modules/.bin/istanbul cover --dir testing/coverage node_modules/mocha/bin/_mocha -- -r ../_common/test.globals.js 'src/{,!(node_modules)}/**/*.tests.js'",
+    "coverage": "NODE_PATH=node_modules node_modules/.bin/istanbul cover --config .istanbul.js node_modules/mocha/bin/_mocha -- -r ../_common/test.globals.js $(find src -name '*.tests.js')",
     "eslint": "node_modules/.bin/eslint --ignore-pattern src/node_modules 'src/**/*.js'",
     "install-coils": "vendor/install-coils.sh",
     "install-seg": "vendor/install-seg.sh",
