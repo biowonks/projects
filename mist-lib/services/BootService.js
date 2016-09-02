@@ -86,9 +86,6 @@ class BootService {
 		if (!dbConfig)
 			throw new Error('Unable to setup Sequelize. Please supply a valid database configuration during instantiation')
 
-		if (!dbConfig.enabled)
-			return
-
 		if (!dbConfig.name) {
 			this.bootLogger_.fatal('Invalid database configuration: missing database name')
 			throw new Error('Database enabled, but missing configuration (name)')
@@ -173,7 +170,7 @@ class BootService {
 
 	// ----------------------------------------------------
 	// Private methods
-	createLogger_(loggerOptions = {}) {
+	createLogger_(loggerOptions = {name: 'unknown'}) {
 		if (Reflect.has(loggerOptions, 'stream'))
 			throw new Error('Stream property is not an allowed logger option. Please convert to use the streams array property. See: https://github.com/trentm/node-bunyan#streams')
 

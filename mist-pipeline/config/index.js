@@ -6,18 +6,31 @@ let path = require('path')
 // Vendor
 let moment = require('moment')
 
+// Local
+let packageJSON = require('../package.json'), // eslint-disable-line no-mixed-requires
+	database = require('../src/node_modules/mist-lib/db/config')(packageJSON.name)
+
+// --------------------------------------------------------
+// database.name = ''
+// database.user = ''
+// database.password = ''
+// database.sequelizeOptions.host = 'db'
+// database.migrations.path = path.resolve(__dirname, '..', 'src', 'node_modules', 'mist-lib', 'db', 'migrations')
+
 let pipelineRootPath = path.resolve(__dirname, '..'),
 	paths = {
 		root: pipelineRootPath,
 		data: path.resolve(pipelineRootPath, 'data'),
 		genomes: path.resolve(pipelineRootPath, 'data', 'genomes'),
-		scripts: path.resolve(pipelineRootPath, 'scripts'),
-		lib: path.resolve(pipelineRootPath, 'scripts', 'lib'),
+		// scripts: path.resolve(pipelineRootPath, 'scripts'),
+		// lib: path.resolve(pipelineRootPath, 'scripts', 'lib'),
 		vendor: path.resolve(pipelineRootPath, 'vendor')
 	}
 
 module.exports = {
 	paths,
+
+	database,
 
 	ncbi: {
 		ftp: {

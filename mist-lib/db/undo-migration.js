@@ -9,7 +9,11 @@ let readline = require('readline')
 let program = require('commander')
 
 // Local
-let BootService = require('../services/BootService')
+let BootService = require('../services/BootService'),
+	loadDbConfig = require('./config')
+
+// Other
+let dbConfig = loadDbConfig('undo-migration')
 
 // --------------------------------------------------------
 // --------------------------------------------------------
@@ -51,7 +55,7 @@ function confirmUndo() {
 }
 
 function undoMigration() {
-	let bootService = new BootService({
+	let bootService = new BootService(dbConfig, {
 		logger: {
 			name: 'undo-migration'
 		}
