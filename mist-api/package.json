@@ -11,7 +11,7 @@
     "postinstall": "bin/install-symlinks.sh",
     "eslint": "node_modules/.bin/eslint --ignore-pattern src/node_modules 'src/**/*.js'",
     "coverage": "NODE_PATH=node_modules node_modules/.bin/istanbul cover --dir testing/coverage node_modules/mocha/bin/_mocha -- -r ../_common/test.globals.js 'src/{,!(node_modules)}/**/*.tests.js'",
-    "test": "NODE_PATH=node_modules node_modules/.bin/mocha -r ../_common/test.globals.js 'src/{,!(node_modules)}/**/*.tests.js'",
+    "test": "find src -name '*.tests.js' | NODE_PATH=node_modules xargs node_modules/.bin/mocha -r ../_common/test.globals.js",
     "debug": "NODE_PATH=node_modules node --debug src/app.js | node_modules/.bin/bunyan",
     "start": "NODE_PATH=node_modules node src/start-api.js | node_modules/.bin/bunyan",
     "stop": "node_modules/.bin/pm2 stop mist-api",
