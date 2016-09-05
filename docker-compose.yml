@@ -8,6 +8,7 @@ services:
       dockerfile: Dockerfile.node-bootstrap
       args:
         LOCAL_USER_ID: $LOCAL_USER_ID
+    command: /bin/true
 
   mist-lib.base:
     image: biowonks/mist-lib.base
@@ -16,6 +17,7 @@ services:
     build:
       context: mist-lib
       dockerfile: Dockerfile.base
+    command: /bin/true
 
   mist-lib:
     image: biowonks/mist-lib
@@ -34,6 +36,8 @@ services:
       - mist-local-db
 
   mist-api:
+    tty: true
+    stdin_open: true
     image: biowonks/mist-api
     depends_on:
       - mist-lib.base
@@ -45,6 +49,7 @@ services:
       - 5000:5000 # Port API is listening on
       - 5858:5858 # Node debugging port
       - 5859:5859 # Node debugging port
+    command: bash
 
   mist-local-db:
     build:
