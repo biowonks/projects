@@ -1,0 +1,18 @@
+FROM mhart/alpine-node:6.4
+
+MAINTAINER BioWonks <biowonks@users.noreply.github.com>
+
+# The following is to facilitate volume sharing with the right permissions when locally developing.
+# Use docker build --build-arg LOCAL_USER_ID=#### to configure the biowonks user with
+# a different id value
+ARG LOCAL_USER_ID=1000
+
+RUN echo http://nl.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
+	apk --update --no-cache add bash git ca-certificates su-exec && \
+	grep -q biowonks /etc/group || addgroup -g ${LOCAL_USER_ID:=1000} biowonks && \
+	id biowonks > /dev/null 2>&1 || adduser -S -G biowonks -s /bin/false -u ${LOCAL_USER_ID:=1000} biowonks && \
+	mkdir /app && \
+	chown biowonks:biowonks /app
+
+COPY _common /app/_common
+WORKDIR /app

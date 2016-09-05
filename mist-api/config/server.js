@@ -6,7 +6,6 @@ let os = require('os')
 // Constants
 const kDefaultMaxMemory = 512 // MB
 
-
 module.exports = function() {
 	return {
 		host: process.env.HOST || '127.0.0.1',
@@ -17,7 +16,7 @@ module.exports = function() {
 		// rule that all requests should not take longer than 30 seconds (imposed by Heroku) and
 		// gives the master adequate time to perform its own cleanup.
 		killTimeoutMs: 25000, // 25 seconds
-		restartDelayMs: 250, // 1/4 second
+		restartDelayMs: 500, // 1/2 second
 		watch: false,
 
 		// The following are derived automatically unless otherwise specified

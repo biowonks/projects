@@ -16,7 +16,7 @@ module.exports = {
 		password: '$&hxsALC!7_c',
 
 		sequelizeOptions: {
-			host: 'db'
+			host: 'mist-local-db'
 		}
 	},
 

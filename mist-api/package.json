@@ -8,15 +8,16 @@
   },
   "scripts": {
     "preinstall": "node ../_common/merge-deps.js -i ../mist-lib/package.json ./package.json",
-    "postinstall": "bin/install-symlinks.sh",
     "eslint": "node_modules/.bin/eslint --ignore-pattern src/node_modules 'src/**/*.js'",
-    "coverage": "NODE_PATH=node_modules node_modules/.bin/istanbul cover --config .istanbul.js node_modules/mocha/bin/_mocha -- -r ../_common/test.globals.js $(find src -name '*.tests.js')",
+    "coverage": "NODE_PATH=node_modules node_modules/.bin/istanbul cover --config ../_common/.istanbul.js node_modules/mocha/bin/_mocha -- -r ../_common/test.globals.js $(find src -name '*.tests.js')",
     "test": "find src -name '*.tests.js' | NODE_PATH=node_modules xargs node_modules/.bin/mocha -r ../_common/test.globals.js",
     "debug": "NODE_PATH=node_modules node --debug src/app.js | node_modules/.bin/bunyan",
     "start": "NODE_PATH=node_modules node src/start-api.js | node_modules/.bin/bunyan",
     "stop": "node_modules/.bin/pm2 stop mist-api",
     "monitor": "node_modules/.bin/pm2 monit mist-api",
-    "logs": "node_modules/.bin/pm2 logs --raw mist-api | node_modules/.bin/bunyan"
+    "logs": "node_modules/.bin/pm2 logs --raw mist-api | node_modules/.bin/bunyan",
+    "docker-build": "docker build -t biowonks/mist-api .",
+    "on-docker": "docker run --rm biowonks/mist-api"
   },
   "pre-commit": [
     "eslint"

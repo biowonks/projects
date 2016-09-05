@@ -1,0 +1,59 @@
+version: '2'
+
+services:
+  node-bootstrap:
+    image: biowonks/node-bootstrap
+    build:
+      context: .
+      dockerfile: Dockerfile.node-bootstrap
+      args:
+        LOCAL_USER_ID: $LOCAL_USER_ID
+
+  mist-lib.base:
+    image: biowonks/mist-lib.base
+    depends_on:
+      - node-bootstrap
+    build:
+      context: mist-lib
+      dockerfile: Dockerfile.base
+
+  mist-lib:
+    image: biowonks/mist-lib
+    depends_on:
+      - mist-lib.base
+    build:
+      context: mist-lib
+
+  mist-pipeline:
+    image: biowonks/mist-pipeline
+    depends_on:
+      - mist-lib.base
+    build:
+      context: mist-pipeline
+    links:
+      - mist-local-db
+
+  mist-api:
+    image: biowonks/mist-api
+    depends_on:
+      - mist-lib.base
+    build:
+      context: mist-api
+    links:
+      - mist-local-db
+    ports:
+      - 5000:5000 # Port API is listening on
+      - 5858:5858 # Node debugging port
+      - 5859:5859 # Node debugging port
+
+  mist-local-db:
+    build:
+      context: mist-local-db
+    image: biowonks/mist-local-db
+    volumes:
+      - db-9.5.4:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+
+volumes:
+  db-9.5.4:

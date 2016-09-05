@@ -24,7 +24,7 @@ HMMER3_URL="http://eddylab.org/software/hmmer3/$VERSION/$TARBALL_FILENAME"
 
 echo "Downloading HMMER3 tarball"
 cd /tmp
-rm $TARBALL_FILENAME
+rm -f $TARBALL_FILENAME
 wget --no-verbose $HMMER3_URL
 echo "Decompressing tarball"
 tar zxvf $TARBALL_FILENAME
@@ -34,7 +34,7 @@ make
 make install
 echo "Cleaning up"
 cd /tmp
-rm -r $TARBALL_BASENAME
+rm -rf $TARBALL_BASENAME
 rm $TARBALL_FILENAME
 PATH=$BIN_PATH:$PATH
 export PATH

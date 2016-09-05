@@ -1,6 +1,9 @@
 /* eslint-disable no-console */
 'use strict'
 
+// Core
+const path = require('path')
+
 // Vendor
 const pm2 = require('pm2')
 
@@ -10,7 +13,7 @@ const config = require('../config')
 pm2.connect(() => {
 	pm2.start({
 		name: 'mist-api',
-		script: 'app.js',
+		script: path.resolve(__dirname, 'app.js'),
 		execMode: 'cluster',
 		instances: config.server.cpus,
 		maxMemoryRestart: config.server.maxMemory + 'M',
