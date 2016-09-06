@@ -104,7 +104,7 @@ exports.download = function(url, optDestFile) {
 			destFile = result
 			tmpDestFile = `${destFile}.tmp`
 
-			return exports.shellCommand(`wget --quiet -O "${tmpDestFile}" ${url}`)
+			return exports.shellCommand(`wget -q -O "${tmpDestFile}" ${url}`)
 		})
 		.catch((error) => {
 			// Cleanup the temporary file created by wget on failure
