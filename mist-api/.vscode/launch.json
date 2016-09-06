@@ -2,6 +2,27 @@
 	"version": "0.2.0",
 	"configurations": [
 		{
+			"name": "Run API",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/src/app.js",
+			"stopOnEntry": false,
+			"args": [],
+			"cwd": "${workspaceRoot}",
+			"preLaunchTask": null,
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development",
+				"NODE_PATH": "${workspaceRoot}/node_modules"
+			},
+			"externalConsole": false,
+			"sourceMaps": false,
+			"outDir": null
+		},
+		{
 			"name": "Attach API",
 			"type": "node",
 			"request": "attach",

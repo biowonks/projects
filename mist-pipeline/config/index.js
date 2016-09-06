@@ -39,17 +39,19 @@ module.exports = {
 	},
 
 	vendor: {
-		// Tools
+		// Vendor tools
 		coils: {
-			basePath: path.resolve(paths.vendor, 'coils')
+			basePath: path.resolve(paths.vendor, 'vendor-tools', 'coils')
 		},
+		seg: {
+			basePath: path.resolve(paths.vendor, 'vendor-tools', 'seg')
+		},
+
+		// Other tools
 		hmmer3: {
 			version: '3.1b2',
 			basePath: path.resolve(paths.vendor, 'hmmer3', '3.1b2'),
 			binPath: path.resolve(paths.vendor, 'hmmer3', '3.1b2', 'bin')
-		},
-		seg: {
-			basePath: path.resolve(paths.vendor, 'seg')
 		},
 
 		// Databases

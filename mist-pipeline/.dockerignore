@@ -1,9 +1,4 @@
 .vscode
 node_modules
 testing
-/vendor/*
-!/vendor/*.sh
-!/vendor/coils*
-/vendor/coils/ncoils
-!/vendor/seg*
-/vendor/seg/seg
+vendor/*

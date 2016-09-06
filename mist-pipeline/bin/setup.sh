@@ -3,11 +3,11 @@
 set -e
 
 npm install
-npm run install-coils
-npm run install-seg
+npm run install-vendor-tools
 npm run install-hmmer3
-npm run install-pfam
+npm run install-agfam
+# npm run install-pfam
 
-echo "\n"
+echo ""
 echo "-----------------------------------------------------------"
 echo "MiST setup complete"

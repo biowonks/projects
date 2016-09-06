@@ -34,7 +34,7 @@ if [[ -s "$TARGET_DIR/$PFAM_HMM_NAME" &&
 fi
 
 if [[ ! -s "$TARGET_DIR/$PFAM_HMM_NAME" ]]; then
-	echo "Downloading HMM database"
+	echo "Downloading Pfam $VERSION HMM database"
 	wget --no-verbose -O "/tmp/$GZ_PFAM_HMM_NAME" $PFAM_HMM_URL
 	echo "Decompressing"
 	gunzip "/tmp/$GZ_PFAM_HMM_NAME"

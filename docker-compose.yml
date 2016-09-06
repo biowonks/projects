@@ -1,6 +1,7 @@
 version: '2'
 
 services:
+  # -------------------------------------------------------
   node-bootstrap:
     image: biowonks/node-bootstrap
     build:
@@ -10,6 +11,8 @@ services:
         LOCAL_USER_ID: $LOCAL_USER_ID
     command: /bin/true
 
+
+  # -------------------------------------------------------
   mist-lib.base:
     image: biowonks/mist-lib.base
     depends_on:
@@ -19,6 +22,8 @@ services:
       dockerfile: Dockerfile.base
     command: /bin/true
 
+
+  # -------------------------------------------------------
   mist-lib:
     image: biowonks/mist-lib
     depends_on:
@@ -26,7 +31,11 @@ services:
     build:
       context: mist-lib
 
+
+  # -------------------------------------------------------
   mist-pipeline:
+    tty: true
+    stdin_open: true
     image: biowonks/mist-pipeline
     depends_on:
       - mist-lib.base
@@ -34,10 +43,14 @@ services:
       context: mist-pipeline
     links:
       - mist-local-db
+    volumes:
+      - mist-pipeline-node_modules:/app/mist-pipeline/node_modules
+      - mist-pipeline-vendor:/app/mist-pipeline/vendor
+    command: bash
 
+
+  # -------------------------------------------------------
   mist-api:
-    tty: true
-    stdin_open: true
     image: biowonks/mist-api
     depends_on:
       - mist-lib.base
@@ -49,8 +62,12 @@ services:
       - 5000:5000 # Port API is listening on
       - 5858:5858 # Node debugging port
       - 5859:5859 # Node debugging port
-    command: bash
+    volumes:
+      - mist-api-node_modules:/app/mist-api/node_modules
+    command: [npm, start]
 
+
+  # -------------------------------------------------------
   mist-local-db:
     build:
       context: mist-local-db
@@ -60,5 +77,10 @@ services:
     ports:
       - 5432:5432
 
+
+# -------------------------------------------------------
 volumes:
   db-9.5.4:
+  mist-pipeline-vendor:
+  mist-pipeline-node_modules:
+  mist-api-node_modules:
