@@ -7,5 +7,4 @@ RUN chown -R biowonks:biowonks /app
 USER biowonks
 WORKDIR /app/mist-api
 RUN npm install
-
-# CMD ["npm", "start"]
+CMD ["npm", "start"]

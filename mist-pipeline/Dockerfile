@@ -8,4 +8,4 @@ COPY . /app/mist-pipeline
 RUN chown -R biowonks:biowonks /app
 USER biowonks
 WORKDIR /app/mist-pipeline
-RUN npm run setup
+CMD ["npm", "run", "setup"]

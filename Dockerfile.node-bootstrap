@@ -7,12 +7,15 @@ MAINTAINER BioWonks <biowonks@users.noreply.github.com>
 # a different id value
 ARG LOCAL_USER_ID=1000
 
-RUN echo http://nl.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
+RUN addgroup -g ${LOCAL_USER_ID:=1000} biowonks && \
+	adduser -S -G biowonks -s /bin/false -u ${LOCAL_USER_ID:=1000} biowonks && \
+	echo http://nl.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
 	apk --update --no-cache add bash git ca-certificates su-exec && \
-	grep -q biowonks /etc/group || addgroup -g ${LOCAL_USER_ID:=1000} biowonks && \
-	id biowonks > /dev/null 2>&1 || adduser -S -G biowonks -s /bin/false -u ${LOCAL_USER_ID:=1000} biowonks && \
 	mkdir /app && \
 	chown biowonks:biowonks /app
 
+COPY docker.node-bootstrap.entrypoint.sh /usr/local/bin/
 COPY _common /app/_common
-WORKDIR /app
+
+ENTRYPOINT ["/usr/local/bin/docker.node-bootstrap.entrypoint.sh"]
+CMD ["bash"]

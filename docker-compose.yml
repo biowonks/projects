@@ -2,6 +2,35 @@ version: '2'
 
 services:
   # -------------------------------------------------------
+  # -------------------------------------------------------
+  # Master docker image for performing local development work
+  biowonks-dev:
+    tty: true
+    stdin_open: true
+    image: biowonks/node-bootstrap
+    container_name: biowonks-dev
+    depends_on:
+      - mist-local-db
+      - node-bootstrap
+    links:
+      - mist-local-db
+    ports:
+      - 5000:5000 # MiST-API port
+      - 5858:5858 # Node debugging port
+      - 5859:5859 # Node debugging port
+    volumes:
+      - .:/app
+      - /app/mist-lib/node_modules
+      - /app/mist-api/node_modules
+      - /app/mist-api/config/local
+      - /app/mist-pipeline/node_modules
+      - /app/mist-pipeline/vendor
+    working_dir: /app
+    environment:
+      - BIOWONKS_VOLUMES=/app/mist-lib/node_modules /app/mist-api/node_modules /app/mist-pipeline/node_modules /app/mist-pipeline/vendor /app/mist-api/config/local
+
+
+  # -------------------------------------------------------
   node-bootstrap:
     image: biowonks/node-bootstrap
     build:
@@ -43,9 +72,9 @@ services:
       context: mist-pipeline
     links:
       - mist-local-db
-    volumes:
-      - mist-pipeline-node_modules:/app/mist-pipeline/node_modules
-      - mist-pipeline-vendor:/app/mist-pipeline/vendor
+    # volumes:
+    #   - mist-pipeline-node_modules:/app/mist-pipeline/node_modules
+    #   - mist-pipeline-vendor:/app/mist-pipeline/vendor
     command: bash
 
 
@@ -81,6 +110,6 @@ services:
 # -------------------------------------------------------
 volumes:
   db-9.5.4:
-  mist-pipeline-vendor:
-  mist-pipeline-node_modules:
+  # mist-pipeline-vendor:
+  # mist-pipeline-node_modules:
   mist-api-node_modules:
