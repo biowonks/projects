@@ -110,6 +110,3 @@ services:
 # -------------------------------------------------------
 volumes:
   db-9.5.4:
-  # mist-pipeline-vendor:
-  # mist-pipeline-node_modules:
-  mist-api-node_modules:
