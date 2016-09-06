@@ -72,9 +72,6 @@ services:
       context: mist-pipeline
     links:
       - mist-local-db
-    # volumes:
-    #   - mist-pipeline-node_modules:/app/mist-pipeline/node_modules
-    #   - mist-pipeline-vendor:/app/mist-pipeline/vendor
     command: bash
 
 
@@ -91,8 +88,6 @@ services:
       - 5000:5000 # Port API is listening on
       - 5858:5858 # Node debugging port
       - 5859:5859 # Node debugging port
-    volumes:
-      - mist-api-node_modules:/app/mist-api/node_modules
     command: [npm, start]
 
 
@@ -110,6 +105,3 @@ services:
 # -------------------------------------------------------
 volumes:
   db-9.5.4:
-  # mist-pipeline-vendor:
-  # mist-pipeline-node_modules:
-  mist-api-node_modules:
