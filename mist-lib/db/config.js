@@ -1,9 +1,12 @@
 'use strict'
 
 // Core
-const path = require('path')
+const assert = require('assert'),
+	path = require('path')
 
 module.exports = function(applicationName = 'app') {
+	assert(typeof applicationName === 'string', 'application name must be a string')
+
 	// Default database configuration.
 	let config = {
 		// NOTE: The DATABASE_URL environment variable if defined will override these values.
