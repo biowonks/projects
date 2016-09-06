@@ -10,7 +10,8 @@ const bodyParser = require('body-parser'),
 	express = require('express'),
 	helmet = require('helmet'), // Security practices
 	httpShutdown = require('http-shutdown'),
-	pathRoutify = require('path-routify')
+	pathRoutify = require('path-routify'),
+	responseTime = require('response-time')
 
 // Local
 const config = require('../config'),
@@ -73,6 +74,13 @@ bootService.setup()
 	app.set('logger', logger)
 	app.set('sequelize', bootService.sequelize())
 	app.set('models', bootService.models())
+
+	if (config.responseTime.enabled) {
+		app.use(responseTime((req, res, time) => {
+			logger.info({url: req.originalUrl, responseTime: time, httpMethod: req.method, statusCode: res.statusCode}, `${res.statusCode} - ${req.method.toUpperCase()} ${req.originalUrl}: ${time.toFixed(1)} ms`)
+			res.header('X-Response-Time', time)
+		}))
+	}
 
 	if (config.routing.ssl)
 		app.use(throwErrorIfNotSSL)

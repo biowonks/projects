@@ -41,6 +41,10 @@ let config = {
 		enabled: true
 	},
 
+	responseTime: {
+		enabled: true
+	},
+
 	debug: {
 		errors: false	// If true, outputs error and stack to console
 	},
