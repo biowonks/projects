@@ -25,7 +25,7 @@ HMMER3_URL="http://eddylab.org/software/hmmer3/$VERSION/$TARBALL_FILENAME"
 echo "Downloading HMMER3 tarball"
 cd /tmp
 rm -f $TARBALL_FILENAME
-wget --no-verbose $HMMER3_URL
+wget -q $HMMER3_URL
 echo "Decompressing tarball"
 tar zxvf $TARBALL_FILENAME
 cd $TARBALL_BASENAME
