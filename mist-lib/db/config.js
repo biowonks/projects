@@ -18,7 +18,7 @@ module.exports = function(applicationName = 'app') {
 			protocol: 'postgres',
 			dialect: 'postgres',
 			port: 5432,
-			host: 'localhost',
+			host: 'mist-local-db', // docker-specific
 			dialectOptions: {
 				application_name: applicationName,
 				ssl: true
