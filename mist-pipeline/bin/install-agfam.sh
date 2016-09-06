@@ -33,7 +33,7 @@ mkdir -p $TARGET_DIR
 
 if [[ ! -s "$TARGET_DIR/$AGFAM_HMM_NAME" ]]; then
 	echo "Downloading Agfam $VERSION HMM database"
-	wget --no-verbose -O "$TARGET_DIR/$AGFAM_HMM_NAME" $AGFAM_HMM_URL
+	wget -q -O "$TARGET_DIR/$AGFAM_HMM_NAME" $AGFAM_HMM_URL
 fi
 
 cd $TARGET_DIR
