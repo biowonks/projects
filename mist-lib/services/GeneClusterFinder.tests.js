@@ -2,29 +2,29 @@
 'use strict'
 
 // Local
-let GeneGroupFinder = require('./GeneGroupFinder'),
+let GeneClusterFinder = require('./GeneClusterFinder'),
 	sampleGeneData = require('./test-data/sample-gene-data')
 
 describe('Services', function() {
-	describe('GeneGroupFinder', function() {
+	describe('GeneClusterFinder', function() {
 		describe('distanceCutoffBp', function() {
 			it('default constructor returns the default cutoff', function() {
-				let x = new GeneGroupFinder()
-				expect(x.distanceCutoffBp()).equal(GeneGroupFinder.kDefaultDistanceCutoffBp)
+				let x = new GeneClusterFinder()
+				expect(x.distanceCutoffBp()).equal(GeneClusterFinder.kDefaultDistanceCutoffBp)
 			})
 
 			it('arbitrary cutoff of 300', function() {
-				expect(GeneGroupFinder.kDefaultDistanceCutoffBp).not.equal(300)
-				let x = new GeneGroupFinder(300)
+				expect(GeneClusterFinder.kDefaultDistanceCutoffBp).not.equal(300)
+				let x = new GeneClusterFinder(300)
 				expect(x.distanceCutoffBp()).equal(300)
 			})
 		})
 
-		describe('findGroups', function() {
-			let geneGroupFinder = null,
+		describe('findClusters', function() {
+			let geneClusterFinder = null,
 				cutoff = null
 			beforeEach(() => {
-				geneGroupFinder = new GeneGroupFinder(200)
+				geneClusterFinder = new GeneClusterFinder(200)
 			})
 
 			it('does not mutate source genes array', function() {
@@ -41,9 +41,10 @@ describe('Services', function() {
 					}
 				]
 				let oldGenes = genes.slice()
-				geneGroupFinder.findGroups(genes)
+				geneClusterFinder.findClusters(genes)
 				expect(genes).eql(oldGenes)
 			})
+
 			it('linear chromosome with one gene does not return any groups', function() {
 				let genes = [
 					{
@@ -52,7 +53,7 @@ describe('Services', function() {
 						strand: '+'
 					}
 				]
-				let results = geneGroupFinder.findGroups(genes)
+				let results = geneClusterFinder.findClusters(genes)
 				expect(results).eql([])
 			})
 
@@ -64,7 +65,7 @@ describe('Services', function() {
 						strand: '+'
 					}
 				]
-				let results = geneGroupFinder.findGroups(genes, {isCircular: true, repliconLength: 30})
+				let results = geneClusterFinder.findClusters(genes, {isCircular: true, repliconLength: 30})
 				expect(results).eql([])
 			})
 
@@ -81,12 +82,12 @@ describe('Services', function() {
 						strand: '+'
 					}
 				]
-				let results = geneGroupFinder.findGroups(genes, {isCircular: true, repliconLength: 850})
+				let results = geneClusterFinder.findClusters(genes, {isCircular: true, repliconLength: 850})
 				expect(results).eql([])
 			})
 			describe('Cutoff should be inclusive', function() {
 				it('same distance of cutoff should be grouped', function() {
-					cutoff = geneGroupFinder.distanceCutoffBp()
+					cutoff = geneClusterFinder.distanceCutoffBp()
 					let genes = [
 						{
 							start: 1,
@@ -99,11 +100,11 @@ describe('Services', function() {
 							strand: '+'
 						}
 					]
-					let results = geneGroupFinder.findGroups(genes, {isCircular: true, repliconLength: 850})
+					let results = geneClusterFinder.findClusters(genes, {isCircular: true, repliconLength: 850})
 					expect(results).eql([genes])
 				})
 				it('1bp more than the cutoff should not be grouped', function() {
-					cutoff = geneGroupFinder.distanceCutoffBp()
+					cutoff = geneClusterFinder.distanceCutoffBp()
 					let genes = [
 						{
 							start: 1,
@@ -116,13 +117,13 @@ describe('Services', function() {
 							strand: '+'
 						}
 					]
-					let results = geneGroupFinder.findGroups(genes, {isCircular: true, repliconLength: 850})
+					let results = geneClusterFinder.findClusters(genes, {isCircular: true, repliconLength: 850})
 					expect(results).eql([])
 				})
 			})
 
 			it('gene on + strand followed by gene on - strand that is < cutoff should not be grouped', function() {
-				let results = geneGroupFinder.findGroups([
+				let results = geneClusterFinder.findClusters([
 					{
 						start: 1,
 						stop: 10,
@@ -151,7 +152,7 @@ describe('Services', function() {
 					}
 				]
 
-				let results = geneGroupFinder.findGroups(genes)
+				let results = geneClusterFinder.findClusters(genes)
 				expect(results).deep.equal([
 					[
 						{
@@ -169,7 +170,7 @@ describe('Services', function() {
 			})
 
 			it('gene on - strand followed by gene on - strand that is < cutoff should be grouped', function() {
-				let results = geneGroupFinder.findGroups([
+				let results = geneClusterFinder.findClusters([
 					{
 						start: 1,
 						stop: 10,
@@ -196,7 +197,7 @@ describe('Services', function() {
 			})
 
 			it('gene groups with different strands should be groupped separetely', function() {
-				let results = geneGroupFinder.findGroups([
+				let results = geneClusterFinder.findClusters([
 					{
 						start: 1,
 						stop: 10,
@@ -247,7 +248,7 @@ describe('Services', function() {
 			})
 
 			it('gene groups with same strand but different distant from each other should be groupped separetely', function() {
-				let results = geneGroupFinder.findGroups([
+				let results = geneClusterFinder.findClusters([
 					{
 						start: 1,
 						stop: 10,
@@ -298,7 +299,7 @@ describe('Services', function() {
 			})
 			describe('Dealing with overlapping genes', function() {
 				it('case: patial overlap. If same strand, then they should cluster together', function() {
-					let results = geneGroupFinder.findGroups([
+					let results = geneClusterFinder.findClusters([
 						{
 							start: 1,
 							stop: 10,
@@ -327,7 +328,7 @@ describe('Services', function() {
 				})
 
 				it('case: patial overlap. If different strand, then they should NOT cluster together', function() {
-					let results = geneGroupFinder.findGroups([
+					let results = geneClusterFinder.findClusters([
 						{
 							start: 1,
 							stop: 10,
@@ -343,7 +344,7 @@ describe('Services', function() {
 				})
 
 				it('case: full overlap. If same strand, then they should cluster together', function() {
-					let results = geneGroupFinder.findGroups([
+					let results = geneClusterFinder.findClusters([
 						{
 							start: 1,
 							stop: 50,
@@ -372,7 +373,7 @@ describe('Services', function() {
 				})
 
 				it('case: full overlap. If different strand, then they should NOT cluster together', function() {
-					let results = geneGroupFinder.findGroups([
+					let results = geneClusterFinder.findClusters([
 						{
 							start: 1,
 							stop: 50,
@@ -407,7 +408,7 @@ describe('Services', function() {
 						}
 					]
 					expect(function() {
-						geneGroupFinder.findGroups(genes, {isCircular: true})
+						geneClusterFinder.findClusters(genes, {isCircular: true})
 					}).throw(Error)
 				})
 				it('If not circular chromosome, repliconLength should not matter', function() {
@@ -428,7 +429,7 @@ describe('Services', function() {
 							strand: '+'
 						}
 					]
-					let results = geneGroupFinder.findGroups(genes, {isCircular: false})
+					let results = geneClusterFinder.findClusters(genes, {isCircular: false})
 					expect(results).eql([
 						[
 							{
@@ -445,7 +446,7 @@ describe('Services', function() {
 					])
 				})
 				it('If same strand, all genes at the end of chromosome should cluster together with the first group', function() {
-					let results = geneGroupFinder.findGroups([
+					let results = geneClusterFinder.findClusters([
 						{
 							start: 10,
 							stop: 50,
@@ -483,7 +484,7 @@ describe('Services', function() {
 					])
 				})
 				it('If not the same strand, all genes at the end of chromosome should NOT cluster together with the first group', function() {
-					let results = geneGroupFinder.findGroups([
+					let results = geneClusterFinder.findClusters([
 						{
 							start: 10,
 							stop: 50,
@@ -516,7 +517,7 @@ describe('Services', function() {
 					])
 				})
 				it('If same strand and under cutoff, the group at the end of chromosome should cluster together with the first gene', function() {
-					let results = geneGroupFinder.findGroups([
+					let results = geneClusterFinder.findClusters([
 						{
 							start: 10,
 							stop: 50,
@@ -566,7 +567,7 @@ describe('Services', function() {
 					])
 				})
 				it('all genes are part of the 1 group from backwards, return should be in order', function() {
-					let results = geneGroupFinder.findGroups([
+					let results = geneClusterFinder.findClusters([
 						{
 							start: 210,
 							stop: 240,
@@ -614,7 +615,7 @@ describe('Services', function() {
 					])
 				})
 				it('If same strand but not under cutoff, the last group should be at the end of the returned groups', function() {
-					let results = geneGroupFinder.findGroups([
+					let results = geneClusterFinder.findClusters([
 						{
 							start: 210,
 							stop: 240,
@@ -681,7 +682,7 @@ describe('Services', function() {
 							strand: '+'
 						}
 					]
-					let results = geneGroupFinder.findGroups(genes, {isCircular: true, repliconLength: 800})
+					let results = geneClusterFinder.findClusters(genes, {isCircular: true, repliconLength: 800})
 					expect(results).eql([
 						[
 							{
@@ -700,7 +701,7 @@ describe('Services', function() {
 			})
 			describe('Circular and overlapping', function() {
 				it('Should handle this example with Circular and overlapping together', function() {
-					let results = geneGroupFinder.findGroups([
+					let results = geneClusterFinder.findClusters([
 						{
 							start: 1,
 							stop: 50,
@@ -771,7 +772,7 @@ describe('Services', function() {
 				})
 			})
 			it('Should just parse the input in the right way', function() {
-				let results = geneGroupFinder.findGroups(sampleGeneData)
+				let results = geneClusterFinder.findClusters(sampleGeneData)
 				expect(results).deep.equal(
 					[
 						[
@@ -791,7 +792,7 @@ describe('Services', function() {
 			})
 
 			it('Should return empty if empty array is passed', function() {
-				let results = geneGroupFinder.findGroups([])
+				let results = geneClusterFinder.findClusters([])
 				expect(results).deep.equal([])
 			})
 
@@ -808,7 +809,7 @@ describe('Services', function() {
 					]
 				fixtures.forEach((fixture) => {
 					expect(function() {
-						geneGroupFinder.findGroups(fixture)
+						geneClusterFinder.findClusters(fixture)
 					}).throw(Error)
 				})
 			})

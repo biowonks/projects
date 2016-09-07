@@ -8,7 +8,7 @@ const kDefaultDistanceCutoffBp = 200,
 	kMinGroupSize = 2
 
 module.exports =
-class GeneGroupFinder {
+class GeneClusterFinder {
 	/**
 	 * Groups genes that are cluster together in the chromosome under a certain distance cutoff (in bp) and has the same strand.
 	 *
@@ -39,7 +39,7 @@ class GeneGroupFinder {
 	 * @param {Number} [options.repliconLength = 0]
 	 * @returns {Array.<Array.<Object>>}
 	 */
-	findGroups(genes, options = {isCircular: false, repliconLength: 1}) {
+	findClusters(genes, options = {isCircular: false, repliconLength: 1}) {
 		let isCircular = options.isCircular,
 			repliconLength = options.repliconLength
 

@@ -70,7 +70,10 @@ function loadModels(sequelize, optLogger) {
 		let modelName = nameForDefinition(definition, modelFileName)
 		setupDefinition(definition, modelName)
 
-		models[modelName] = sequelize.define(modelName, definition.fields, definition.params)
+		let model = models[modelName] = sequelize.define(modelName, definition.fields, definition.params)
+
+		if (definition.params.noPrimaryKey)
+			model.removeAttribute('id')
 
 		if (optLogger)
 			optLogger.info({modelName, table: definition.params.tableName}, `Loaded model: ${modelName} (${definition.params.tableName} table)`)

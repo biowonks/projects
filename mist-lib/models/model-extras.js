@@ -24,6 +24,12 @@ module.exports = function(Sequelize) {
 		}
 	}
 
+	function requiredDnaStrand() {
+		let result = dnaStrand()
+		result.allowNull = false
+		return result
+	}
+
 	function positiveInteger() {
 		return {
 			type: Sequelize.INTEGER,
@@ -134,6 +140,7 @@ module.exports = function(Sequelize) {
 	return {
 		accessionWithoutVersion,
 		dnaStrand,
+		requiredDnaStrand,
 		requiredAccessionWithoutVersion,
 		positiveInteger,
 		seqId,
