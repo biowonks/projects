@@ -14,24 +14,30 @@ In order to work as a developer make sure to checkout the develop branch:
 git checkout develop
 ```
 
-### Start Docker
+Start Docker:
 ```
 docker-compose -up -d biowonks-dev
+```
+
+Attach the bash session:
+```
 docker attach biowonks-dev
 ```
 
-## MIST PIPELINE
+## MiST pipeline
+
 ```
 cd mist-pipeline
 npm install
 ./bin/pipeline.sh SeedNewGenomes
 ```
 
-## MIST API
+## MiST api
 Setup:
 ```
 cd mist-api
 npm run setup
+```
 
 Start the api with:
 ```
