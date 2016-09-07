@@ -14,7 +14,7 @@ module.exports = function(Sequelize, models, extras) {
 			type: Sequelize.TEXT
 		},
 		location: extras.requiredText(),
-		strand: extras.dnaStrand(),
+		strand: extras.requiredDnaStrand(),
 		start: extras.requiredPositiveInteger(),
 		stop: extras.requiredPositiveInteger(),
 		length: extras.requiredPositiveInteger(),
