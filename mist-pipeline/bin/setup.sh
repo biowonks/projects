@@ -6,7 +6,7 @@ npm install
 npm run install-vendor-tools
 npm run install-hmmer3
 npm run install-agfam
-# npm run install-pfam
+npm run install-pfam
 
 echo ""
 echo "-----------------------------------------------------------"
