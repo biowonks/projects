@@ -6,7 +6,7 @@ DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 cd $DIR/..
 
-LOCAL_USER_ID=$(id -u) docker-compose build
+LOCAL_USER_ID=$(id -u) docker-compose build biowonks-dev
 docker-compose up -d biowonks-dev
 
 echo '-----------------------------------------------------------'
