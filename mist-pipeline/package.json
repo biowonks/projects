@@ -58,7 +58,7 @@
     "request": "^2.74.0",
     "request-promise": "^4.1.1",
     "sequelize": "^3.24.1",
-    "sequelize-migrator": "git://github.com/lukeulrich/sequelize-migrator.git",
+    "sequelize-migrator": "https://github.com/lukeulrich/sequelize-migrator.git",
     "universal-analytics": "^0.4.2",
     "xml2js": "^0.4.17"
   },
