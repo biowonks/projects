@@ -33,6 +33,10 @@ module.exports = function(dbConfig = {}) {
 	sequelizeOptions.define.underscored = true
 	sequelizeOptions.define.timestamps = true
 
+	sequelizeOptions.dialect = dbConfig.dialect
+	sequelizeOptions.host = dbConfig.host
+	sequelizeOptions.port = dbConfig.port
+
 	addClassMethods(sequelizeOptions.define)
 	return new Sequelize(dbConfig.name, dbConfig.user, dbConfig.password, sequelizeOptions)
 }

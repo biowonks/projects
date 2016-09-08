@@ -9,15 +9,12 @@ const kMaxCpus = 2,
 	kEnvWatchPaths = kWatchEnabled && process.env.WATCH ? process.env.WATCH.split(',') : null
 
 module.exports = {
-	// The following parameters are for the local, dockerized postgresql database
+	// The following parameters are for the dockerized postgresql database
 	database: {
 		name: 'mist_dev',
 		user: 'mist_dev',
 		password: '$&hxsALC!7_c',
-
-		sequelizeOptions: {
-			host: 'mist-local-db'
-		}
+		host: 'mist-local-db'
 	},
 
 	server: {
