@@ -23,6 +23,8 @@ module.exports = function(dbConfig = {}) {
 	let sequelizeOptions = dbConfig.sequelizeOptions
 	if (!sequelizeOptions.define)
 		sequelizeOptions.define = {}
+	if (!sequelizeOptions.dialectOptions)
+		sequelizeOptions.dialectOptions = {}
 
 	for (let defineProperty of ['underscored', 'timestamps']) {
 		if (Reflect.has(sequelizeOptions.define, defineProperty))
@@ -36,6 +38,8 @@ module.exports = function(dbConfig = {}) {
 	sequelizeOptions.dialect = dbConfig.dialect
 	sequelizeOptions.host = dbConfig.host
 	sequelizeOptions.port = dbConfig.port
+	sequelizeOptions.define.schema = dbConfig.schema
+	sequelizeOptions.dialectOptions.application_name = dbConfig.applicationName
 
 	addClassMethods(sequelizeOptions.define)
 	return new Sequelize(dbConfig.name, dbConfig.user, dbConfig.password, sequelizeOptions)

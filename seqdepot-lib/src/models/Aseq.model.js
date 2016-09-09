@@ -4,7 +4,7 @@
 const assert = require('assert')
 
 // Local
-const seqUtil = require('../bio/seq-util')
+const seqUtil = require('core-lib/bio/seq-util')
 
 // Constants
 const kToolIdFieldNames = ['pfam30', 'segs', 'coils']

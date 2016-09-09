@@ -7,7 +7,7 @@
     "node": "6.4"
   },
   "scripts": {
-    "preinstall": "node ../_common/merge-deps.js -i ../mist-lib/package.json ./package.json",
+    "preinstall": "node ../bin/merge-deps.js -i ../core-lib/package.json ../seqdepot-lib/src/models/package.json ../mist-lib/package.json ./package.json",
     "eslint": "node_modules/.bin/eslint --ignore-pattern src/node_modules 'src/**/*.js'",
     "coverage": "NODE_PATH=node_modules node_modules/.bin/istanbul cover --config ../_common/.istanbul.js node_modules/mocha/bin/_mocha -- -r ../_common/test.globals.js $(find src -name '*.tests.js')",
     "test": "find src -name '*.tests.js' | NODE_PATH=node_modules xargs node_modules/.bin/mocha -r ../_common/test.globals.js",

@@ -5,7 +5,7 @@
 // Local
 const models = require('./index').withDummyConnection(),
 	AseqModelFn = require('./Aseq.model.js'),
-	Seq = require('../bio/Seq')
+	Seq = require('core-lib/bio/Seq')
 
 // Other
 const Aseq = models.Aseq

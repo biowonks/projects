@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Common MiST project code",
   "scripts": {
+    "preinstall": "node ../bin/merge-deps.js -i ../core-lib/package.json ../seqdepot-lib/package.json ./package.json",
     "test": "NODE_PATH=node_modules node_modules/.bin/mocha -r ../_common/test.globals.js '**/*.tests.js'",
     "coverage": "NODE_PATH=node_modules node_modules/.bin/istanbul cover --config ../_common/.istanbul.js node_modules/mocha/bin/_mocha -- -r ../_common/test.globals.js '**/*.tests.js'",
     "eslint": "node_modules/.bin/eslint '**/*.js'",
@@ -49,7 +50,8 @@
     "split": "^1.0.0",
     "through2": "^2.0.1",
     "universal-analytics": "^0.4.2",
-    "xml2js": "^0.4.17"
+    "xml2js": "^0.4.17",
+    "sequelize-model-loader": "https://github.com/lukeulrich/sequelize-model-loader.git"
   },
   "devDependencies": {
     "chai": "^3.5.0",

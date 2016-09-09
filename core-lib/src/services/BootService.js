@@ -6,11 +6,8 @@ const bunyan = require('bunyan'),
 
 // Vendor
 const publicIp = require('public-ip'),
-	Migrator = require('sequelize-migrator').Migrator
-
-// Local
-const loadModels = require('../models'),
-	mistSequelize = require('../mist-sequelize')
+	Migrator = require('sequelize-migrator').Migrator,
+	loadModels = require('sequelize-model-loader')
 
 /**
  * Encapsulates a common configuration and all boot strapping methods. May be used to call
@@ -18,27 +15,38 @@ const loadModels = require('../models'),
  * core responsibilities necessary to running the API.
  *
  * Because the configuration is not tied to any given instance, it is assigned as a static
- * property of the BootService definition.
+ * property of the AbstractBootService definition.
  */
-class BootService {
+class AbstractBootService {
 	/**
 	 * On instantiation, creates a logger with the options specified in ${options.logger}
 	 * or by default those defined in config.logger.
 	 *
 	 * @constructor
-	 * @param {Object} [dbConfig = null]
+	 * @param {Object} dbConfig
+	 * @param {String} [dbConfig.schema = null] - schema to use when running migrations and for each model unless otherwise specified
+	 * @param {}
 	 * @param {Object} [options = {}]
 	 * @param {Object} [options.logger] - bunyan compatible logger instance
 	 */
-	constructor(dbConfig = null, options = {}) {
+	constructor(dbConfig, options = {}) {
+		if (!dbConfig)
+			throw new Error('Unable to setup Sequelize. Please supply a valid database configuration during instantiation')
+
 		this.dbConfig_ = dbConfig
 		this.logger_ = this.createLogger_(options.logger)
-		this.bootLogger_ = this.logger_.child({module: 'bootService'})
+		this.bootLogger_ = this.logger_.child({module: 'BootService'})
+
 		this.sequelize_ = null
 		this.migrator_ = null
 		this.models_ = null
 		this.setupComplete_ = false
 		this.publicIP_ = null
+	}
+
+	// abstract virtual methods
+	loadModels() {
+		throw new Error('not implemented')
 	}
 
 	/**
@@ -83,8 +91,6 @@ class BootService {
 	 */
 	setupSequelize() {
 		let dbConfig = this.dbConfig_
-		if (!dbConfig)
-			throw new Error('Unable to setup Sequelize. Please supply a valid database configuration during instantiation')
 
 		if (!dbConfig.name) {
 			this.bootLogger_.fatal('Invalid database configuration: missing database name')
@@ -92,27 +98,17 @@ class BootService {
 		}
 
 		if (!this.sequelize_)
-			this.sequelize_ = mistSequelize(dbConfig)
+			this.sequelize_ = this.sequelizeCreateFn_(dbConfig)
 
-		if (!this.migrator_) {
-			let options = {
-				path: dbConfig.migrations.path,
-				pattern: dbConfig.migrations.pattern,
-				modelName: dbConfig.migrations.modelName,
-				tableName: dbConfig.migrations.tableName,
-				schema: dbConfig.migrations.schema,
-				logger: this.logger_.child({module: 'migrations'})
-			}
-			this.migrator_ = new Migrator(this.sequelize_, options)
-		}
+		if (!this.migrator_)
+			this.setupMigrator_()
 	}
 
-	loadModels() {
+	loadModelsOld() {
 		if (!this.sequelize_)
 			throw new Error('Sequelize not initialized. Please call setupSequelize() first')
 
-		if (!this.models_)
-			this.models_ = loadModels(this.sequelize_, this.bootLogger_)
+		this.loadModels_()
 	}
 
 	/**
@@ -138,7 +134,7 @@ class BootService {
 
 	setupDatabase() {
 		return this.setupSchema_()
-		.then(this.setupSearchPath_.bind(this))
+		.then(this.setSearchPath_.bind(this, this.dbConfig_.searchPath))
 	}
 
 	logger() {
@@ -169,22 +165,47 @@ class BootService {
 	}
 
 	// ----------------------------------------------------
-	// Private methods
-	createLogger_(loggerOptions = {name: 'unknown'}) {
-		if (Reflect.has(loggerOptions, 'stream'))
-			throw new Error('Stream property is not an allowed logger option. Please convert to use the streams array property. See: https://github.com/trentm/node-bunyan#streams')
+	// Protected methods
+	createMigrator_(migratorOptions, loggerName) {
+		let options = {
+			path: migratorOptions.path,
+			pattern: migratorOptions.pattern,
+			modelName: migratorOptions.modelName,
+			tableName: migratorOptions.tableName,
+			schema: migratorOptions.schema,
+			logger: this.logger_.child({module: loggerName})
+		}
 
-		return bunyan.createLogger(loggerOptions)
+		return new Migrator(this.sequelize_, options)
+	}
+
+	runPendingMigrations_() {
+		return this.migrator_.up()
+	}
+
+	setupMigrator_() {
+		this.migrator_ = this.createMigrator_(this.dbConfig_.migrations, 'migrations')
 	}
 
 	setupSchema_() {
-		let schema = null
-		try {
-			schema = this.dbConfig_.sequelizeOptions.define.schema
+		return this.createSchema_(this.dbConfig_.schema)
+	}
+
+	loadModels_() {
+		if (!this.models_) {
+			this.models_ = loadModels(this.dbConfig_.models.path, this.sequelize_, {
+				logger: this.bootLogger_,
+				schema: this.dbConfig_.schema
+				// context: ...
+			})
 		}
-		catch (error) {
-			// Noop
-		}
+	}
+
+	/**
+	 * @param {String} [schema = null]
+	 * @returns {Promise}
+	 */
+	createSchema_(schema = null) {
 		if (!schema)
 			return Promise.resolve()
 
@@ -197,8 +218,7 @@ class BootService {
 		return this.sequelize_.query(`create schema if not exists ${schema}`, {raw: true})
 	}
 
-	setupSearchPath_() {
-		let searchPath = this.dbConfig_.searchPath
+	setSearchPath_(searchPath) {
 		if (!searchPath)
 			return Promise.resolve()
 
@@ -206,13 +226,63 @@ class BootService {
 		return this.sequelize_.query(`set search_path to ${searchPath}`, {raw: true})
 	}
 
-	runPendingMigrations_() {
-		return this.migrator_.up()
+	/**
+	 * Return an object of methods that should be added globally to each model's classMethods.
+	 * @returns {Object.<String, Function>}
+	 */
+	globalClassMethods() {
+		return {}
+	}
+
+	// ----------------------------------------------------
+	// Private methods
+	setupDbConfigDefaults_() {
+		let dbConfig = this.dbConfig_
+		if (!dbConfig.sequelizeOptions)
+			dbConfig.sequelizeOptions = {}
+		if (!dbConfig.sequelizeOptions.dialect)
+			dbConfig.sequelizeOptions.dialect = 'postgres'
+
+		let sequelizeOptions = dbConfig.sequelizeOptions
+		if (!sequelizeOptions.define)
+			sequelizeOptions.define = {}
+		if (!sequelizeOptions.dialectOptions)
+			sequelizeOptions.dialectOptions = {}
+
+		for (let defineProperty of ['underscored', 'timestamps']) {
+			if (Reflect.has(sequelizeOptions.define, defineProperty))
+				throw new Error(`the "${defineProperty}" sequelize option may not be configured`)
+		}
+
+		// Enforce underscored table names and timestamps by default
+		sequelizeOptions.define.underscored = true
+		sequelizeOptions.define.timestamps = true
+
+		sequelizeOptions.dialect = dbConfig.dialect
+		sequelizeOptions.host = dbConfig.host
+		sequelizeOptions.port = dbConfig.port
+		sequelizeOptions.define.schema = dbConfig.schema
+		sequelizeOptions.dialectOptions.application_name = dbConfig.applicationName
+
+		let define = sequelizeOptions.define
+		if (!define.classMethods)
+			define.classMethods = {}
+
+		let globalMethods = this.globalClassMethods()
+		for (let globalMethodName in globalMethods)
+			define.classMethods = globalMethods[globalMethodName]
+	}
+
+	createLogger_(loggerOptions = {name: 'unknown'}) {
+		if (Reflect.has(loggerOptions, 'stream'))
+			throw new Error('Stream property is not an allowed logger option. Please convert to use the streams array property. See: https://github.com/trentm/node-bunyan#streams')
+
+		return bunyan.createLogger(loggerOptions)
 	}
 }
 
-// Expose the configuration and Sequelize definition directly on the BootService class as a static
+// Expose the configuration and Sequelize definition directly on the AbstractBootService class as a static
 // property
-BootService.Sequelize = mistSequelize.Sequelize
+// AbstractBootService.Sequelize = mistSequelize.Sequelize
 
-module.exports = BootService
+module.exports = AbstractBootService

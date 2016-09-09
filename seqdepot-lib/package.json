@@ -1,0 +1,14 @@
+{
+  "name": "seqdepot-lib",
+  "version": "1.0.0",
+  "description": "Common SeqDepot project code",
+  "scripts": {
+    "preinstall": "node ../bin/merge-deps.js -i ../core-lib/package.json ./package.json"
+  },
+  "author": "BioWonks",
+  "license": "MIT",
+  "dependencies": {
+    "sequelize-model-loader": "https://github.com/lukeulrich/sequelize-model-loader.git",
+    "pack": "seqdepot"
+  }
+}

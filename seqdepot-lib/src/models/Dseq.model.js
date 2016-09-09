@@ -1,7 +1,7 @@
 'use strict'
 
 // Local
-const seqUtil = require('../bio/seq-util')
+const seqUtil = require('core-lib/bio/seq-util')
 
 // Constants
 const kFloatPrecision = 6

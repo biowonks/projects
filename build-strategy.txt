@@ -1,0 +1,52 @@
+/core-lib
+  package.json
+  /src
+    /bio
+      seq-util.js
+
+
+/seqdepot-lib
+  package.json
+  deps.js: ['core-lib']
+  /node_modules
+  /src
+    /models
+	  Aseq.model.js
+	  index.js
+	  package.json
+	/db
+	  ** No package.json necessary
+	  /migrations
+    /node_modules
+	  /core-lib (symlink) -> /core-lib/src
+
+
+/mist-lib
+  deps.js: ['core-lib', 'seqdepot-lib/src/models', 'seqdepot-lib/src/db']
+  package.json
+  /node_modules
+  /src
+    /node_modules
+	  /core-lib (symlink) -> core-lib/src
+	  /seqdepot-lib/src/models (symlink) -> /seqdepot-lib/src/models
+	  /seqdepot-lib/src/db (symlink) -> /seqdepot-lib/src/db
+
+  ** 1) npm install: foreach dep in deps.js (recursively walk the deps, build unique list of project deps)
+  					merge-deps dep/package.json /mist-lib/package.json
+					ln -sf dep ../../${dep-name}
+
+  ** 2) deploy:
+        a) rsync everything all files excluding src/node_modules
+		b) rsync all src/node_modules following the symlinks and excluding its node_modules
+
+
+/mist-api
+  deps.js: ['mist-lib'] // will recurse to get all other dependencies
+  package.json
+  /node_modules
+  /src
+    /node_modules
+	  /core-lib (symlink) -> /core-lib/src
+	  /seqdepot-lib/models (symlink) -> /seqdepot-lib/src/models
+	  /seqdepot-lib/db (symlink) -> /seqdepot-lib/src/db
+	  /mist-lib (symlink) -> /mist-lib/src
