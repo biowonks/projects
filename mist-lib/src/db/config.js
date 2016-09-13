@@ -19,26 +19,6 @@ module.exports = {
 	ssl: true,
 	logging: false,
 
-	sequelizeOptions: {
-		// The following fiveproperties should be transferred from the top-level configuration.
-		// Currently, this is done in mist-sequelize.js
-		dialect: null,
-		host: null,
-		port: null,
-		define: {
-			schema: null
-		},
-		dialectOptions: {
-			application_name: null,
-			ssl: true
-		},
-		logging: false,
-		pool: {
-			maxConnections: 10,
-			maxIdleTime: 1000
-		}
-	},
-
 	models: {
 		path: path.resolve(__dirname, '..', 'models')
 	},

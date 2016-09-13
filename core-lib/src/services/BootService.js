@@ -7,33 +7,37 @@ const bunyan = require('bunyan'),
 // Vendor
 const publicIp = require('public-ip'),
 	Migrator = require('sequelize-migrator').Migrator,
-	loadModels = require('sequelize-model-loader')
+	modelLoader = require('sequelize-model-loader'),
+	Sequelize = require('sequelize')
+
+// Local
+const normalizeConfig = require('../db/normalize-config')
 
 /**
- * Encapsulates a common configuration and all boot strapping methods. May be used to call
- * specific bootstrap activites (e.g. migrations) or, using the setup() method, perform all
- * core responsibilities necessary to running the API.
+ * Encapsulates common logic necessary to boot a database-enabled application leveraging the
+ * sequelizejs library from a database configuration.
  *
- * Because the configuration is not tied to any given instance, it is assigned as a static
- * property of the AbstractBootService definition.
+ * Call setup() to perform all relevant functions to booting (e.g. setting up sequelize, checking
+ * the database connection, running migrations, etc.). Alternatively, these functions may be
+ * accomplished by calling the individual functions as desired.
+ *
+ * Subclass this service to provide specialized boot logic (e.g. run seqdepot migrations in the
+ * same migration database).
  */
-class AbstractBootService {
+class BootService {
 	/**
-	 * On instantiation, creates a logger with the options specified in ${options.logger}
-	 * or by default those defined in config.logger.
+	 * On instantiation, creates a logger with the options specified in ${options.logger}.
 	 *
 	 * @constructor
 	 * @param {Object} dbConfig
-	 * @param {String} [dbConfig.schema = null] - schema to use when running migrations and for each model unless otherwise specified
-	 * @param {}
 	 * @param {Object} [options = {}]
-	 * @param {Object} [options.logger] - bunyan compatible logger instance
+	 * @param {Object} [options.logger] - bunyan logger options
 	 */
 	constructor(dbConfig, options = {}) {
 		if (!dbConfig)
-			throw new Error('Unable to setup Sequelize. Please supply a valid database configuration during instantiation')
+			throw new Error('missing database configuration')
 
-		this.dbConfig_ = dbConfig
+		this.dbConfig_ = normalizeConfig(dbConfig)
 		this.logger_ = this.createLogger_(options.logger)
 		this.bootLogger_ = this.logger_.child({module: 'BootService'})
 
@@ -44,19 +48,13 @@ class AbstractBootService {
 		this.publicIP_ = null
 	}
 
-	// abstract virtual methods
-	loadModels() {
-		throw new Error('not implemented')
-	}
-
 	/**
-	 * Bootstraps the API:
-	 *
 	 * 1) Configures sequelize
-	 * 2) Loads the models
-	 * 3) Checks the database connection
-	 * 4) Sets up any defined schema
-	 * 5) Runs any pending migrations
+	 * 2) Creates the migrator
+	 * 3) Loads the models
+	 * 4) Checks the database connection
+	 * 5) Sets up any defined schema
+	 * 6) Runs any pending migrations
 	 *
 	 * @returns {Promise}
 	 */
@@ -68,15 +66,16 @@ class AbstractBootService {
 
 		try {
 			this.setupSequelize()
-			this.loadModels()
+			this.setupMigrator()
+			this.setupModels()
 		}
 		catch (error) {
 			return Promise.reject(error)
 		}
 
 		return this.checkDatabaseConnection()
-		.then(this.setupDatabase.bind(this))
-		.then(this.runPendingMigrations_.bind(this))
+		.then(this.setupSchema.bind(this))
+		.then(this.runPendingMigrations.bind(this))
 		.catch(this.sequelize_.DatabaseError, (databaseError) => {
 			this.bootLogger_.fatal({sql: databaseError.sql}, databaseError.message)
 			throw databaseError
@@ -88,27 +87,45 @@ class AbstractBootService {
 
 	/**
 	 * Responsible for creating the sequelize and migrator instances.
+	 * @returns {Object} - sequelize instance
 	 */
 	setupSequelize() {
-		let dbConfig = this.dbConfig_
+		if (this.sequelize_)
+			return this.sequelize_
 
+		let dbConfig = this.dbConfig_
 		if (!dbConfig.name) {
 			this.bootLogger_.fatal('Invalid database configuration: missing database name')
-			throw new Error('Database enabled, but missing configuration (name)')
+			throw new Error('database configuration missing \'name\'')
 		}
 
 		if (!this.sequelize_)
-			this.sequelize_ = this.sequelizeCreateFn_(dbConfig)
+			this.sequelize_ = new Sequelize(dbConfig.name, dbConfig.user, dbConfig.password, dbConfig.sequelizeOptions)
 
-		if (!this.migrator_)
-			this.setupMigrator_()
+		return this.sequelize_
 	}
 
-	loadModelsOld() {
-		if (!this.sequelize_)
-			throw new Error('Sequelize not initialized. Please call setupSequelize() first')
+	setupMigrator() {
+		this.migrator_ = this.createMigrator_(this.dbConfig_.migrations, 'migrations')
+		return this.migrator_
+	}
 
-		this.loadModels_()
+	/**
+	 * @param {*} [context = null] - optional parameter to send to each model when required.
+	 * @returns {Object.<String,Model>}
+	 */
+	setupModels(context = null) {
+		if (this.models_)
+			return this.models_
+
+		this.setupSequelize()
+		this.models_ = modelLoader(this.dbConfig_.models.path, this.sequelize_, {
+			logger: this.bootLogger_,
+			schema: this.dbConfig_.schema,
+			context
+		})
+
+		return this.models_
 	}
 
 	/**
@@ -132,9 +149,12 @@ class AbstractBootService {
 		})
 	}
 
-	setupDatabase() {
-		return this.setupSchema_()
-		.then(this.setSearchPath_.bind(this, this.dbConfig_.searchPath))
+	setupSchema() {
+		return this.createSchema_(this.dbConfig_.schema)
+	}
+
+	runPendingMigrations() {
+		return this.migrator_.up()
 	}
 
 	logger() {
@@ -179,28 +199,6 @@ class AbstractBootService {
 		return new Migrator(this.sequelize_, options)
 	}
 
-	runPendingMigrations_() {
-		return this.migrator_.up()
-	}
-
-	setupMigrator_() {
-		this.migrator_ = this.createMigrator_(this.dbConfig_.migrations, 'migrations')
-	}
-
-	setupSchema_() {
-		return this.createSchema_(this.dbConfig_.schema)
-	}
-
-	loadModels_() {
-		if (!this.models_) {
-			this.models_ = loadModels(this.dbConfig_.models.path, this.sequelize_, {
-				logger: this.bootLogger_,
-				schema: this.dbConfig_.schema
-				// context: ...
-			})
-		}
-	}
-
 	/**
 	 * @param {String} [schema = null]
 	 * @returns {Promise}
@@ -226,53 +224,8 @@ class AbstractBootService {
 		return this.sequelize_.query(`set search_path to ${searchPath}`, {raw: true})
 	}
 
-	/**
-	 * Return an object of methods that should be added globally to each model's classMethods.
-	 * @returns {Object.<String, Function>}
-	 */
-	globalClassMethods() {
-		return {}
-	}
-
 	// ----------------------------------------------------
 	// Private methods
-	setupDbConfigDefaults_() {
-		let dbConfig = this.dbConfig_
-		if (!dbConfig.sequelizeOptions)
-			dbConfig.sequelizeOptions = {}
-		if (!dbConfig.sequelizeOptions.dialect)
-			dbConfig.sequelizeOptions.dialect = 'postgres'
-
-		let sequelizeOptions = dbConfig.sequelizeOptions
-		if (!sequelizeOptions.define)
-			sequelizeOptions.define = {}
-		if (!sequelizeOptions.dialectOptions)
-			sequelizeOptions.dialectOptions = {}
-
-		for (let defineProperty of ['underscored', 'timestamps']) {
-			if (Reflect.has(sequelizeOptions.define, defineProperty))
-				throw new Error(`the "${defineProperty}" sequelize option may not be configured`)
-		}
-
-		// Enforce underscored table names and timestamps by default
-		sequelizeOptions.define.underscored = true
-		sequelizeOptions.define.timestamps = true
-
-		sequelizeOptions.dialect = dbConfig.dialect
-		sequelizeOptions.host = dbConfig.host
-		sequelizeOptions.port = dbConfig.port
-		sequelizeOptions.define.schema = dbConfig.schema
-		sequelizeOptions.dialectOptions.application_name = dbConfig.applicationName
-
-		let define = sequelizeOptions.define
-		if (!define.classMethods)
-			define.classMethods = {}
-
-		let globalMethods = this.globalClassMethods()
-		for (let globalMethodName in globalMethods)
-			define.classMethods = globalMethods[globalMethodName]
-	}
-
 	createLogger_(loggerOptions = {name: 'unknown'}) {
 		if (Reflect.has(loggerOptions, 'stream'))
 			throw new Error('Stream property is not an allowed logger option. Please convert to use the streams array property. See: https://github.com/trentm/node-bunyan#streams')
@@ -281,8 +234,8 @@ class AbstractBootService {
 	}
 }
 
-// Expose the configuration and Sequelize definition directly on the AbstractBootService class as a static
+// Expose the configuration and Sequelize definition directly on the BootService class as a static
 // property
-// AbstractBootService.Sequelize = mistSequelize.Sequelize
+BootService.Sequelize = Sequelize
 
-module.exports = AbstractBootService
+module.exports = BootService

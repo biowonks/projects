@@ -22,28 +22,18 @@
 'use strict'
 
 // Vendor
-const loadModels = require('sequelize-model-loader')
+const modelLoader = require('sequelize-model-loader')
 
 // Local
-const mistSequelize = require('../mist-sequelize'), // eslint-disable-line no-mixed-requires
-	modelExtras = require('./model-extras')(mistSequelize.Sequelize), // eslint-disable-line no-mixed-requires
-	setupAssociations = require('./associations')
+const setupAssociations = require('./associations')
 
 module.exports = function(sequelize, logger = null) {
-	let models = loadModels(__dirname, sequelize, {
+	const modelExtras = require('./model-extras')(sequelize.Sequelize) // eslint-disable-line global-require
+
+	let models = modelLoader(__dirname, sequelize, {
 		logger,
 		context: modelExtras
 	})
 	setupAssociations(models, logger)
 	return models
-}
-
-/**
- * Loads all models using a dummy connection
- *
- * @param {Object} [optLogger = null]
- * @returns {Object.<String,Model>}
- */
-module.exports.withDummyConnection = function(optLogger = null) {
-	return module.exports(mistSequelize(), optLogger)
 }
