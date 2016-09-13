@@ -1,39 +1,49 @@
-# MiST3 - Microbial Signal Transduction Database release 3.x
+# Biowonks Projects
 
+## Requirements
+* git
+* Docker
 
-## Bootstraping
-
-#### NVM (node version manager) installation
-
+Clone the repository:
 ```
-curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.31.0/install.sh | bash
-```
-
-#### Node installation
-```
-nvm install 6.1.0
-nvm use 6.1.0
-nvm alias default node
+git clone https://github.com/biowonks/projects.git
 ```
 
-#### Git branching strategy
-[Git branching strategy](http://nvie.com/posts/a-successful-git-branching-model) for a developing team.
-
-#### Database migrations
-
-
-#### Pulling down the codebase
+In order to work as a developer make sure to checkout the develop branch:
 ```
-git clone https://yourusername@bitbucket.org:lukeulrich/mist3-api.git
-cd mist3-api
-[git checkout develop ] # for the latest development commit
+git checkout develop
+```
+
+Start Docker:
+```
+docker-compose -up -d biowonks-dev
+```
+
+Attach the bash session:
+```
+docker attach biowonks-dev
+```
+
+## MiST pipeline
+
+```
+cd mist-pipeline
 npm install
+./bin/pipeline.sh SeedNewGenomes
 ```
 
-#### Postgresql database setup
+## MiST api
+Setup:
+```
+cd mist-api
+npm run setup
+```
 
-#### Configuring the database connection
+Start the api with:
+```
+npm start
+```
 
-#### Running the API
 
-#### Unit tests
+## FQL (Feature Query Language)
+

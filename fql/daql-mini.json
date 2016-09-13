@@ -1,0 +1,23 @@
+{
+    "name": "my DAQ",
+    "db":"pfam30",
+    "key":"CheW",
+    "rule":
+        "
+        (
+            (
+                (p.pfam30.indexOf('HATPase_c') > -1 || p.pfam30.indexOf('HATPase_c2') > -1)
+                &&
+                p.pfam30.indexOf('Hpt') == 0
+                &&
+                (
+                    (p.pfam30.indexOf('CheW') > p.pfam30.indexOf('HATPase_c))
+                    ||
+                    (p.pfam30.indexOf('CheW') > p.pfam30.indexOf('HATPase_c2))
+            )
+            || p.agfam2.indexOf('HK_Ca:Che') > -1
+        )
+    && p.pfam30.length > 3
+    && (p.pfam30.indexOf('Response_reg') > -1 || p.agfam2.indexOf('RR') > -1)
+    "
+}

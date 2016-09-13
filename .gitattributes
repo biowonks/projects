@@ -3,10 +3,18 @@
 
 # Explicit declarations
 *.js text
+*.jsx text
 *.json text
 *.md text
 *.sh text
 *.sql text
+*.htm text
+*.html text
+*.jade text
+*.pug text
+*.xml text
+*.css text
+*.sass text
 
 # Denote all files that are truly binary and should not be modified.
 *.png binary
