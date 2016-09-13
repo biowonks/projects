@@ -9,11 +9,7 @@ let readline = require('readline')
 let program = require('commander')
 
 // Local
-let BootService = require('../services/BootService'),
-	loadDbConfig = require('./config')
-
-// Other
-let dbConfig = loadDbConfig('undo-migration')
+let MistBootService = require('../services/MistBootService')
 
 // --------------------------------------------------------
 // --------------------------------------------------------
@@ -48,21 +44,23 @@ function confirmUndo() {
 		rl.close()
 
 		if (answer !== 'y')
-			process.exit(0)
+			process.exit()
 
 		undoMigration()
 	})
 }
 
 function undoMigration() {
-	let bootService = new BootService(dbConfig, {
+	let bootService = new MistBootService({
+		applicationName: 'undo-migration',
 		logger: {
 			name: 'undo-migration'
 		}
 	})
 
 	bootService.setupSequelize()
+	bootService.setupMigrator()
 	bootService.checkDatabaseConnection()
-	.then(() => bootService.setupDatabase())
 	.then(() => bootService.migrator().down(numberToUndo))
+	.finally(() => bootService.sequelize().close())
 }

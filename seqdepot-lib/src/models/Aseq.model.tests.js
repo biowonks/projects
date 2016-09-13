@@ -2,16 +2,28 @@
 
 'use strict'
 
-// Local
-const models = require('./index').withDummyConnection(),
-	AseqModelFn = require('./Aseq.model.js'),
+// Vendor
+const BootService = require('core-lib/services/BootService'),
 	Seq = require('core-lib/bio/Seq')
 
-// Other
-const Aseq = models.Aseq
+// Local
+const loadModels = require('./index'),
+	AseqModelFn = require('./Aseq.model')
 
 describe('models', function() {
 	describe('Aseq', function() {
+		let models = null,
+			Aseq = null
+		before(() => {
+			let bootService = new BootService({
+					name: 'dummy-database'
+				}),
+				sequelize = bootService.setupSequelize()
+
+			models = loadModels(sequelize)
+			Aseq = models.Aseq
+		})
+
 		describe('kToolIdFieldNames (static property)', function() {
 			it('returns a list of supported tool ids', function() {
 				expect(AseqModelFn.kToolIdFieldNames).members(['pfam30', 'segs', 'coils'])

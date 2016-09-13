@@ -6,7 +6,7 @@ const assert = require('assert')
 // Local
 const PerGenomePipelineModule = require('lib/PerGenomePipelineModule'),
 	AseqsComputeService = require('lib/services/AseqsComputeService'),
-	AseqModelFn = require('mist-lib/models/Aseq.model')
+	AseqModelFn = require('seqdepot-lib/models/Aseq.model')
 
 // Other
 const kAseqModelToolIdSet = new Set(AseqModelFn.kToolIdFieldNames),

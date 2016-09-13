@@ -60,7 +60,8 @@
     "sequelize": "^3.24.1",
     "sequelize-migrator": "https://github.com/lukeulrich/sequelize-migrator.git",
     "universal-analytics": "^0.4.2",
-    "xml2js": "^0.4.17"
+    "xml2js": "^0.4.17",
+    "sequelize-model-loader": "https://github.com/lukeulrich/sequelize-model-loader.git"
   },
   "devDependencies": {
     "csv-parse": "^1.0.1",

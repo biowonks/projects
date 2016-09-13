@@ -6,10 +6,11 @@
 let MistBootService = require('../services/MistBootService')
 
 let bootService = new MistBootService({
-	name: 'migrate',
+	applicationName: 'migrate',
 	logger: {
 		name: 'run-migrations'
 	}
 })
 
 bootService.setup()
+.finally(() => bootService.sequelize().close())

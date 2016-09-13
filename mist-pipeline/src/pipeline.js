@@ -17,7 +17,7 @@ const config = require('../config'),
 	InterruptError = require('lib/InterruptError'),
 	ModuleDepNode = require('lib/ModuleDepNode'),
 	ModuleDepGraph = require('lib/ModuleDepGraph'),
-	BootService = require('mist-lib/services/BootService'),
+	MistBootService = require('mist-lib/services/MistBootService'),
 	WorkerService = require('mist-lib/services/WorkerService')
 
 // Constants
@@ -25,7 +25,7 @@ const k1KB = 1024,
 	kModulesOncePath = path.resolve(__dirname, '..', 'src', 'modules', 'once'),
 	kModulesPerGenomePath = path.resolve(__dirname, '..', 'src', 'modules', 'per-genome'),
 	kShutdownGracePeriodMs = 30000,
-	kIsolationLevels = BootService.Sequelize.Transaction.ISOLATION_LEVELS
+	kIsolationLevels = MistBootService.Sequelize.Transaction.ISOLATION_LEVELS
 
 // Leverage bluebird globally for all Promises
 global.Promise = Promise
@@ -91,7 +91,7 @@ dieIfRequestedToUndoOnceModule()
 
 let requestedOnceModuleIds = putil.matchingModuleIds(requestedModuleIds, availableModules.once),
 	requestedPerGenomeModuleIds = putil.matchingModuleIds(requestedModuleIds, availableModules.perGenome),
-	bootService = new BootService(config.database, {
+	bootService = new MistBootService({
 		logger: {
 			name: 'pipeline',
 			streams: [
@@ -165,6 +165,7 @@ bootService.setup()
 	return saveWorkerError(error)
 })
 .catch(logError)
+.finally(() => bootService.sequelize().close())
 
 // --------------------------------------------------------
 // --------------------------------------------------------
@@ -243,10 +244,10 @@ function logError(error) {
 	let shortMessage = error.message ? error.message.substr(0, k1KB) : null
 
 	switch (error.constructor) {
-		case BootService.Sequelize.DatabaseError:
+		case MistBootService.Sequelize.DatabaseError:
 			logger.error({name: error.name, sql: error.sql.substr(0, k1KB)}, shortMessage)
 			return
-		case BootService.Sequelize.ValidationError:
+		case MistBootService.Sequelize.ValidationError:
 			logger.error({errors: error.errors, record: error.record}, shortMessage)
 			return
 		case InterruptError:
@@ -270,7 +271,7 @@ function saveWorkerError(error) {
 	if (error.constructor !== InterruptError)
 		worker.error_message += '\n\n' + error.stack
 	return worker.save({fields: ['active', 'normal_exit', 'error_message', 'job']})
-	.catch(BootService.Sequelize.DatabaseError, () => {
+	.catch(MistBootService.Sequelize.DatabaseError, () => {
 		// When would this ever happen? One example is the genbankReaderStream reading in compressed
 		// gzip data (vs the uncompressed raw text) and including in the error message the binary
 		// data line.
@@ -313,7 +314,7 @@ function runOnceModules(app, moduleIds) {
 			moduleInstance = new ModuleClass(app, moduleId.subNames())
 		return moduleInstance.main()
 		.then(() => {
-			logger.info(`Module finished normally: ${module.name}`)
+			logger.info(`Module finished normally: ${moduleId}`)
 		})
 	})
 }

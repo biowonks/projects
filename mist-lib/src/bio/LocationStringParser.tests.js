@@ -2,7 +2,7 @@
 
 // Local
 const LocationStringParser = require('./LocationStringParser'),
-	Seq = require('./Seq')
+	Seq = require('core-lib/bio/Seq')
 
 describe('LocationStringParser', function() {
 	describe('parse', function() {

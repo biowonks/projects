@@ -1,7 +1,7 @@
 'use strict'
 
 // Local
-const Seq = require('./Seq')
+const Seq = require('core-lib/bio/Seq')
 
 module.exports =
 class FastaSeq extends Seq {

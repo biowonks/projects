@@ -2,7 +2,7 @@
 
 'use strict'
 
-let Seq = require('./Seq'),
+let Seq = require('core-lib/bio/Seq'),
 	FastaSeq = require('./FastaSeq')
 
 describe('FastaSeq', function() {

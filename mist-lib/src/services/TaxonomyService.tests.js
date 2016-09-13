@@ -11,8 +11,8 @@ const nock = require('nock')
 
 // Local
 const TaxonomyService = require('./TaxonomyService'),
+	MistBootService = require('./MistBootService'),
 	testResults = require('./test-data/taxonomyService.test.results'),
-	models = require('../models').withDummyConnection(),
 	mutil = require('../mutil')
 
 // Constants
@@ -21,11 +21,16 @@ const kSampleXMLFileSpecies = path.resolve(__dirname, 'test-data', '476210_speci
 
 describe('Services', function() {
 	describe('TaxonomyService', function() {
-		let taxonomyService = new TaxonomyService(models.Taxonomy),
+		let models = null,
+			taxonomyService = null,
 			speciesXML = null,
 			intermediateXML = null
 
 		before(() => {
+			let bootService = new MistBootService()
+			models = bootService.setupModels()
+			taxonomyService = new TaxonomyService(models.Taxonomy)
+
 			return mutil.readFile(kSampleXMLFileSpecies)
 			.then((xml) => {
 				speciesXML = xml

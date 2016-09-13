@@ -6,7 +6,7 @@ const assert = require('assert')
 // Local
 const AbstractLocation = require('./AbstractLocation'),
 	LocationPoint = require('./LocationPoint'),
-	Seq = require('./Seq')
+	Seq = require('core-lib/bio/Seq')
 
 module.exports =
 class Location extends AbstractLocation {

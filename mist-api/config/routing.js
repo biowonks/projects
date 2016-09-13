@@ -3,11 +3,11 @@
 // Core
 const path = require('path')
 
-module.exports = function(kRootPath) {
+module.exports = function() {
 	return {
 		ssl: false,
 		prefix: '/v1',
-		middlewaresPath: path.resolve(kRootPath, 'src', 'middlewares'),
-		routesPath: path.resolve(kRootPath, 'src', 'routes')
+		middlewaresPath: path.resolve(__dirname, '..', 'src', 'middlewares'),
+		routesPath: path.resolve(__dirname, '..', 'src', 'routes')
 	}
 }

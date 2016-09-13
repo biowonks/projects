@@ -6,7 +6,7 @@ const JoinLocation = require('./JoinLocation'),
 	ComplementLocation = require('./ComplementLocation'),
 	Location = require('./Location'),
 	LocationPoint = require('./LocationPoint'),
-	Seq = require('./Seq')
+	Seq = require('core-lib/bio/Seq')
 
 describe('JoinLocation', function() {
 	describe('constructor', function() {

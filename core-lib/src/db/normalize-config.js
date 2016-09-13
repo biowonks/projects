@@ -26,10 +26,13 @@ const kPostgresPort = 5432
  * @returns {Object}
  */
 module.exports = function(dbConfig) {
+	if (dbConfig.migrations) {
+		if (!dbConfig.migrations.schema)
+			dbConfig.migrations.schema = dbConfig.schema
+	}
+
 	if (!dbConfig.sequelizeOptions)
 		dbConfig.sequelizeOptions = {}
-	if (!dbConfig.sequelizeOptions.dialect)
-		dbConfig.sequelizeOptions.dialect = 'postgres'
 
 	let sequelizeOptions = dbConfig.sequelizeOptions
 	if (!sequelizeOptions.define)
@@ -37,17 +40,12 @@ module.exports = function(dbConfig) {
 	if (!sequelizeOptions.dialectOptions)
 		sequelizeOptions.dialectOptions = {}
 
-	for (let defineProperty of ['underscored', 'timestamps']) {
-		if (Reflect.has(sequelizeOptions.define, defineProperty))
-			throw new Error(`the "${defineProperty}" sequelize option may not be configured`)
-	}
-
 	// Enforce underscored table names and timestamps by default
 	sequelizeOptions.define.underscored = Reflect.has(dbConfig, 'underscoredTableNames') ? !!dbConfig.underscoredTableNames : true
 	sequelizeOptions.define.timestamps = Reflect.has(dbConfig, 'timestamps') ? !!dbConfig.timestamps : true
 
 	sequelizeOptions.define.schema = dbConfig.schema
-	sequelizeOptions.dialect = dbConfig.dialect
+	sequelizeOptions.dialect = dbConfig.dialect || 'postgres'
 	sequelizeOptions.dialectOptions.application_name = dbConfig.applicationName
 	sequelizeOptions.host = dbConfig.host || 'localhost'
 	sequelizeOptions.port = dbConfig.port || kPostgresPort

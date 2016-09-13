@@ -3,12 +3,13 @@
 // Vendor
 const loadModels = require('sequelize-model-loader')
 
-module.exports = function(sequelize, logger = null) {
+module.exports = function(sequelize, schema = null, logger = null) {
+	const modelExtras = require('core-lib/model-extras')(sequelize.Sequelize) // eslint-disable-line global-require
 	let models = loadModels(__dirname, sequelize, {
-		logger
+		logger,
+		schema,
+		context: modelExtras
 	})
-
-	// setup assocations, other seqdepot model configuration
 
 	return models
 }

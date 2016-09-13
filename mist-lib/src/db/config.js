@@ -12,8 +12,7 @@ module.exports = {
 	dialect: 'postgres',
 	user: 'mist_dev',
 	password: '$&hxsALC!7_c',
-	// host: 'mist-local-db', // docker-specific
-	host: 'localhost', // docker-specific
+	host: 'mist-local-db', // docker-specific
 	port: 5432,
 	name: 'mist_dev',
 	ssl: true,
@@ -32,8 +31,8 @@ module.exports = {
 		schema: 'seqdepot',
 		migrations: {
 			path: path.resolve(__dirname, '..', 'node_modules', 'seqdepot-lib', 'db', 'migrations'),
-			pattern: /^\d{4}_[\w-_]+\.sql$/
-			// schema: 'seqdepot'
+			pattern: /^\d{4}_[\w-_]+\.sql$/,
+			schema: 'seqdepot'
 		},
 
 		models: {

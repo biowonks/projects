@@ -24,8 +24,12 @@ class MistBootService extends BootService {
 		this.addGlobalClassMethods_()
 	}
 
+	/**
+	 * Create the stock MiST migrator and one for the SeqDepot relations.
+	 * @returns {Object}
+	 */
 	setupMigrator() {
-		super.superMigrator()
+		super.setupMigrator()
 		this.seqdepotMigrator_ = this.createMigrator_(dbConfig.seqdepot.migrations, 'seqdepot-migrations')
 		return this.migrator_
 	}
@@ -35,18 +39,19 @@ class MistBootService extends BootService {
 	 * @returns {Object.<String,Model>}
 	 */
 	setupModels() {
-		this.models_ = loadMistModels(this.sequelize_, this.bootLogger_)
-		let seqdepotModels = loadSeqdepotModels(this.sequelize_, this.bootLogger_)
-		for (let name in seqdepotModels) {
-			let isConflictingName = Reflect.has(this.models_, name)
-			if (isConflictingName)
-				throw new Error(`model name conflict: ${name} exists in both MiST and seqdepot`)
-			this.models_[name] = seqdepotModels[name]
-		}
+		if (this.models_)
+			return this.models_
 
+		this.setupSequelize()
+		let seqdepotModels = loadSeqdepotModels(this.sequelize_, dbConfig.seqdepot.schema, this.bootLogger_)
+		this.models_ = loadMistModels(this.sequelize_, seqdepotModels, this.bootLogger_)
 		return this.models_
 	}
 
+	/**
+	 * Create any base schema along with the SeqDepot schema.
+	 * @returns {Promise}
+	 */
 	setupSchema() {
 		return super.setupSchema()
 		.then(this.createSchema_.bind(this, dbConfig.seqdepot.schema))
@@ -63,8 +68,11 @@ class MistBootService extends BootService {
 
 	// ----------------------------------------------------
 	// Private methods
+	/**
+	 * Adds a couple methods to the global sequelize options.
+	 */
 	addGlobalClassMethods_() {
-		let classMethods = this.dbConfig_.sequelizeOptions.define
+		let classMethods = this.dbConfig_.sequelizeOptions.define.classMethods
 		assert(typeof classMethods === 'object')
 
 		/**

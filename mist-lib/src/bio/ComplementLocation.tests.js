@@ -5,7 +5,7 @@
 const ComplementLocation = require('./ComplementLocation'),
 	Location = require('./Location'),
 	LocationPoint = require('./LocationPoint'),
-	Seq = require('./Seq')
+	Seq = require('core-lib/bio/Seq')
 
 describe('ComplementLocation', function() {
 	let seq = new Seq('ATCGNXATCG')

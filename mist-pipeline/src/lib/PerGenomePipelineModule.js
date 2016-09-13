@@ -37,7 +37,7 @@ class PerGenomePipelineModule extends AbstractPipelineModule {
 	// ----------------------------------------------------
 	// Private methods
 	ensureDataDirectoryExists_() {
-		return mutil.mkdir(this.dataDirectory_)
+		return mutil.mkdirp(this.dataDirectory_)
 		.then((result) => {
 			if (result.created)
 				this.logger_.info({dataDirectory: this.dataDirectory_}, 'Created data directory')

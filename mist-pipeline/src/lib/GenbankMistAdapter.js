@@ -6,7 +6,7 @@ const assert = require('assert')
 // Local
 const mutil = require('mist-lib/mutil'),
 	LocationStringParser = require('mist-lib/bio/LocationStringParser'),
-	Seq = require('mist-lib/bio/Seq')
+	Seq = require('core-lib/bio/Seq')
 
 // Constants
 const kIgnoreGeneQualifierSet = new Set([

@@ -27,6 +27,6 @@ describe('StopWatch', function() {
 				expect(firstElapsed).equal(secondElapsed)
 				done()
 			}, 10)
-		}, 50)
+		}, 60)
 	})
 })

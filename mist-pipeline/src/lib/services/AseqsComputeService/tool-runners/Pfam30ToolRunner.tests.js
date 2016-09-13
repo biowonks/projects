@@ -6,18 +6,23 @@
 const path = require('path')
 
 // Local
-const models = require('mist-lib/models').withDummyConnection(),
+const MistBootService = require('mist-lib/services/MistBootService'),
 	Pfam30ToolRunner = require('./Pfam30ToolRunner'),
 	testData = require('./test-data')
 
 // Other
-const Aseq = models.Aseq,
-	databasePath = path.resolve(__dirname, '..', '..', '..', 'streams', 'test-data', 'test.hmm'),
+const databasePath = path.resolve(__dirname, '..', '..', '..', 'streams', 'test-data', 'test.hmm'),
 	numHmms = 16295
 
 describe('services', function() {
 	describe('AseqsService', function() {
 		describe('Pfam30ToolRunner', function() {
+			let Aseq = null
+			before(() => {
+				let bootService = new MistBootService()
+				Aseq = bootService.setupModels().Aseq
+			})
+
 			it('computes and updates aseqs pfam30 field', function() {
 				let pfamConfig = {
 						databasePath,

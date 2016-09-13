@@ -1,7 +1,7 @@
 'use strict'
 
 // Local
-const Seq = require('../bio/Seq'),
+const Seq = require('core-lib/bio/Seq'),
 	uniqueStream = require('./unique-stream')
 
 describe('streams', function() {

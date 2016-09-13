@@ -7,7 +7,7 @@ const Location = require('./Location'),
 	BetweenLocationPoint = require('./BetweenLocationPoint'),
 	BoundedLocationPoint = require('./BoundedLocationPoint'),
 	FuzzyLocationPoint = require('./FuzzyLocationPoint'),
-	Seq = require('./Seq')
+	Seq = require('core-lib/bio/Seq')
 
 describe('Location', function() {
 	describe('constructor', function() {
