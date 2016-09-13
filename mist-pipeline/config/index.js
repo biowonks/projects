@@ -7,8 +7,7 @@ const path = require('path')
 const moment = require('moment')
 
 // Local
-let packageJSON = require('../package.json'), // eslint-disable-line no-mixed-requires
-	database = require('../src/node_modules/mist-lib/db/config')(packageJSON.name)
+let database = require('../src/node_modules/mist-lib/db/config')
 
 // --------------------------------------------------------
 let pipelineRootPath = path.resolve(__dirname, '..'),

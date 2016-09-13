@@ -3,10 +3,11 @@
 
 // Local
 const CriteriaService = require('./CriteriaService'),
-	mistSequelize = require('mist-lib/mist-sequelize')
+	MistBootService = require('mist-lib/services/MistBootService')
 
 // Other
-let sequelize = mistSequelize(), // This adds created_at, updated_at to each model
+let bootService = new MistBootService(),
+	sequelize = bootService.setupSequelize(),
 	Sequelize = sequelize.Sequelize,
 	User = sequelize.define('User', {
 		name: {

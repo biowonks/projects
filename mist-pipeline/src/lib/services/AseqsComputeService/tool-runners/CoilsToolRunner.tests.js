@@ -3,16 +3,19 @@
 'use strict'
 
 // Local
-const models = require('mist-lib/models').withDummyConnection(),
+const MistBootService = require('mist-lib/services/MistBootService'),
 	CoilsToolRunner = require('./CoilsToolRunner'),
 	testData = require('./test-data')
-
-// Other
-const Aseq = models.Aseq
 
 describe('services', function() {
 	describe('AseqsService', function() {
 		describe('CoilsToolRunner', function() {
+			let Aseq = null
+			before(() => {
+				let bootService = new MistBootService()
+				Aseq = bootService.setupModels().Aseq
+			})
+
 			it('computes and updates aseqs coils field', function() {
 				let x = new CoilsToolRunner(),
 					aseqs = [

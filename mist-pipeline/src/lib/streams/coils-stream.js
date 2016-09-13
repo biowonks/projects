@@ -11,7 +11,7 @@ const pumpify = require('pumpify'),
 // Local
 const config = require('../../../config'),
 	fastaStream = require('mist-lib/streams/fasta-stream'),
-	seqUtil = require('mist-lib/bio/seq-util'),
+	seqUtil = require('core-lib/bio/seq-util'),
 	streamMixins = require('mist-lib/streams/stream-mixins')
 
 // Constants
