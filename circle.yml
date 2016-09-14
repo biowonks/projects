@@ -12,5 +12,5 @@ machine:
 
 dependencies:
   override:
-    - npm install
+    - npm install:
         pwd: core-lib
