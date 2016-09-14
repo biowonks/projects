@@ -6,6 +6,8 @@ general:
 machine:
   environment:
     NODE_ENV: develop
+    MOCHA_REPORTER: mocha-circleci-reporter
+    MOCHA_FILE: $CIRCLE_TEST_REPORTS/junit/test-results.xml
     TZ: America/New_York
   node:
     version: 6.4
