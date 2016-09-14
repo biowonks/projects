@@ -1,0 +1,16 @@
+general:
+  branches:
+    only:
+      - f-circleci-testing
+
+machine:
+  environment:
+    NODE_ENV: develop
+    TZ: America/New_York
+  node:
+    version: 6.4
+
+dependencies:
+  override:
+    - npm install
+        pwd: core-lib
