@@ -64,7 +64,6 @@ module.exports = function(Sequelize, models, extras) {
 			classMethods,
 			instanceMethods,
 			validate,
-			schema: 'seqdepot',
 			timestamps: false
 		}
 	}

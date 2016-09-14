@@ -5,9 +5,9 @@ const FastaStreamToolRunner = require('./FastaStreamToolRunner'),
 	hmmscanStream = require('lib/streams/hmmscan-stream')
 
 module.exports =
-class Pfam30ToolRunner extends FastaStreamToolRunner {
+class Agfam2ToolRunner extends FastaStreamToolRunner {
 	handleResult_(aseq, result) {
-		aseq.pfam30 = result.domains
+		aseq.agfam2 = result.domains
 	}
 
 	toolStream_() {
@@ -16,6 +16,6 @@ class Pfam30ToolRunner extends FastaStreamToolRunner {
 }
 
 module.exports.meta = {
-	id: 'pfam30',
-	description: 'predict pfam30 domains'
+	id: 'agfam2',
+	description: 'predict agfam2 domains'
 }

@@ -35,7 +35,10 @@ class AbstractToolRunner extends EventEmitter {
 	}
 
 	/**
-	 * If ${aseqs} is empty, immediately resolves. This method is not intended to be overrided by
+	 * If ${aseqs} is empty, immediately resolves. This sidesteps some issues with tools that bork
+	 * if nothing is written to STDIN (because there are no aseqs) such as occurs with hmmscan.
+	 *
+	 * This method is not intended to be overrided by
 	 * child classes as it abstracts the progress event logic and immediate resolving if ${aseqs} is
 	 * empty. Rather, this method calls the protected method, onRun(), which is intended to be
 	 * implemented by child classes.

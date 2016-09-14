@@ -77,6 +77,42 @@ module.exports = [
 				env_cov: '..',
 				acc: 0.98
 			}
+		],
+		agfam2: [
+			{
+				name: 'Response_reg',
+				score: 101.9,
+				bias: 0,
+				c_evalue: 2.5e-33,
+				i_evalue: 2e-29,
+				hmm_from: 1,
+				hmm_to: 111,
+				hmm_cov: '[.',
+				ali_from: 4,
+				ali_to: 112,
+				ali_cov: '..',
+				env_from: 4,
+				env_to: 113,
+				env_cov: '..',
+				acc: 0.98
+			},
+			{
+				name: 'Trans_reg_C',
+				score: 77.2,
+				bias: 0,
+				c_evalue: 8.2e-26,
+				i_evalue: 6.7e-22,
+				hmm_from: 2,
+				hmm_to: 77,
+				hmm_cov: '.]',
+				ali_from: 148,
+				ali_to: 223,
+				ali_cov: '..',
+				env_from: 146,
+				env_to: 223,
+				env_cov: '..',
+				acc: 0.98
+			}
 		]
 	}
 ]
