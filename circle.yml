@@ -4,6 +4,8 @@ general:
       - f-circleci-testing
 
 machine:
+  services:
+    - docker
   environment:
     NODE_ENV: develop
     MOCHA_REPORTER: mocha-circleci-reporter
@@ -14,13 +16,15 @@ machine:
 
 dependencies:
   cache_directories:
-    - core-lib/node_modules
+    - "~/docker"
+  #   - core-lib/node_modules
 
   override:
-    - npm prune && npm install:
-        pwd: core-lib
+    - bin/build-docker-images.sh core-lib
+
+  #   - npm prune && npm install:
+  #       pwd: core-lib
 
 test:
   override:
-    - npm test:
-        pwd: core-lib
+    - docker run --rm biowonks/core-lib npm test
