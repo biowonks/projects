@@ -116,7 +116,7 @@ class AbstractPipelineModule {
 
 	analyze(...tableNames) {
 		return Promise.each(tableNames, (tableName) => {
-			this.logger_.info({tableName}, `Analyzing table: ${tableName}`)
+			this.logger_.info({tableName: tableName.toString()}, `Analyzing table: ${tableName}`)
 			return this.sequelize_.query(`ANALYZE ${tableName}`, {raw: true})
 		})
 	}

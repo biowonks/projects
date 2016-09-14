@@ -61,7 +61,11 @@ module.exports = {
 		},
 		pfam30: {
 			databasePath: path.resolve(vendorPath, 'pfam', '30.0', 'Pfam-A.hmm'),
-			ticksPerProgressEvent: 100
+			ticksPerProgressEvent: 50
+		},
+		agfam2: {
+			databasePath: path.resolve(vendorPath, 'agfam', '2.0', 'agfam.hmm'),
+			ticksPerProgressEvent: 1000
 		}
 	},
 
