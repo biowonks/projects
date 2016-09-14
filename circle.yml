@@ -17,3 +17,8 @@ dependencies:
   override:
     - npm prune && npm install:
         pwd: core-lib
+
+test:
+  override:
+    - npm test:
+        pwd: core-lib
