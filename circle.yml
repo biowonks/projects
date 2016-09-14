@@ -11,6 +11,9 @@ machine:
     version: 6.4
 
 dependencies:
+  cache_directories:
+    - core-lib/node_modules
+
   override:
-    - npm install:
+    - npm prune && npm install:
         pwd: core-lib
