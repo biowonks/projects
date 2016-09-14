@@ -45,13 +45,14 @@
     "pumpify": "^1.3.5",
     "request": "^2.74.0",
     "request-promise": "^4.1.1",
+    "rimraf": "^2.5.4",
     "sequelize": "^3.24.1",
     "sequelize-migrator": "https://github.com/lukeulrich/sequelize-migrator.git",
+    "sequelize-model-loader": "https://github.com/lukeulrich/sequelize-model-loader.git",
     "split": "^1.0.0",
     "through2": "^2.0.1",
     "universal-analytics": "^0.4.2",
-    "xml2js": "^0.4.17",
-    "sequelize-model-loader": "https://github.com/lukeulrich/sequelize-model-loader.git"
+    "xml2js": "^0.4.17"
   },
   "devDependencies": {
     "chai": "^3.5.0",

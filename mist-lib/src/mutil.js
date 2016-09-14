@@ -13,7 +13,8 @@ let Promise = require('bluebird'),
 	mkdirp = require('mkdirp'),
 	moment = require('moment'),
 	xml2js = require('xml2js'),
-	mv = require('mv')
+	mv = require('mv'),
+	rimraf = require('rimraf')
 
 /**
  * Creates the directory ${directory} if it does not already exist. Note, the immediate
@@ -307,6 +308,8 @@ exports.mkdirp = function(directory) {
 			})
 		})
 }
+
+exports.rimraf = Promise.promisify(rimraf)
 
 exports.unlink = function(file) {
 	return new Promise((resolve, reject) => {
