@@ -11,19 +11,13 @@ machine:
     MOCHA_REPORTER: mocha-circleci-reporter
     MOCHA_FILE: $CIRCLE_TEST_REPORTS/junit/test-results.xml
     TZ: America/New_York
-  node:
-    version: 6.4
 
 dependencies:
   cache_directories:
     - "~/docker"
-  #   - core-lib/node_modules
 
   override:
     - bin/build-docker-images.sh core-lib
-
-  #   - npm prune && npm install:
-  #       pwd: core-lib
 
 test:
   override:
