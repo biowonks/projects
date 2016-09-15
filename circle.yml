@@ -17,8 +17,11 @@ dependencies:
     - "~/docker"
 
   override:
-    - bin/build-docker-images.sh core-lib
+    - if [[ -e ~/docker/node-bootstrap.tar ]]; then docker load -i ~/docker/node-bootstrap.tar; fi
+    - docker build --build-arg LOCAL_USER_ID=$(id -u) -t biowonks/node-bootstrap -f Dockerfile.node-bootstrap .
+    - mkdir -p ~/docker; docker save biowonks/node-bootstrap > ~/docker/node-bootstrap.tar
+    # - bin/build-docker-images.sh core-lib
 
 test:
   override:
-    - docker run --rm biowonks/core-lib npm test
+    - docker run --rm --name core-lib-test -v .:/app -w /app/core-lib biowonks/node-bootstrap npm install && npm test
