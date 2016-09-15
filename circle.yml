@@ -24,4 +24,4 @@ dependencies:
 test:
   override:
     - docker run --rm -v $(pwd):/app -w /app/core-lib biowonks/node-bootstrap npm test
-    - if [[ -e core-lib/test-results.xml ]]; then cp core-lib/test-results.xml $CIRCLE_TEST_REPORTS/junit
+    - if [[ -e core-lib/test-results.xml ]]; then cp core-lib/test-results.xml $CIRCLE_TEST_REPORTS/junit; fi
