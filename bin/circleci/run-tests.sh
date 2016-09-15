@@ -9,7 +9,7 @@ cd $ROOT
 
 for PROJECT in "$@"; do
 	echo "====> Running $PROJECT tests"
-	docker run --rm -e CI=$CI -v $ROOT:/app -w /app/$PROJECT biowonks/node-bootstrap npm test
+	docker run -e CI=$CI -v $ROOT:/app -w /app/$PROJECT biowonks/node-bootstrap npm test
 
 	# Copy over any junit test reports
 	if [[ -e $ROOT/$PROJECT/test-results.xml ]]; then
