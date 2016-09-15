@@ -6,22 +6,29 @@ general:
 machine:
   services:
     - docker
+  node:
+    # Necessary for using the ES6 features of some of our scripts
+    version: 6.4
   environment:
     NODE_ENV: develop
     MOCHA_REPORTER: mocha-circleci-reporter
-    MOCHA_FILE: $CIRCLE_TEST_REPORTS/junit/test-results.xml
+    # MOCHA_FILE: $CIRCLE_TEST_REPORTS/junit/test-results.xml
     TZ: America/New_York
 
 dependencies:
   cache_directories:
     - '~/docker'
     - core-lib/node_modules
+    - mist-lib/node_modules
+    - mist-pipeline/node_modules
+    - mist-pipeline/vendor
 
   override:
+    # All tests will be run on the docker image
     - bin/circleci/setup-test-docker-image.sh
-    - docker run --rm -v $(pwd):/app -w /app/core-lib biowonks/node-bootstrap /bin/bash -c 'npm prune && npm install'
+    - bin/circleci/detect-projects-to-build.sh > projects-to-build.txt
+    - bin/circleci/install-dependencies $(cat projects-to-build.txt)
 
 test:
   override:
-    - docker run --rm -v $(pwd):/app -w /app/core-lib biowonks/node-bootstrap npm test
-    - if [[ -e core-lib/test-results.xml ]]; then cp core-lib/test-results.xml $CIRCLE_TEST_REPORTS/junit/core-lib.test-results.xml; fi
+    - bin/circleci/run-tests.sh $(cat projects-to-build.txt)
