@@ -5,6 +5,11 @@ set -e
 DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 CHANGED_PROJECTS=$($DIR/get-changed-projects.sh)
+if [[ -z "$CHANGED_PROJECTS" ]]; then
+	# No projects to build
+	exit
+fi
+
 PROJECTS_TO_BUILD=$(node $DIR/get-dependent-projects.js $DIR/inter-project.dependencies.js $CHANGED_PROJECTS)
 
 # >&2 echo ... <--- output to stderr; http://stackoverflow.com/a/23550347
