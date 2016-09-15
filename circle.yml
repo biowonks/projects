@@ -12,7 +12,6 @@ machine:
   environment:
     NODE_ENV: develop
     MOCHA_REPORTER: mocha-circleci-reporter
-    # MOCHA_FILE: $CIRCLE_TEST_REPORTS/junit/test-results.xml
     TZ: America/New_York
 
 dependencies:
@@ -27,7 +26,7 @@ dependencies:
     # All tests will be run on the docker image
     - bin/circleci/setup-test-docker-image.sh
     - bin/circleci/detect-projects-to-build.sh > projects-to-build.txt
-    - bin/circleci/install-dependencies $(cat projects-to-build.txt)
+    - bin/circleci/install-dependencies.sh $(cat projects-to-build.txt)
 
 test:
   override:
