@@ -5,13 +5,13 @@ set -e
 npm run install-vendor-tools
 npm run install-hmmer3
 
-if [[ -z ${CI+x} ]]; then
+if [ -z ${CI+x} ]; then
 	npm run install-agfam
 	npm run install-pfam
 else
-	echo "Skipping installation of agfam and pfam"
+	echo "===> CI variable is defined. Skipping installation of agfam and pfam."
 fi
 
 echo ""
 echo "-----------------------------------------------------------"
-echo "MiST setup complete"
+echo "MiST pipeline setup complete"

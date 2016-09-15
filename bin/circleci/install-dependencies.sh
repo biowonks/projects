@@ -9,5 +9,5 @@ cd $ROOT
 
 for PROJECT in "$@"; do
 	echo "====> Installing $PROJECT dependencies"
-	docker run --rm -v $ROOT:/app -w /app/$PROJECT biowonks/node-bootstrap /bin/bash -c 'npm prune && npm install'
+	docker run --rm -e CI=$CI -v $ROOT:/app -w /app/$PROJECT biowonks/node-bootstrap /bin/bash -c 'npm prune && npm install'
 done
