@@ -18,9 +18,6 @@ dependencies:
 
   override:
     - bin/circleci/setup-test-docker-image.sh
-    # - if [[ -e ~/docker/node-bootstrap.tar ]]; then docker load -i ~/docker/node-bootstrap.tar; fi
-    # - docker build --build-arg LOCAL_USER_ID=$(id -u) -t biowonks/node-bootstrap -f Dockerfile.node-bootstrap .
-    # - mkdir -p ~/docker; docker save biowonks/node-bootstrap > ~/docker/node-bootstrap.tar
 
 test:
   override:

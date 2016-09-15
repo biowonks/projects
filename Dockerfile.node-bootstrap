@@ -17,7 +17,6 @@ RUN addgroup -g ${LOCAL_USER_ID:=1000} biowonks && \
 	chown biowonks:biowonks /app
 
 COPY docker.node-bootstrap.entrypoint.sh /usr/local/bin/
-COPY _common /app/_common
 
 ENTRYPOINT ["/usr/local/bin/docker.node-bootstrap.entrypoint.sh"]
 CMD ["bash"]
