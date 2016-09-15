@@ -17,10 +17,12 @@ dependencies:
     - "~/docker"
 
   override:
-    - if [[ -e ~/docker/node-bootstrap.tar ]]; then docker load -i ~/docker/node-bootstrap.tar; fi
-    - docker build --build-arg LOCAL_USER_ID=$(id -u) -t biowonks/node-bootstrap -f Dockerfile.node-bootstrap .
-    - mkdir -p ~/docker; docker save biowonks/node-bootstrap > ~/docker/node-bootstrap.tar
+    - rm -rf ~/docker
+    - bin/circleci/setup-test-docker-image.sh
+    # - if [[ -e ~/docker/node-bootstrap.tar ]]; then docker load -i ~/docker/node-bootstrap.tar; fi
+    # - docker build --build-arg LOCAL_USER_ID=$(id -u) -t biowonks/node-bootstrap -f Dockerfile.node-bootstrap .
+    # - mkdir -p ~/docker; docker save biowonks/node-bootstrap > ~/docker/node-bootstrap.tar
 
 test:
   override:
-    - docker run --rm --name core-lib-test -v $(pwd):/app -w /app/core-lib biowonks/node-bootstrap /bin/bash -c 'npm install && npm test'
+    - docker run --rm -v $(pwd):/app -w /app/core-lib biowonks/node-bootstrap /bin/bash -c 'npm install && npm test'
