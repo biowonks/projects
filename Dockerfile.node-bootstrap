@@ -2,7 +2,7 @@ FROM mhart/alpine-node:6.4
 
 MAINTAINER BioWonks <biowonks@users.noreply.github.com>
 
-ENV PS1="(docker) \w $ "
+ENV PS1="(\u@docker) \w $ "
 ENV HOME=/app
 
 # The following is to facilitate volume sharing with the right permissions when locally developing.
