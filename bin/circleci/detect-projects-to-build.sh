@@ -6,6 +6,7 @@ DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 CHANGED_PROJECTS=$($DIR/get-changed-projects.sh)
 if [[ -z "$CHANGED_PROJECTS" ]]; then
+	(>&2 echo "====> No project changes detected")
 	# No projects to build
 	exit
 fi
