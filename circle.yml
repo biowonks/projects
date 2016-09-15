@@ -14,7 +14,8 @@ machine:
 
 dependencies:
   cache_directories:
-    - "~/docker"
+    - '~/docker'
+    - core-lib/node_modules
 
   override:
     - bin/circleci/setup-test-docker-image.sh
