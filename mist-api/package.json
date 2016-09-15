@@ -15,9 +15,7 @@
     "start": "NODE_PATH=node_modules node src/start-api.js | node_modules/.bin/bunyan",
     "stop": "node_modules/.bin/pm2 stop mist-api",
     "monitor": "node_modules/.bin/pm2 monit mist-api",
-    "logs": "node_modules/.bin/pm2 logs --raw mist-api | node_modules/.bin/bunyan",
-    "docker-build": "docker build -t biowonks/mist-api .",
-    "on-docker": "docker run --rm biowonks/mist-api"
+    "logs": "node_modules/.bin/pm2 logs --raw mist-api | node_modules/.bin/bunyan"
   },
   "pre-commit": [
     "eslint"
