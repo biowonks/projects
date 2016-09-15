@@ -19,7 +19,9 @@ dependencies:
 
   override:
     - bin/circleci/setup-test-docker-image.sh
+    - docker run --rm -v $(pwd):/app -w /app/core-lib biowonks/node-bootstrap /bin/bash -c 'npm prune && npm install'
 
 test:
   override:
-    - docker run --rm -v $(pwd):/app -w /app/core-lib biowonks/node-bootstrap /bin/bash -c 'npm install && npm test'
+    - docker run --rm -v $(pwd):/app -w /app/core-lib biowonks/node-bootstrap npm test
+    - if [[ -e core-lib/test-results.xml ]]; then cp core-lib/test-results.xml $CIRCLE_TEST_REPORTS/junit
