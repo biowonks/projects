@@ -8,6 +8,7 @@ ROOT=$DIR/../..
 cd $ROOT
 
 for PROJECT in "$@"; do
+	echo "====> Running $PROJECT tests"
 	docker run --rm -v $(ROOT):/app -w /app/$PROJECT biowonks/node-bootstrap npm test
 
 	# Copy over any junit test reports
