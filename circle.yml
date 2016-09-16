@@ -36,4 +36,4 @@ dependencies:
 test:
   override:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit
-    - if [[ -s projects-to-build.txt ]]; then bin/merge-junit-reports.js $(awk '{print $1 "/test-results.xml" }' projects-to-build.txt) > $CIRCLE_TEST_REPORTS/junit/test-results.xml; fi
+    - bin/merge-junit-reports.js $(awk '{print $1 "/test-results.xml" }' projects-to-build.txt) > $CIRCLE_TEST_REPORTS/junit/test-results.xml
