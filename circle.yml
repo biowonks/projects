@@ -17,6 +17,7 @@ machine:
 dependencies:
   cache_directories:
     - '~/docker'
+    - '~/'
     - node_modules
     - core-lib/node_modules
     - mist-lib/node_modules
@@ -38,4 +39,4 @@ test:
 
   post:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit
-    - bin/merge-junit-reports.js $(awk '{print $1 "/test-results.xml" }' projects-to-build.txt) > $CIRCLE_TEST_REPORTS/junit/test-results.xml
+    - if [[ -s projects-to-build.txt ]]; then bin/merge-junit-reports.js $(awk '{print $1 "/test-results.xml" }' projects-to-build.txt) > $CIRCLE_TEST_REPORTS/junit/test-results.xml; fi
