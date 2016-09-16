@@ -24,7 +24,8 @@ dependencies:
     - mist-pipeline/vendor
 
   override:
-    - npm set progress=false # Small speed-up; https://twitter.com/gavinjoyce/status/691773956144119808
+    # Small speed-up; https://twitter.com/gavinjoyce/status/691773956144119808
+    - npm set progress=false
     - npm prune && npm install
     # All tests will be run on the docker image
     - bin/circleci/setup-test-docker-image.sh
@@ -36,4 +37,5 @@ test:
     - bin/circleci/run-tests.sh $(cat projects-to-build.txt)
 
   post:
+    - mkdir -p $CIRCLE_TEST_REPORTS/junit
     - bin/merge-junit-reports.js $(awk '{print $1 "/test-results.xml" }' projects-to-build.txt) > $CIRCLE_TEST_REPORTS/junit/test-results.xml
