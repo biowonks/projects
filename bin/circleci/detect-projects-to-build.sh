@@ -95,15 +95,15 @@ removeDuplicateLines() {
 
 # Step 1a
 LAST_BUILD_STATUS=$(curl -s "https://circleci.com/api/v1.1/project/github/biowonks/projects/tree/f-circleci-testing?limit=1&circle-token=$CIRCLE_TOKEN" | python -c "import sys, json; x = json.load(sys.stdin)[0]; print x['previous']['status'] if x is not None else 'success'")
-echo "====> Last build status: $LAST_BUILD_STATUS"
+echoSTDERR "====> Last build status: $LAST_BUILD_STATUS"
 if [[ $LAST_BUILD_STATUS = 'success' ]]; then
-	echo '      * Updating list of built projects'
+	echoSTDERR '      * Updating list of built projects'
 	# Step 1b
 	# The last build succeeded. Add projects to the success list
 	cat $CACHE_PROJECTS_TO_BUILD_FILE >> $CACHE_BUILT_PROJECTS_FILE
 	removeDuplicateLines $CACHE_BUILT_PROJECTS_FILE
 else
-	echo '      * Removing previous build projects from list of those successfully built'
+	echoSTDERR '      * Removing previous build projects from list of those successfully built'
 	# Step 1c
 	# The last build failed. Remove all such projects from the built list
 	removeFromCacheBuiltFile "$(cat $CACHE_PROJECTS_TO_BUILD_FILE)"
@@ -119,7 +119,7 @@ CACHED_BUILT_PROJECTS=$(cat $CACHE_BUILT_PROJECTS_FILE | sort)
 UNBUILT_PROJECTS=$(comm -23 <(sort $BUILD_TARGETS_FILE) <(echo "$CACHED_BUILT_PROJECTS"))
 
 if [[ -z "$UNBUILT_PROJECTS" ]]; then
-	(>&2 echo "====> No outstanding projects to build")
+	echoSTDERR "====> No outstanding projects to build"
 	# Empty the projects to build file
 	> $CACHE_PROJECTS_TO_BUILD_FILE
 	exit
