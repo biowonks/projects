@@ -13,5 +13,5 @@ for PROJECT in "$@"; do
 	#          ^^^^^^^^^^ inform scripts that we are a CI server
 
 	# Create a file to indicate that this project has been built
-	touch ~/cache/built/$CIRCLE_BRANCH/$PROJECT
+	echo $PROJECT > ~/cache/built/$CIRCLE_BRANCH/$PROJECT
 done
