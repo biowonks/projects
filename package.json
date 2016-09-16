@@ -1,0 +1,23 @@
+{
+  "name": "projects",
+  "version": "1.0.0",
+  "description": "BioWonks monorepo",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/biowonks/projects.git"
+  },
+  "keywords": [
+    "mist",
+    "seqdepot"
+  ],
+  "author": "BioWonks",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/biowonks/projects/issues"
+  },
+  "homepage": "https://github.com/biowonks/projects#readme",
+  "dependencies": {
+    "junit-report-merger": "0.0.4"
+  }
+}

@@ -1,20 +1,19 @@
 #!/bin/bash
+#
+# >&2 echo ... <--- output to stderr; http://stackoverflow.com/a/23550347
 
 set -e
 
 DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-CHANGED_PROJECTS=$($DIR/get-changed-projects.sh)
+CHANGED_PROJECTS=$($DIR/git-changed-projects.sh)
 if [[ -z "$CHANGED_PROJECTS" ]]; then
-	#    ^^^^^^^^^^^^^^^^^^^^^ http://stackoverflow.com/a/13864829
 	(>&2 echo "====> No project changes detected")
-	# No projects to build
 	exit
 fi
 
 PROJECTS_TO_BUILD=$(node $DIR/get-dependent-projects.js $DIR/inter-project.dependencies.js $CHANGED_PROJECTS)
 
-# >&2 echo ... <--- output to stderr; http://stackoverflow.com/a/23550347
 (>&2 echo "----> Changed Projects:")
 for i in $CHANGED_PROJECTS; do
 	(>&2 echo "      * $i")

@@ -9,5 +9,6 @@ cd $ROOT
 
 for PROJECT in "$@"; do
 	echo "====> Installing $PROJECT dependencies"
-	docker run -e CI=$CI -v $ROOT:/app -w /app/$PROJECT biowonks/node-bootstrap /bin/bash -c 'npm prune && npm install'
+	docker run -e CI=true -v $ROOT:/app -w /app/$PROJECT biowonks/node-bootstrap /bin/bash -c 'npm prune && npm install'
+	#          ^^^^^^^^^^ inform scripts that we are a CI server
 done

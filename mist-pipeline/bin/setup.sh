@@ -12,6 +12,6 @@ else
 	echo "===> CI variable is defined. Skipping installation of agfam and pfam."
 fi
 
-echo ""
+echo
 echo "-----------------------------------------------------------"
 echo "MiST pipeline setup complete"

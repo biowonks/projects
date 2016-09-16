@@ -1,3 +1,2 @@
 *
-!_common
 !docker.node-bootstrap.entrypoint.sh
