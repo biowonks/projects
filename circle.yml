@@ -24,10 +24,10 @@ dependencies:
     - mist-pipeline/vendor
 
   override:
+    - npm set progress=false # Small speed-up; https://twitter.com/gavinjoyce/status/691773956144119808
     - npm prune && npm install
     # All tests will be run on the docker image
     - bin/circleci/setup-test-docker-image.sh
-    - npm set progress=false # Small speed-up; https://twitter.com/gavinjoyce/status/691773956144119808
     - bin/circleci/detect-projects-to-build.sh > projects-to-build.txt
     - bin/circleci/install-dependencies.sh $(cat projects-to-build.txt)
 

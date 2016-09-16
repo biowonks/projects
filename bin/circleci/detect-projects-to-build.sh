@@ -12,7 +12,7 @@ if [[ -z "$CHANGED_PROJECTS" ]]; then
 	exit
 fi
 
-PROJECTS_TO_BUILD=$(node $DIR/get-dependent-projects.js $DIR/inter-project.dependencies.js $CHANGED_PROJECTS)
+PROJECTS_TO_BUILD=$(node $DIR/list-dependent-projects.js $DIR/inter-project.dependencies.js $CHANGED_PROJECTS)
 
 (>&2 echo "----> Changed Projects:")
 for i in $CHANGED_PROJECTS; do
