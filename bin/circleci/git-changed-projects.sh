@@ -11,4 +11,20 @@
 
 set -e
 
-git diff --name-only ${CIRCLE_BRANCH}^ $CIRCLE_BRANCH | awk 'BEGIN {FS="/"} /^[^._]+\// && $1 != "bin" && $1 != "mist-local-db" && $1 != "fql" {print $1}' | sort -u
+# >&2 echo ... <--- output to stderr; http://stackoverflow.com/a/23550347
+echoSTDERR() {
+	(>&2 echo "$1")
+}
+
+echoUsage() {
+	echoSTDERR "git-changed-projects.sh <git branch>"
+}
+
+BRANCH=$1
+
+if [[ -z $BRANCH ]]; then
+	echoUsage
+	exit 1
+fi
+
+git diff --name-only ${BRANCH}^ $BRANCH | awk 'BEGIN {FS="/"} /^[^._]+\// && $1 != "bin" && $1 != "mist-local-db" && $1 != "fql" {print $1}' | sort -u

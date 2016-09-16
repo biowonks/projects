@@ -8,7 +8,7 @@ const path = require('path')
 const DepNode = require('../../mist-lib/src/graph/DepNode')
 
 // Other
-const kUsage = `Usage: get-dependent-projects.js <dependent project list> <changed project> [...]
+const kUsage = `Usage: list-dependent-projects.js <dependent project list> <changed project> [...]
 
   Given a list of projects that have changed and a list of inter-project
   dependencies, output all affected projects that should be rebuilt. For

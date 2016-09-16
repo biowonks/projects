@@ -16,8 +16,7 @@ machine:
 
 dependencies:
   cache_directories:
-    - '~/docker'
-    - '~/'
+    - '~/cache'
     - node_modules
     - core-lib/node_modules
     - mist-lib/node_modules
@@ -26,11 +25,11 @@ dependencies:
 
   override:
     # Small speed-up; https://twitter.com/gavinjoyce/status/691773956144119808
-    - npm set progress=false
-    - npm prune && npm install
+    - npm set progress=false && npm prune && npm install
+    - mkdir -p ~/cache/built/$CIRCLE_BRANCH
     # All tests will be run on the docker image
     - bin/circleci/setup-test-docker-image.sh
-    - bin/circleci/detect-projects-to-build.sh > projects-to-build.txt
+    - bin/circleci/detect-projects-to-build.sh build-targets.txt $CIRCLE_BRANCH > projects-to-build.txt
     - bin/circleci/install-dependencies.sh $(cat projects-to-build.txt)
 
 test:

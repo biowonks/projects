@@ -14,7 +14,7 @@ IMAGE_FULL_NAME="biowonks/node-bootstrap:$VERSION_TAG"
 echo "Image version: $VERSION_TAG"
 echo "Image name:    $IMAGE_FULL_NAME"
 
-CACHE_DIR=$(readlink -f ~/docker)
+CACHE_DIR=$(readlink -f ~/cache/docker)
 IMAGE_TARFILE_BASENAME=node-bootstrap.$VERSION_TAG.tar
 IMAGE_TARFILE=$CACHE_DIR/$IMAGE_TARFILE_BASENAME
 
