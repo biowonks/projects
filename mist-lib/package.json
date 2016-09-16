@@ -1,6 +1,6 @@
 {
   "name": "mist-lib",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Common MiST project code",
   "scripts": {
     "preinstall": "node ../bin/merge-deps.js -i ../core-lib/package.json ../seqdepot-lib/package.json ./package.json",
