@@ -4,7 +4,7 @@
   "description": "Common project code for BioWonks' node projects",
   "scripts": {
     "test": "NODE_PATH=node_modules node_modules/.bin/mocha --reporter ${MOCHA_REPORTER-spec} -r ../_common/test.globals.js 'src/**/*.tests.js'",
-    "coverage": "NODE_PATH=node_modules node_modules/.bin/istanbul cover --config ../_common/.istanbul.js node_modules/mocha/bin/_mocha -- -r ../_common/test.globals.js 'src/**/*.tests.js'",
+    "coverage": "NODE_PATH=node_modules node_modules/.bin/istanbul cover --config ../_common/.istanbul.js node_modules/mocha/bin/_mocha -- --reporter ${MOCHA_REPORTER-spec} -r ../_common/test.globals.js 'src/**/*.tests.js'",
     "eslint": "node_modules/.bin/eslint 'src/**/*.js'"
   },
   "pre-commit": [
