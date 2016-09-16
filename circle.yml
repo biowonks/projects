@@ -31,11 +31,9 @@ dependencies:
     - bin/circleci/setup-test-docker-image.sh
     - bin/circleci/detect-projects-to-build.sh build-targets.txt $CIRCLE_BRANCH > projects-to-build.txt
     - bin/circleci/install-dependencies.sh $(cat projects-to-build.txt)
+    - bin/circleci/run-tests.sh $(cat projects-to-build.txt)
 
 test:
   override:
-    - bin/circleci/run-tests.sh $(cat projects-to-build.txt)
-
-  post:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit
     - if [[ -s projects-to-build.txt ]]; then bin/merge-junit-reports.js $(awk '{print $1 "/test-results.xml" }' projects-to-build.txt) > $CIRCLE_TEST_REPORTS/junit/test-results.xml; fi
