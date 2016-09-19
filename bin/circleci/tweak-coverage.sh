@@ -48,6 +48,7 @@ echo ""
 
 # Create the final combined report
 echo "====> Combining code coverage reports"
+mkdir -p $CIRCLE_ARTIFACTS/coverage # In case it does not already exist
 node_modules/.bin/istanbul report --root /tmp/coverage --dir /tmp/coverage/all json lcov 2>/dev/null
 cp -r /tmp/coverage/all/lcov-report $CIRCLE_ARTIFACTS/coverage/all
 mv /tmp/coverage/all/coverage-final.json /tmp/coverage/all/coverage.json
