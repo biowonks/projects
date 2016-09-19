@@ -13,6 +13,6 @@ for PROJECT in "$@"; do
 	#          ^^^^^^^^^^ inform scripts that we are a CI server
 
 	echo "      - Copying coverage report to artifacts"
-	mkdir -p $CIRCLE_ARTIFACTS/coverage/$PROJECT
 	cp -r $ROOT/$PROJECT/testing/coverage/lcov-report $CIRCLE_ARTIFACTS/coverage/$PROJECT
+	cp $ROOT/$PROJECT/testing/coverage/* $CIRCLE_ARTIFACTS/coverage/$PROJECT 2>/dev/null
 done

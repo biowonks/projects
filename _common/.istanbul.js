@@ -8,7 +8,8 @@ module.exports = {
 		'include-all-sources': true,
 		excludes: [
 			'src/node_modules'
-		]
+		],
+		root: 'src'
 	},
 	reporting: {
 		dir: 'testing/coverage'

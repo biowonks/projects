@@ -35,6 +35,7 @@ dependencies:
 test:
   override:
     - bin/circleci/run-tests.sh $(cat projects-to-build.txt)
+    - bin/circleci/tweak-coverage.sh $(cat build-targets.txt)
 
   post:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit
