@@ -29,6 +29,7 @@ dependencies:
     - bin/circleci/install-dependencies.sh $(cat projects-to-build.txt)
 
     # Cache heroku repository state - clones or updates from Heroku
+    - bin/circleci/setup-heroku.sh # Log in the Heroku user
     - bin/circleci/fetch-heroku-repos.sh ~/heroku mist-api-boom
 
 test:
