@@ -1,6 +1,6 @@
 {
   "name": "mist-api",
-  "version": "3.0.1",
+  "version": "3.0.2",
   "description": "RESTful API to the MiST database",
   "main": "index.js",
   "engines": {

@@ -103,8 +103,7 @@ echoProjects() {
 
 # ---------------------------------------------------------
 # Step 1a
-# LAST_BUILD_STATUS=$(curl -s "https://circleci.com/api/v1.1/project/github/biowonks/projects/tree/f-circleci-testing?limit=1&circle-token=$CIRCLE_TOKEN" | python -c "import sys, json; x = json.load(sys.stdin)[0]; print x['previous']['status'] if x is not None else 'success'")
-LAST_BUILD_STATUS="success"
+LAST_BUILD_STATUS=$(curl -s "https://circleci.com/api/v1.1/project/github/biowonks/projects/tree/f-circleci-testing?limit=1&circle-token=$CIRCLE_TOKEN" | python -c "import sys, json; x = json.load(sys.stdin)[0]; print x['previous']['status'] if x is not None else 'success'")
 echoSTDERR "====> Last build status: $LAST_BUILD_STATUS"
 if [[ $LAST_BUILD_STATUS = 'success' ]]; then
 	echoSTDERR "      * Updating list of built projects"

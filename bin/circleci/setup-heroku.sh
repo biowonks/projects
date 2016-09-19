@@ -5,8 +5,8 @@ if [[ -z $CIRCLECI ]]; then
 	exit 1
 fi
 
-if [[ -z $HEROKU_API_TOKEN ]]; then
-	echo "HEROKU_API_TOKEN is not set"
+if [[ -z $HEROKU_API_KEY ]]; then
+	echo "HEROKU_API_KEY is not set"
 	exit 1
 fi
 
@@ -23,7 +23,7 @@ fi
 cat > $HOME/.netrc <<EOF
 machine api.heroku.com
 	login $HEROKU_USER
-	password $HEROKU_API_TOKEN
+	password $HEROKU_API_KEY
 EOF
 
 chmod 600 ~/.netrc
