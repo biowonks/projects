@@ -2,8 +2,11 @@
 
 set -e
 
-if [[ -z $1 ]]; then
-	echo "Usage: tweak-coverage.sh <build target> ..."
+BRANCH=$1
+shift
+
+if [[ -z $BRANCH || -z $1 ]]; then
+	echo "Usage: tweak-coverage.sh <branch> <build target> ..."
 	exit 1
 fi
 
@@ -18,7 +21,7 @@ mkdir -p /tmp/s3 /tmp/coverage
 echo ""
 
 echo "====> Downloading previous coverage files from S3"
-aws s3api get-object --bucket biowonks --key circleci/coverage.tar.gz /tmp/s3/coverage.tar.gz 2>/dev/null || true
+aws s3api get-object --bucket biowonks --key circleci/$BRANCH/coverage.tar.gz /tmp/s3/coverage.tar.gz 2>/dev/null || true
 if [[ -s /tmp/s3/coverage.tar.gz ]]; then
 	tar -C /tmp/s3 -xf /tmp/s3/coverage.tar.gz
 else
@@ -43,7 +46,7 @@ echo ""
 # Create the new tarball coverage
 echo "====> Saving results into new tarball"
 tar -C /tmp -czf coverage.tar.gz coverage
-aws s3 cp --storage-class=REDUCED_REDUNDANCY coverage.tar.gz s3://biowonks/circleci/coverage.tar.gz
+aws s3 cp --storage-class=REDUCED_REDUNDANCY coverage.tar.gz s3://biowonks/circleci/$BRANCH/coverage.tar.gz
 echo ""
 
 # Create the final combined report
