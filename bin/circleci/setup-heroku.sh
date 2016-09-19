@@ -24,6 +24,9 @@ cat > $HOME/.netrc <<EOF
 machine api.heroku.com
     login $HEROKU_USER
     password $HEROKU_API_KEY
+machine git.heroku.com
+    login $HEROKU_USER
+    password $HEROKU_API_KEY
 EOF
 
 chmod 600 ~/.netrc

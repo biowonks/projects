@@ -15,5 +15,5 @@ for PROJECT in "$@"; do
 	echo "      - Copying coverage report to artifacts"
 	mkdir -p $CIRCLE_ARTIFACTS/coverage/$PROJECT
 	cp -r $ROOT/$PROJECT/testing/coverage/lcov-report/* $CIRCLE_ARTIFACTS/coverage/$PROJECT
-	cp $ROOT/$PROJECT/testing/coverage/* $CIRCLE_ARTIFACTS/coverage/$PROJECT 2>/dev/null
+	cp $ROOT/$PROJECT/testing/coverage/* $CIRCLE_ARTIFACTS/coverage/$PROJECT 2>/dev/null || true
 done

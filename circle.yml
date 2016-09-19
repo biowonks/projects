@@ -40,9 +40,9 @@ test:
     - bin/merge-junit-reports.js $(awk '{print $1 "/test-results.xml" }' projects-to-build.txt) > $CIRCLE_TEST_REPORTS/junit/test-results.xml
     - bin/circleci/tweak-coverage.sh $CIRCLE_BRANCH $(cat build-targets.txt)
 
-# deployment:
-#   boom:
-#     branch: develop
-#     commands:
-#       - bin/circleci/fetch-heroku-repos.sh ~/heroku mist-api-boom
-#       - bin/circleci/deploy-to-heroku.sh develop $(cat projects-to-build.txt)
+deployment:
+  boom:
+    branch: develop
+    commands:
+      - bin/circleci/fetch-heroku-repos.sh ~/heroku mist-api-boom
+      - bin/circleci/deploy-to-heroku.sh develop $(cat projects-to-build.txt)
