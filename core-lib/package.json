@@ -1,6 +1,6 @@
 {
   "name": "core-lib",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Common project code for BioWonks' node projects",
   "scripts": {
     "test": "NODE_PATH=node_modules node_modules/.bin/mocha --reporter ${MOCHA_REPORTER-spec} -r ../_common/test.globals.js 'src/**/*.tests.js'",

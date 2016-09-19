@@ -58,5 +58,5 @@ mv /tmp/coverage/all/coverage-final.json /tmp/coverage/all/coverage.json
 cp /tmp/coverage/all/* $CIRCLE_ARTIFACTS/coverage/all > /dev/null || true
 echo ""
 
-# TODO: Submit to codecov
 echo "====> Uploading results to codecov"
+# $ROOT/node_modules/.bin/codecov -f
