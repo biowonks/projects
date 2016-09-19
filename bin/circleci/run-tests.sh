@@ -7,6 +7,8 @@ ROOT=$DIR/../..
 
 cd $ROOT
 
+mkdir -p $CIRCLE_ARTIFACTS/coverage
+
 for PROJECT in "$@"; do
 	echo "====> Running $PROJECT tests"
 	docker run -e CI=true -e MOCHA_REPORTER=mocha-circleci-reporter -v $ROOT:/app -w /app/$PROJECT biowonks/node-bootstrap npm run coverage
