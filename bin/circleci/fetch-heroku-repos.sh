@@ -20,7 +20,7 @@ for APP_NAME in "$@"; do
 		git pull
 	else
 		echo "      (Cloning)"
-		git clone https://git.heroku.com/$APP_NAME.git
+		heroku git:clone -a $APP_NAME
 	fi
 	echo ""
 done
