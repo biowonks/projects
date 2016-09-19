@@ -7,7 +7,8 @@
     "node": "6.4"
   },
   "scripts": {
-    "preinstall": "node ../bin/merge-deps.js -i ../core-lib/package.json ../seqdepot-lib/src/models/package.json ../mist-lib/package.json ./package.json",
+    "merge-deps": "node ../bin/merge-deps.js -i ../core-lib/package.json ../seqdepot-lib/src/models/package.json ../mist-lib/package.json ./package.json",
+    "preinstall": "npm run merge-deps",
     "eslint": "node_modules/.bin/eslint --ignore-pattern src/node_modules 'src/**/*.js'",
     "coverage": "NODE_PATH=node_modules node_modules/.bin/istanbul cover --config ../_common/.istanbul.js node_modules/mocha/bin/_mocha -- --reporter ${MOCHA_REPORTER-spec} -r ../_common/test.globals.js $(find src -name '*.tests.js')",
     "test": "find src -name '*.tests.js' | NODE_PATH=node_modules xargs node_modules/.bin/mocha --reporter ${MOCHA_REPORTER-spec} -r ../_common/test.globals.js",
@@ -67,7 +68,8 @@
     "through2": "^2.0.1",
     "universal-analytics": "^0.4.2",
     "xml2js": "^0.4.17",
-    "sequelize-model-loader": "https://github.com/lukeulrich/sequelize-model-loader.git"
+    "sequelize-model-loader": "https://github.com/lukeulrich/sequelize-model-loader.git",
+    "rimraf": "^2.5.4"
   },
   "devDependencies": {
     "chai": "^3.5.0",

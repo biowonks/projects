@@ -12,6 +12,7 @@ machine:
 dependencies:
   cache_directories:
     - '~/cache'
+    - '~/heroku'
     - node_modules
     - core-lib/node_modules
     - mist-lib/node_modules
@@ -27,11 +28,20 @@ dependencies:
     - bin/circleci/detect-projects-to-build.sh build-targets.txt $CIRCLE_BRANCH > projects-to-build.txt
     - bin/circleci/install-dependencies.sh $(cat projects-to-build.txt)
 
+    # Cache heroku repository state - clones or updates from Heroku
+    - bin/circleci/fetch-heroku-repos.sh ~/heroku mist-api-boom
+
 test:
   override:
     - bin/circleci/run-tests.sh $(cat projects-to-build.txt)
-    - bin/circleci/tweak-coverage.sh $(cat build-targets.txt)
 
   post:
     - mkdir -p $CIRCLE_TEST_REPORTS/junit
     - bin/merge-junit-reports.js $(awk '{print $1 "/test-results.xml" }' projects-to-build.txt) > $CIRCLE_TEST_REPORTS/junit/test-results.xml
+    - bin/circleci/tweak-coverage.sh $CIRCLE_BRANCH $(cat build-targets.txt)
+
+deployment:
+  boom:
+    branch: develop
+    commands:
+      - bin/circleci/deploy-to-heroku.sh develop $(cat projects-to-build.txt)
