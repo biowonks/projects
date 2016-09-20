@@ -15,10 +15,10 @@ if [[ -z $HEROKU_USER ]]; then
 	exit 1
 fi
 
-if [ ! -f "${HOME}/.ssh/id_heroku.com.pub" ]; then
-  echo "SSH is not set for Heroku in CircleCI. set here https://circleci.com/gh/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/edit#ssh"
-  exit 1
-fi
+# if [ ! -f "${HOME}/.ssh/id_heroku.com.pub" ]; then
+#   echo "SSH is not set for Heroku in CircleCI. set here https://circleci.com/gh/${CIRCLE_PROJECT_USERNAME}/${CIRCLE_PROJECT_REPONAME}/edit#ssh"
+#   exit 1
+# fi
 
 cat > $HOME/.netrc <<EOF
 machine api.heroku.com
