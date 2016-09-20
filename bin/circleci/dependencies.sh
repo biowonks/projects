@@ -4,8 +4,10 @@ set -e
 set -x
 
 DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+ROOT=$DIR/../..
 
 # Small speed-up; https://twitter.com/gavinjoyce/status/691773956144119808
+cd $ROOT
 npm set progress=false && npm prune && npm install
 
 # All tests will be run on the docker image
