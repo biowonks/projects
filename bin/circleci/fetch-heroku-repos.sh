@@ -20,9 +20,7 @@ for APP_NAME in "$@"; do
 		git fetch
 		# Quite possible that this repository is empty. If so,
 		# git merge will choke because it won't find a master branch'
-		if [[ $(git branch --list master) ]]; then
-			git merge
-		fi
+		git merge || true
 	else
 		echo "      (Cloning)"
 		heroku git:clone -a $APP_NAME
