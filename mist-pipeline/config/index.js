@@ -4,7 +4,8 @@
 const path = require('path')
 
 // Vendor
-const moment = require('moment')
+const loadConfig = require('node-config-loader'),
+	moment = require('moment')
 
 // Local
 const database = require('../src/node_modules/mist-lib/db/config')
@@ -12,7 +13,7 @@ const database = require('../src/node_modules/mist-lib/db/config')
 // --------------------------------------------------------
 let vendorPath = path.resolve(__dirname, '..', 'vendor')
 
-module.exports = {
+let config = {
 	paths: {
 		vendor: vendorPath
 	},
@@ -86,3 +87,7 @@ module.exports = {
 		]
 	}
 }
+
+loadConfig(__dirname, config)
+
+module.exports = config
