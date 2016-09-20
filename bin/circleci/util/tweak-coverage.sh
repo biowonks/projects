@@ -54,7 +54,8 @@ echo ""
 # Create the final combined report
 echo "====> Combining code coverage reports"
 mkdir -p $CIRCLE_ARTIFACTS/coverage # In case it does not already exist
-docker run -e CI=true -v $ROOT:/app -w /app/tmp biowonks/node-bootstrap $ROOT/node_modules/.bin/istanbul report --dir /app/tmp/coverage/all json lcov
+docker run -e CI=true -v $ROOT:/app -w /app/tmp biowonks/node-bootstrap ../node_modules/.bin/istanbul report --dir /app/tmp/coverage/all json lcov
+# ^^ Since we are running on docker, the path to node_modules is        ^^^^^^^^^^^^^^^ relative to the working directory (/app/tmp)
 cp -r $TMPDIR/coverage/all/lcov-report $CIRCLE_ARTIFACTS/coverage/all
 mv $TMPDIR/coverage/all/coverage-final.json $TMPDIR/coverage/all/coverage.json
 cp $TMPDIR/coverage/all/* $CIRCLE_ARTIFACTS/coverage/all 2> /dev/null || true
