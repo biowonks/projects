@@ -4,7 +4,7 @@ set -e
 
 BRANCH=$1
 DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-ROOT=$DIR/../..
+ROOT=$DIR/../../..
 SUFFIX=""
 
 if [[ -z $BRANCH ]]; then
