@@ -61,4 +61,4 @@ cp $TMPDIR/coverage/all/* $CIRCLE_ARTIFACTS/coverage/all 2> /dev/null || true
 echo ""
 
 echo "====> Uploading results to codecov"
-# $ROOT/node_modules/.bin/codecov -f
+$ROOT/node_modules/.bin/codecov -f $TMPDIR/coverage/all/lcov.info --disable=gcov
