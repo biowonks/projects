@@ -5,7 +5,6 @@ machine:
     # Necessary for using the ES6 features of some of our scripts
     version: 6.4
   environment:
-    NODE_ENV: develop
     MOCHA_REPORTER: mocha-circleci-reporter
     TZ: America/New_York
 

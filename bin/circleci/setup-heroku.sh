@@ -30,3 +30,6 @@ machine git.heroku.com
 EOF
 
 chmod 600 ~/.netrc
+
+git config --global user.name 'CircleCI'
+git config --global user.email 'biowonks@gmail.com'
