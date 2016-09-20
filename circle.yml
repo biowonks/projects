@@ -14,9 +14,11 @@ dependencies:
     - '~/heroku'
     - node_modules
     - core-lib/node_modules
+    - mist-api/node_modules
     - mist-lib/node_modules
     - mist-pipeline/node_modules
     - mist-pipeline/vendor
+    - seqdepot-lib/node_modules
 
   override:
     # Small speed-up; https://twitter.com/gavinjoyce/status/691773956144119808
