@@ -5,7 +5,7 @@
 const path = require('path')
 
 // Local
-const DepNode = require('../../mist-lib/src/graph/DepNode')
+const DepNode = require('../../../mist-lib/src/graph/DepNode')
 
 // Other
 const kUsage = `Usage: list-dependent-projects.js <dependent project list> <changed project> [...]
@@ -19,7 +19,7 @@ const kUsage = `Usage: list-dependent-projects.js <dependent project list> <chan
   names and their dependencies. For example:
 
     module.exports = [
-      {
+	  {
         name: 'core-lib',
         dependencies: []
       },
