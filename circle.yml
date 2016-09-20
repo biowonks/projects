@@ -21,7 +21,6 @@ dependencies:
     - seqdepot-lib/node_modules
 
   override:
-    - rm -rf ~/heroku/* # Temporarily remove this directory
     - bin/circleci/dependencies.sh
 
 test:
