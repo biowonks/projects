@@ -47,11 +47,15 @@ for PROJECT in "$@"; do
 			# --copy-dirlinks: copy any symlinked directories
 			# --delete: remove files in destination that are not in the source directories
 			# --delete-excluded: remove those that are excluded if present in the destination
-			rsync -rLptgv --copy-dirlinks --delete --delete-excluded --filter='P .git' --exclude mist-api/node_modules --exclude .vscode mist-api/ /home/ulrich/heroku/mist-api-boom/
+			rsync -rLptgv --copy-dirlinks --delete --delete-excluded --filter='P .git' --exclude /node_modules --exclude .vscode $PROJECT/ $HEROKU_REPO_DIR
 
 			echo "====> Committing changes and pushing to Heroku repository"
 			LAST_GIT_COMMENT=$(git log -1 --pretty=%B)
-			cd ~/heroku/$HEROKU_APP_NAME
+			cd $HEROKU_REPO_DIR
+
+			# Stub the merge-deps command (to avoid running this on Heroku)
+			sed -i 's/npm run merge-deps/true/g' package.json
+
 			git add -A
 			git commit -m "Automated CircleCI commit (build: $CIRCLE_BUILD_NUM, $CIRCLE_BUILD_URL)" -m "$LAST_GIT_COMMENT"
 			git push
