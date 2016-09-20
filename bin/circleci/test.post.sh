@@ -3,7 +3,7 @@
 set -e
 
 DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-ROOT=$DIR/../../..
+ROOT=$DIR/../..
 
 mkdir -p $CIRCLE_TEST_REPORTS/junit
 $ROOT/bin/merge-junit-reports.js $(awk '{print $1 "/test-results.xml" }' ~/projects-to-build.txt) > $CIRCLE_TEST_REPORTS/junit/test-results.xml
