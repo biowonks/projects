@@ -3,7 +3,7 @@
 set -e
 
 DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-ROOT=$DIR/../..
+ROOT=$DIR/../../..
 
 cd $ROOT
 

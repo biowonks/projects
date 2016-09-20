@@ -15,7 +15,7 @@ if [[ -z $HEROKU_USER ]]; then
 	exit 1
 fi
 
-cat > $HOME/.netrc <<EOF
+cat > ~/.netrc <<EOF
 machine api.heroku.com
     login $HEROKU_USER
     password $HEROKU_API_KEY

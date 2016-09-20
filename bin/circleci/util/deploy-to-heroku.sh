@@ -15,7 +15,7 @@ shift
 
 case "$BRANCH" in
 	develop)
-		SUFFIX="-boom"
+		SUFFIX="-develop"
 		;;
 	staging)
 		SUFFIX="-staging"

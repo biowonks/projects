@@ -6,7 +6,8 @@
 
 # Move to the root project directory
 DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-cd $DIR/../..
+ROOT=$DIR/../../..
+cd $ROOT
 
 VERSION_TAG=$(sha1sum Dockerfile.node-bootstrap docker.node-bootstrap.entrypoint.sh .dockerignore | sha1sum | cut -d' ' -f1)
 IMAGE_FULL_NAME="biowonks/node-bootstrap:$VERSION_TAG"

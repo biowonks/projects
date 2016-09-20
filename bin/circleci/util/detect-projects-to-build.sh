@@ -71,9 +71,10 @@ if [[ -z $BUILD_TARGETS_FILE || -z $BRANCH ]]; then
 fi
 
 DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-CACHE_BUILT_BASEDIR=~/cache/build-info/$BRANCH
-CACHE_BUILT_DIR=$CACHE_BUILT_BASEDIR/built
-LAST_PROJECTS_TO_BUILD_FILE=$CACHE_BUILT_BASEDIR/projects-to-build.txt
+ROOT=$DIR/../../..
+CACHE_BUILT_BASE_DIR=~/cache/build-info/$BRANCH
+CACHE_BUILT_DIR=$CACHE_BUILT_BASE_DIR/built
+LAST_PROJECTS_TO_BUILD_FILE=$CACHE_BUILT_BASE_DIR/projects-to-build.txt
 mkdir -p $CACHE_BUILT_DIR
 # Ensure the relevant cache files exist (avoid errors from commands expecting file to already exist)
 touch $LAST_PROJECTS_TO_BUILD_FILE
@@ -149,7 +150,7 @@ fi
 
 # ---------------------------------------------------------
 # Step 5a
-PROJECTS_TO_BUILD=$(node $DIR/list-dependent-projects.js $DIR/../../inter-project.dependencies.js $UNBUILT_PROJECTS)
+PROJECTS_TO_BUILD=$(node $DIR/list-dependent-projects.js $ROOT/inter-project.dependencies.js $UNBUILT_PROJECTS)
 # Step 5b
 removeCacheBuiltFiles $PROJECTS_TO_BUILD
 

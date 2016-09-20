@@ -1,7 +1,7 @@
 #!/bin/bash
 
-BASEDIR=$1
-if [[ -z $BASEDIR ]]; then
+BASE_DIR=$1
+if [[ -z $BASE_DIR ]]; then
 	echo "Usage: fetch-heroku-repos.sh <local path> <app name> [<app name> ...]"
 	exit 1
 fi
@@ -9,12 +9,12 @@ shift
 
 set -e
 
-mkdir -p $BASEDIR
+mkdir -p $BASE_DIR
 
 for APP_NAME in "$@"; do
-	cd $BASEDIR
+	cd $BASE_DIR
 	echo "====> Heroku:$APP_NAME"
-	if [[ -e $BASEDIR/$APP_NAME ]]; then
+	if [[ -e $BASE_DIR/$APP_NAME ]]; then
 		echo "      (Pulling latest changes)"
 		cd $APP_NAME
 		git fetch
