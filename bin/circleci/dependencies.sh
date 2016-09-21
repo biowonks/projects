@@ -16,5 +16,4 @@ $DIR/util/detect-projects-to-build.sh build-targets.txt $CIRCLE_BRANCH > ~/proje
 $DIR/util/install-dependencies.sh $(cat ~/projects-to-build.txt)
 
 # Cache heroku repository state - clones or updates from Heroku
-$DIR/util/setup-heroku.sh
 $DIR/util/fetch-heroku-repos.sh ~/heroku mist-api-develop

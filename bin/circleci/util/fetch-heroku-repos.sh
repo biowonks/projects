@@ -9,6 +9,9 @@ shift
 
 set -e
 
+git config --global user.name 'CircleCI'
+git config --global user.email 'lukeulrich@circleci.com'
+
 mkdir -p $BASE_DIR
 
 for APP_NAME in "$@"; do
@@ -23,7 +26,7 @@ for APP_NAME in "$@"; do
 		git merge || true
 	else
 		echo "      (Cloning)"
-		heroku git:clone -a $APP_NAME
+		git clone ssh://git@heroku.com/$APP_NAME.git
 	fi
 	echo ""
 done
