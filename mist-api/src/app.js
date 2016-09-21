@@ -1,5 +1,15 @@
 'use strict'
 
+// ----------------------
+// ----------------------
+// Monitoring by NewRelic
+if (process.env.NEW_RELIC_LICENSE_KEY) {
+	console.log('Loading New Relic') // eslint-disable-line no-console
+	require('newrelic') // eslint-disable-line global-require
+}
+// ----------------------
+// ----------------------
+
 // Core
 const http = require('http')
 
