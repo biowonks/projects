@@ -21,6 +21,7 @@ dependencies:
     - seqdepot-lib/node_modules
 
   override:
+    - rm -rf ~/heroku
     - bin/circleci/dependencies.sh
 
 test:
