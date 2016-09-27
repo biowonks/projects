@@ -1,6 +1,8 @@
 # Data Structures
 
 ## Component
+> Example record
+
 ```json
 {
   "genome_id": null,
@@ -158,6 +160,8 @@
 </table>
 
 ## ComponentFeature
+> Example record
+
 ```json
 {
   "component_id": null,
@@ -240,6 +244,8 @@
 </table>
 
 ## Gene
+> Example record
+
 ```json
 {
   "component_id": null,
@@ -406,6 +412,8 @@
 </table>
 
 ## GeneCluster
+> Example record
+
 ```json
 {
   "component_id": null,
@@ -446,6 +454,8 @@
 </table>
 
 ## GeneClusterMember
+> Example record
+
 ```json
 {
   "genes_cluster_id": null,
@@ -479,38 +489,42 @@
 </table>
 
 ## Genome
+> Example record
+
 ```json
 {
-  "worker_id": null,
-  "accession": null,
-  "version": null,
-  "genbank_assembly_accession": null,
-  "genbank_assembly_version": null,
-  "taxonomy_id": null,
-  "name": null,
-  "refseq_category": null,
-  "bioproject": null,
-  "biosample": null,
-  "wgs_master": null,
+  "worker_id": 3,
+  "accession": "GCF_000302455",
+  "version": 1,
+  "genbank_assembly_accession": "GCA_000302455",
+  "genbank_assembly_version": 1,
+  "taxonomy_id": 1204725,
+  "name": "Methanobacterium formicicum DSM 3637",
+  "refseq_category": "representative genome",
+  "bioproject": "PRJNA224116",
+  "biosample": "SAMN02471940",
+  "wgs_master": "AMPO00000000.1",
   "isolate": null,
-  "version_status": null,
-  "assembly_level": null,
-  "release_type": null,
-  "release_date": null,
-  "assembly_name": null,
-  "submitter": null,
-  "ftp_path": null,
-  "superkingdom": null,
-  "phylum": null,
-  "class": null,
-  "order": null,
-  "family": null,
-  "genus": null,
-  "species": null,
-  "strain": null,
+  "version_status": "latest",
+  "assembly_level": "contig",
+  "release_type": "major",
+  "release_date": "2012-10-02",
+  "assembly_name": "ASM30245v1",
+  "submitter": "Department of Genetics, University of Seville, Spain",
+  "ftp_path": "ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF_000302455.1_ASM30245v1",
+  "superkingdom": "Archaea",
+  "phylum": "Euryarchaeota",
+  "class": "Methanobacteria",
+  "order": "Methanobacteriales",
+  "family": "Methanobacteriaceae",
+  "genus": "Methanobacterium",
+  "species": "Methanobacterium formicicum",
+  "strain": "DSM 3637",
   "stats": null
 }
 ```
+
+Genome markdown goes here
 
 <table>
 <thead>
@@ -525,37 +539,37 @@
 <tr>
 <td>worker_id</td>
 <td>integer</td>
-<td></td>
+<td>foreign identifier to the current worker operating on this genome</td>
 <td></td>
 </tr>
 <tr>
 <td>accession</td>
 <td>text</td>
-<td></td>
+<td>NCBI RefSeq accession number</td>
 <td>not null</td>
 </tr>
 <tr>
 <td>version</td>
 <td>integer</td>
-<td></td>
+<td>NCBI RefSeq version</td>
 <td>not null</td>
 </tr>
 <tr>
 <td>genbank_assembly_accession</td>
 <td>text</td>
-<td></td>
+<td>cognate GenBank accession number</td>
 <td></td>
 </tr>
 <tr>
 <td>genbank_assembly_version</td>
 <td>integer</td>
-<td></td>
+<td>cognate GenBank version</td>
 <td></td>
 </tr>
 <tr>
 <td>taxonomy_id</td>
 <td>integer</td>
-<td></td>
+<td>NCBI taxonomy id</td>
 <td></td>
 </tr>
 <tr>
@@ -567,7 +581,7 @@
 <tr>
 <td>refseq_category</td>
 <td>text</td>
-<td></td>
+<td>RefSeq genome category</td>
 <td></td>
 </tr>
 <tr>
@@ -621,7 +635,7 @@
 <tr>
 <td>assembly_name</td>
 <td>text</td>
-<td></td>
+<td>not necessarily different between genome versions</td>
 <td></td>
 </tr>
 <tr>
@@ -706,6 +720,8 @@
 </table>
 
 ## GenomeReference
+> Example record
+
 ```json
 {
   "genome_id": null,
@@ -800,6 +816,8 @@
 </table>
 
 ## Taxonomy
+> Example record
+
 ```json
 {
   "parent_taxonomy_id": null,
@@ -840,6 +858,8 @@
 </table>
 
 ## Worker
+> Example record
+
 ```json
 {
   "hostname": null,
@@ -927,6 +947,8 @@
 </table>
 
 ## WorkerModule
+> Example record
+
 ```json
 {
   "genome_id": null,
@@ -1007,6 +1029,8 @@
 </table>
 
 ## Xref
+> Example record
+
 ```json
 {
   "gene_id": null,
@@ -1047,6 +1071,8 @@
 </table>
 
 ## Aseq
+> Example record
+
 ```json
 {
   "length": null,
@@ -1108,6 +1134,8 @@
 </table>
 
 ## Dseq
+> Example record
+
 ```json
 {
   "length": null,

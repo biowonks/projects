@@ -12,3 +12,5 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		helper.findManyHandler()
 	]
 }
+
+module.exports.har = {}
