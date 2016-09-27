@@ -1,0 +1,20 @@
+title: API Reference
+
+language_tabs:
+  - bash
+  - javascript
+  - python
+  - perl
+  - ruby
+
+toc_footers:
+
+includes:
+  - main
+  - rest-endpoints
+  - data-structures
+  - _errors
+
+search: true
+
+highlight_theme: monokai

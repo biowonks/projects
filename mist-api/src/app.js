@@ -28,6 +28,7 @@ const config = require('../config'),
 	errorHandler = require('lib/error-handler'),
 	loadServices = require('./services'),
 	errors = require('lib/errors'),
+	latestDocs = require('./routes/docs/use'),
 	MistBootService = require('mist-lib/services/MistBootService'),
 	RouteHelper = require('lib/RouteHelper')
 
@@ -117,6 +118,8 @@ bootService.setup()
 		app.use(config.routing.prefix, router)
 	else
 		app.use(router)
+
+	app.use('/', latestDocs())
 
 	app.use(errorHandler(app))
 
