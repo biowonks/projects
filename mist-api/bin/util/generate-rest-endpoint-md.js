@@ -41,7 +41,6 @@ traverseDirectory(routesDir, (listing) => {
 			jsFileName = baseName + '.js'
 
 		console.log(mdParts.header)
-		console.error(mdParts)
 
 		// Attempt to create any snippets if relevant
 		if (jsFileNameSet.has(jsFileName)) {
@@ -139,8 +138,8 @@ function splitMd(md) {
 		newLine = md.indexOf('\n', pos + 1)
 
 	return {
-		header: md.substr(0, newLine),
-		other: md.substr(newLine)
+		header: md.substr(0, newLine + 1),
+		other: md.substr(newLine + 1)
 	}
 }
 

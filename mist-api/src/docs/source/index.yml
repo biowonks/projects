@@ -16,4 +16,4 @@ includes:
 
 search: true
 
-highlight_theme: monokai
+highlight_theme: agate
