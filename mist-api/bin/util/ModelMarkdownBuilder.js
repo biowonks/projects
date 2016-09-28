@@ -102,6 +102,6 @@ class ModelMarkdownBuilder {
 		})
 
 		let json = JSON.stringify(example, null, 2)
-		return '> Example record\n\n```json\n' + json + '\n```\n\n'
+		return '```json\n' + json + '\n```\n\n'
 	}
 }

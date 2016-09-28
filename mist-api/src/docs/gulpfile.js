@@ -1,3 +1,5 @@
+'use strict'
+
 const fs = require('fs')
 
 const gulp = require('gulp'),
@@ -8,7 +10,7 @@ const gulp = require('gulp'),
 	gulpif = require('gulp-if'),
 	open = require('gulp-open'),
 	prettify = require('gulp-prettify'),
-	rename = require("gulp-rename"),
+	rename = require('gulp-rename'),
 	sass = require('gulp-sass'),
 	uglify = require('gulp-uglify'),
 	gutil = require('gulp-util')
@@ -21,9 +23,9 @@ const del = require('del'),
 let renderer = new marked.Renderer()
 let COMPRESS = true
 
-renderer.code = function (code, language) {
-	let highlighted = language ? highlight.highlight(language, code).value
-														 : highlight.highlightAuto(code).value
+renderer.code = function(code, language) {
+	let highlighted = language ? highlight.highlight(language, code).value :
+								highlight.highlightAuto(code).value
 
 	return '<pre class="highlight ' + language + '"><code>' + highlighted + '</code></pre>'
 }
@@ -36,16 +38,16 @@ let getPageData = function() {
 	let config = readIndexYml()
 
 	let includes = config.includes
-				.map(function(include) { return './source/includes/' + include + '.md' })
-				.map(function(include) { return fs.readFileSync(include, 'utf8') })
-				.map(function(include) { return marked(include, { renderer: renderer }) })
+				.map((include) => './source/includes/' + include + '.md')
+				.map((include) => fs.readFileSync(include, 'utf8'))
+				.map((include) => marked(include, {renderer}))
 
 	return {
 		current_page: {
 			data: config
 		},
 		page_classes: '',
-		includes: includes,
+		includes,
 		image_tag: function(filename, alt, className) {
 			return '<img alt="' + alt + '" class="' + className + '" src="images/' + filename + '">'
 		},
@@ -61,7 +63,7 @@ let getPageData = function() {
 	}
 }
 
-gulp.task('clean', function () {
+gulp.task('clean', function() {
 	return del(['build/*'])
 })
 
@@ -80,12 +82,11 @@ gulp.task('js', function() {
 		'./source/javascripts/lib/_jquery.js',
 		'./source/javascripts/lib/_jquery_ui.js',
 		'./source/javascripts/lib/_jquery.tocify.js',
-		'./source/javascripts/lib/_imagesloaded.min.js',
+		'./source/javascripts/lib/_imagesloaded.min.js'
 	]
 	let scripts = [
 		'./source/javascripts/app/_lang.js',
-		'./source/javascripts/app/_toc.js',
-		'./source/javascripts/app/_main.js'
+		'./source/javascripts/app/_toc.js'
 	]
 
 	if (config.search) {
@@ -100,24 +101,24 @@ gulp.task('js', function() {
 		.pipe(gulp.dest('./build/javascripts'))
 })
 
-gulp.task('sass', function () {
+gulp.task('sass', function() {
 	return gulp.src('./source/stylesheets/*.css.scss')
 		.pipe(sass().on('error', sass.logError))
-		.pipe(rename({ extname: ''}))
+		.pipe(rename({extname: ''}))
 		.pipe(gulpif(COMPRESS, cleanCSS()))
 		.pipe(gulp.dest('./build/stylesheets'))
 })
 
-gulp.task('highlightjs', function () {
+gulp.task('highlightjs', function() {
 	let config = readIndexYml()
 	let path = './node_modules/highlight.js/styles/' + config.highlight_theme + '.css'
 	return gulp.src(path)
-		.pipe(rename({ prefix: 'highlight-'}))
+		.pipe(rename({prefix: 'highlight-'}))
 		.pipe(gulpif(COMPRESS, cleanCSS()))
 		.pipe(gulp.dest('./build/stylesheets'))
 })
 
-gulp.task('html', function () {
+gulp.task('html', function() {
 	let data = getPageData()
 	return gulp.src('./source/*.html')
 		.pipe(ejs(data).on('error', gutil.log))
@@ -141,7 +142,7 @@ gulp.task('serve', ['NO_COMPRESS', 'default'], function() {
 	let server = gls.static('build', 4567)
 	server.start()
 
-	gulp.watch(['build/**/*'], function (file) {
+	gulp.watch(['build/**/*'], function(file) {
 		server.notify.apply(server, [file])
 	})
 
