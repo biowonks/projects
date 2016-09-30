@@ -26,7 +26,7 @@ const del = require('del'),
 
 // Local
 let config = require('./config'),
-	generateRestEndpoints = require('./scripts/lib/rest-endpoints')
+	generateRestEndpoints = require('./lib/rest-endpoints')
 
 // let renderer = new marked.Renderer()
 // renderer.code = function(code, language) {

@@ -11,14 +11,14 @@ const HTTPSnippet = require('httpsnippet'),
 	highlight = require('highlight.js')
 
 // Local
-const mistApiConfig = require('../../../../config'),
-	config = require('../../config')
+const mistApiConfig = require('../../../config'),
+	config = require('../config')
 
 // Constants
 const pugCompileOptions = {
 		pretty: !config.compress
 	},
-	kRouteTemplateFile = path.resolve(__dirname, '..', '..', 'source', 'templates', 'route.pug')
+	kRouteTemplateFile = path.resolve(__dirname, '..', 'source', 'templates', 'route.pug')
 
 // Other
 let routeTemplateFn = null,
@@ -56,17 +56,16 @@ module.exports = function(routesDir, options = {}) {
 				pugFileNames = listing.files.filter((x) => x.endsWith('.docs.pug')),
 				pugFileNameSet = new Set(pugFileNames),
 				subEndpoint = subEndpointFromDirectory(listing.directory, routesDir),
-				url = mistApiConfig.server.baseUrl + subEndpoint,
-				isRoot = depth === 1
+				url = mistApiConfig.server.baseUrl + subEndpoint
 
 			url = url.replace('127.0.0.1', 'localhost')
 
-			if (isRoot) {
+			if (depth === 0 || depth === 1) {
 				if (pugFileNameSet.has('docs.pug')) {
 					let fullFile = path.resolve(listing.directory, 'docs.pug')
 					html += pug.renderFile(fullFile)
 				}
-				else {
+				else if (depth === 1) {
 					let dirBaseName = path.basename(listing.directory),
 						autoHeaderName = dirBaseName[0].toUpperCase() + dirBaseName.substr(1)
 					html += `<h2 id="${autoHeaderName.toLowerCase()}">${autoHeaderName}</h2>`
@@ -88,6 +87,14 @@ module.exports = function(routesDir, options = {}) {
 					uri: subEndpoint,
 					har: method === 'GET' ? {} : null
 				})
+
+				// Replace URI encoded parameters with {}
+				if (routeDocs.parameters) {
+					routeDocs.parameters.forEach((parameter) => {
+						let re = new RegExp('\\$' + parameter.name + '\\b', 'g')
+						routeDocs.uri = routeDocs.uri.replace(re, '{' + parameter.name + '}')
+					})
+				}
 
 				if (routeDocs.description)
 					routeDocs.description = '<p>' + routeDocs.description.replace(/\n{2,}/g, '</p></p>') + '</p>'
