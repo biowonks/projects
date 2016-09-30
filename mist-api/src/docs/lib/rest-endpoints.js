@@ -38,6 +38,7 @@ catch (error) {
 
 /**
  * @param {String} routesPath
+ * @param {String} baseUrl
  * @param {Object} [options = {}]
  * @param {Boolean} [options.pretty = false]
  * @param {Array.<String>} [options.languages = []]}
@@ -53,7 +54,7 @@ module.exports = function(routesPath, baseUrl, options = {}) {
 		let html = '<h1 id="rest-endpoints">REST Endpoints</h1>\n',
 			pathRoutifier = new PathRoutifier(),
 			dirRoutes = pathRoutifier.dryRoutify(routesPath),
-			observedRootSet = new Set()
+			observedRootNameSet = new Set()
 
 		// Remove middleware directories or those with no routes
 		dirRoutes = dirRoutes.filter((dirRoute) =>
@@ -64,10 +65,7 @@ module.exports = function(routesPath, baseUrl, options = {}) {
 
 		// Remove middleware routes
 		dirRoutes.forEach((dirRoute) => {
-			dirRoute.routes = dirRoute.routes.filter((x) => {
-				return !x.hasMiddlewarePrefix &&
-					!x.isStar
-			})
+			dirRoute.routes = dirRoute.routes.filter((x) => !x.hasMiddlewarePrefix && !x.isStar)
 		})
 
 		// Finally, generate the documentation as desired
@@ -80,8 +78,8 @@ module.exports = function(routesPath, baseUrl, options = {}) {
 
 			url = url.replace('127.0.0.1', 'localhost')
 
-			if (!observedRootSet.has(rootHeaderName)) {
-				observedRootSet.add(rootHeaderName)
+			if (!observedRootNameSet.has(rootHeaderName)) {
+				observedRootNameSet.add(rootHeaderName)
 				// Check for docs.pug file in base root directory
 				let pos = dirRoute.directory.indexOf('/' + rootHeaderName)
 				if (pos === -1)
@@ -124,9 +122,9 @@ module.exports = function(routesPath, baseUrl, options = {}) {
 
 				// Replace URI encoded parameters with {}
 				if (routeDocs.parameters) {
-					routeDocs.parameters.forEach((parameter) => {
-						let re = new RegExp('\\$' + parameter.name + '\\b', 'g')
-						routeDocs.uri = routeDocs.uri.replace(re, '{' + parameter.name + '}')
+					Object.keys(routeDocs.parameters).forEach((name) => {
+						let re = new RegExp('\\$' + name + '\\b', 'g')
+						routeDocs.uri = routeDocs.uri.replace(re, '{' + name + '}')
 					})
 				}
 

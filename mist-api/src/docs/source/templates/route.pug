@@ -29,8 +29,8 @@ h3.rest-endpoint(id=id, class=`http-${method.toLowerCase()}`)= name
 						th Type
 						th Description
 				tbody
-					each parameter in parameters
+					each parameter, name in parameters
 						tr
-							td= parameter.name
+							td: em= name
 							td= parameter.type
 							td= parameter.description
