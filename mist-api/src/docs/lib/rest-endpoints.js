@@ -10,7 +10,8 @@ const HTTPSnippet = require('httpsnippet'),
 	pug = require('pug'),
 	highlight = require('highlight.js'),
 	PathRoutifier = require('path-routify/lib/PathRoutifier'),
-	cloneDeep = require('lodash.clonedeep')
+	cloneDeep = require('lodash.clonedeep'),
+	merge = require('lodash.merge')
 
 // Local
 const config = require('../config')
@@ -54,7 +55,8 @@ module.exports = function(routesPath, baseUrl, options = {}) {
 		let html = '<h1 id="rest-endpoints">REST Endpoints</h1>\n',
 			pathRoutifier = new PathRoutifier(),
 			dirRoutes = pathRoutifier.dryRoutify(routesPath),
-			observedRootNameSet = new Set()
+			observedRootNameSet = new Set(),
+			cascadingParameters = new Map()
 
 		// Remove middleware directories or those with no routes
 		dirRoutes = dirRoutes.filter((dirRoute) =>
@@ -71,12 +73,42 @@ module.exports = function(routesPath, baseUrl, options = {}) {
 		// Finally, generate the documentation as desired
 		dirRoutes.forEach((dirRoute) => {
 			let listing = directoryListing(dirRoute.directory),
+				relPath = path.relative(routesPath, dirRoute.directory),
 				fileNameSet = new Set(listing.files),
 				endpoint = dirRoute.routes[0].endpoint,
 				url = baseUrl + endpoint,
 				rootHeaderName = endpoint.split('/')[1]
 
 			url = url.replace('127.0.0.1', 'localhost')
+
+			// Build out any cascading parameters
+			let parts = relPath.split('/')
+			parts.map((x, i) => {
+				if (i > 0)
+					parts[i] = parts[i - 1] + '/' + parts[i]
+
+				return parts[i]
+			})
+			.forEach((dir, i) => {
+				if (cascadingParameters.has(dir))
+					return
+
+				let jsFile = `${routesPath}/${dir}/param.docs.js`,
+					pathParams = null
+
+				try {
+					pathParams = require(jsFile)
+				}
+				catch (error) {
+					if (error.code !== 'MODULE_NOT_FOUND')
+						throw error
+
+					// noop
+				}
+
+				let parentPathParams = cascadingParameters.get(parts[i-1])
+				cascadingParameters.set(dir, merge(parentPathParams, pathParams))
+			})
 
 			if (!observedRootNameSet.has(rootHeaderName)) {
 				observedRootNameSet.add(rootHeaderName)
@@ -121,11 +153,16 @@ module.exports = function(routesPath, baseUrl, options = {}) {
 				})
 
 				// Replace URI encoded parameters with {}
-				if (routeDocs.parameters) {
-					Object.keys(routeDocs.parameters).forEach((name) => {
+				routeDocs.parameters = merge(cascadingParameters.get(relPath), routeDocs.parameters)
+				let parameterNames = Object.keys(routeDocs.parameters)
+				if (parameterNames.length) {
+					parameterNames.forEach((name) => {
 						let re = new RegExp('\\$' + name + '\\b', 'g')
 						routeDocs.uri = routeDocs.uri.replace(re, '{' + name + '}')
 					})
+				}
+				else {
+					routeDocs.parameters = null
 				}
 
 				if (routeDocs.description)

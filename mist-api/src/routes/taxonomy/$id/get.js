@@ -12,11 +12,5 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 
 module.exports.docs = {
 	name: 'Fetch Taxonomy Node',
-	description: 'Returns the NCBI taxonomic record',
-	parameters: {
-		id: {
-			type: 'integer',
-			description: 'NCBI taxonomic id'
-		}
-	}
+	description: 'Returns the NCBI taxonomic record'
 }
