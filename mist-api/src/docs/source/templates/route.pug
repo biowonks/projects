@@ -12,7 +12,8 @@ h3.rest-endpoint(id=id, class=`http-${method.toLowerCase()}`)= name
 			| !{snippet}
 
 	if description
-		.description= description
+		.description
+			| !{description}
 
 	if examples
 		.examples
@@ -23,15 +24,16 @@ h3.rest-endpoint(id=id, class=`http-${method.toLowerCase()}`)= name
 
 	if parameters
 		.parameters
+			h4 Parameters
 			table
 				thead
 					tr
 						th Name
-						th Example
+						th Type
 						th Description
 				tbody
 					each parameter in parameters
 						tr
 							td= parameter.name
-							td= parameter.example
+							td= parameter.type
 							td= parameter.description

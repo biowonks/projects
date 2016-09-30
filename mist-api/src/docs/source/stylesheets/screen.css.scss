@@ -347,7 +347,7 @@ html, body {
     clear: both;
   }
 
-  &>h1, &>h2, &>h3, &>h4, &>h5, &>h6, &>p, &>table, &>ul, &>ol, &>aside, &>dl, .api-route>header, .api-route>div {
+  &>h1, &>h2, &>h3, &>h4, &>h5, &>h6, &>p, &>table, &>ul, &>ol, &>aside, &>dl, .api-route>header, .api-route>div, .api-route>table {
     margin-right: $examples-width;
     padding: 0 $main-padding;
     box-sizing: border-box;
@@ -652,9 +652,14 @@ h3.http-get {
   background-color: $http-get-bg;
 }
 
+h4 {
+  font-size: 14px;
+}
+
 .api-route {
   header {
     line-height: 37px;
+    margin: 10px 0;
 
     .http-method {
       line-height: 25px;

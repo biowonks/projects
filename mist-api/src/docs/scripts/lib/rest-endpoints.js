@@ -89,7 +89,8 @@ module.exports = function(routesDir, options = {}) {
 					har: method === 'GET' ? {} : null
 				})
 
-				// console.error(`Processing ${listing.directory}/${jsFileName}`)
+				if (routeDocs.description)
+					routeDocs.description = '<p>' + routeDocs.description.replace(/\n{2,}/g, '</p></p>') + '</p>'
 
 				// Compile the snippets
 				if (routeDocs.har)
