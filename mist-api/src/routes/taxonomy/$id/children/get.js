@@ -12,3 +12,8 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		}
 	]
 }
+
+module.exports.docs = {
+	name: 'Fetch Child Taxonomy',
+	description: 'Returns an array of child taxonomic nodes'
+}

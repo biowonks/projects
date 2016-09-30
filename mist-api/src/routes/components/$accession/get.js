@@ -12,3 +12,8 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		helper.findHandler('accession')
 	]
 }
+
+module.exports.docs = {
+	name: 'Fetch Component',
+	description: 'Returns a single component (replicon / contig) without its associated DNA'
+}

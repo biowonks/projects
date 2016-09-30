@@ -12,3 +12,8 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		helper.findHandler('accession')
 	]
 }
+
+module.exports.docs = {
+	name: 'Fetch Genome',
+	description: 'Returns a single genome'
+}
