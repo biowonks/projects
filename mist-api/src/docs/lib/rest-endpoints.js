@@ -51,24 +51,14 @@ module.exports = function(routesPath, baseUrl, options = {}) {
 	if (!Reflect.has(options, 'languages'))
 		options.languages = []
 
+	// eslint-disable-next-line no-param-reassign
+	baseUrl = baseUrl.replace('127.0.0.1', 'localhost')
+
 	return new Promise((resolve, reject) => {
 		let html = '<h1 id="rest-endpoints">REST Endpoints</h1>\n',
-			pathRoutifier = new PathRoutifier(),
-			dirRoutes = pathRoutifier.dryRoutify(routesPath),
+			dirRoutes = buildRouteList(routesPath),
 			observedRootNameSet = new Set(),
 			cascadingParameters = new Map()
-
-		// Remove middleware directories or those with no routes
-		dirRoutes = dirRoutes.filter((dirRoute) =>
-			!dirRoute.directory.startsWith('^') &&
-			dirRoute.routes &&
-			dirRoute.routes.length
-		)
-
-		// Remove middleware routes
-		dirRoutes.forEach((dirRoute) => {
-			dirRoute.routes = dirRoute.routes.filter((x) => !x.hasMiddlewarePrefix && !x.isStar)
-		})
 
 		// Finally, generate the documentation as desired
 		dirRoutes.forEach((dirRoute) => {
@@ -76,66 +66,10 @@ module.exports = function(routesPath, baseUrl, options = {}) {
 				relPath = path.relative(routesPath, dirRoute.directory),
 				fileNameSet = new Set(listing.files),
 				endpoint = dirRoute.routes[0].endpoint,
-				url = baseUrl + endpoint,
-				rootHeaderName = endpoint.split('/')[1]
+				url = baseUrl + endpoint
 
-			url = url.replace('127.0.0.1', 'localhost')
-
-			// Build out any cascading parameters
-			let parts = relPath.split('/')
-			parts.map((x, i) => {
-				if (i > 0)
-					parts[i] = parts[i - 1] + '/' + parts[i]
-
-				return parts[i]
-			})
-			.forEach((dir, i) => {
-				if (cascadingParameters.has(dir))
-					return
-
-				let jsFile = `${routesPath}/${dir}/param.docs.js`,
-					pathParams = null
-
-				try {
-					pathParams = require(jsFile)
-				}
-				catch (error) {
-					if (error.code !== 'MODULE_NOT_FOUND')
-						throw error
-
-					// noop
-				}
-
-				let parentPathParams = cascadingParameters.get(parts[i-1])
-				cascadingParameters.set(dir, merge(parentPathParams, pathParams))
-			})
-
-			if (!observedRootNameSet.has(rootHeaderName)) {
-				observedRootNameSet.add(rootHeaderName)
-				// Check for docs.pug file in base root directory
-				let pos = dirRoute.directory.indexOf('/' + rootHeaderName)
-				if (pos === -1)
-					throw new Error(`did not find ${rootHeaderName} anywhere in route path`)
-
-				let dir = dirRoute.directory.substr(0, pos) + '/' + rootHeaderName,
-					rootPugFile = dir + '/docs.pug',
-					rootPugString = null
-
-				try {
-					rootPugString = fs.readFileSync(rootPugFile)
-				}
-				catch (error) {
-					// noop - probably means the file didn't exist'
-				}
-
-				if (rootPugString) {
-					html += pug.render(rootPugString)
-				}
-				else {
-					let autoHeaderName = rootHeaderName[0].toUpperCase() + rootHeaderName.substr(1)
-					html += `<h2 id="${autoHeaderName.toLowerCase()}">${autoHeaderName}</h2>`
-				}
-			}
+			updateCascadingParameters(cascadingParameters, relPath, routesPath)
+			html += addLeadingSectionHTML(observedRootNameSet, endpoint, dirRoute.directory)
 
 			dirRoute.routes.forEach((route) => {
 				let jsFile = path.resolve(dirRoute.directory, route.fileName),
@@ -146,31 +80,16 @@ module.exports = function(routesPath, baseUrl, options = {}) {
 
 				setDefaults(routeDocs, {
 					name: `${route.httpMethod} ${endpoint}`,
-					id: makeId(routeDocs.name, route.httpMethod, endpoint),
+					id: makeHTMLId(routeDocs.name, route.httpMethod, endpoint),
 					method: route.httpMethod,
 					uri: endpoint,
 					har: route.httpMethod === 'get' ? {} : null
 				})
 
-				// Replace URI encoded parameters with {}
-				routeDocs.parameters = merge(cascadingParameters.get(relPath), routeDocs.parameters)
-				let parameterNames = Object.keys(routeDocs.parameters)
-				if (parameterNames.length) {
-					parameterNames.forEach((name) => {
-						let re = new RegExp('\\$' + name + '\\b', 'g')
-						routeDocs.uri = routeDocs.uri.replace(re, '{' + name + '}')
-					})
-				}
-				else {
-					routeDocs.parameters = null
-				}
-
-				if (routeDocs.description)
-					routeDocs.description = '<p>' + routeDocs.description.replace(/\n{2,}/g, '</p></p>') + '</p>'
-
-				// Compile the snippets
-				if (routeDocs.har)
-					routeDocs.snippets = buildSnippets(route.httpMethod, url, options.languages)
+				routeDocs.parameters = finalizeRouteParameters(cascadingParameters.get(relPath), routeDocs.parameters)
+				routeDocs.uri = reformatUri(routeDocs.uri, routeDocs.parameters)
+				routeDocs.description = toHTMLParagraphs(routeDocs.description)
+				routeDocs.snippets = buildHTMLSnippets(routeDocs.har, route.httpMethod, url, options.languages)
 
 				// If pug template exists, preferentially use it
 				if (fileNameSet.has(pugFileName)) {
@@ -231,10 +150,240 @@ function setDefaults(dest, defaults) {
 	}
 }
 
-function buildSnippets(method, url, langs) {
-	let snippets = []
+function makeHTMLId(name, method, subEndpoint) {
+	let result = name ? name : method + '-' + subEndpoint
 
-	let snippet = new HTTPSnippet({method, url})
+	result = result.toLowerCase()
+		.replace(/\$/g, '')
+		.replace(/(\s+|\/)/g, '-')
+		.replace(/-{2,}/g, '-')
+
+	return result
+}
+
+/**
+ * Uses the path-routify library to detect relevant routes beneath ${routesPath} and further removes
+ * those that are middleware routes / paths or are wildcard paths.
+ *
+ * The result looks like the following:
+ * [
+ * 	{
+ *    directory,
+ *    routes: [
+ *      {
+ *        endpoint: '/',
+ *        fileName: 'get.js',
+ *        path: '/full/path/to/get.js',
+ *        hasMiddlewarePrefix: false,
+ *        hasNumericPrefix: false,
+ *        httpMethod: 'get',
+ *        isStar: false
+ *      },
+ *      ...
+ *    ]
+ *  },
+ *  ...
+ * ]
+ *
+ * @param {String} routesPath - root directory to scan for routes
+ * @returns {Array.<Object>}
+ */
+function buildRouteList(routesPath) {
+	let pathRoutifier = new PathRoutifier(),
+		dirRoutes = pathRoutifier.dryRoutify(routesPath)
+
+	// Remove middleware directories or those with no routes
+	dirRoutes = dirRoutes.filter((dirRoute) =>
+		!dirRoute.directory.startsWith('^') &&
+		dirRoute.routes &&
+		dirRoute.routes.length
+	)
+
+	// Remove middleware routes
+	dirRoutes.forEach((dirRoute) => {
+		dirRoute.routes = dirRoute.routes.filter((x) => !x.hasMiddlewarePrefix && !x.isStar)
+	})
+
+	return dirRoutes
+}
+
+/**
+ * Iterates through each directory within ${relPath} and if the parameters for this directory have
+ * not already been loaded, load and merge with any parent cascading parameters. For example, given
+ * the following file structure:
+ *
+ * /aseqs
+ * /aseqs/param.docs.js = {id: {type: 'integer', description: 'aseq_id'}}
+ * /aseqs/$id
+ * /aseqs/$id/param.docs.js = {id: {type: 'string'}}
+ *
+ * And ${relPath} = 'aseqs/$id'
+ *
+ * Updates ${cascadingParameters} to look like:
+ *
+ * {
+ *   aseqs: {
+ *     id: {
+ *       type: 'integer'
+ *     }
+ *   },
+ *   'aseqs/$id': {
+ *     id: {
+ *       type: 'string',
+ *       description: 'aseq_id'
+ *     }
+ *   }
+ * }
+ *
+ * @param {Map} cascadingParameters
+ * @param {String} relPath
+ * @param {String} routesPath
+ */
+function updateCascadingParameters(cascadingParameters, relPath, routesPath) {
+	let pathParts = relPath.split('/')
+	pathParts.map((x, i) => {
+		if (i > 0)
+			pathParts[i] = pathParts[i - 1] + '/' + pathParts[i]
+
+		return pathParts[i]
+	})
+	.forEach((dir, i) => {
+		let alreadyDefined = cascadingParameters.has(dir)
+		if (alreadyDefined)
+			return
+
+		let paramJsFile = `${routesPath}/${dir}/param.docs.js`,
+			pathParams = null
+
+		try {
+			pathParams = require(paramJsFile)
+		}
+		catch (error) {
+			let moduleExistsWithError = error.code !== 'MODULE_NOT_FOUND'
+			if (moduleExistsWithError)
+				throw error
+
+			// noop
+		}
+
+		let parentPathParams = cascadingParameters.get(pathParts[i - 1]),
+			thisPathParams = merge(parentPathParams, pathParams)
+		cascadingParameters.set(dir, thisPathParams)
+	})
+}
+
+/**
+ * Handle creating / loading a root section (${routesPath}/<directory>) HTML lead text. If a pug
+ * template is found at docs.pug, then the rendered template is returned; otherwise, the capitalized
+ * directory name is returned as a h2 header.
+ *
+ * All routes directly within ${routesPath} are placed under the 'Root' heading unless a
+ * corresponding pug template is present.
+ *
+ * @param {Set} observedRootNameSet
+ * @param {String} endpoint
+ * @param {String} directory
+ * @returns {String} - HTML header text
+ */
+function addLeadingSectionHTML(observedRootNameSet, endpoint, directory) {
+	let result = '',
+		rootHeaderName = endpoint.split('/')[1] || 'Root'
+
+	if (!observedRootNameSet.has(rootHeaderName)) {
+		observedRootNameSet.add(rootHeaderName)
+		// Check for docs.pug file in base root directory
+		let pos = directory.indexOf('/' + rootHeaderName)
+		if (pos === -1)
+			throw new Error(`did not find ${rootHeaderName} anywhere in route path`)
+
+		let dir = directory.substr(0, pos) + '/' + rootHeaderName,
+			rootPugFile = dir + '/docs.pug',
+			rootPugString = null
+
+		try {
+			rootPugString = fs.readFileSync(rootPugFile)
+		}
+		catch (error) {
+			// noop - probably means the file didn't exist'
+		}
+
+		if (rootPugString) {
+			result += pug.render(rootPugString)
+		}
+		else {
+			let autoHeaderName = rootHeaderName[0].toUpperCase() + rootHeaderName.substr(1)
+			result += `<h2 id="${autoHeaderName.toLowerCase()}">${autoHeaderName}</h2>`
+		}
+	}
+
+	return result
+}
+
+/**
+ * Returns a new object that is the result of merging any cascaded parameters with any defined
+ * route parameters.
+ *
+ * @param {Object} cascadedParameters
+ * @param {Object} routeParameters
+ * @returns {Object}
+ */
+function finalizeRouteParameters(cascadedParameters, routeParameters) {
+	let result = merge(cascadedParameters, routeParameters),
+		paramNames = Object.keys(result)
+
+	return paramNames.length ? result : null
+}
+
+/**
+ * Replaces all occurrences of parameter names in ${uri} with the name surrounded by brackets.
+ *
+ * For example,
+ *
+ * /aseqs/$id -> /aseqs/{id}
+ *
+ * @param {String} uri
+ * @param {Object} routeParameters
+ * @returns {String}
+ */
+function reformatUri(uri, routeParameters) {
+	if (!routeParameters)
+		return uri
+
+	let paramNames = Object.keys(routeParameters),
+		result = uri
+
+	paramNames.forEach((name) => {
+		let re = new RegExp('\\$' + name + '\\b', 'g')
+		result = result.replace(re, '{' + name + '}')
+	})
+
+	return result
+}
+
+/**
+ * @param {String} value
+ * @returns {String} - replaces all multiple occurrences of newlines with HTML paragraphs
+ */
+function toHTMLParagraphs(value) {
+	if (!value)
+		return null
+
+	return '<p>' + value.replace(/\n{2,}/g, '</p></p>') + '</p>'
+}
+
+/**
+ * @param {Object} har
+ * @param {String} method
+ * @param {String} url
+ * @param {Array.<String>} langs
+ * @returns {Array.<String>} - array of HTML highlighted code snippets
+ */
+function buildHTMLSnippets(har, method, url, langs) {
+	if (!har)
+		return null
+
+	let htmlSnippets = [],
+		snippet = new HTTPSnippet({method, url})
 
 	langs.forEach((lang) => {
 		let effectiveLang = lang,
@@ -251,19 +400,8 @@ function buildSnippets(method, url, langs) {
 
 		highlightedCodeHtml = `<pre class="highlight ${highlightLang}"><code>${highlightedCodeHtml}</code></pre>`
 
-		snippets.push(highlightedCodeHtml)
+		htmlSnippets.push(highlightedCodeHtml)
 	})
 
-	return snippets.length ? snippets : null
-}
-
-function makeId(name, method, subEndpoint) {
-	let result = name ? name : method + '-' + subEndpoint
-
-	result = result.toLowerCase()
-		.replace(/\$/g, '')
-		.replace(/(\s+|\/)/g, '-')
-		.replace(/-{2,}/g, '-')
-
-	return result
+	return htmlSnippets.length ? htmlSnippets : null
 }
