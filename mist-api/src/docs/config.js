@@ -15,7 +15,8 @@ module.exports = {
 	tocFooters: [],
 	includes: [
 		'main.pug',
-		'rest-endpoints.html'
+		'rest-endpoints.html',
+		'rest-errors.pug'
 		// 'data-structures',
 		// 'errors'
 	],
