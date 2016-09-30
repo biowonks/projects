@@ -8,33 +8,19 @@ const fs = require('fs'),
 const gulp = require('gulp'),
 	cleanCSS = require('gulp-clean-css'),
 	concat = require('gulp-concat'),
-	// ejs = require('gulp-ejs'),
 	gls = require('gulp-live-server'),
 	gulpif = require('gulp-if'),
 	open = require('gulp-open'),
-	// prettify = require('gulp-prettify'),
 	rename = require('gulp-rename'),
 	sass = require('gulp-sass'),
 	uglify = require('gulp-uglify')
-	// gutil = require('gulp-util')
 
 const del = require('del'),
-	// highlight = require('highlight.js'),
 	pug = require('pug')
-	// marked = require('marked'),
-	// yaml = require('js-yaml')
 
 // Local
 let config = require('./config'),
 	generateRestEndpoints = require('./lib/rest-endpoints')
-
-// let renderer = new marked.Renderer()
-// renderer.code = function(code, language) {
-// 	let highlighted = language ? highlight.highlight(language, code).value :
-// 								highlight.highlightAuto(code).value
-
-// 	return '<pre class="highlight ' + language + '"><code>' + highlighted + '</code></pre>'
-// }
 
 try {
 	fs.mkdirSync('./build')
