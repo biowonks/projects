@@ -347,7 +347,7 @@ html, body {
     clear: both;
   }
 
-  &>h1, &>h2, &>h3, &>h4, &>h5, &>h6, &>p, &>table, &>ul, &>ol, &>aside, &>dl {
+  &>h1, &>h2, &>h3, &>h4, &>h5, &>h6, &>p, &>table, &>ul, &>ol, &>aside, &>dl, .api-route>header, .api-route>div {
     margin-right: $examples-width;
     padding: 0 $main-padding;
     box-sizing: border-box;
@@ -637,4 +637,42 @@ html, body {
 
 .highlight, .highlight .w {
   background-color: $code-bg;
+}
+
+
+
+h3.rest-endpoint {
+  line-height: 30px;
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+h3.http-get {
+  color: $http-get-text;
+  background-color: $http-get-bg;
+}
+
+.api-route {
+  header {
+    line-height: 37px;
+
+    .http-method {
+      line-height: 25px;
+      padding: $vpadding $hpadding;
+      margin-right: $hmargin;
+    }
+
+    code {
+      line-height: 25px;
+      color: #444;
+      background-color: #f5f5f5;
+      border: 1px solid #cfcfcf;
+      font-size: 14px;
+    }
+  }
+
+  &.http-get .http-method {
+      color: $http-get-method-text;
+      background-color: $http-get-method-bg;
+  }
 }

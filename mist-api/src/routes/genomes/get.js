@@ -13,4 +13,12 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 	]
 }
 
-module.exports.har = {}
+module.exports.docs = {
+	name: 'Fetch Many Genomes',
+	description: 'Returns an array of genomes',
+	method: null,
+	uri: null,
+	parameters: null,
+	examples: null,
+	har: null
+}

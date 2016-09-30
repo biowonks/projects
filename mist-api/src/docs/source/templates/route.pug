@@ -1,0 +1,37 @@
+//- Hide the header because we want to restyle it, but tocify needs the unmodified h3
+//- h3.hide(id=`${method.toLowerCase()}${uri.toLowerCase().replace(/\//g, '-').replace(/\$/g, '')}`)= name
+
+h3.rest-endpoint(id=id, class=`http-${method.toLowerCase()}`)= name
+.api-route(class=`http-${method.toLowerCase()}`)
+	header
+		span.http-method= method
+		code.uri= uri
+
+	if snippets
+		each snippet in snippets
+			| !{snippet}
+
+	if description
+		.description= description
+
+	if examples
+		.examples
+			h4 Examples
+			ul
+				each example in examples
+					li= example
+
+	if parameters
+		.parameters
+			table
+				thead
+					tr
+						th Name
+						th Example
+						th Description
+				tbody
+					each parameter in parameters
+						tr
+							td= parameter.name
+							td= parameter.example
+							td= parameter.description

@@ -1,82 +1,61 @@
 'use strict'
 
-const fs = require('fs')
+// Core
+const fs = require('fs'),
+	path = require('path')
 
+// Vendor
 const gulp = require('gulp'),
 	cleanCSS = require('gulp-clean-css'),
 	concat = require('gulp-concat'),
-	ejs = require('gulp-ejs'),
+	// ejs = require('gulp-ejs'),
 	gls = require('gulp-live-server'),
 	gulpif = require('gulp-if'),
 	open = require('gulp-open'),
-	prettify = require('gulp-prettify'),
+	// prettify = require('gulp-prettify'),
 	rename = require('gulp-rename'),
 	sass = require('gulp-sass'),
-	uglify = require('gulp-uglify'),
-	gutil = require('gulp-util')
+	uglify = require('gulp-uglify')
+	// gutil = require('gulp-util')
 
 const del = require('del'),
-	highlight = require('highlight.js'),
-	marked = require('marked'),
-	yaml = require('js-yaml')
+	// highlight = require('highlight.js'),
+	pug = require('pug')
+	// marked = require('marked'),
+	// yaml = require('js-yaml')
 
-let renderer = new marked.Renderer()
-let COMPRESS = true
+// Local
+let config = require('./config'),
+	generateRestEndpoints = require('./scripts/lib/rest-endpoints')
 
-renderer.code = function(code, language) {
-	let highlighted = language ? highlight.highlight(language, code).value :
-								highlight.highlightAuto(code).value
+// let renderer = new marked.Renderer()
+// renderer.code = function(code, language) {
+// 	let highlighted = language ? highlight.highlight(language, code).value :
+// 								highlight.highlightAuto(code).value
 
-	return '<pre class="highlight ' + language + '"><code>' + highlighted + '</code></pre>'
+// 	return '<pre class="highlight ' + language + '"><code>' + highlighted + '</code></pre>'
+// }
+
+try {
+	fs.mkdirSync('./build')
 }
-
-let readIndexYml = function() {
-	return yaml.safeLoad(fs.readFileSync('./source/index.yml', 'utf8'))
-}
-
-let getPageData = function() {
-	let config = readIndexYml()
-
-	let includes = config.includes
-				.map((include) => './source/includes/' + include + '.md')
-				.map((include) => fs.readFileSync(include, 'utf8'))
-				.map((include) => marked(include, {renderer}))
-
-	return {
-		current_page: {
-			data: config
-		},
-		page_classes: '',
-		includes,
-		image_tag: function(filename, alt, className) {
-			return '<img alt="' + alt + '" class="' + className + '" src="images/' + filename + '">'
-		},
-		javascript_include_tag: function(name) {
-			return '<script src="javascripts/' + name + '.js" type="text/javascript"></script>'
-		},
-		stylesheet_link_tag: function(name, media) {
-			return '<link href="stylesheets/' + name + '.css" rel="stylesheet" type="text/css" media="' + media + '" />'
-		},
-		langs: (config.language_tabs || []).map(function(lang) {
-			return typeof lang == 'string' ? lang : lang.keys.first
-		})
-	}
+catch (error) {
+	// noop
 }
 
 gulp.task('clean', function() {
 	return del(['build/*'])
 })
 
-gulp.task('fonts', function() {
+gulp.task('fonts', ['clean'], function() {
 	return gulp.src('./source/fonts/**/*').pipe(gulp.dest('build/fonts'))
 })
 
-gulp.task('images', function() {
+gulp.task('images', ['clean'], function() {
 	return gulp.src('./source/images/**/*').pipe(gulp.dest('build/images'))
 })
 
-gulp.task('js', function() {
-	let config = readIndexYml()
+gulp.task('js', ['clean'], function() {
 	let libs = [
 		'./source/javascripts/lib/_energize.js',
 		'./source/javascripts/lib/_jquery.js',
@@ -97,37 +76,51 @@ gulp.task('js', function() {
 
 	return gulp.src(libs.concat(scripts))
 		.pipe(concat('all.js'))
-		.pipe(gulpif(COMPRESS, uglify()))
+		.pipe(gulpif(config.compress, uglify()))
 		.pipe(gulp.dest('./build/javascripts'))
 })
 
-gulp.task('sass', function() {
+gulp.task('sass', ['clean'], function() {
 	return gulp.src('./source/stylesheets/*.css.scss')
 		.pipe(sass().on('error', sass.logError))
 		.pipe(rename({extname: ''}))
-		.pipe(gulpif(COMPRESS, cleanCSS()))
+		.pipe(gulpif(config.compress, cleanCSS()))
 		.pipe(gulp.dest('./build/stylesheets'))
 })
 
-gulp.task('highlightjs', function() {
-	let config = readIndexYml()
-	let path = './node_modules/highlight.js/styles/' + config.highlight_theme + '.css'
-	return gulp.src(path)
+gulp.task('highlightjs', ['clean'], function() {
+	let cssPath = './node_modules/highlight.js/styles/' + config.highlightTheme + '.css'
+	return gulp.src(cssPath)
 		.pipe(rename({prefix: 'highlight-'}))
-		.pipe(gulpif(COMPRESS, cleanCSS()))
+		.pipe(gulpif(config.compress, cleanCSS()))
 		.pipe(gulp.dest('./build/stylesheets'))
 })
 
-gulp.task('html', function() {
-	let data = getPageData()
-	return gulp.src('./source/*.html')
-		.pipe(ejs(data).on('error', gutil.log))
-		.pipe(gulpif(COMPRESS, prettify({indent_size: 2})))
-		.pipe(gulp.dest('./build'))
+gulp.task('rest-endpoints', function() {
+	return generateRestEndpoints(config.routesDir, {
+		pretty: !config.compress,
+		languages: [
+			'shell:curl',
+			'node',
+			'python',
+			'ruby'
+		]
+	})
+	.then((restEndpointsHtml) => {
+		let outfile = path.resolve(__dirname, 'source', 'includes', 'rest-endpoints.html')
+		fs.writeFileSync(outfile, restEndpointsHtml)
+	})
+})
+
+gulp.task('html', ['clean', 'rest-endpoints'], function(done) {
+	let html = pug.renderFile('./source/index.pug', getPageData()),
+		outFile = path.resolve(__dirname, 'build', 'index.html')
+
+	fs.writeFile(outFile, html, done)
 })
 
 gulp.task('NO_COMPRESS', function() {
-	COMPRESS = false
+	config.compress = false
 })
 
 gulp.task('default', ['clean', 'fonts', 'images', 'highlightjs', 'js', 'sass', 'html'])
@@ -148,3 +141,29 @@ gulp.task('serve', ['NO_COMPRESS', 'default'], function() {
 
 	gulp.src(__filename).pipe(open({uri: 'http://localhost:4567'}))
 })
+
+// --------------------------------------------------------
+function getPageData() {
+	let includes = config.includes
+		.map((include) => './source/includes/' + include)
+		.map((include) => {
+			if (/\.html$/.test(include))
+				return fs.readFileSync(include, 'utf8')
+
+			return pug.renderFile(include, {pretty: !config.compress})
+		})
+
+	let result = {
+		data: config,
+		includes,
+		langs: (config.languageTabs || []).map(function(lang) {
+			return typeof lang == 'string' ? lang : lang.keys.first
+		}),
+		langsJSON: null,
+		pretty: !config.compress
+	}
+
+	result.langsJSON = JSON.stringify(result.langs)
+
+	return result
+}

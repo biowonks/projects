@@ -400,10 +400,7 @@
                 "data-unique": hashValue
 
             }).append($("<a/>", {
-                // Highlight HTTP verbs
-                "html": self.text().replace(/(GET|POST|PUT|DELETE|PATCH|OPTIONS)/, function(verb) {
-                    return '<span class="http-method http-' + verb.toLowerCase() + '">' + verb + '</span>'
-                })
+                "text": self.text()
             }));
 
             // Adds an HTML anchor tag before the currently traversed HTML element
