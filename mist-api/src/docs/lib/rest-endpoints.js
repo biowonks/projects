@@ -8,7 +8,9 @@ const fs = require('fs'),
 // Vendor
 const HTTPSnippet = require('httpsnippet'),
 	pug = require('pug'),
-	highlight = require('highlight.js')
+	highlight = require('highlight.js'),
+	PathRoutifier = require('path-routify/lib/PathRoutifier'),
+	cloneDeep = require('lodash.clonedeep')
 
 // Local
 const mistApiConfig = require('../../../config'),
@@ -39,7 +41,7 @@ catch (error) {
  * @param {String} routesDir
  * @param {Object} [options = {}]
  * @param {Boolean} [options.pretty = false]
- * @param {Array.<String>] [options.languages = []]}
+ * @param {Array.<String>} [options.languages = []]}
  * @returns {Promise}
  */
 module.exports = function(routesDir, options = {}) {
@@ -49,43 +51,78 @@ module.exports = function(routesDir, options = {}) {
 		options.languages = []
 
 	return new Promise((resolve, reject) => {
-		let html = '<h1 id="rest-endpoints">REST Endpoints</h1>\n'
+		let html = '<h1 id="rest-endpoints">REST Endpoints</h1>\n',
+			pathRoutifier = new PathRoutifier(),
+			dirRoutes = pathRoutifier.dryRoutify(routesDir),
+			observedRootSet = new Set()
 
-		traverseDirectory(routesDir, (listing, depth) => {
-			let jsFileNames = listing.files.filter((x) => x.endsWith('.js')),
-				pugFileNames = listing.files.filter((x) => x.endsWith('.docs.pug')),
-				pugFileNameSet = new Set(pugFileNames),
-				subEndpoint = subEndpointFromDirectory(listing.directory, routesDir),
-				url = mistApiConfig.server.baseUrl + subEndpoint
+		// Remove middleware directories or those with no routes
+		dirRoutes = dirRoutes.filter((dirRoute) =>
+			!dirRoute.directory.startsWith('^') &&
+			dirRoute.routes &&
+			dirRoute.routes.length
+			// dirRoute.routes[0].endpoint === '/components'
+		)
+
+		// Remove middleware routes
+		dirRoutes.forEach((dirRoute) => {
+			dirRoute.routes = dirRoute.routes.filter((x) => {
+				return !x.hasMiddlewarePrefix &&
+					!x.isStar
+			})
+		})
+
+		// Finally, generate the documentation as desired
+		dirRoutes.forEach((dirRoute) => {
+			let listing = directoryListing(dirRoute.directory),
+				fileNameSet = new Set(listing.files),
+				endpoint = dirRoute.routes[0].endpoint,
+				// depth = endpoint.split(/\/[^/]+/).length - 1,
+				url = mistApiConfig.server.baseUrl + endpoint,
+				rootHeaderName = endpoint.split('/')[1]
 
 			url = url.replace('127.0.0.1', 'localhost')
 
-			if (depth === 0 || depth === 1) {
-				if (pugFileNameSet.has('docs.pug')) {
-					let fullFile = path.resolve(listing.directory, 'docs.pug')
-					html += pug.renderFile(fullFile)
+			if (!observedRootSet.has(rootHeaderName)) {
+				observedRootSet.add(rootHeaderName)
+				// Check for docs.pug file in base root directory
+				let pos = dirRoute.directory.indexOf('/' + rootHeaderName)
+				if (pos === -1)
+					throw new Error(`did not find ${rootHeaderName} anywhere in route path`)
+
+				let dir = dirRoute.directory.substr(0, pos) + '/' + rootHeaderName,
+					rootPugFile = dir + '/docs.pug',
+					rootPugString = null
+
+				try {
+					rootPugString = fs.readFileSync(rootPugFile)
 				}
-				else if (depth === 1) {
-					let dirBaseName = path.basename(listing.directory),
-						autoHeaderName = dirBaseName[0].toUpperCase() + dirBaseName.substr(1)
+				catch (error) {
+					// noop - probably means the file didn't exist'
+				}
+
+				if (rootPugString) {
+					html += pug.render(rootPugString)
+				}
+				else {
+					let autoHeaderName = rootHeaderName[0].toUpperCase() + rootHeaderName.substr(1)
 					html += `<h2 id="${autoHeaderName.toLowerCase()}">${autoHeaderName}</h2>`
 				}
 			}
 
-			jsFileNames.forEach((jsFileName) => {
-				let method = methodFromName(jsFileName),
-					jsFile = path.resolve(listing.directory, jsFileName),
+			dirRoute.routes.forEach((route) => {
+				let jsFile = path.resolve(dirRoute.directory, route.fileName),
 					routeFn = require(jsFile),
-					routeDocs = routeFn && routeFn.docs ? routeFn.docs : {},
+					routeDocs = routeFn && routeFn.docs ? cloneDeep(routeFn.docs) : {},
 					baseName = path.basename(jsFile, '.js'),
 					pugFileName = baseName + '.docs.pug'
 
 				setDefaults(routeDocs, {
-					name: `${method} ${subEndpoint}`,
-					id: makeId(routeDocs.name, method, subEndpoint),
-					method,
-					uri: subEndpoint,
-					har: method === 'GET' ? {} : null
+					name: `${route.httpMethod} ${endpoint}`,
+					id: makeId(routeDocs.name, route.httpMethod, endpoint),
+					method: route.httpMethod,
+					uri: endpoint,
+					har: route.httpMethod === 'get' ? {} : null
 				})
 
 				// Replace URI encoded parameters with {}
@@ -101,11 +138,11 @@ module.exports = function(routesDir, options = {}) {
 
 				// Compile the snippets
 				if (routeDocs.har)
-					routeDocs.snippets = buildSnippets(method, url, options.languages)
+					routeDocs.snippets = buildSnippets(route.httpMethod, url, options.languages)
 
 				// If pug template exists, preferentially use it
-				if (pugFileNameSet.has(pugFileName)) {
-					let pugFile = path.resolve(listing.directory, pugFileName)
+				if (fileNameSet.has(pugFileName)) {
+					let pugFile = path.resolve(dirRoute.directory, pugFileName)
 					html += pug.renderFile(pugFile, routeDocs)
 				}
 				else {
@@ -155,43 +192,11 @@ function directoryListing(directory) {
 	}
 }
 
-/**
- * Synchronously and recursively traverses ${directory} and all sub-directories, calling
- * ${callbackFn} with a Listing for each directory scanned.
- *
- * @param {String} directory the source path to begin traversing
- * @param {listingCallback} callbackFn
- * @param {Number} [depth = 0]
- */
-function traverseDirectory(directory, callbackFn, depth = 0) {
-	let listing = directoryListing(directory)
-	callbackFn(listing, depth)
-	listing.subDirectories.forEach((subDirectory) => {
-		let fullPath = path.resolve(directory, subDirectory)
-		traverseDirectory(fullPath, callbackFn, depth + 1)
-	})
-}
-
-function methodFromName(fileName) {
-	let result = fileName.replace(/^\^/, '') 	// Remove any leading ^
-		.replace(/\d+\./, '') 				 	// Remove any digits
-		.replace(/\.(\w+)$/, '') 				// Remove the extension
-		.replace(/\.star$/, '.') 				// Remove any star suffix
-
-	return result.toUpperCase()
-}
-
 function setDefaults(dest, defaults) {
 	for (let key in defaults) {
 		if (!Reflect.has(dest, key) || dest[key] === null)
 			dest[key] = defaults[key]
 	}
-}
-
-function subEndpointFromDirectory(directory, routesDir) {
-	let result = directory.substr(routesDir.length)
-	result = result.replace(/\/\^[^\/]+/g, '')
-	return result
 }
 
 function buildSnippets(method, url, langs) {

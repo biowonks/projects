@@ -644,6 +644,10 @@ html, body {
   font-size: 13px;
 }
 
+.http-method {
+  text-transform: uppercase;
+}
+
 h3.rest-endpoint {
   line-height: 30px;
   margin-top: 0;
