@@ -97,7 +97,7 @@ gulp.task('highlightjs', ['clean'], function() {
 })
 
 gulp.task('rest-endpoints', function() {
-	return generateRestEndpoints(config.routesDir, {
+	return generateRestEndpoints(config.routesPath, config.baseUrl, {
 		pretty: !config.compress,
 		languages: [
 			'shell:curl',

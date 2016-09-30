@@ -13,8 +13,7 @@ const HTTPSnippet = require('httpsnippet'),
 	cloneDeep = require('lodash.clonedeep')
 
 // Local
-const mistApiConfig = require('../../../config'),
-	config = require('../config')
+const config = require('../config')
 
 // Constants
 const pugCompileOptions = {
@@ -38,13 +37,13 @@ catch (error) {
 }
 
 /**
- * @param {String} routesDir
+ * @param {String} routesPath
  * @param {Object} [options = {}]
  * @param {Boolean} [options.pretty = false]
  * @param {Array.<String>} [options.languages = []]}
  * @returns {Promise}
  */
-module.exports = function(routesDir, options = {}) {
+module.exports = function(routesPath, baseUrl, options = {}) {
 	if (!Reflect.has(options, 'pretty'))
 		options.pretty = false
 	if (!Reflect.has(options, 'languages'))
@@ -53,7 +52,7 @@ module.exports = function(routesDir, options = {}) {
 	return new Promise((resolve, reject) => {
 		let html = '<h1 id="rest-endpoints">REST Endpoints</h1>\n',
 			pathRoutifier = new PathRoutifier(),
-			dirRoutes = pathRoutifier.dryRoutify(routesDir),
+			dirRoutes = pathRoutifier.dryRoutify(routesPath),
 			observedRootSet = new Set()
 
 		// Remove middleware directories or those with no routes
@@ -61,7 +60,6 @@ module.exports = function(routesDir, options = {}) {
 			!dirRoute.directory.startsWith('^') &&
 			dirRoute.routes &&
 			dirRoute.routes.length
-			// dirRoute.routes[0].endpoint === '/components'
 		)
 
 		// Remove middleware routes
@@ -77,8 +75,7 @@ module.exports = function(routesDir, options = {}) {
 			let listing = directoryListing(dirRoute.directory),
 				fileNameSet = new Set(listing.files),
 				endpoint = dirRoute.routes[0].endpoint,
-				// depth = endpoint.split(/\/[^/]+/).length - 1,
-				url = mistApiConfig.server.baseUrl + endpoint,
+				url = baseUrl + endpoint,
 				rootHeaderName = endpoint.split('/')[1]
 
 			url = url.replace('127.0.0.1', 'localhost')

@@ -1,10 +1,11 @@
 'use strict'
 
-// Core
-const path = require('path')
+// Local
+const mistApiConfig = require('../../config')
 
 module.exports = {
-	routesDir: path.resolve(__dirname, '../routes'),
+	routesPath: mistApiConfig.routing.routesPath,
+	baseUrl: mistApiConfig.server.baseUrl,
 	languageTabs: [
 		'bash',
 		'javascript',
