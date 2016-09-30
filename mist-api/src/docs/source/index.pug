@@ -28,8 +28,8 @@ html
 	//- body(data-languages!=langsJSON)
 	//- body(data-languages!=`${langsJSON}`)
 	body(data-languages=langsJSON)
-		a#nav-button
-			span NAV
+		a#nav-button(href="#")
+			span Menu&nbsp;
 				img(src="images/navbar.png")
 
 		.tocify-wrapper
@@ -37,7 +37,7 @@ html
 			if langs
 				.lang-selector
 					each lang in langs
-						a(data-language-name=lang) #{lang}
+						a(href="#", data-language-name=lang) #{lang}
 
 			if data.search
 				.search
@@ -62,4 +62,4 @@ html
 				if langs
 					.lang-selector
 						each lang in langs
-							a(data-language-name=lang) #{lang}
+							a(href="#", data-language-name=lang) #{lang}

@@ -236,7 +236,7 @@ html, body {
 #nav-button {
   span {
     display: block;
-    $side-pad: $main-padding / 2 - 8px;
+    $side-pad: $main-padding / 2 - 9px;
     padding: $side-pad $side-pad $side-pad;
     background-color: rgba($main-bg, 0.7);
     transform-origin: 0 0;
@@ -640,6 +640,9 @@ html, body {
 }
 
 
+.content h4 {
+  font-size: 13px;
+}
 
 h3.rest-endpoint {
   line-height: 30px;
@@ -650,10 +653,6 @@ h3.rest-endpoint {
 h3.http-get {
   color: $http-get-text;
   background-color: $http-get-bg;
-}
-
-.content h4 {
-  font-size: 13px;
 }
 
 .api-route {
