@@ -106,6 +106,7 @@ $search-box-border-color: #666;
 
 
 
+
 $vpadding: 5px;
 $vmargin: 5px;
 $hpadding: 10px;
@@ -113,12 +114,23 @@ $hmargin: 10px;
 
 // API Route
 //////////////
-// $code-bg: #f5f5f5;
-// $code-text: #444;
-// $code-border: #cfcfcf;
-
 $http-get-bg: #d9edf7;
 $http-get-text: #337ab7;
 $http-get-method-bg: #337ab7;
 $http-get-method-text: #fff;
+
+$http-post-bg: #dff0d8;
+$http-post-text: #5cb85c;
+$http-post-method-bg: #5cb85c;
+$http-post-method-text: #fff;
+
+$http-put-bg: #fcf8e3;
+$http-put-text: #ed9c28;
+$http-put-method-bg: #ed9c28;
+$http-put-method-text: #fff;
+
+$http-delete-bg: #f2dede;
+$http-delete-text: #d9534f;
+$http-delete-method-bg: #d9534f;
+$http-delete-method-text: #fff;
 
