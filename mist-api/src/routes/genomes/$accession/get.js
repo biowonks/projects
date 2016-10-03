@@ -13,7 +13,19 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 	]
 }
 
-module.exports.docs = {
-	name: 'Fetch Genome',
-	description: 'Returns a single genome'
+module.exports.docs = function(modelExamples) {
+	return {
+		name: 'Fetch Genome',
+		description: 'Returns a single genome',
+		example: {
+			request: {
+				parameters: {
+					accession: modelExamples.Genome.accession
+				}
+			},
+			response: {
+				body: modelExamples.Genome
+			}
+		}
+	}
 }

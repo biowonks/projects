@@ -22,7 +22,7 @@ class ModelHTMLBuilder {
 		html += this.exampleRecordHTML_(exampleRecord)
 		html += this.tableOpen_()
 		if (this.hasDefaultPrimaryKey_(fields) && !fields.id)
-			html += this.tableRow_('id', this.Sequelize_.INTEGER, 'auto-incrementing, primary identifier')
+			html += this.tableRow_('id', this.Sequelize_.INTEGER, 'unique primary identifier')
 		Object.keys(fields).forEach((fieldName) => {
 			let fieldSpec = fields[fieldName]
 			html += this.tableRowField_(fieldName, fieldSpec)
@@ -44,7 +44,8 @@ class ModelHTMLBuilder {
 	}
 
 	header_(definition) {
-		return `<h2 id="${this.model_.name}-model">${this.model_.name}</h2>\n`
+		let id = this.model_.name.toLowerCase() + '-model'
+		return `<h2 id="${id}">${this.model_.name}</h2>\n`
 	}
 
 	exampleRecordHTML_(exampleRecord) {

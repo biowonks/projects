@@ -133,7 +133,7 @@ gulp.task('ready-models', function() {
 	}
 })
 
-gulp.task('rest-api', function() {
+gulp.task('rest-api', ['ready-models'], function() {
 	return generateRestApiDocs(config.routesPath, config.baseUrl, {
 		pretty: !config.compress,
 		languages: [
@@ -141,11 +141,12 @@ gulp.task('rest-api', function() {
 			'node',
 			'python',
 			'ruby'
-		]
+		],
+		modelExamples
 	})
-	.then((restEndpointsHtml) => {
+	.then((restApiHtml) => {
 		let outfile = path.resolve(__dirname, 'source', 'includes', 'rest-api.html')
-		fs.writeFileSync(outfile, restEndpointsHtml)
+		fs.writeFileSync(outfile, restApiHtml)
 	})
 })
 

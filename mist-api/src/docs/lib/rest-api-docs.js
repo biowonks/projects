@@ -43,6 +43,7 @@ catch (error) {
  * @param {Object} [options = {}]
  * @param {Boolean} [options.pretty = false]
  * @param {Array.<String>} [options.languages = []]}
+ * @param {Object.<String,Object>} [options.modelExamples = {}]
  * @returns {Promise}
  */
 module.exports = function(routesPath, baseUrl, options = {}) {
@@ -50,6 +51,8 @@ module.exports = function(routesPath, baseUrl, options = {}) {
 		options.pretty = false
 	if (!Reflect.has(options, 'languages'))
 		options.languages = []
+	if (!Reflect.has(options, 'modelExamples'))
+		options.modelExamples = {}
 
 	// eslint-disable-next-line no-param-reassign
 	baseUrl = baseUrl.replace('127.0.0.1', 'localhost')
@@ -74,22 +77,30 @@ module.exports = function(routesPath, baseUrl, options = {}) {
 			dirRoute.routes.forEach((route) => {
 				let jsFile = path.resolve(dirRoute.directory, route.fileName),
 					routeFn = require(jsFile),
-					routeDocs = routeFn && routeFn.docs ? cloneDeep(routeFn.docs) : {},
+					// routeDocs = routeFn && routeFn.docs ? cloneDeep(routeFn.docs) : {},
+					routeDocs = routeFn ? routeFn.docs || {} : {},
 					baseName = path.basename(jsFile, '.js'),
 					pugFileName = baseName + '.docs.pug'
+
+				if (typeof routeDocs === 'function')
+					routeDocs = routeDocs(options.modelExamples)
+				else
+					routeDocs = cloneDeep(routeDocs)
 
 				setDefaults(routeDocs, {
 					name: `${route.httpMethod} ${endpoint}`,
 					id: makeHTMLId(routeDocs.name, route.httpMethod, endpoint),
 					method: route.httpMethod,
-					uri: endpoint,
+					endpoint,
 					har: route.httpMethod === 'get' ? {} : null
 				})
 
 				routeDocs.parameters = finalizeRouteParameters(cascadingParameters.get(relPath), routeDocs.parameters)
-				routeDocs.uri = reformatUri(routeDocs.uri, routeDocs.parameters)
+				routeDocs.endpoint = reformatEndpoint(routeDocs.endpoint, routeDocs.parameters)
 				routeDocs.description = toHTMLParagraphs(routeDocs.description)
 				routeDocs.snippets = buildHTMLSnippets(routeDocs.har, route.httpMethod, url, options.languages)
+
+				normalizeExample(baseUrl, route.httpMethod, routeDocs.endpoint, routeDocs.example)
 
 				// If pug template exists, preferentially use it
 				if (fileNameSet.has(pugFileName)) {
@@ -345,7 +356,7 @@ function finalizeRouteParameters(cascadedParameters, routeParameters) {
  * @param {Object} routeParameters
  * @returns {String}
  */
-function reformatUri(uri, routeParameters) {
+function reformatEndpoint(uri, routeParameters) {
 	if (!routeParameters)
 		return uri
 
@@ -396,12 +407,78 @@ function buildHTMLSnippets(har, method, url, langs) {
 
 		let unhighlightedCode = snippet.convert(effectiveLang, subLang),
 			highlightLang = languageMap[effectiveLang] || effectiveLang,
-			highlightedCodeHtml = highlight.highlight(highlightLang, unhighlightedCode).value
-
-		highlightedCodeHtml = `<pre class="highlight ${highlightLang}"><code>${highlightedCodeHtml}</code></pre>`
+			highlightedCodeHtml = highlightCode(highlightLang, unhighlightedCode)
 
 		htmlSnippets.push(highlightedCodeHtml)
 	})
 
 	return htmlSnippets.length ? htmlSnippets : null
+}
+
+/**
+ * @param {String} lang
+ * @param {String} code - textual source code to highlight
+ * @returns {String} - code marked up with HTML
+ */
+function highlightCode(lang, code) {
+	let highlightedCodeHtml = highlight.highlight(lang, code).value
+
+	return `<pre class="highlight ${lang}"><code>${highlightedCodeHtml}</code></pre>`
+}
+
+function highlightJSON(object) {
+	let json = JSON.stringify(object, null, 2)
+	return highlightCode('json', json)
+}
+
+/**
+ * Iterates through each example in ${examples} and normalizes its data sturcture for consistent
+ * usage in the template. Currently only works for GET routes.
+ *
+ * @param {String} baseUrl
+ * @param {String} method
+ * @paraM {String} endpoint
+ * @param {Array.<Object>} [examples = null]
+ */
+function normalizeExample(baseUrl, method, endpoint, example) {
+	if (method !== 'get' || !example)
+		return
+
+	example.request = normalizeRequest(baseUrl, endpoint, example.request)
+	example.response = normalizeResponse(example.response)
+}
+
+function normalizeRequest(baseUrl, endpoint, request) {
+	let result = request || {}
+
+	if (!result.endpoint)
+		result.endpoint = endpoint
+
+	if (!result.baseUrl)
+		result.baseUrl = baseUrl
+
+	if (!result.parameters) {
+		result.parameters = {}
+	}
+	else {
+		// Interpolate all endpoint parameters
+		Object.keys(result.parameters).forEach((parameterName) => {
+			let value = result.parameters[parameterName],
+				regex = new RegExp('{' + parameterName + '}', 'g')
+			result.endpoint = result.endpoint.replace(regex, value)
+		})
+	}
+
+	return result
+}
+
+function normalizeResponse(response) {
+	let result = response || {}
+
+	if (!result.statusCode)
+		result.statusCode = 200
+	if (typeof result.body === 'object')
+		result.body = highlightJSON(result.body)
+
+	return result
 }

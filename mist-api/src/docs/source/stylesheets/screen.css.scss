@@ -296,7 +296,7 @@ html, body {
   .lang-selector {
     position: fixed;
     z-index: 50;
-    border-bottom: 5px solid $lang-select-active-bg;
+    // border-bottom: 5px solid $lang-select-active-bg;
   }
 }
 
@@ -650,7 +650,7 @@ html, body {
 
 h3.rest-endpoint {
   line-height: 30px;
-  margin-top: 0;
+  margin-top: 2em;
   margin-bottom: 0;
 }
 
@@ -661,8 +661,8 @@ h3.http-get {
 
 .api-route {
   header {
-    line-height: 37px;
-    margin: 10px 0;
+    line-height: 50px;
+    margin: 0;
 
     .http-method {
       line-height: 25px;
@@ -679,6 +679,20 @@ h3.http-get {
     }
   }
 
+  blockquote {
+    padding-bottom: 0;
+    padding-top: 0;
+    background-color: $examples-bg;
+
+    > p {
+      background-color: transparent;
+      border: 0;
+      padding-left: 0;
+      padding-right: 0;
+      font-size: 14px;
+    }
+  }
+
   &.http-get .http-method {
       color: $http-get-method-text;
       background-color: $http-get-method-bg;
@@ -691,4 +705,16 @@ table.model-structure td {
 
 .field-name {
   font-style: italic;
+}
+
+.example {
+  a {
+    color: #337ab7;
+    text-decoration: none;
+
+    &:hover {
+      color: #005580;
+      text-decoration: underline;
+    }
+  }
 }
