@@ -15,10 +15,10 @@ module.exports = {
 	tocFooters: [],
 	includes: [
 		'main.pug',
-		'rest-endpoints.html',
-		'rest-errors.pug'
-		// 'data-structures',
-		// 'errors'
+		'rest-api.html',
+		'rest-errors.pug',
+		'model-structures-intro.pug',
+		'model-structures.html'
 	],
 	search: true,
 	highlightTheme: 'agate',

@@ -5,7 +5,9 @@ const fs = require('fs'),
 	path = require('path')
 
 // Vendor
-const gulp = require('gulp'),
+const del = require('del'),
+	pug = require('pug'),
+	gulp = require('gulp'),
 	cleanCSS = require('gulp-clean-css'),
 	concat = require('gulp-concat'),
 	gls = require('gulp-live-server'),
@@ -15,12 +17,16 @@ const gulp = require('gulp'),
 	sass = require('gulp-sass'),
 	uglify = require('gulp-uglify')
 
-const del = require('del'),
-	pug = require('pug')
-
 // Local
-let config = require('./config'),
-	generateRestEndpoints = require('./lib/rest-endpoints')
+const config = require('./config'),
+	MistBootService = require('../node_modules/mist-lib/services/MistBootService'),
+	generateRestApiDocs = require('./lib/rest-api-docs'),
+	ModelHTMLBuilder = require('./lib/ModelHTMLBuilder')
+
+// Other
+let Sequelize = null,
+	models = {}, 		// actual database models
+	modelExamples = {}	// examples of each database model
 
 try {
 	fs.mkdirSync('./build')
@@ -82,8 +88,53 @@ gulp.task('highlightjs', ['clean'], function() {
 		.pipe(gulp.dest('./build/stylesheets'))
 })
 
-gulp.task('rest-endpoints', function() {
-	return generateRestEndpoints(config.routesPath, config.baseUrl, {
+gulp.task('ready-models', function() {
+	let mistBootService = new MistBootService({
+		logger: {
+			name: 'generator',
+			streams: [
+				fs.createWriteStream('/dev/null')
+			]
+		}
+	})
+
+	models = mistBootService.setupModels()
+	Sequelize = mistBootService.sequelize().Sequelize
+
+	// Build out the examples
+	for (let modelName in models) {
+		let model = models[modelName],
+			example = {},
+			fields = model.definition.fields
+
+		// Add default primary key
+		if (!model.definition.params.noPrimaryKey)
+			example.id = 1
+
+		Object.keys(fields).forEach((fieldName) => {
+			let fieldSpec = fields[fieldName]
+
+			// In the event, the primary key is defined on a different column, remove the default
+			// primary key field
+			if (fieldSpec.primaryKey)
+				Reflect.deleteProperty(example, 'id')
+
+			example[fieldName] = fieldSpec.example || null
+		})
+
+		if (model.options.timestamps) {
+			if (model.options.createdAt !== false)
+				example[model.options.createdAt] = '2016-09-20T20:40:36.098Z'
+			if (model.options.updatedAt !== false)
+				example[model.options.updatedAt] = '2016-09-20T20:55:09.838Z'
+		}
+
+		modelExamples[model.name] = example
+	}
+})
+
+gulp.task('rest-api', function() {
+	return generateRestApiDocs(config.routesPath, config.baseUrl, {
 		pretty: !config.compress,
 		languages: [
 			'shell:curl',
@@ -93,12 +144,25 @@ gulp.task('rest-endpoints', function() {
 		]
 	})
 	.then((restEndpointsHtml) => {
-		let outfile = path.resolve(__dirname, 'source', 'includes', 'rest-endpoints.html')
+		let outfile = path.resolve(__dirname, 'source', 'includes', 'rest-api.html')
 		fs.writeFileSync(outfile, restEndpointsHtml)
 	})
 })
 
-gulp.task('html', ['clean', 'rest-endpoints'], function(done) {
+gulp.task('model-structures', ['ready-models'], function() {
+	let modelHTMLBuilder = new ModelHTMLBuilder(Sequelize),
+		html = '',
+		outfile = path.resolve(__dirname, 'source', 'includes', 'model-structures.html')
+
+	for (let modelName in models) {
+		let model = models[modelName]
+		html += modelHTMLBuilder.html(model, modelExamples[model.name])
+	}
+
+	fs.writeFileSync(outfile, html)
+})
+
+gulp.task('html', ['clean', 'rest-api', 'model-structures'], function(done) {
 	let html = pug.renderFile('./source/index.pug', getPageData()),
 		outFile = path.resolve(__dirname, 'build', 'index.html')
 

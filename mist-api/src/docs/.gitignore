@@ -1,5 +1,5 @@
 build
 
 # The following are auto-generated!
-source/includes/rest-endpoints.html
-source/includes/data-structures.html
+source/includes/rest-api.html
+source/includes/model-structures.html

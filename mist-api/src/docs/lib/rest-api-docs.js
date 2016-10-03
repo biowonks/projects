@@ -55,7 +55,7 @@ module.exports = function(routesPath, baseUrl, options = {}) {
 	baseUrl = baseUrl.replace('127.0.0.1', 'localhost')
 
 	return new Promise((resolve, reject) => {
-		let html = '<h1 id="rest-endpoints">REST Endpoints</h1>\n',
+		let html = '<h1 id="rest-api">REST API</h1>\n',
 			dirRoutes = buildRouteList(routesPath),
 			observedRootNameSet = new Set(),
 			cascadingParameters = new Map()

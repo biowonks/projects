@@ -428,7 +428,7 @@ html, body {
     }
 
     th {
-      padding: 5px 10px;
+      padding: 5px;
       border-bottom: 1px solid #ccc;
       vertical-align: bottom;
     }
@@ -442,11 +442,11 @@ html, body {
     }
 
     tr:nth-child(odd)>td {
-      background-color: lighten($main-bg,4.2%);
+      background-color: darken($main-bg, 4.2%);
     }
 
     tr:nth-child(even)>td {
-      background-color: lighten($main-bg,2.4%);
+      // background-color: darken($main-bg,2.4%);
     }
   }
 
@@ -683,4 +683,12 @@ h3.http-get {
       color: $http-get-method-text;
       background-color: $http-get-method-bg;
   }
+}
+
+table.model-structure td {
+  padding: 5px;
+}
+
+.field-name {
+  font-style: italic;
 }
