@@ -2,6 +2,9 @@ FROM mhart/alpine-node:6.4
 
 MAINTAINER BioWonks <biowonks@users.noreply.github.com>
 
+ENV PS1="(\u@docker) \w $ "
+ENV HOME=/app
+
 # The following is to facilitate volume sharing with the right permissions when locally developing.
 # Use docker build --build-arg LOCAL_USER_ID=#### to configure the biowonks user with
 # a different id value
@@ -15,7 +18,6 @@ RUN addgroup -g ${LOCAL_USER_ID:=1000} biowonks && \
 	chown biowonks:biowonks /app
 
 COPY docker.node-bootstrap.entrypoint.sh /usr/local/bin/
-COPY _common /app/_common
 
 ENTRYPOINT ["/usr/local/bin/docker.node-bootstrap.entrypoint.sh"]
 CMD ["bash"]

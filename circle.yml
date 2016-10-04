@@ -1,0 +1,36 @@
+machine:
+  services:
+    - docker
+  node:
+    # Necessary for using the ES6 features of some of our scripts
+    version: 6.4
+  environment:
+    MOCHA_REPORTER: mocha-circleci-reporter
+    TZ: America/New_York
+
+dependencies:
+  cache_directories:
+    - '~/cache'
+    - '~/heroku'
+    - node_modules
+    - core-lib/node_modules
+    - mist-api/node_modules
+    - mist-lib/node_modules
+    - mist-pipeline/node_modules
+    - mist-pipeline/vendor
+    - seqdepot-lib/node_modules
+
+  override:
+    - bin/circleci/dependencies.sh
+
+test:
+  override:
+    - bin/circleci/util/run-tests.sh $(cat ~/projects-to-build.txt)
+  post:
+    - bin/circleci/test.post.sh
+
+deployment:
+  boom:
+    branch: develop
+    commands:
+      - bin/circleci/util/deploy-to-heroku.sh develop $(cat ~/projects-to-build.txt)

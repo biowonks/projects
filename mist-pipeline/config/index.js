@@ -4,23 +4,19 @@
 const path = require('path')
 
 // Vendor
-const moment = require('moment')
+const loadConfig = require('node-config-loader'),
+	moment = require('moment')
 
 // Local
-let packageJSON = require('../package.json'), // eslint-disable-line no-mixed-requires
-	database = require('../src/node_modules/mist-lib/db/config')(packageJSON.name)
+const database = require('../src/node_modules/mist-lib/db/config')
 
 // --------------------------------------------------------
-let pipelineRootPath = path.resolve(__dirname, '..'),
-	paths = {
-		root: pipelineRootPath,
-		data: path.resolve(pipelineRootPath, 'data'),
-		genomes: path.resolve(pipelineRootPath, 'data', 'genomes'),
-		vendor: path.resolve(pipelineRootPath, 'vendor')
-	}
+let vendorPath = path.resolve(__dirname, '..', 'vendor')
 
-module.exports = {
-	paths,
+let config = {
+	paths: {
+		vendor: vendorPath
+	},
 
 	database,
 
@@ -33,27 +29,27 @@ module.exports = {
 	vendor: {
 		// Vendor tools
 		coils: {
-			basePath: path.resolve(paths.vendor, 'vendor-tools', 'coils')
+			basePath: path.resolve(vendorPath, 'vendor-tools', 'coils')
 		},
 		seg: {
-			basePath: path.resolve(paths.vendor, 'vendor-tools', 'seg')
+			basePath: path.resolve(vendorPath, 'vendor-tools', 'seg')
 		},
 
 		// Other tools
 		hmmer3: {
 			version: '3.1b2',
-			basePath: path.resolve(paths.vendor, 'hmmer3', '3.1b2'),
-			binPath: path.resolve(paths.vendor, 'hmmer3', '3.1b2', 'bin')
+			basePath: path.resolve(vendorPath, 'hmmer3', '3.1b2'),
+			binPath: path.resolve(vendorPath, 'hmmer3', '3.1b2', 'bin')
 		},
 
 		// Databases
 		agfam: {
 			version: '2.0',
-			basePath: path.resolve(paths.vendor, 'agfam', '2.0')
+			basePath: path.resolve(vendorPath, 'agfam', '2.0')
 		},
 		pfam: {
 			version: '30.0',
-			basePath: path.resolve(paths.vendor, 'pfam', '30.0')
+			basePath: path.resolve(vendorPath, 'pfam', '30.0')
 		}
 	},
 
@@ -65,8 +61,12 @@ module.exports = {
 			ticksPerProgressEvent: 25000
 		},
 		pfam30: {
-			databasePath: path.resolve(paths.vendor, 'pfam', '30.0', 'Pfam-A.hmm'),
-			ticksPerProgressEvent: 100
+			databasePath: path.resolve(vendorPath, 'pfam', '30.0', 'Pfam-A.hmm'),
+			ticksPerProgressEvent: 50
+		},
+		agfam2: {
+			databasePath: path.resolve(vendorPath, 'agfam', '2.0', 'agfam.hmm'),
+			ticksPerProgressEvent: 1000
 		}
 	},
 
@@ -87,3 +87,7 @@ module.exports = {
 		]
 	}
 }
+
+loadConfig(__dirname, config)
+
+module.exports = config

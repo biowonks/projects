@@ -1,0 +1,5 @@
+core-lib
+seqdepot-lib
+mist-lib
+mist-pipeline
+mist-api

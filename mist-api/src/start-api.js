@@ -26,22 +26,41 @@ pm2.connect(() => {
 			return
 		}
 
-		console.log('PM2 and application have been successfully started')
-		pm2.launchBus((error, bus) => {
-			if (error)
-				throw error
-
-			console.log('[PM2] Log streaming started')
-
-			bus.on('log:out', (packet) => {
-				// console.log('[%s] %s', packet.process.name, packet.data)
-				process.stdout.write(packet.data)
+		// KeyMetrics logging
+		let keyMetricsPrivateKey = process.env.KEYMETRICS_PRIVATE_KEY,
+			keyMetricsPublicKey = process.env.KEYMETRICS_PUBLIC_KEY,
+			keyMetricsMachineName = process.env.DYNO
+		if (keyMetricsPrivateKey && keyMetricsPublicKey && keyMetricsMachineName) {
+			console.log('Connecting to KeyMetrics monitoring service')
+			pm2.interact(keyMetricsPrivateKey, keyMetricsPublicKey, keyMetricsMachineName, () => {
+				console.log('--> Success!')
+				console.log('Launching communication bus')
+				launchBus()
 			})
+		}
+		else {
+			console.log('Missing or incomplete KeyMetrics environment variables. Not connecting to KeyMetrics monitoring service')
+			launchBus()
+		}
 
-			bus.on('log:err', (packet) => {
-				// console.error('[%s](Error) %s', packet.process.name, packet.data)
-				process.stderr.write(packet.data)
+		function launchBus() {
+			console.log('PM2 and application have been successfully started')
+			pm2.launchBus((error, bus) => {
+				if (error)
+					throw error
+
+				console.log('[PM2] Log streaming started')
+
+				bus.on('log:out', (packet) => {
+					// console.log('[%s] %s', packet.process.name, packet.data)
+					process.stdout.write(packet.data)
+				})
+
+				bus.on('log:err', (packet) => {
+					// console.error('[%s](Error) %s', packet.process.name, packet.data)
+					process.stderr.write(packet.data)
+				})
 			})
-		})
+		}
 	})
 })

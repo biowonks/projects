@@ -1,0 +1,8 @@
+# Base image for the mist library code. This image is not intended to be used directly.
+#
+# Solely adds mist-lib -> $HOME/mist-lib
+FROM biowonks/node-bootstrap
+
+MAINTAINER BioWonks <biowonks@users.noreply.github.com>
+
+COPY . /app/core-lib

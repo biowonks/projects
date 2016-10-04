@@ -1,9 +1,12 @@
 'use strict'
 
 // Core
-let assert = require('assert')
+const assert = require('assert')
 
-module.exports = function(kRootPath, packageJSON) {
+// Local
+const packageJSON = require('../package.json')
+
+module.exports = function() {
 	let result = {
 		// The following options are passed directly to bunyan when creating a logger
 		options: {

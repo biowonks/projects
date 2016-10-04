@@ -1,5 +1,15 @@
 'use strict'
 
+// ----------------------
+// ----------------------
+// Monitoring by NewRelic
+if (process.env.NEW_RELIC_LICENSE_KEY) {
+	console.log('Loading New Relic') // eslint-disable-line no-console
+	require('newrelic') // eslint-disable-line global-require
+}
+// ----------------------
+// ----------------------
+
 // Core
 const http = require('http')
 
@@ -18,7 +28,7 @@ const config = require('../config'),
 	errorHandler = require('lib/error-handler'),
 	loadServices = require('./services'),
 	errors = require('lib/errors'),
-	BootService = require('mist-lib/services/BootService'),
+	MistBootService = require('mist-lib/services/MistBootService'),
 	RouteHelper = require('lib/RouteHelper')
 
 // Constants
@@ -28,7 +38,7 @@ const kMsPerSecond = 1000,
 
 // Maintain reference to server variable because the handleUncaughtErrors middleware references it.
 let server = null,
-	bootService = new BootService(config.database, {
+	bootService = new MistBootService(config.database, {
 		logger: {
 			name: 'mist-api',
 			streams: [

@@ -4,3 +4,4 @@ npm-debug.log
 testing/coverage
 data
 .eslintrc.js
+vendor

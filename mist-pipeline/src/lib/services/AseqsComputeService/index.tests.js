@@ -22,17 +22,22 @@ const bunyan = require('bunyan')
 
 // Local
 const AseqsComputeService = require('./index'),
-	Seq = require('mist-lib/bio/Seq'),
+	MistBootService = require('mist-lib/services/MistBootService'),
+	Seq = require('core-lib/bio/Seq'),
 	config = require('../../../../config'),
-	models = require('mist-lib/models').withDummyConnection(),
 	testData = require('./tool-runners/test-data')
 
 // Other
-const Aseq = models.Aseq,
-	logger = bunyan.createLogger({name: 'AseqsComputeService-tests'})
+const logger = bunyan.createLogger({name: 'AseqsComputeService-tests'})
 
 describe('services', function() {
 	describe('AseqsComputeService', function() {
+		let Aseq = null
+		before(() => {
+			let bootService = new MistBootService()
+			Aseq = bootService.setupModels().Aseq
+		})
+
 		describe('tools (static method)', function() {
 			it('should return an array of tool-runners', function() {
 				let tools = AseqsComputeService.tools()

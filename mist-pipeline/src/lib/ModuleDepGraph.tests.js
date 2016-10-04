@@ -6,15 +6,21 @@
 const bunyan = require('bunyan')
 
 // Local
-const models = require('mist-lib/models').withDummyConnection(),
+const MistBootService = require('mist-lib/services/MistBootService'),
 	ModuleDepNode = require('./ModuleDepNode'),
 	ModuleDepGraph = require('./ModuleDepGraph'),
 	ModuleId = require('./ModuleId')
 
-const WorkerModule = models.WorkerModule
-
 describe('pipeline', function() {
 	describe('ModuleDepGraph', function() {
+		let models = null,
+			WorkerModule = null
+		before(() => {
+			let bootService = new MistBootService()
+			models = bootService.setupModels()
+			WorkerModule = models.WorkerModule
+		})
+
 		let logger = bunyan.createLogger({name: 'ModuleDepGraph test'}),
 			depList = [
 				{name: 'A',		dependencies: []},
@@ -143,14 +149,14 @@ describe('pipeline', function() {
 		})
 
 		describe('moduleIdsInStates', function() {
-			let x = new ModuleDepGraph(root, logger),
-				wmA = WorkerModule.build({module: 'A', state: 'done'}),
-				wmB = WorkerModule.build({module: 'B', state: 'done'}),
-				wmC = WorkerModule.build({module: 'C', state: 'active'}),
-				wmD = WorkerModule.build({module: 'D', state: 'undo'}),
-				wmE = WorkerModule.build({module: 'E', state: 'error'})
+			let x = new ModuleDepGraph(root, logger)
 
 			beforeEach(() => {
+				let wmA = WorkerModule.build({module: 'A', state: 'done'}),
+					wmB = WorkerModule.build({module: 'B', state: 'done'}),
+					wmC = WorkerModule.build({module: 'C', state: 'active'}),
+					wmD = WorkerModule.build({module: 'D', state: 'undo'}),
+					wmE = WorkerModule.build({module: 'E', state: 'error'})
 				x.loadState([wmA, wmB, wmC, wmD, wmE])
 			})
 

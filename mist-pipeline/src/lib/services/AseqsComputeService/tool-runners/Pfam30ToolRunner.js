@@ -4,8 +4,6 @@
 const FastaStreamToolRunner = require('./FastaStreamToolRunner'),
 	hmmscanStream = require('lib/streams/hmmscan-stream')
 
-// If nothing is written to the STDIN of hmmscan, it causes an error. Thus, we handle empty
-// input specially here.
 module.exports =
 class Pfam30ToolRunner extends FastaStreamToolRunner {
 	handleResult_(aseq, result) {

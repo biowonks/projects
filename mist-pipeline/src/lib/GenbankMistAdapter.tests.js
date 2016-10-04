@@ -4,7 +4,7 @@
 
 // Local
 let GenbankMistAdapter = require('./GenbankMistAdapter'),
-	Seq = require('mist-lib/bio/Seq')
+	Seq = require('core-lib/bio/Seq')
 
 describe('GenbankMistAdapter', function() {
 	describe('findRefSeqError', function() {

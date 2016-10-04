@@ -9,4 +9,9 @@ if [[ ! -z "$BIOWONKS_VOLUMES" ]]; then
 	done
 fi
 
-su-exec biowonks "$@"
+if [[ $(whoami) = 'root' ]]; then
+	su-exec biowonks "$@"
+else
+	exec "$@"
+fi
+
