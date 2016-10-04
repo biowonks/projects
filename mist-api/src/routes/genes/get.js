@@ -13,3 +13,8 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		helper.findManyHandler()
 	]
 }
+
+module.exports.docs = {
+	name: 'Fetch Many Genes',
+	description: 'Returns an array of genes'
+}

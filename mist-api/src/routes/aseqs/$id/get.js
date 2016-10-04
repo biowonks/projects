@@ -11,3 +11,8 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		helper.findHandler()
 	]
 }
+
+module.exports.docs = {
+	name: 'Fetch Aseq',
+	description: 'Returns an Aseq record (including predicted results)'
+}

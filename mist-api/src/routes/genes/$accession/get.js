@@ -13,3 +13,8 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		helper.findHandler('accession')
 	]
 }
+
+module.exports.docs = {
+	name: 'Fetch Gene',
+	description: 'Returns a single gene'
+}

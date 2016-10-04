@@ -7,6 +7,7 @@
     "node": "6.4"
   },
   "scripts": {
+    "generate-docs": "bin/generate-docs.sh",
     "merge-deps": "node ../bin/merge-deps.js -i ../core-lib/package.json ../seqdepot-lib/src/models/package.json ../mist-lib/package.json ./package.json",
     "preinstall": "npm run merge-deps",
     "fast-install": "npm run preinstall && sha1sum -c package.json.sha1 > /dev/null || (npm install && sha1sum package.json > package.json.sha1)",
@@ -76,6 +77,7 @@
   "devDependencies": {
     "chai": "^3.5.0",
     "eslint": "^3.4.0",
+    "httpsnippet": "^1.16.5",
     "istanbul": "^0.4.5",
     "mocha": "^3.0.2",
     "mocha-circleci-reporter": "0.0.2",

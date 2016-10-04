@@ -12,3 +12,21 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		helper.findManyHandler()
 	]
 }
+
+module.exports.docs = function(modelExamples) {
+	return {
+		name: 'Fetch Many Genomes',
+		description: 'Returns an array of genomes',
+		method: null,
+		uri: null,
+		parameters: null,
+		example: {
+			response: {
+				body: [
+					modelExamples.Genome
+				]
+			}
+		},
+		har: null
+	}
+}
