@@ -9,7 +9,7 @@ class Fql {
 
 	buildQuery(rules) {
 		rules.forEach(function(rule) {
-			let queryInfo = readRule(rule)
+			let queryInfo = this.readRule(rule)
 
 
 		})
@@ -18,8 +18,10 @@ class Fql {
 	readRule(rule) {
 		let rc = rule.db
 		let domainIn = []
-		rule.in.forEach(function(domain) {
-			domainIn.push(domain)
+		rule.in.forEach(function(domainInfo) {
+			let domain = domainInfo[0]
+			let count = domainInfo[1]
+			domainIn.push(domain, count) //review this.
 		})
 		return [rc, domainIn]
 	}
