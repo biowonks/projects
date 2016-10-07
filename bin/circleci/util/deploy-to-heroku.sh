@@ -47,7 +47,14 @@ for PROJECT in "$@"; do
 			# --copy-dirlinks: copy any symlinked directories
 			# --delete: remove files in destination that are not in the source directories
 			# --delete-excluded: remove those that are excluded if present in the destination
-			rsync -rLptgv --copy-dirlinks --delete --delete-excluded --filter='P .git' --exclude /node_modules --exclude .vscode $PROJECT/ $HEROKU_REPO_DIR
+			rsync -rLptgv --copy-dirlinks --delete --delete-excluded --filter='P .git' --exclude /node_modules --exclude .vscode --exclude /src/docs $PROJECT/ $HEROKU_REPO_DIR
+
+			echo "====> Building documentation"
+			cd $PROJECT/src/docs
+			npm run build
+
+			echo "====> Syncing documentation with Heroku repo (rsync)"
+			rsync -rLptgv --delete --delete-excluded $PROJECT/src/docs/build $HEROKU_REPO_DIR/src/docs
 
 			echo "====> Committing changes and pushing to Heroku repository"
 			LAST_GIT_COMMENT=$(git log -1 --pretty=%B)

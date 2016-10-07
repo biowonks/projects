@@ -11,4 +11,9 @@ for PROJECT in "$@"; do
 	echo "====> Installing $PROJECT dependencies"
 	docker run -e CI=true -v $ROOT:/app -w /app/$PROJECT biowonks/node-bootstrap /bin/bash -c 'npm prune && npm install'
 	#          ^^^^^^^^^^ inform scripts that we are a CI server
+
+	if [[ $PROJECT = 'mist-api' ]]; then
+		echo "====> Installing $PROJECT docs dependencies"
+		docker run -e CI=true -v $ROOT:/app -w /app/$PROJECT/src/docs biowonks/node-bootstrap /bin/bash -c 'npm prune && npm install'
+	fi
 done

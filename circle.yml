@@ -15,6 +15,7 @@ dependencies:
     - node_modules
     - core-lib/node_modules
     - mist-api/node_modules
+    - mist-api/src/docs/node_modules
     - mist-lib/node_modules
     - mist-pipeline/node_modules
     - mist-pipeline/vendor
