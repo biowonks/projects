@@ -5,7 +5,7 @@
 ### Single feature search
 
 Any sequence with only 1 region matching a CheW domain from Pfam29 and nothing else.
-```json
+```javascript
 {
     name: 'CheW'
     rule: ['CheW @ pfam29']
@@ -19,7 +19,7 @@ The actual query of features will come in front of the key `rule` and each eleme
 In FQL you can search for features in any resource from SeqDepot. It is mandatory to specify from which resource the feature should belong. FQL uses the character `|` as delimiter between the feature and the resource. Generically, an instruction is made of `feature|resource`. Other examples of simple searches like this will be:
 
 Any sequence with only 1 region matching a CheW domain from SuperFamily and nothing else.
-```json
+```javascript
 {
     name: 'CheW'
     rule: ['SSF50341|superfam']
@@ -27,14 +27,14 @@ Any sequence with only 1 region matching a CheW domain from SuperFamily and noth
 ```
 
 Any sequence with only 1 region matching a CheW domain from SMART and nothing else.
-```json
+```javascript
 {
     name: 'CheW'
     rule: ['SM00260|smart']
 }
 ```
 Any sequence with only 1 region matching a CheW domain from ProSite profile scan and nothing else.
-```json
+```javascript
 {
     name: 'CheW'
     rule: ['PS50851|proscan']
@@ -47,7 +47,7 @@ The second option is correct. FQL will work within the universe of resources tha
 
 Select the sequences with only 1 transmembrane region defined by DAS, TMHMM or both
 
-```json
+```javascript
 {
     name: 'proteins with 1 TM region'
     rule: ['|das.tmhmm']
@@ -62,7 +62,7 @@ You can also try to select proteins that contain 1 TM region predicted by both D
 
 Select the sequences with only 1 transmembrane region defined by DAS **AND** TMHMM.
 
-```json
+```javascript
 {
     name: 'proteins with 1 TM region'
     rule: ['|das,tmhmm']
@@ -75,7 +75,7 @@ Now, for some reason still obscure to us, some one wants to select proteins with
 
 Select the sequences with only 1 transmembrane region defined by DAS but **NOT** by TMHMM.
 
-```json
+```javascript
 {
     name: 'proteins with 1 TM region'
     rule: ['|das,!tmhmm']
@@ -86,7 +86,7 @@ These operator may be used in the `feature` part of the instruction, for example
 
 Select any sequence with only 1 region matching a CheW domain **OR** a Response Regulator domain from Pfam29 and nothing else.
 
-```json
+```javascript
 {
     name: 'CheW and CheYs'
     rule: ['CheW.RR|pfam29']
@@ -101,7 +101,7 @@ A large number of protein families of interest needs more than 1 feature to be u
 
 Select any sequence with a region matching CheW domain followed by a region matching a Response Regulator, both from pfam29 and nothing else (from pfam29).
 
-```json
+```javascript
 {
     name: 'CheV'
     rule: ['CheW|pfam29', 'RR|pfam29']
@@ -113,7 +113,7 @@ A protein that has a CheW domain fused to a RR domain is defined as CheV. In thi
 Another important case, is to select sequences from protein families that underwent through extensive domain swaps. Thus, there will be only one domain common to all members of the protein family but each sequence will have one or more other regions with matches to features in the same resource. For example Methyl-accepting chemotaxis proteins (MCP), is defined by the presence of the MCP_signal domain (pfam). Let's select all MCPs from the database:
 
 Select any sequence that match MCP_signal domain from the pfam29 database and nothing else.
-```json
+```javascript
 {
     name: 'MCP'
     rule: ['MCP_signal|pfam29']
@@ -122,7 +122,7 @@ Select any sequence that match MCP_signal domain from the pfam29 database and no
 The *'nothing else'* clearly will not let this query to select all the chemoreceptors in the database. Most of the domain diversity in MCPs happen in the N-terminus direction from the MCP_signal domain. To accommodate this variability we introduce the positional wild-card character `*`.
 
 Select any sequence that match MCP_signal domain from the pfam29 database and nothing else towards the C-terminus.
-```json
+```javascript
 {
     name: 'MCP'
     rule: ['*MCP_signal|pfam29']
@@ -134,7 +134,7 @@ This rule will select sequences that has MCP_signal as the domain closest to the
 **Most** but not all chemoreceptors have the MCP_signal domain as the closest domain to the C-terminus. To find all chemoreceptors we need:
 
 Select any sequence that match MCP_signal domain from the pfam29 database anywhere in the sequence.
-```json
+```javascript
 {
     name: 'MCP'
     rule: ['*MCP_signal|pfam29*']
@@ -148,7 +148,7 @@ Adding another instruction will limit the possibilities of localization selected
 
 Select any sequence that starts with TM region as defined by DAS and match MCP_signal domain from the pfam29 database anywhere else in the sequence.
 
-```json
+```javascript
 {
     name: 'MCP starting with 1 TM'
     rule: ['|das', '*MCP_signal|pfam29*']
@@ -157,7 +157,7 @@ Select any sequence that starts with TM region as defined by DAS and match MCP_s
 
 In this rule, proteins with MCP_signal as the closest feature to the N-terminus of the sequence will not be selected. Notice that only one of the instructions carries the `*` operator. This is **BAD**. Without the `*` operator in the `|das` instruction, this rule will select only sequences with EXACT 1 TM region and that it is the closest feature (from DAS or pfam29) from the N-terminus. This means that this rule is searching for sequences that puts the MCP_signal domain in the periplasm, which is unheard of. To fix this we need to add the `*` operator:
 
-```json
+```javascript
 {
     name: 'MCP starting with 1 TM'
     rule: ['|das*', '*MCP_signal|pfam29*']
@@ -167,7 +167,7 @@ Now this query is selecting sequences with at least 1 TM region as the closest f
 
 Several chemoreceptors will have two TM regions and both of them are towards the N-terminus from the MCP_signal. If we just add another instruction `|das*` we get:
 
-```json
+```javascript
 {
     name: 'MCP'
     rule: ['|das*', '|das*', '*MCP_signal|pfam29*']
@@ -180,7 +180,7 @@ Sequences with these features and any number of extra TM regions more than these
 
 Select any sequence that has at least two TM regions to the left of the MCP_signal and one of them being the closest feature to the N-terminus and at least one region matching MCP_signal domain from the pfam29 database anywhere else in the sequence
 
-```json
+```javascript
 {
     name: 'MCP'
     rule: ['|das*', '*|das*', '*MCP_signal|pfam29*']
@@ -189,7 +189,7 @@ Select any sequence that has at least two TM regions to the left of the MCP_sign
 
 However, there might be proteins with two TM regions but with more than one region matching MCP_signal. Let's suppose that we do not want to include those. There are several ways to do that with the operators already described. However, FQL has the operator `counts`, represented by the character `_` followed by a number. So to not select sequences with more than 1 MCP_signal we need to modify the rule:
 
-```json
+```javascript
 {
     name: 'MCP'
     rule: ['|das*', '*|das*', '*MCP_signal|pfam29_1*']
@@ -198,7 +198,7 @@ However, there might be proteins with two TM regions but with more than one regi
 
 This allows for some simplification in other cases, for example: a trailed double TM regions:
 
-```json
+```javascript
 ['|das', '|das*'] == ['|das_2*'] != ['|das*', '*|das*']
 ```
 
@@ -206,7 +206,7 @@ As of right now, the MCP query will collect all MCPs with 2 TM regions, one of t
 
 However, let's say we only want chemoreceptors with either one of the two sensory domain models: 4HB_MCP or TarH.
 
-```json
+```javascript
 {
     name: 'MCP'
     rule: ['|das', 'das*', '4HB_MCP.TarH|pfam29', '*|das*', '*MCP_signal|pfam29_1*']
@@ -215,7 +215,7 @@ However, let's say we only want chemoreceptors with either one of the two sensor
 
 Notice that the lack of `*` operator will make this rule to select sequences with only 1 region matching either 4HB_MCP or TarH domains in pfam29 between at least 2 TM regions. To select the same but with exact 2 TM regions:
 
-```json
+```javascript
 {
     name: 'MCP'
     rule: ['|das', '^',  ['4HB_MCP|pfam29', 'TarH|pfam29'], '|das', '*MCP_signal|pfam29_1*']
@@ -251,7 +251,7 @@ Now, let's suppose you want a more complex
 
 
 Any sequence with only 1 region matching a CheW domain from pfam29 and nothing else.
-```json
+```javascript
 {
     rule: ['CheW|pfam29']
 }
@@ -260,7 +260,7 @@ Any sequence with only 1 region matching a CheW domain from pfam29 and nothing e
 
 
 Any sequence with at least 1 CheW domain from pfam29
-```json
+```javascript
 {
     rule: ['*CheW|pfam29*']
 }
@@ -283,7 +283,7 @@ Anything that has at least 1 TM from das
 
 Anything that has at least 2 TM from das anywhere in the sequence
 
-```json
+```javascript
 ['*|das*', '*|das*']
 ['*|das', '*|das*']
 ['*|das*', '|das*']
