@@ -2,27 +2,44 @@
 
 module.exports =
 class Fql {
-	constructor() {
+	constructor(initialAseqs) {
 		this.input = {}
 		this.sqlQuery = ''
+		this.selection = initialAseqs ? initialAseqs : []
 	}
-
+	/**
+	* Reads rules
+	* @param {Object} rules array of feature request rules
+	*/
 	buildQuery(rules) {
+		let self = this
 		rules.forEach(function(rule) {
-			let queryInfo = this.readRule(rule)
-
-
+			if (self.isValidRule_(rule))
+				self.readRule_(rule)
 		})
 	}
+	readRule_(rule) {
+		let rc = rule.resource
+		let feature = rule.feature
+		return [rc, feature]
+	}
 
-	readRule(rule) {
-		let rc = rule.db
-		let domainIn = []
-		rule.in.forEach(function(domainInfo) {
-			let domain = domainInfo[0]
-			let count = domainInfo[1]
-			domainIn.push(domain, count) //review this.
+	isValidRule_(rule) {
+		let requiredFields = [
+			'resource',
+			'feature'
+		]
+		let requiredFeatureField = 'name'
+		requiredFields.forEach(function(field) {
+			if (!(field in rule))
+				throw new Error('Must especify the ' + field)
 		})
-		return [rc, domainIn]
+		if (Array.isArray(rule.feature) === false)
+			throw new Error('Value in feature must be an array')
+		rule.feature.forEach(function(featureRule, i) {
+			if (!(requiredFeatureField in featureRule))
+				throw new Error('Must give a name for the feature ' + i + ' in rule:\n' + JSON.stringify(rule, null, '  '))
+			return true
+		})
 	}
 }

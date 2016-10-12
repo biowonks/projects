@@ -1,118 +1,114 @@
 'use strict'
 
-describe.only.exact('Feature Query Language - FQL', function() {
-	describe('unordered searches', function() {
-		it('requesting sequences with a match of at least one region to one domain from pfam29 in any order', function() {
-			let queryJson = [{
+let Fql = require('./Fql.js')
+
+describe('Feature Query Language - FQL', function() {
+	describe('Initialize Fql with restrict dataset of Aseqs', function() {
+		it('Passing nothing is the same as passing an empty array', function() {
+			let fql = new Fql()
+			expect(fql.selection).eql([])
+		})
+		it('List of aseqs, restricted search in list', function() {
+			let aseqArray = [
+				'yg8A8H8N-4x1Ezf8WW-YbA',
+				'naytI0dLM_rK2kaC1m3ZSQ',
+				'GS8z3QwN5MzpxU0aTuxuaA',
+				'SSYJSGHiGYZVlFVpPJ-sdA',
+				'aijSW8Bzi9iHCIkYuqU9UQ',
+				'fiUs-3vh34LxGVAdbheipg'
+			]
+			let fql = new Fql(aseqArray)
+			expect(fql.selection).eql(aseqArray)
+		})
+		it('Nothing will search whole database')
+	})
+	describe('Single feature request from single resource', function() {
+		it('Request protein sequences with any number of matches, anywhere in the sequence, to a single domain from pfam29', function() {
+			let fql = new Fql()
+			let rules = [{
 				resource: 'pfam29',
-				mode: 'any',
-				in: [
-					'CheW'
+				feature: [
+					{
+						name: 'CheW',
+						count: 0,
+						position: [0]
+					}
 				]
 			}]
-			let result = buildQuery(queryJson)
-			expect(result).equal("...CheA, CheW, CheV, 2xCheW, 3xCheW and etc")
+			let result = fql.buildQuery(rules)
+			expect(result).equal('...CheA, CheW, CheV, 2xCheW, 3xCheW and etc')
 		})
-		it('requesting sequences with a match of at least two regions to the same domain from pfam29 in any order', function() {
-			let queryJson = [{
+		it('Request protein sequences with 1 match, anywhere in the sequence, to a single domain from pfam29', function() {
+			let fql = new Fql()
+			let rules = [{
 				resource: 'pfam29',
-				mode: 'any',
-				in: [
-					'CheW', 'CheW'
+				feature: [
+					{
+						name: 'CheW',
+						count: 1,
+						position: [0]
+					}
 				]
 			}]
-			let result = buildQuery(queryJson)
-			expect(result).equal("... 2xCheW, 3xCheW")
+			let result = fql.buildQuery(rules)
+			expect(result).equal('...CheA, CheW, CheV, 2xCheW, 3xCheW and etc')
 		})
-		it('requesting sequences with a match of two regions, one to each domain from pfam29 in any order', function() {
-			let queryJson = [{
-				resource: 'pfam29',
-				mode: 'any',
-				in: [
-					'CheW', 'RR'
-				]
-			}]
-			let result = buildQuery(queryJson)
-			expect(result).equal("...CheV, CheA, RR-CheW...")
-		})
-		it('requesting sequences with a match of at least one transmembrane region from DAS anywhere in the sequence', function() {
-			let queryJson = [{
-				resource: 'das',
-				mode: 'any',
-				in: [1]
-			}]
-			let result = buildQuery(queryJson)
-			expect(result).equal("...CheA, CheW, CheV, 2xCheW, 3xCheW and etc")
-		})
-		it('requesting sequences with a match of at least one transmembrane region from DAS anywhere in the sequence', function() {
-			let queryJson = [{
-				resource: 'das',
-				mode: 'any',
-				in: [1]
-			}]
-			let result = buildQuery(queryJson)
-			expect(result).equal("...CheA, CheW, CheV, 2xCheW, 3xCheW and etc")
+		describe('Invalid queries', function() {
+			let fql = null
+			beforeEach(() => {
+				fql = new Fql()
+			})
+			it('? Specifying more positions than counts whould throw error ?')
+			describe('Error handling about missing information', function() {
+				it('Missing feature.name should throw Error', function() {
+					let rules = [{
+						resource: 'pfam29',
+						feature: [
+							{
+								count: 1,
+								position: [0]
+							}
+						]
+					}]
+					expect(fql.buildQuery.bind(fql, rules)).to.throw('Must give a name for the feature')
+				})
+				it('Missing feature.count assumes count = 1')
+				it('Missing feature.position assumes any position')
+				it('Missing resource should throw Error', function() {
+					let rules = [{
+						feature: [
+							{
+								name: 'CheW',
+								count: 1,
+								position: [0]
+							}
+						]
+					}]
+					expect(fql.buildQuery.bind(fql, rules)).to.throw('Must especify the resource')
+				})
+				it('Missing feature should throw Error', function() {
+					let rules = [{
+						resource: 'pfam29'
+					}]
+					expect(fql.buildQuery.bind(fql, rules)).to.throw('Must especify the feature')
+				})
+			})
+			describe('Error handling for invalid format', function() {
+				it('Passing anything but Array as value for feature should throw Error', function() {
+					let rules = [{
+						resource: 'pfam29',
+						feature: {
+							name: 'CheW',
+							count: 1,
+							position: [0]
+						}
+					}]
+					expect(fql.buildQuery.bind(fql, rules)).to.throw('Value in feature must be an array')
+				})
+			})
 		})
 	})
-	describe('excludent searches', function() {
-		it('requesting sequences with a match of exact one region to one domains from pfam29 in any order', function() {
-			let queryJson = [{
-				resource: 'pfam29',
-				mode: 'exact',
-				in: [
-					'CheW'
-				]
-			}]
-			let result = buildQuery(queryJson)
-			expect(result).equal("...CheW, ParP...")
-		})
-		it('requesting sequences with a match of exact two regions to the same domain from pfam29 in any order', function() {
-			let queryJson = [{
-				resource: 'pfam29',
-				mode: 'exact',
-				in: [
-					'CheW', 'CheW'
-				]
-			}]
-			let result = buildQuery(queryJson)
-			expect(result).equal("... 2xCheW")
-		})
-		it('requesting sequences exact with a match of two regions, one to each domain from pfam29 in any order', function(){
-			let queryJson = [{
-				resource: 'pfam29',
-				mode: 'exact',
-				in: [
-					'CheW', 'RR'
-				]
-			}]
-			let result = buildQuery(queryJson)
-			expect(result).equal("... ... CheW-RR, CheV")
-		})
-	})
-	describe('Combinations: OR, AND', function() {})
-	describe('ordered searches', function() {})
-	describe('errors', function() {
-		it('requesting feature from non-existent resource should throw error and return available resources', function() {
-			let queryJson = [{
-				resource: 'xxxxx',
-				mode: 'any',
-				in: [
-					'CheW'
-				]
-			}]
-			let result = buildQuery(queryJson)
-			expect(result).equal("...ERROR")
-		})
-		it('requesting AND combination in mode exact should throw error', function() {
-			let queryJson = [{}]
-			let result = buildQuery(queryJson)
-			expect(result).equal("...ERROR")
-		})
-	})
-	describe('bonus functionality', function() {
-		it('return should always contain input', function() {})
+	describe('Multiple features request from single resource', function() {
+		it('Same position specified in two rules should mean OR')
 	})
 })
-
-
-// | feature | db | [aseqs]

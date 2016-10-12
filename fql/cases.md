@@ -8,7 +8,7 @@ Any sequence with only 1 region matching a CheW domain from Pfam29 and nothing e
 ```json
 {
     name: 'CheW'
-    rule: ['CheW|pfam29']
+    rule: ['CheW @ pfam29']
 }
 ```
 
@@ -202,6 +202,34 @@ This allows for some simplification in other cases, for example: a trailed doubl
 ['|das', '|das*'] == ['|das_2*'] != ['|das*', '*|das*']
 ```
 
+As of right now, the MCP query will collect all MCPs with 2 TM regions, one of them in the N-terminus and 1 MCP_signal domain to the right of the second TM region. Great! This query allows for chemoreceptors that contains any, or even none, sensory domain in the periplasmic region (between the two TM region.)
+
+However, let's say we only want chemoreceptors with either one of the two sensory domain models: 4HB_MCP or TarH.
+
+```json
+{
+    name: 'MCP'
+    rule: ['|das', 'das*', '4HB_MCP.TarH|pfam29', '*|das*', '*MCP_signal|pfam29_1*']
+}
+```
+
+Notice that the lack of `*` operator will make this rule to select sequences with only 1 region matching either 4HB_MCP or TarH domains in pfam29 between at least 2 TM regions. To select the same but with exact 2 TM regions:
+
+```json
+{
+    name: 'MCP'
+    rule: ['|das', '^',  ['4HB_MCP|pfam29', 'TarH|pfam29'], '|das', '*MCP_signal|pfam29_1*']
+}
+```
+
+
+
+### Getting to details
+
+We already talked about and extensive amount of details for you to build your query rule in a intuitive and specific way. But sometimes, details matter and FQL provides another
+
+
+
 To cover:
 * wild-card domains (separate keys)
 * OR via brackets
@@ -217,7 +245,7 @@ To cover:
 | `,` | logical conjunction - **AND** | `'|das,tmhmm'`|
 | `!` | logical negation - **NOT** | `'|das,!tmhmm'`|
 | `*` | positional wild card | `'*MCP_signal|pfam29*'` |
-| `_` | feature counter | ['|das_2*'] |
+| `_` | feature counter | `['|das_2*']` |
 
 Now, let's suppose you want a more complex
 

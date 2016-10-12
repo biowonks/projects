@@ -1,0 +1,31 @@
+{
+  "name": "fql",
+  "version": "1.0.0",
+  "description": "Feature query language",
+  "main": ".eslintrc.js",
+  "scripts": {
+    "test": "find ./ -name '*.tests.js' | NODE_PATH=node_modules xargs node_modules/.bin/mocha --reporter ${MOCHA_REPORTER-spec} -r ../_common/test.globals.js"
+  },
+  "author": "BioWonks",
+  "license": "",
+  "contributors": [
+    {
+      "name": "Luke Ulrich"
+    },
+    {
+      "name": "Ogun Adebali"
+    },
+    {
+      "name": "Davi Ortega"
+    },
+    {
+      "name": "Amit Upadhyay"
+    }
+  ],
+  "dependencies": {
+    "chai": "^3.5.0",
+    "mocha": "^3.1.2",
+    "request": "^2.75.0",
+    "sinon": "^1.17.6"
+  }
+}
