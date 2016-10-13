@@ -2,48 +2,135 @@
 
 ## Understanding the fundamentals of FQL
 
-### Single feature search
+FQL is a flexible feature querying language for proteins that is based in a filtering mechanism. By feature we call anything that can be identified in a protein sequence: transmembrane regions, domain models, signal peptides, low complex regions and more. FQL is based in the `SeqDepot` database.
 
-Any sequence with only 1 region matching a CheW domain from Pfam29 and nothing else.
-```json
-{
-    name: 'CheW'
-    rule: ['CheW @ pfam29']
-}
+### Single feature filter
+
+Filter sequences with **any** number of matches to a CheW domain from Pfam29 **anywhere** in the sequence..
+
+```javascript
+[
+    {
+        resource: 'pfam29',
+        id: 'CheW'
+    }
+]
 ```
 
-In FQL, the value in front of the key `name` will serve as an identifier and we will understand why they should be unique for each definition later.
+In FQL, the filtering rule is passed as an Array of objects. Each object is called a feature. The mandatory keys are:
+ * `resource` in which you must specify which `SeqDepot` resource you are using.
+ * `id` which is the identifier or name of the feature to be present.
 
-The actual query of features will come in front of the key `rule` and each element of the list is called `instruction`. In this example `CheW|pfam29` is the only `instruction` in this `rule`. Imagine the list of `instructions` passed to `rule` as the domain architecture you are looking for with c-terminus to the left of the list and n-terminus to the right of the list.
+Other examples of simple rules like this will be:
 
-In FQL you can search for features in any resource from SeqDepot. It is mandatory to specify from which resource the feature should belong. FQL uses the character `|` as delimiter between the feature and the resource. Generically, an instruction is made of `feature|resource`. Other examples of simple searches like this will be:
+Filter sequences with **any** number of matches to a CheW domain from SuperFamily **anywhere** in the sequence.
 
-Any sequence with only 1 region matching a CheW domain from SuperFamily and nothing else.
-```json
-{
-    name: 'CheW'
-    rule: ['SSF50341|superfam']
-}
+```javascript
+[
+    {
+        resource: 'superfam',
+        id: 'SSF50341'
+    }
+]
 ```
 
-Any sequence with only 1 region matching a CheW domain from SMART and nothing else.
-```json
-{
-    name: 'CheW'
-    rule: ['SM00260|smart']
-}
-```
-Any sequence with only 1 region matching a CheW domain from ProSite profile scan and nothing else.
-```json
-{
-    name: 'CheW'
-    rule: ['PS50851|proscan']
-}
+Filter sequences with **any** number of matches to a CheW domain from SMART **anywhere** in the sequence.
+
+```javascript
+[
+    {
+        resource: 'smart',
+        id: 'SM00260'
+    }
+]
 ```
 
-The *'nothing else'* part of the query is a bit tricky to understand and it is ambiguous: *'nothing else'* refers to no other match to any other feature of any other resource or just from the resource defined in the rule?
+Filter sequences with **any** number of matches to a CheW domain from ProSite **anywhere** in the sequence.
 
-The second option is correct. FQL will work within the universe of resources that appears in your query. However, you can search for a feature in more than one resource in the same instruction, for example:
+```javascript
+[
+    {
+        resource: 'proscan',
+        id: 'PS50851'
+    }
+]
+```
+
+Since FQL is in essence a filter, sequences with other domains besides `CheW` will be selected.
+
+To select only sequences with CheW domains, you must specify the boundaries in which you want to find the domain. For that we borrow the *Regular Expression* lexicon `^` to determine the N-terminus of the sequence and `$` the end. For example:
+
+Filter sequences with **any** number of matches to a CheW domains from Pfam29, and **only** CheW domains from Pfam29.
+
+```javascript
+[
+    {
+        resource: null,
+        id: '^'
+    },
+    {
+        resource: 'pfam29',
+        id: 'CheW'
+    }
+    {
+        resource: null,
+        id: '$'
+    }
+]
+```
+
+Notice that the value of `resource` is `null` since it is not to be searched in any database but it is part of the FQ language.
+
+Another important aspect of FQL to filter queries based in single feature is the number or appearences you want to select. For that FQL has the special key `count` which also borrows the lexicon from *Regular Expressions* quantifiers to express ranges using curly brackets `{}` in a string:
+
+Filter sequences with **2** matches to a CheW domains from Pfam29.
+
+```javascript
+[
+    {
+        resource: null,
+        id: '^'
+    },
+    {
+        resource: 'pfam29',
+        id: 'CheW',
+        count: '{2}'
+    }
+    {
+        resource: null,
+        id: '$'
+    }
+]
+```
+
+Filter sequences with **1 or 2** matches to a CheW domains from Pfam29.
+
+```javascript
+[
+    {
+        resource: null,
+        id: '^'
+    },
+    {
+        resource: 'pfam29',
+        id: 'CheW',
+        count: '{1,2}'
+    }
+    {
+        resource: null,
+        id: '$'
+    }
+]
+```
+
+
+
+
+
+
+
+
+
 
 Select the sequences with only 1 transmembrane region defined by DAS, TMHMM or both
 

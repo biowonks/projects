@@ -2,10 +2,10 @@
 
 module.exports =
 class Fql {
-	constructor(initialAseqs) {
+	constructor(initialAseqs = []) {
 		this.input = {}
 		this.sqlQuery = ''
-		this.selection = initialAseqs ? initialAseqs : []
+		this.selection = initialAseqs
 	}
 	/**
 	* Reads rules
@@ -34,9 +34,9 @@ class Fql {
 			if (!(field in rule))
 				throw new Error('Must especify the ' + field)
 		})
-		if (Array.isArray(rule.feature) === false)
+		if (Array.isArray(rule.features) === false)
 			throw new Error('Value in feature must be an array')
-		rule.feature.forEach(function(featureRule, i) {
+		rule.features.forEach(function(featureRule, i) {
 			if (!(requiredFeatureField in featureRule))
 				throw new Error('Must give a name for the feature ' + i + ' in rule:\n' + JSON.stringify(rule, null, '  '))
 			return true

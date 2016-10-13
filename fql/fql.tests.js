@@ -25,16 +25,18 @@ describe('Feature Query Language - FQL', function() {
 	describe('Single feature request from single resource', function() {
 		it('Request protein sequences with any number of matches, anywhere in the sequence, to a single domain from pfam29', function() {
 			let fql = new Fql()
-			let rules = [{
-				resource: 'pfam29',
-				feature: [
-					{
-						name: 'CheW',
-						count: 0,
-						position: [0]
-					}
-				]
-			}]
+			let rules = [
+				{
+					resource: 'pfam29',
+					features: [
+						{
+							name: 'CheW',
+							count: 1,
+							position: [0]
+						}
+					]
+				}
+			]
 			let result = fql.buildQuery(rules)
 			expect(result).equal('...CheA, CheW, CheV, 2xCheW, 3xCheW and etc')
 		})
@@ -42,7 +44,7 @@ describe('Feature Query Language - FQL', function() {
 			let fql = new Fql()
 			let rules = [{
 				resource: 'pfam29',
-				feature: [
+				features: [
 					{
 						name: 'CheW',
 						count: 1,
@@ -63,7 +65,7 @@ describe('Feature Query Language - FQL', function() {
 				it('Missing feature.name should throw Error', function() {
 					let rules = [{
 						resource: 'pfam29',
-						feature: [
+						features: [
 							{
 								count: 1,
 								position: [0]
@@ -76,7 +78,7 @@ describe('Feature Query Language - FQL', function() {
 				it('Missing feature.position assumes any position')
 				it('Missing resource should throw Error', function() {
 					let rules = [{
-						feature: [
+						features: [
 							{
 								name: 'CheW',
 								count: 1,
@@ -97,7 +99,7 @@ describe('Feature Query Language - FQL', function() {
 				it('Passing anything but Array as value for feature should throw Error', function() {
 					let rules = [{
 						resource: 'pfam29',
-						feature: {
+						features: {
 							name: 'CheW',
 							count: 1,
 							position: [0]
