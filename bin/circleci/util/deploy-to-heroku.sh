@@ -50,8 +50,8 @@ for PROJECT in "$@"; do
 			rsync -rLptgv --copy-dirlinks --delete --delete-excluded --filter='P .git' --exclude /node_modules --exclude .vscode --exclude /src/docs $PROJECT/ $HEROKU_REPO_DIR
 
 			echo "====> Building documentation"
-			cd $PROJECT/src/docs
-			npm run build
+			cd $PROJECT
+			npm run build-docs
 
 			echo "====> Syncing documentation with Heroku repo (rsync)"
 			rsync -rLptgv --delete --delete-excluded $PROJECT/src/docs/build $HEROKU_REPO_DIR/src/docs

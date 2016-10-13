@@ -10,7 +10,7 @@ const del = require('del'),
 	gulp = require('gulp'),
 	cleanCSS = require('gulp-clean-css'),
 	concat = require('gulp-concat'),
-	gls = require('gulp-live-server'),
+	// gls = require('gulp-live-server'),
 	gulpif = require('gulp-if'),
 	open = require('gulp-open'),
 	rename = require('gulp-rename'),
@@ -176,22 +176,22 @@ gulp.task('NO_COMPRESS', function() {
 
 gulp.task('default', ['clean', 'fonts', 'images', 'highlightjs', 'js', 'sass', 'html'])
 
-gulp.task('serve', ['NO_COMPRESS', 'default'], function() {
+// gulp.task('serve', ['NO_COMPRESS', 'default'], function() {
 
-	gulp.watch(['./source/*.html', './source/includes/**/*'], ['html'])
-	gulp.watch('./source/javascripts/**/*', ['js'])
-	gulp.watch('./source/stylesheets/**/*', ['sass'])
-	gulp.watch('./source/index.yml', ['highlightjs', 'js', 'html'])
+// 	gulp.watch(['./source/*.html', './source/includes/**/*'], ['html'])
+// 	gulp.watch('./source/javascripts/**/*', ['js'])
+// 	gulp.watch('./source/stylesheets/**/*', ['sass'])
+// 	gulp.watch('./source/index.yml', ['highlightjs', 'js', 'html'])
 
-	let server = gls.static('build', 4567)
-	server.start()
+// 	let server = gls.static('build', 4567)
+// 	server.start()
 
-	gulp.watch(['build/**/*'], function(file) {
-		server.notify.apply(server, [file])
-	})
+// 	gulp.watch(['build/**/*'], function(file) {
+// 		server.notify.apply(server, [file])
+// 	})
 
-	gulp.src(__filename).pipe(open({uri: 'http://localhost:4567'}))
-})
+// 	gulp.src(__filename).pipe(open({uri: 'http://localhost:4567'}))
+// })
 
 // --------------------------------------------------------
 function getPageData() {

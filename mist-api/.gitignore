@@ -2,3 +2,4 @@ npm-debug.log
 .DS_Store
 testing/coverage
 data
+package.json.sha1

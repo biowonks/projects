@@ -22,12 +22,13 @@ services:
       - .:/app
       - /app/mist-lib/node_modules
       - /app/mist-api/node_modules
+      - /app/mist-api/src/docs/node_modules
       - /app/mist-api/config/local
       - /app/mist-pipeline/node_modules
       - /app/mist-pipeline/vendor
     working_dir: /app
     environment:
-      - BIOWONKS_VOLUMES=/app/mist-lib/node_modules /app/mist-api/node_modules /app/mist-pipeline/node_modules /app/mist-pipeline/vendor /app/mist-api/config/local
+      - BIOWONKS_VOLUMES=/app/mist-lib/node_modules /app/mist-api/node_modules /app/mist-api/src/docs/node_modules /app/mist-pipeline/node_modules /app/mist-pipeline/vendor /app/mist-api/config/local
 
 
   # -------------------------------------------------------

@@ -14,4 +14,3 @@ if [[ $(whoami) = 'root' ]]; then
 else
 	exec "$@"
 fi
-
