@@ -136,12 +136,7 @@ gulp.task('ready-models', function() {
 gulp.task('rest-api', ['ready-models'], function() {
 	return generateRestApiDocs(config.routesPath, config.baseUrl, {
 		pretty: !config.compress,
-		languages: [
-			'shell:curl',
-			'node',
-			'python',
-			'ruby'
-		],
+		languages: config.languages,
 		modelExamples
 	})
 	.then((restApiHtml) => {
@@ -207,14 +202,16 @@ function getPageData() {
 	let result = {
 		data: config,
 		includes,
-		langs: (config.languageTabs || []).map(function(lang) {
-			return typeof lang == 'string' ? lang : lang.keys.first
-		}),
-		langsJSON: null,
+		languages: config.languages,
+		languagesJSON: JSON.stringify((config.languages || []).map((language) => language.name)),
+		// langs: (config.languageTabs || []).map(function(lang) {
+		// 	return typeof lang == 'string' ? lang : lang.keys.first
+		// }),
+		// langsJSON: null,
 		pretty: !config.compress
 	}
 
-	result.langsJSON = JSON.stringify(result.langs)
+	// result.langsJSON = JSON.stringify(result.langs)
 
 	return result
 }

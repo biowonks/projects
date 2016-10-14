@@ -9,7 +9,7 @@ cd $ROOT
 
 for PROJECT in "$@"; do
 	echo "====> Running $PROJECT tests"
-	docker run --rm -e CI=true -e MOCHA_REPORTER=mocha-circleci-reporter -v $ROOT:/app -w /app/$PROJECT biowonks/node-bootstrap npm run coverage
+	docker run -e CI=true -e MOCHA_REPORTER=mocha-circleci-reporter -v $ROOT:/app -w /app/$PROJECT biowonks/node-bootstrap npm run coverage
 	#          ^^^^^^^^^^ inform scripts that we are a CI server
 
 	echo "      - Copying coverage report to artifacts"

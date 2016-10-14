@@ -386,28 +386,19 @@ function toHTMLParagraphs(value) {
  * @param {Object} har
  * @param {String} method
  * @param {String} url
- * @param {Array.<String>} langs
+ * @param {Array.<Object>} languages
  * @returns {Array.<String>} - array of HTML highlighted code snippets
  */
-function buildHTMLSnippets(har, method, url, langs) {
+function buildHTMLSnippets(har, method, url, languages) {
 	if (!har)
 		return null
 
 	let htmlSnippets = [],
 		snippet = new HTTPSnippet({method, url})
 
-	langs.forEach((lang) => {
-		let effectiveLang = lang,
-			subLang = null
-		if (lang.includes(':')) {
-			let parts = lang.split(':')
-			effectiveLang = parts[0]
-			subLang = parts[1]
-		}
-
-		let unhighlightedCode = snippet.convert(effectiveLang, subLang),
-			highlightLang = languageMap[effectiveLang] || effectiveLang,
-			highlightedCodeHtml = highlightCode(highlightLang, unhighlightedCode)
+	languages.forEach((language) => {
+		let unhighlightedCode = snippet.convert(language.snippets.target, language.snippets.client),
+			highlightedCodeHtml = highlightCode(language.highlightAs, unhighlightedCode, language.name)
 
 		htmlSnippets.push(highlightedCodeHtml)
 	})
@@ -416,14 +407,15 @@ function buildHTMLSnippets(har, method, url, langs) {
 }
 
 /**
- * @param {String} lang
+ * @param {String} highlightAs - language to use when highlighting code
  * @param {String} code - textual source code to highlight
+ * @param {String} [name = highlightAs] - optional name attribute to use in resulting HTML
  * @returns {String} - code marked up with HTML
  */
-function highlightCode(lang, code) {
-	let highlightedCodeHtml = highlight.highlight(lang, code).value
+function highlightCode(highlightAs, code, name = highlightAs) {
+	let highlightedCodeHtml = highlight.highlight(highlightAs, code).value
 
-	return `<pre class="highlight ${lang}"><code>${highlightedCodeHtml}</code></pre>`
+	return `<pre class="highlight ${name}"><code>${highlightedCodeHtml}</code></pre>`
 }
 
 function highlightJSON(object) {

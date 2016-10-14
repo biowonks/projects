@@ -25,9 +25,7 @@ html
 
 		script(src="javascripts/all.js", type="text/javascript")
 
-	//- body(data-languages!=langsJSON)
-	//- body(data-languages!=`${langsJSON}`)
-	body(data-languages=langsJSON)
+	body(data-languages=languagesJSON)
 		a#nav-button(href="#")
 			span Menu&nbsp;
 				img(src="images/navbar.png")
@@ -59,7 +57,7 @@ html
 					| !{include}
 
 			.dark-box
-				if langs
+				if languages
 					.lang-selector
-						each lang in langs
-							a(href="#", data-language-name=lang) #{lang}
+						each language in languages
+							a(href="#", data-language-name=language.name) #{language.name}
