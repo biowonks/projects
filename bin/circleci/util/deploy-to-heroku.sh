@@ -60,8 +60,9 @@ for PROJECT in "$@"; do
 			LAST_GIT_COMMENT=$(git log -1 --pretty=%B)
 			cd $HEROKU_REPO_DIR
 
-			# Stub the merge-deps command (to avoid running this on Heroku)
+			# Stub the merge-deps and build-docs commands (to avoid running this on Heroku)
 			sed -i 's/npm run merge-deps/true/g' package.json
+			sed -i 's/npm run build-docs/true/g' package.json
 
 			git add -A
 			git commit -m "Automated CircleCI commit (build: $CIRCLE_BUILD_NUM, $CIRCLE_BUILD_URL)" -m "$LAST_GIT_COMMENT"

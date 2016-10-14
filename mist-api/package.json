@@ -10,7 +10,7 @@
     "build-docs": "cd src/docs; npm run build",
     "merge-deps": "node ../bin/merge-deps.js -i ../core-lib/package.json ../seqdepot-lib/src/models/package.json ../mist-lib/package.json ./package.json",
     "preinstall": "npm run merge-deps",
-    "postinstall": "cd src/docs; npm prune && npm install",
+    "postinstall": "npm run build-docs",
     "fast-install": "npm run preinstall && sha1sum -c package.json.sha1 > /dev/null || (npm install && sha1sum package.json > package.json.sha1)",
     "eslint": "node_modules/.bin/eslint --ignore-pattern src/node_modules 'src/**/*.js'",
     "coverage": "NODE_PATH=node_modules node_modules/.bin/istanbul cover --config ../_common/.istanbul.js node_modules/mocha/bin/_mocha -- --reporter ${MOCHA_REPORTER-spec} -r ../_common/test.globals.js $(find src -path src/docs -prune -o -name '*.tests.js' -print)",
