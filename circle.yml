@@ -21,6 +21,10 @@ dependencies:
     - mist-pipeline/vendor
     - seqdepot-lib/node_modules
 
+  # Temporary remove existing node_modules from the cache
+  pre:
+    - rm -rf '~/cache' '~/heroku' node_modules {core-lib,mist-api,mist-lib,mist-pipeline,seqdepot-lib}/node_modules mist-api/src/docs/node_modules
+
   override:
     - bin/circleci/dependencies.sh
 
