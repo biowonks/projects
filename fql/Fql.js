@@ -1,7 +1,5 @@
 'use strict'
 
-const Transform = require('stream').Transform
-
 module.exports =
 class Fql {
 	constructor(initialAseqs = []) {
@@ -11,10 +9,12 @@ class Fql {
 		this.rules = []
 		this.match = []
 		this.resources = []
+		this.regex = ''
 	}
 	/**
 	* Load rules
 	* @param {Object} rules array of feature request rules
+	* @return null
 	*/
 	loadRules(rules) {
 		this.rules = rules
@@ -24,20 +24,34 @@ class Fql {
 			if (resources.indexOf(rule.resource) === -1)
 				resources.push(rule.resource)
 		})
+		this.regex = this._rulesToRegex(rules)
 		this.resources = resources
 		return null
 	}
 
 	applyFilter(data) {
 		let matchList = []
+		let ruleExpr = this._rulesToRegex(this.rules)
 		data.forEach((info) => {
-			let pInfo = this._preprocess(info)
-			let match = false
+			let stringInfo = this._seqDepotInfoToString(info)
+			if (stringInfo.match(ruleExpr))
+				matchList.push(true)
+			else
+				matchList.push(false)
 		})
-		return null
+		this.match = matchList
+		return matchList
 	}
 
-	_preprocess(info) {
+	_rulesToRegex(rules) {
+		let regex = ''
+		this.rules.forEach((rule) => {
+			regex += '(' + rule.feature + '@' + rule.resource + ')'
+		})
+		return regex
+	}
+
+	_seqDepotInfoToString(info) {
 		let features = []
 		this.resources.forEach((resource) => {
 			let config = this._getConfig(resource)
@@ -45,9 +59,9 @@ class Fql {
 				if (resource in info.result.t) {
 					info.result.t[resource].forEach((hit) => {
 						let feature = {}
-						feature['rc'] = resource
-						feature['ft'] = hit[config.ft] ? hit[config.ft] : config.ft
-						feature['pos'] = hit[config.pos]
+						feature.rc = resource
+						feature.ft = hit[config.ft] ? hit[config.ft] : config.ft
+						feature.pos = hit[config.pos]
 						features.push(feature)
 					})
 				}
@@ -56,7 +70,6 @@ class Fql {
 		features.sort((a, b) => {
 			return a.pos - b.pos
 		})
-		console.log(features)
 		let expression = ''
 		features.forEach((feature) => {
 			expression += feature.ft + '@' + feature.rc

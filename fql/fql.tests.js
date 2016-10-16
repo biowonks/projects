@@ -1,3 +1,4 @@
+/* eslint-disable no-magic-numbers, no-undefined */
 'use strict'
 /*
 AseqIDs sample
@@ -46,7 +47,7 @@ describe('Feature Query Language - FQL', function() {
 			expect(expected).eql(results)
 		})
 	})
-	describe.only('Nuts and bolts', () => {
+	describe('Nuts and bolts', () => {
 		let fql = null
 		beforeEach(function() {
 			fql = new Fql()
@@ -82,10 +83,11 @@ describe('Feature Query Language - FQL', function() {
 					}
 				}
 			}
-			let expression = fql._preprocess(info)
+			let expression = fql._seqDepotInfoToString(info)
 			expect(expression).equal('TM@dasCache_1@pfam28TM@dasHAMP@pfam28MCPsignal@pfam28')
 		})
 		it('check behaviour _getConfig')
+		it('check behaviour _rulesToRegex')
 	})
 	describe('Loading the rules', () => {
 		let fql = null
@@ -187,7 +189,7 @@ describe('Feature Query Language - FQL', function() {
 		it('Nothing will search whole database')
 	})
 	describe('Single feature request from single resource', function() {
-		it('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single domain from pfam29', function() {
+		it.only('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single domain from pfam29', function() {
 			let fql = new Fql()
 			let rules = [
 				{
