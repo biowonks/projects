@@ -34,10 +34,8 @@ class Fql {
 		let ruleExpr = this._rulesToRegex(this.rules)
 		data.forEach((info) => {
 			let stringInfo = this._seqDepotInfoToString(info)
-			if (stringInfo.match(ruleExpr))
-				matchList.push(true)
-			else
-				matchList.push(false)
+			let isMatch = stringInfo.match(ruleExpr) ? true : false
+			matchList.push(isMatch)
 		})
 		this.match = matchList
 		return matchList
@@ -46,15 +44,23 @@ class Fql {
 	_rulesToRegex(rules) {
 		let regex = ''
 		this.rules.forEach((rule) => {
-			regex += '(' + rule.feature + '@' + rule.resource + ')'
+			let fixedRule = this._fixRule(rule)
+			regex += '(' + fixedRule.feature + '@' + fixedRule.resource + ')'
 		})
 		return regex
 	}
 
+	_fixRule(rule) {
+		if (rule.resource === 'das')
+			rule.feature = 'TM'
+		return rule
+	}
+
 	_seqDepotInfoToString(info) {
 		let features = []
+		let config = {}
 		this.resources.forEach((resource) => {
-			let config = this._getConfig(resource)
+			config = this._getConfig(resource)
 			if ('t' in info.result) {
 				if (resource in info.result.t) {
 					info.result.t[resource].forEach((hit) => {

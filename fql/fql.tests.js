@@ -87,7 +87,25 @@ describe('Feature Query Language - FQL', function() {
 			expect(expression).equal('TM@dasCache_1@pfam28TM@dasHAMP@pfam28MCPsignal@pfam28')
 		})
 		it('check behaviour _getConfig')
-		it('check behaviour _rulesToRegex')
+		it('check behaviour _rulesToRegex', () => {
+			let rules = [
+				{
+					resource: 'pfam28',
+					feature: 'CheW'
+				},
+				{
+					resource: 'pfam28',
+					feature: 'Response_reg'
+				},
+				{
+					resource: 'das',
+					feature: true
+				}
+			]
+			fql.loadRules(rules)
+			let expr = fql.regex
+			expect(expr).equal('(CheW@pfam28)(Response_reg@pfam28)(TM@das)')
+		})
 	})
 	describe('Loading the rules', () => {
 		let fql = null
@@ -189,7 +207,7 @@ describe('Feature Query Language - FQL', function() {
 		it('Nothing will search whole database')
 	})
 	describe('Single feature request from single resource', function() {
-		it.only('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single domain from pfam29', function() {
+		it('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single domain from pfam29', function() {
 			let fql = new Fql()
 			let rules = [
 				{
