@@ -37,12 +37,7 @@ describe('Feature Query Language - FQL', function() {
 			fql = new Fql()
 		})
 		it('If no rules are applied, should return only trues', function() {
-			let results = []
-			let result = null
-			sampleData.forEach((data) => {
-				result = fql.applyFilter(data)
-				results.push(result)
-			})
+			let results = fql.applyFilter(sampleData)
 			let expected = new Array(sampleData.length).fill(true)
 			expect(expected).eql(results)
 		})
