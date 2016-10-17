@@ -124,9 +124,9 @@ gulp.task('ready-models', function() {
 
 		if (model.options.timestamps) {
 			if (model.options.createdAt !== false)
-				example[model.options.createdAt] = '2016-09-20T20:40:36.098Z'
+				example.created_at = '2016-09-20T20:40:36.098Z'
 			if (model.options.updatedAt !== false)
-				example[model.options.updatedAt] = '2016-09-20T20:55:09.838Z'
+				example.updated_at = '2016-09-20T20:55:09.838Z'
 		}
 
 		modelExamples[model.name] = example
