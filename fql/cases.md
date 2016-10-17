@@ -60,12 +60,12 @@ Since FQL is in essence a filter, sequences with other domains besides `CheW` wi
 
 To select only sequences with CheW domains, you must specify the boundaries in which you want to find the domain. For that we borrow the *Regular Expression* lexicon `^` to determine the N-terminus of the sequence and `$` the end. For example:
 
-Filter sequences with **any** number of matches to a CheW domains from Pfam29, and **only** CheW domains from Pfam29.
+Filter sequences with **1** match to a CheW domains from Pfam29, and **only** CheW domains from Pfam29.
 
 ```javascript
 [
     {
-        resource: null,
+        resource: 'fql',
         id: '^'
     },
     {
@@ -73,17 +73,16 @@ Filter sequences with **any** number of matches to a CheW domains from Pfam29, a
         id: 'CheW'
     }
     {
-        resource: null,
+        resource: 'fql',
         id: '$'
     }
 ]
 ```
 
-Notice that the value of `resource` is `null` since it is not to be searched in any database but it is part of the FQ language.
+Notice that the value of `resource` is `'fql'` since it is not to be searched in any database but it is part of the FQ language.
 
-Another important aspect of FQL to filter queries based in single feature is the number or appearences you want to select. For that FQL has the special key `count` which also borrows the lexicon from *Regular Expressions* quantifiers to express ranges using curly brackets `{}` in a string:
-
-Filter sequences with **2** matches to a CheW domains from Pfam29.
+Another important aspect of FQL to filter queries based in single feature is the number or appearences you want to select.
+For that FQL has the special key `count`. Note that when using `count` positional information is tricky and here starts some conventions that FQL must make. The argument passed to `count` in items between the items signaling the begin `^` and end `$` will be added to the query rule as regular expression quantifier and for that reason we will use the *curly brackets* notation `{}` as in regular expression. Note that quantifiers in regular expression is related to immediate repeat. For example:
 
 ```javascript
 [
@@ -94,7 +93,7 @@ Filter sequences with **2** matches to a CheW domains from Pfam29.
     {
         resource: 'pfam29',
         id: 'CheW',
-        count: '{2}'
+        count: '{3}'
     }
     {
         resource: null,
@@ -102,6 +101,34 @@ Filter sequences with **2** matches to a CheW domains from Pfam29.
     }
 ]
 ```
+
+In this case, only sequences with CheW - CheW - CheW domain architecture and no other match to the pfam29 database will be selected. If you want to pick sequences with only 2 or 3 CheWs and nothing else:
+
+```javascript
+[
+    {
+        resource: null,
+        id: '^'
+    },
+    {
+        resource: 'pfam29',
+        id: 'CheW',
+        count: '{2,3}'
+    }
+    {
+        resource: null,
+        id: '$'
+    }
+]
+```
+
+But this won't match something like this:
+![img](http://seqdepot.net/api/v1/aseqs/7hMuWLhwA4TkUJ5akVyt8Q.png)
+
+
+
+
+
 
 Filter sequences with **1 or 2** matches to a CheW domains from Pfam29.
 

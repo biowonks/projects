@@ -408,6 +408,45 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(fql.match).eql(expected)
 			})
+			it('Request protein sequences with 2 TM regions anywhere in the sequence', function() {
+				let fql = new Fql()
+				let rules = [
+					{
+						resource: 'das',
+						feature: 'TM',
+						count: '{2}'
+					},
+					{
+						resource: 'pfam28',
+						feature: 'MCPsignal'
+					}
+				]
+				fql.loadRules(rules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					false, // CheW | CheW
+					false, // CheW | Response_reg
+					false, // CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					false, // CheW | CheW | CheW
+					false, // Response_reg | NMT1_2 | CheW
+					false, // CheW | CheR
+					false, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					true, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					true,  // TM | TM | MCPsignal
+					true,  // TM | TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(fql.match).eql(expected)
+			})
 		})
 		describe('Invalid inputs', function() {
 			let fql = null
