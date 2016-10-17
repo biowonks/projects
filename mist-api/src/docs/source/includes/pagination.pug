@@ -1,1 +1,42 @@
 h1#pagination Pagination
+
+p As of October 2016, public databases contain more than 60,000 microbial genomes and thousands of metagenomic samples. Each of these genomes has many thousands of genes. It is not tractable, nor efficient to return all the data for a given resource in a single request. For this purpose, any endpoint that returns an array of records (e.g.&nbsp;
+    a(href="#fetch-many-genomes") Fetch Many Genomes
+    | ) returns up to 30 records per page. The following query parameters may be used to navigate to subsequent pages and adjust the number of records returned per page.
+
+table
+    thead
+        th.nowrap Query Parameter
+        th Type
+        th Description
+    tbody
+        tr
+            td: code per_page
+            td integer
+            td number of primary records to return per page. Defaults to
+                code 30
+                |  . Must be between
+                code 1
+                |  and
+                code 100
+                | .
+        tr
+            td: code page
+            td integer
+            td the page of results to fetch. Defaults to
+                code 1
+                | .
+
+h3 Examples
+dl
+    dt
+        a(href="/v1/genomes?per_page=5") /v1/genomes?per_page=5
+    dd Returns up to 5 genome records on the first page
+
+    dt
+        a(href="/v1/genomes?page=2") /v1/genomes?page=2
+    dd Returns up to 30 genome records skipping the first 30 genome records
+
+    dt
+        a(href="/v1/genomes?page=2&per_page=5") /v1/genomes?page=2&amp;per_page=5
+    dd Returns up to 5 genome records skipping the first 5 genome records
