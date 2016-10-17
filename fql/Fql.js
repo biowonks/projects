@@ -9,7 +9,7 @@ class Fql {
 		this.rules = []
 		this.match = []
 		this.resources = []
-		this.regex = ''
+		this.regexes = []
 	}
 	/**
 	* Load rules
@@ -24,30 +24,45 @@ class Fql {
 			if (resources.indexOf(rule.resource) === -1)
 				resources.push(rule.resource)
 		})
-		this.regex = this._rulesToRegex(rules)
+		this.regexes = this._parseRules(rules)
 		this.resources = resources
 		return null
 	}
 
 	applyFilter(data) {
 		let matchList = []
-		let ruleExpr = this._rulesToRegex(this.rules)
 		data.forEach((info) => {
 			let stringInfo = this._seqDepotInfoToString(info)
-			let isMatch = stringInfo.match(ruleExpr) ? true : false
+			let isMatch = true
+			this.regexes.forEach((regex) => {
+				isMatch = isMatch && (stringInfo.match(regex) ? true : false)
+			})
 			matchList.push(isMatch)
 		})
 		this.match = matchList
 		return matchList
 	}
 
-	_rulesToRegex(rules) {
-		let regex = ''
+	_parseRules(rules) {
+		let regexes = [],
+			regex = '',
+			expr = ''
 		this.rules.forEach((rule) => {
 			let fixedRule = this._fixRule(rule)
-			regex += '(' + fixedRule.feature + '@' + fixedRule.resource + ')'
+			if (fixedRule.resource == 'fql')
+				expr = fixedRule.feature
+			else
+				expr = '(' + fixedRule.feature + '@' + fixedRule.resource + ')'
+			if ('count' in fixedRule)
+				expr += fixedRule.count
+			regex += expr
+			//if ('count' in rule)
+			//	counts.push([expr, fixedRule.count])
 		})
-		return regex
+		regexes.push(regex)
+		//console.log(regex)
+		this.regexes = regexes
+		return regexes
 	}
 
 	_fixRule(rule) {
@@ -80,6 +95,7 @@ class Fql {
 		features.forEach((feature) => {
 			expression += feature.ft + '@' + feature.rc
 		})
+		//console.log(expression)
 		return expression
 	}
 	/**
@@ -90,13 +106,15 @@ class Fql {
 	*/
 	_getConfig(rc) {
 		let config = {}
-		if (rc.indexOf('pfam') !== -1) {
-			config.pos = 1
-			config.ft = 0
-		}
-		if (rc === 'das') {
-			config.pos = 0
-			config.ft = 'TM'
+		if (rc) {
+			if (rc.indexOf('pfam') !== -1) {
+				config.pos = 1
+				config.ft = 0
+			}
+			if (rc === 'das') {
+				config.pos = 0
+				config.ft = 'TM'
+			}
 		}
 		return config
 	}
@@ -120,11 +138,11 @@ class Fql {
 			noFeature = false
 
 		if (noResource && noFeature)
-			throw new Error('Each rule must explicitly define a resource and feature')
+			throw new Error('Each rule must explicitly define a resource and feature: \n' + JSON.stringify(rule))
 		else if (noResource)
-			throw new Error('Each rule must explicitly define a resource')
+			throw new Error('Each rule must explicitly define a resource: \n' + JSON.stringify(rule))
 		else if (noFeature)
-			throw new Error('Each rule must explicitly define a feature')
+			throw new Error('Each rule must explicitly define a feature: \n' + JSON.stringify(rule))
 
 		return null
 	}

@@ -98,8 +98,8 @@ describe('Feature Query Language - FQL', function() {
 				}
 			]
 			fql.loadRules(rules)
-			let expr = fql.regex
-			expect(expr).equal('(CheW@pfam28)(Response_reg@pfam28)(TM@das)')
+			let expr = fql.regexes
+			expect(expr).eql(['(CheW@pfam28)(Response_reg@pfam28)(TM@das)'])
 		})
 	})
 	describe('Loading the rules', () => {
@@ -213,94 +213,228 @@ describe('Feature Query Language - FQL', function() {
 			fql.loadRules(rules)
 			fql.applyFilter(sampleData)
 			let expected = [
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				true,
-				false,
-				false,
-				false,
-				false,
-				false,
-				false,
-				false,
-				false,
-				false,
-				false
+				true, // CheW | CheW
+				true, // CheW | Response_reg
+				true, // CheW
+				true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+				true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+				true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+				true, // CheW | CheW | CheW
+				true, // Response_reg | NMT1_2 | CheW
+				true, // CheW | CheR
+				true, // Response_reg | CheW
+				false, // TM | Cache_1 | TM | HAMP | MCPsignal
+				false, // HAMP | MCPsignal
+				false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+				false, // **
+				false, // **
+				false, // TM | TM | MCPsignal
+				false, // TM | MCPsignal | Rhodanese
+				false, // TM | TM | TM | TM | MCPsignal
+				false, // TM | TM | TM | TM | TM | TM | MCPsignal
+				false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 			]
 			expect(fql.match).eql(expected)
 		})
-		it('Request protein sequences with 1 match, anywhere in the sequence, to a single domain from pfam29', function() {
+		it('Request protein sequences with 1 match and nothing else to a single domain from pfam29', function() {
 			let fql = new Fql()
-			let rules = [{
-				resource: 'pfam29',
-				features: [
+			let rules = [
+				{
+					resource: 'fql',
+					feature: '^'
+				},
+				{
+					resource: 'pfam28',
+					feature: 'CheW'
+				},
+				{
+					resource: 'fql',
+					feature: '$'
+				}
+			]
+			fql.loadRules(rules)
+			fql.applyFilter(sampleData)
+			let expected = [
+				false, // CheW | CheW
+				false, // CheW | Response_reg
+				true, // CheW
+				false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+				false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+				false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+				false, // CheW | CheW | CheW
+				false, // Response_reg | NMT1_2 | CheW
+				false, // CheW | CheR
+				false, // Response_reg | CheW
+				false, // TM | Cache_1 | TM | HAMP | MCPsignal
+				false, // HAMP | MCPsignal
+				false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+				false, // **
+				false, // **
+				false, // TM | TM | MCPsignal
+				false, // TM | MCPsignal | Rhodanese
+				false, // TM | TM | TM | TM | MCPsignal
+				false, // TM | TM | TM | TM | TM | TM | MCPsignal
+				false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+			]
+			expect(fql.match).eql(expected)
+		})
+		describe('Testing the behaviour of "count"', () => {
+			it('Request protein sequences with 2 matches and nothing else to a single domain from pfam28', function() {
+				let fql = new Fql()
+				let rules = [
 					{
-						name: 'CheW',
-						count: 1,
-						position: [0]
+						resource: 'fql',
+						feature: '^'
+					},
+					{
+						resource: 'pfam28',
+						feature: 'CheW',
+						count: '{2}'
+					},
+					{
+						resource: 'fql',
+						feature: '$'
 					}
 				]
-			}]
-			let result = fql.buildQuery(rules)
-			expect(result).equal('...CheA, CheW, CheV, 2xCheW, 3xCheW and etc')
+				fql.loadRules(rules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					true, // CheW | CheW
+					false, // CheW | Response_reg
+					false, // CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					false, // CheW | CheW | CheW
+					false, // Response_reg | NMT1_2 | CheW
+					false, // CheW | CheR
+					false, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					false, // TM | TM | MCPsignal
+					false, // TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(fql.match).eql(expected)
+			})
+			it('Request protein sequences with 3 matches and nothing else to a single domain from pfam28', function() {
+				let fql = new Fql()
+				let rules = [
+					{
+						resource: 'fql',
+						feature: '^'
+					},
+					{
+						resource: 'pfam28',
+						feature: 'CheW',
+						count: '{3}'
+					},
+					{
+						resource: 'fql',
+						feature: '$'
+					}
+				]
+				fql.loadRules(rules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					false, // CheW | CheW
+					false, // CheW | Response_reg
+					false, // CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					true, // CheW | CheW | CheW
+					false, // Response_reg | NMT1_2 | CheW
+					false, // CheW | CheR
+					false, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					false, // TM | TM | MCPsignal
+					false, // TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(fql.match).eql(expected)
+			})
+			it('Request protein sequences with 2 or 3 matches and nothing else to a single domain from pfam28', function() {
+				let fql = new Fql()
+				let rules = [
+					{
+						resource: 'fql',
+						feature: '^'
+					},
+					{
+						resource: 'pfam28',
+						feature: 'CheW',
+						count: '{2,3}'
+					},
+					{
+						resource: 'fql',
+						feature: '$'
+					}
+				]
+				fql.loadRules(rules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					true, // CheW | CheW
+					false, // CheW | Response_reg
+					false, // CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					true, // CheW | CheW | CheW
+					false, // Response_reg | NMT1_2 | CheW
+					false, // CheW | CheR
+					false, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					false, // TM | TM | MCPsignal
+					false, // TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(fql.match).eql(expected)
+			})
 		})
-		describe('Invalid queries', function() {
+		describe('Invalid inputs', function() {
 			let fql = null
 			beforeEach(() => {
 				fql = new Fql()
 			})
-			it('? Specifying more positions than counts whould throw error ?')
-			describe('Error handling about missing information', function() {
-				it('Missing feature.name should throw Error', function() {
-					let rules = [{
-						resource: 'pfam29',
-						features: [
-							{
-								count: 1,
-								position: [0]
-							}
-						]
-					}]
-					expect(fql.buildQuery.bind(fql, rules)).to.throw('Must give a name for the feature')
+			describe('Invalie rules', () => {
+				describe('Error handling about missing information', function() {
+					it('Missing feature should throw Error', function() {
+						let rules = [{
+							resource: 'pfam29'
+						}]
+						expect(fql.loadRules.bind(fql, rules)).to.throw('Each rule must explicitly define a feature: \n{"resource":"pfam29"}')
+					})
+					it('Missing resource should throw Error', function() {
+						let rules = [{
+							feature: 'CheW'
+						}]
+						expect(fql.loadRules.bind(fql, rules)).to.throw('Each rule must explicitly define a resource: \n{"feature":"CheW"}')
+					})
+					it('Missing feature and resource should throw Error', function() {
+						let rules = [{}]
+						expect(fql.loadRules.bind(fql, rules)).to.throw('Each rule must explicitly define a resource and feature: \n{}')
+					})
 				})
-				it('Missing feature.count assumes count = 1')
-				it('Missing feature.position assumes any position')
-				it('Missing resource should throw Error', function() {
-					let rules = [{
-						features: [
-							{
-								name: 'CheW',
-								count: 1,
-								position: [0]
-							}
-						]
-					}]
-					expect(fql.buildQuery.bind(fql, rules)).to.throw('Must especify the resource')
-				})
-				it('Missing feature should throw Error', function() {
-					let rules = [{
-						resource: 'pfam29'
-					}]
-					expect(fql.buildQuery.bind(fql, rules)).to.throw('Must especify the feature')
-				})
-			})
-			describe('Error handling for invalid format', function() {
-				it('Passing anything but Array as value for feature should throw Error', function() {
-					let rules = [{
-						resource: 'pfam29',
-						features: {
-							name: 'CheW',
-							count: 1,
-							position: [0]
-						}
-					}]
-					expect(fql.buildQuery.bind(fql, rules)).to.throw('Value in feature must be an array')
+				describe('Error handling for invalid format', function() {
+					it('Passing anything but Array as value for feature should throw Error')
 				})
 			})
 		})
