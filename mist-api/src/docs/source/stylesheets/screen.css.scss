@@ -717,15 +717,3 @@ table.model-structure td {
 .field-name {
   font-style: italic;
 }
-
-.example {
-  a {
-    color: #337ab7;
-    text-decoration: none;
-
-    &:hover {
-      color: #005580;
-      text-decoration: underline;
-    }
-  }
-}

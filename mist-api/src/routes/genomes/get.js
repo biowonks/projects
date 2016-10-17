@@ -16,7 +16,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 module.exports.docs = function(modelExamples) {
 	return {
 		name: 'Fetch Many Genomes',
-		description: 'Returns an array of genomes',
+		description: 'Returns an array of <a href="#genome-model">Genomes</a>.',
 		method: null,
 		uri: null,
 		parameters: null,

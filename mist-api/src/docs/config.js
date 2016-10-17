@@ -52,8 +52,8 @@ let config = {
 	includes: [
 		'introduction.pug',
 		'partial-responses.pug',
-		'pagination.pug',
 		'linked-models.pug',
+		'pagination.pug',
 		'rest-api.html', // Dynamically generated via the rest-api gulp task
 		'rest-errors.pug',
 		'model-structures-intro.pug',
