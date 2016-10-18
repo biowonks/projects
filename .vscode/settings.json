@@ -1,0 +1,12 @@
+// Place your settings in this file to overwrite default and user settings.
+{
+	"files.trimTrailingWhitespace": true,
+	"files.exclude": {
+		"**/.git": true,
+		"**/.DS_Store": true,
+		"node_modules/": true
+	},
+
+	// ESLint
+	"eslint.enable": true
+}

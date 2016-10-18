@@ -1,0 +1,306 @@
+'use strict'
+
+module.exports = [
+	{
+		domains: [
+			{
+				name: 'ETF',
+				score: 81.9,
+				bias: 0,
+				c_evalue: 2.8e-27,
+				i_evalue: 4.6e-23,
+				hmm_from: 80,
+				hmm_to: 180,
+				hmm_cov: '..',
+				ali_from: 2,
+				ali_to: 108,
+				ali_cov: '..',
+				env_from: 1,
+				env_to: 110,
+				env_cov: '[.',
+				acc: 0.95
+			}
+		],
+		queryName: 'demoSeqA',
+		queryLength: 151
+	},
+	{
+		domains: [
+			{
+				name: 'ETF',
+				score: 145.5,
+				bias: 0.1,
+				c_evalue: 1.7e-46,
+				i_evalue: 1.4e-42,
+				hmm_from: 6,
+				hmm_to: 180,
+				hmm_cov: '..',
+				ali_from: 28,
+				ali_to: 204,
+				ali_cov: '..',
+				env_from: 24,
+				env_to: 206,
+				env_cov: '..',
+				acc: 0.94
+			},
+			{
+				name: 'ETF',
+				score: 145.5,
+				bias: 0.1,
+				c_evalue: 1.7e-46,
+				i_evalue: 1.4e-42,
+				hmm_from: 6,
+				hmm_to: 180,
+				hmm_cov: '..',
+				ali_from: 275,
+				ali_to: 451,
+				ali_cov: '..',
+				env_from: 271,
+				env_to: 453,
+				env_cov: '..',
+				acc: 0.94
+			}
+		],
+		queryName: 'demoSeqB',
+		queryLength: 494
+	},
+	{
+		domains: [
+			{
+				name: 'Response_reg',
+				score: 101.9,
+				bias: 0,
+				c_evalue: 2.5e-33,
+				i_evalue: 2e-29,
+				hmm_from: 1,
+				hmm_to: 111,
+				hmm_cov: '[.',
+				ali_from: 4,
+				ali_to: 112,
+				ali_cov: '..',
+				env_from: 4,
+				env_to: 113,
+				env_cov: '..',
+				acc: 0.98
+			},
+			{
+				name: 'Trans_reg_C',
+				score: 77.2,
+				bias: 0,
+				c_evalue: 8.2e-26,
+				i_evalue: 6.7e-22,
+				hmm_from: 2,
+				hmm_to: 77,
+				hmm_cov: '.]',
+				ali_from: 148,
+				ali_to: 223,
+				ali_cov: '..',
+				env_from: 146,
+				env_to: 223,
+				env_cov: '..',
+				acc: 0.98
+			}
+		],
+		queryName: 'accession:NP_415222.1|locus:b0694|genom',
+		queryLength: 225
+	},
+	{
+		domains: [],
+		queryName: 'noDomain',
+		queryLength: 159
+	},
+	{
+		domains: [
+			{
+				name: 'KdpD',
+				score: 325.8,
+				bias: 0,
+				c_evalue: 2.6e-101,
+				i_evalue: 8.6e-98,
+				hmm_from: 1,
+				hmm_to: 210,
+				hmm_cov: '[]',
+				ali_from: 21,
+				ali_to: 230,
+				ali_cov: '..',
+				env_from: 21,
+				env_to: 230,
+				env_cov: '..',
+				acc: 1
+			},
+			{
+				name: 'DUF4118',
+				score: 99,
+				bias: 15.7,
+				c_evalue: 3.3e-32,
+				i_evalue: 1.1e-28,
+				hmm_from: 2,
+				hmm_to: 106,
+				hmm_cov: '..',
+				ali_from: 403,
+				ali_to: 507,
+				ali_cov: '..',
+				env_from: 402,
+				env_to: 508,
+				env_cov: '..',
+				acc: 0.95
+			},
+			{
+				name: 'HATPase_c',
+				score: 80.5,
+				bias: 0,
+				c_evalue: 3.4e-26,
+				i_evalue: 1.1e-22,
+				hmm_from: 4,
+				hmm_to: 109,
+				hmm_cov: '..',
+				ali_from: 776,
+				ali_to: 882,
+				ali_cov: '..',
+				env_from: 773,
+				env_to: 883,
+				env_cov: '..',
+				acc: 0.94
+			},
+			{
+				name: 'HisKA',
+				score: 40.8,
+				bias: 1.8,
+				c_evalue: 4.5e-14,
+				i_evalue: 1.5e-10,
+				hmm_from: 2,
+				hmm_to: 64,
+				hmm_cov: '.]',
+				ali_from: 664,
+				ali_to: 730,
+				ali_cov: '..',
+				env_from: 663,
+				env_to: 730,
+				env_cov: '..',
+				acc: 0.91
+			},
+			{
+				name: 'GAF_3',
+				score: 34.4,
+				bias: 0,
+				c_evalue: 6.7e-12,
+				i_evalue: 2.2e-8,
+				hmm_from: 1,
+				hmm_to: 129,
+				hmm_cov: '[]',
+				ali_from: 527,
+				ali_to: 644,
+				ali_cov: '..',
+				env_from: 527,
+				env_to: 644,
+				env_cov: '..',
+				acc: 0.89
+			}
+		],
+		queryName: 'b0695',
+		queryLength: 894
+	},
+	{
+		domains: [
+			{
+				name: 'KdpC',
+				score: 228.3,
+				bias: 0,
+				c_evalue: 3.4e-72,
+				i_evalue: 5.5e-68,
+				hmm_from: 2,
+				hmm_to: 182,
+				hmm_cov: '.]',
+				ali_from: 5,
+				ali_to: 187,
+				ali_cov: '..',
+				env_from: 4,
+				env_to: 187,
+				env_cov: '..',
+				acc: 0.98
+			}
+		],
+		queryName: 'KdpC',
+		queryLength: 190
+	},
+	{
+		domains: [
+			{
+				name: 'E1-E2_ATPase',
+				score: 140.6,
+				bias: 0.6,
+				c_evalue: 7.3e-45,
+				i_evalue: 3.9e-41,
+				hmm_from: 3,
+				hmm_to: 221,
+				hmm_cov: '.]',
+				ali_from: 72,
+				ali_to: 296,
+				ali_cov: '..',
+				env_from: 70,
+				env_to: 296,
+				env_cov: '..',
+				acc: 0.94
+			},
+			{
+				name: 'Hydrolase',
+				score: 132.6,
+				bias: 4.1,
+				c_evalue: 3.8e-42,
+				i_evalue: 2e-38,
+				hmm_from: 1,
+				hmm_to: 210,
+				hmm_cov: '[]',
+				ali_from: 301,
+				ali_to: 530,
+				ali_cov: '..',
+				env_from: 301,
+				env_to: 530,
+				env_cov: '..',
+				acc: 0.9
+			},
+			{
+				name: 'Hydrolase_3',
+				score: 21.4,
+				bias: 0.3,
+				c_evalue: 2.8e-8,
+				i_evalue: 0.00015,
+				hmm_from: 194,
+				hmm_to: 242,
+				hmm_cov: '..',
+				ali_from: 501,
+				ali_to: 549,
+				ali_cov: '..',
+				env_from: 497,
+				env_to: 556,
+				env_cov: '..',
+				acc: 0.9
+			}
+		],
+		queryName: 'NP_415225.1_Transmembrane_protein',
+		queryLength: 682
+	},
+	{
+		domains: [
+			{
+				name: 'KdpA',
+				score: 786.5,
+				bias: 34,
+				c_evalue: 5.3e-241,
+				i_evalue: 8.6e-237,
+				hmm_from: 2,
+				hmm_to: 546,
+				hmm_cov: '.]',
+				ali_from: 11,
+				ali_to: 556,
+				ali_cov: '..',
+				env_from: 10,
+				env_to: 556,
+				env_cov: '..',
+				acc: 0.99
+			}
+		],
+		queryName: 'locus:b0698_potassium_translocating_ATPase,_subunit_A_[E._coli]',
+		queryLength: 557
+	}
+]

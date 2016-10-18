@@ -1,0 +1,117 @@
+version: '2'
+
+services:
+  # -------------------------------------------------------
+  # -------------------------------------------------------
+  # Master docker image for performing local development work
+  biowonks-dev:
+    tty: true
+    stdin_open: true
+    image: biowonks/node-bootstrap
+    container_name: biowonks-dev
+    depends_on:
+      - mist-pg-db
+    links:
+      - mist-pg-db
+    ports:
+      - 5000:5000 # MiST-API port
+      - 5858:5858 # Node debugging port
+      - 5859:5859 # Node debugging port
+    volumes:
+      - .:/app
+      - /app/mist-lib/node_modules
+      - /app/mist-api/node_modules
+      - /app/mist-api/src/docs/node_modules
+      - /app/mist-api/config/local
+      - /app/mist-pipeline/node_modules
+      - /app/mist-pipeline/vendor
+    working_dir: /app
+    environment:
+      - BIOWONKS_VOLUMES=/app/mist-lib/node_modules /app/mist-api/node_modules /app/mist-api/src/docs/node_modules /app/mist-pipeline/node_modules /app/mist-pipeline/vendor /app/mist-api/config/local
+
+
+  # -------------------------------------------------------
+  node-bootstrap:
+    image: biowonks/node-bootstrap
+    build:
+      context: .
+      dockerfile: Dockerfile.node-bootstrap
+      args:
+        LOCAL_USER_ID: $LOCAL_USER_ID
+    command: /bin/true
+
+
+  # -------------------------------------------------------
+  mist-lib.base:
+    image: biowonks/mist-lib.base
+    depends_on:
+      - node-bootstrap
+    build:
+      context: mist-lib
+      dockerfile: Dockerfile.base
+    command: /bin/true
+
+
+  # -------------------------------------------------------
+  mist-lib:
+    image: biowonks/mist-lib
+    depends_on:
+      - mist-lib.base
+    build:
+      context: mist-lib
+
+
+  # -------------------------------------------------------
+  mist-pipeline:
+    tty: true
+    stdin_open: true
+    image: biowonks/mist-pipeline
+    depends_on:
+      - mist-lib.base
+    build:
+      context: mist-pipeline
+    links:
+      - mist-pg-db
+    command: bash
+
+
+  # -------------------------------------------------------
+  mist-api:
+    image: biowonks/mist-api
+    depends_on:
+      - mist-lib.base
+    build:
+      context: mist-api
+    links:
+      - mist-pg-db
+    ports:
+      - 5000:5000 # Port API is listening on
+      - 5858:5858 # Node debugging port
+      - 5859:5859 # Node debugging port
+    command: [npm, start]
+
+
+  # -------------------------------------------------------
+  mist-pg-db:
+    build:
+      context: mist-pg-db
+    image: biowonks/mist-pg-db
+    volumes:
+      - db-9.6.0:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    environment:
+      # The POSTGRES_* variables are passed to the postgresql image
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+
+      # These are used by postgres-setup.sh (which uses defaults if not specified)
+      - CERT_SUBJ
+      - DB_NAME
+      - DB_USER
+      - DB_PASSWORD
+
+
+# -------------------------------------------------------
+volumes:
+  db-9.6.0:

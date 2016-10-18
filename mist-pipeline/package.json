@@ -1,0 +1,80 @@
+{
+  "name": "mist-pipeline",
+  "version": "3.0.2",
+  "description": "Computational pipeline for populating the MiST database",
+  "engines": {
+    "node": "6.4"
+  },
+  "scripts": {
+    "preinstall": "node ../bin/merge-deps.js -i ../core-lib/package.json ../seqdepot-lib/src/models/package.json ../mist-lib/package.json ./package.json",
+    "postinstall": "bin/setup.sh",
+    "test": "find src -name '*.tests.js' | NODE_PATH=node_modules xargs node_modules/.bin/mocha --reporter ${MOCHA_REPORTER-spec} -r ../_common/test.globals.js",
+    "coverage": "NODE_PATH=node_modules node_modules/.bin/istanbul cover --config ../_common/.istanbul.js node_modules/mocha/bin/_mocha -- --reporter ${MOCHA_REPORTER-spec} -r ../_common/test.globals.js $(find src -name '*.tests.js')",
+    "eslint": "node_modules/.bin/eslint --ignore-pattern src/node_modules 'src/**/*.js'",
+    "install-vendor-tools": "bin/install-vendor-tools.sh",
+    "install-hmmer3": "bin/install-hmmer3.sh $(bin/get-config.js vendor.hmmer3.version vendor.hmmer3.basePath)",
+    "install-agfam": "npm run install-hmmer3 && bin/install-agfam.sh $(bin/get-config.js vendor.agfam.version vendor.agfam.basePath vendor.hmmer3.binPath)",
+    "install-pfam": "npm run install-hmmer3 && bin/install-pfam.sh $(bin/get-config.js vendor.pfam.version vendor.pfam.basePath vendor.hmmer3.binPath)"
+  },
+  "pre-commit": [
+    "eslint"
+  ],
+  "author": "BioWonks",
+  "contributors": [
+    {
+      "name": "Luke Ulrich"
+    },
+    {
+      "name": "Ogun Adebali"
+    },
+    {
+      "name": "Davi Ortega"
+    },
+    {
+      "name": "Amit Upadhyay"
+    }
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "bluebird": "^3.4.5",
+    "bunyan": "^1.8.1",
+    "byline": "4.2.x",
+    "commander": "^2.9.0",
+    "duplex-child-process": "0.0.5",
+    "inflection": "^1.10.0",
+    "lodash": "^4.15.0",
+    "mkdirp": "^0.5.1",
+    "moment": "^2.14.1",
+    "mv": "^2.1.1",
+    "node-config-loader": "https://github.com/lukeulrich/node-config-loader.git",
+    "pg": "^6.1.0",
+    "public-ip": "^2.0.1",
+    "pump": "1.x",
+    "pumpify": "^1.3.5",
+    "request": "^2.74.0",
+    "request-promise": "^4.1.1",
+    "rimraf": "^2.5.4",
+    "sequelize": "^3.24.1",
+    "sequelize-migrator": "https://github.com/lukeulrich/sequelize-migrator.git",
+    "sequelize-model-loader": "https://github.com/lukeulrich/sequelize-model-loader.git",
+    "split": "^1.0.0",
+    "stream-each": "1.x",
+    "through2": "^2.0.1",
+    "universal-analytics": "^0.4.2",
+    "xml2js": "^0.4.17"
+  },
+  "devDependencies": {
+    "csv-parse": "^1.0.1",
+    "eslint": "^3.4.0",
+    "istanbul": "^0.4.5",
+    "mocha": "^3.0.2",
+    "mocha-circleci-reporter": "0.0.2",
+    "pre-commit": "^1.1.3",
+    "sinon": "^1.17.5",
+    "supertest": "1.x",
+    "supertest-as-promised": "2.x",
+    "chai": "^3.5.0",
+    "nock": "^8.0.0",
+    "temp": "^0.8.3"
+  }
+}

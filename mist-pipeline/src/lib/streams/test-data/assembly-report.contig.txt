@@ -1,0 +1,122 @@
+# Assembly name:  Draft genome sequence of PAMC 26794
+# Organism name:  Paenibacillus sp. PAMC 26794 (firmicutes)
+# Infraspecific name:  strain=PAMC 26794
+# Taxid:          1257080
+# BioSample:      SAMN02470173
+# Submitter:      Korea Polar Research Institute
+# Date:           2012-11-29
+# Assembly type:  n/a
+# Release type:   major
+# Assembly level: Contig
+# Genome representation: full
+# WGS project:    ANHX01
+# Assembly method: GS De Novo Assembler v. 2.6; CLC Genomics Workbench v. 5.0
+# Genome coverage: 564.0x
+# Sequencing technology: 454; Illumina HiSeq
+# RefSeq category: Representative Genome
+# GenBank assembly accession: GCA_000316035.1 (latest)
+# RefSeq assembly accession: GCF_000316035.1 (latest)
+# RefSeq assembly and GenBank assemblies identical: yes
+#
+## Assembly-Units:
+## GenBank Unit Accession	RefSeq Unit Accession	Assembly-Unit name
+## GCA_000316045.1	GCF_000316045.1	Primary Assembly
+#
+# Ordered by chromosome/plasmid; the chromosomes/plasmids are followed by
+# unlocalized scaffolds.
+# Unplaced scaffolds are listed at the end.
+# RefSeq is equal or derived from GenBank object.
+#
+# Sequence-Name	Sequence-Role	Assigned-Molecule	Assigned-Molecule-Location/Type	GenBank-Accn	Relationship	RefSeq-Accn	Assembly-Unit	Sequence-Length	UCSC-style-name
+5104_1	unplaced-scaffold	na	na	ANHX01000001.1	=	NZ_ANHX01000001.1	Primary Assembly	31103	na
+5104_2	unplaced-scaffold	na	na	ANHX01000002.1	=	NZ_ANHX01000002.1	Primary Assembly	237541	na
+5104_3	unplaced-scaffold	na	na	ANHX01000003.1	=	NZ_ANHX01000003.1	Primary Assembly	170587	na
+5104_4	unplaced-scaffold	na	na	ANHX01000004.1	=	NZ_ANHX01000004.1	Primary Assembly	418501	na
+5104_5	unplaced-scaffold	na	na	ANHX01000005.1	=	NZ_ANHX01000005.1	Primary Assembly	30079	na
+5104_6	unplaced-scaffold	na	na	ANHX01000006.1	=	NZ_ANHX01000006.1	Primary Assembly	24150	na
+5104_7	unplaced-scaffold	na	na	ANHX01000007.1	=	NZ_ANHX01000007.1	Primary Assembly	153837	na
+5104_8	unplaced-scaffold	na	na	ANHX01000008.1	=	NZ_ANHX01000008.1	Primary Assembly	688	na
+5104_9	unplaced-scaffold	na	na	ANHX01000009.1	=	NZ_ANHX01000009.1	Primary Assembly	111375	na
+5104_10	unplaced-scaffold	na	na	ANHX01000010.1	=	NZ_ANHX01000010.1	Primary Assembly	1810	na
+5104_11	unplaced-scaffold	na	na	ANHX01000011.1	=	NZ_ANHX01000011.1	Primary Assembly	680473	na
+5104_12	unplaced-scaffold	na	na	ANHX01000012.1	=	NZ_ANHX01000012.1	Primary Assembly	85443	na
+5104_13	unplaced-scaffold	na	na	ANHX01000013.1	=	NZ_ANHX01000013.1	Primary Assembly	28555	na
+5104_14	unplaced-scaffold	na	na	ANHX01000014.1	=	NZ_ANHX01000014.1	Primary Assembly	37246	na
+5104_15	unplaced-scaffold	na	na	ANHX01000015.1	=	NZ_ANHX01000015.1	Primary Assembly	90689	na
+5104_16	unplaced-scaffold	na	na	ANHX01000016.1	=	NZ_ANHX01000016.1	Primary Assembly	120146	na
+5104_17	unplaced-scaffold	na	na	ANHX01000017.1	=	NZ_ANHX01000017.1	Primary Assembly	200097	na
+5104_18	unplaced-scaffold	na	na	ANHX01000018.1	=	NZ_ANHX01000018.1	Primary Assembly	33262	na
+5104_19	unplaced-scaffold	na	na	ANHX01000019.1	=	NZ_ANHX01000019.1	Primary Assembly	636	na
+5104_20	unplaced-scaffold	na	na	ANHX01000020.1	=	NZ_ANHX01000020.1	Primary Assembly	710	na
+5104_21	unplaced-scaffold	na	na	ANHX01000021.1	=	NZ_ANHX01000021.1	Primary Assembly	154905	na
+5104_22	unplaced-scaffold	na	na	ANHX01000022.1	=	NZ_ANHX01000022.1	Primary Assembly	164684	na
+5104_23	unplaced-scaffold	na	na	ANHX01000023.1	=	NZ_ANHX01000023.1	Primary Assembly	21173	na
+5104_24	unplaced-scaffold	na	na	ANHX01000024.1	=	NZ_ANHX01000024.1	Primary Assembly	6317	na
+5104_25	unplaced-scaffold	na	na	ANHX01000025.1	=	NZ_ANHX01000025.1	Primary Assembly	264138	na
+5104_26	unplaced-scaffold	na	na	ANHX01000026.1	=	NZ_ANHX01000026.1	Primary Assembly	41859	na
+5104_27	unplaced-scaffold	na	na	ANHX01000027.1	=	NZ_ANHX01000027.1	Primary Assembly	55037	na
+5104_28	unplaced-scaffold	na	na	ANHX01000028.1	=	NZ_ANHX01000028.1	Primary Assembly	2119	na
+5104_29	unplaced-scaffold	na	na	ANHX01000029.1	=	NZ_ANHX01000029.1	Primary Assembly	199166	na
+5104_30	unplaced-scaffold	na	na	ANHX01000030.1	=	NZ_ANHX01000030.1	Primary Assembly	43905	na
+5104_31	unplaced-scaffold	na	na	ANHX01000031.1	=	NZ_ANHX01000031.1	Primary Assembly	1355	na
+5104_32	unplaced-scaffold	na	na	ANHX01000032.1	=	NZ_ANHX01000032.1	Primary Assembly	2629	na
+5104_33	unplaced-scaffold	na	na	ANHX01000033.1	=	NZ_ANHX01000033.1	Primary Assembly	42917	na
+5104_34	unplaced-scaffold	na	na	ANHX01000034.1	=	NZ_ANHX01000034.1	Primary Assembly	1021	na
+5104_35	unplaced-scaffold	na	na	ANHX01000035.1	=	NZ_ANHX01000035.1	Primary Assembly	1235	na
+5104_36	unplaced-scaffold	na	na	ANHX01000036.1	=	NZ_ANHX01000036.1	Primary Assembly	4062	na
+5104_37	unplaced-scaffold	na	na	ANHX01000037.1	=	NZ_ANHX01000037.1	Primary Assembly	848	na
+5104_38	unplaced-scaffold	na	na	ANHX01000038.1	=	NZ_ANHX01000038.1	Primary Assembly	1113	na
+5104_39	unplaced-scaffold	na	na	ANHX01000039.1	=	NZ_ANHX01000039.1	Primary Assembly	6513	na
+5104_40	unplaced-scaffold	na	na	ANHX01000040.1	=	NZ_ANHX01000040.1	Primary Assembly	151220	na
+5104_41	unplaced-scaffold	na	na	ANHX01000041.1	=	NZ_ANHX01000041.1	Primary Assembly	170656	na
+5104_42	unplaced-scaffold	na	na	ANHX01000042.1	=	NZ_ANHX01000042.1	Primary Assembly	7573	na
+5104_43	unplaced-scaffold	na	na	ANHX01000043.1	=	NZ_ANHX01000043.1	Primary Assembly	30923	na
+5104_44	unplaced-scaffold	na	na	ANHX01000044.1	=	NZ_ANHX01000044.1	Primary Assembly	33630	na
+5104_45	unplaced-scaffold	na	na	ANHX01000045.1	=	NZ_ANHX01000045.1	Primary Assembly	15245	na
+5104_46	unplaced-scaffold	na	na	ANHX01000046.1	=	NZ_ANHX01000046.1	Primary Assembly	33536	na
+5104_47	unplaced-scaffold	na	na	ANHX01000047.1	=	NZ_ANHX01000047.1	Primary Assembly	1101	na
+5104_48	unplaced-scaffold	na	na	ANHX01000048.1	=	NZ_ANHX01000048.1	Primary Assembly	16623	na
+5104_49	unplaced-scaffold	na	na	ANHX01000049.1	=	NZ_ANHX01000049.1	Primary Assembly	6539	na
+5104_50	unplaced-scaffold	na	na	ANHX01000050.1	=	NZ_ANHX01000050.1	Primary Assembly	62959	na
+5104_51	unplaced-scaffold	na	na	ANHX01000051.1	=	NZ_ANHX01000051.1	Primary Assembly	40454	na
+5104_52	unplaced-scaffold	na	na	ANHX01000052.1	=	NZ_ANHX01000052.1	Primary Assembly	115188	na
+5104_53	unplaced-scaffold	na	na	ANHX01000053.1	=	NZ_ANHX01000053.1	Primary Assembly	1344	na
+5104_54	unplaced-scaffold	na	na	ANHX01000054.1	=	NZ_ANHX01000054.1	Primary Assembly	69183	na
+5104_55	unplaced-scaffold	na	na	ANHX01000055.1	=	NZ_ANHX01000055.1	Primary Assembly	183549	na
+5104_56	unplaced-scaffold	na	na	ANHX01000056.1	=	NZ_ANHX01000056.1	Primary Assembly	28543	na
+5104_57	unplaced-scaffold	na	na	ANHX01000057.1	=	NZ_ANHX01000057.1	Primary Assembly	1715	na
+5104_58	unplaced-scaffold	na	na	ANHX01000058.1	=	NZ_ANHX01000058.1	Primary Assembly	40870	na
+5104_59	unplaced-scaffold	na	na	ANHX01000059.1	=	NZ_ANHX01000059.1	Primary Assembly	74258	na
+5104_60	unplaced-scaffold	na	na	ANHX01000060.1	=	NZ_ANHX01000060.1	Primary Assembly	1715	na
+5104_61	unplaced-scaffold	na	na	ANHX01000061.1	=	NZ_ANHX01000061.1	Primary Assembly	31933	na
+5104_62	unplaced-scaffold	na	na	ANHX01000062.1	=	NZ_ANHX01000062.1	Primary Assembly	112687	na
+5104_63	unplaced-scaffold	na	na	ANHX01000063.1	=	NZ_ANHX01000063.1	Primary Assembly	13160	na
+5104_64	unplaced-scaffold	na	na	ANHX01000064.1	=	NZ_ANHX01000064.1	Primary Assembly	59698	na
+5104_65	unplaced-scaffold	na	na	ANHX01000065.1	=	NZ_ANHX01000065.1	Primary Assembly	21431	na
+5104_66	unplaced-scaffold	na	na	ANHX01000066.1	=	NZ_ANHX01000066.1	Primary Assembly	77169	na
+5104_67	unplaced-scaffold	na	na	ANHX01000067.1	=	NZ_ANHX01000067.1	Primary Assembly	1715	na
+5104_68	unplaced-scaffold	na	na	ANHX01000068.1	=	NZ_ANHX01000068.1	Primary Assembly	29641	na
+5104_69	unplaced-scaffold	na	na	ANHX01000069.1	=	NZ_ANHX01000069.1	Primary Assembly	650	na
+5104_70	unplaced-scaffold	na	na	ANHX01000070.1	=	NZ_ANHX01000070.1	Primary Assembly	1581	na
+5104_71	unplaced-scaffold	na	na	ANHX01000071.1	=	NZ_ANHX01000071.1	Primary Assembly	171911	na
+5104_72	unplaced-scaffold	na	na	ANHX01000072.1	=	NZ_ANHX01000072.1	Primary Assembly	1715	na
+5104_73	unplaced-scaffold	na	na	ANHX01000073.1	=	NZ_ANHX01000073.1	Primary Assembly	49214	na
+5104_74	unplaced-scaffold	na	na	ANHX01000074.1	=	NZ_ANHX01000074.1	Primary Assembly	1715	na
+5104_75	unplaced-scaffold	na	na	ANHX01000075.1	=	NZ_ANHX01000075.1	Primary Assembly	70388	na
+5104_76	unplaced-scaffold	na	na	ANHX01000076.1	=	NZ_ANHX01000076.1	Primary Assembly	209501	na
+5104_77	unplaced-scaffold	na	na	ANHX01000077.1	=	NZ_ANHX01000077.1	Primary Assembly	94479	na
+5104_78	unplaced-scaffold	na	na	ANHX01000078.1	=	NZ_ANHX01000078.1	Primary Assembly	42370	na
+5104_79	unplaced-scaffold	na	na	ANHX01000079.1	=	NZ_ANHX01000079.1	Primary Assembly	124869	na
+5104_80	unplaced-scaffold	na	na	ANHX01000080.1	=	NZ_ANHX01000080.1	Primary Assembly	146923	na
+5104_81	unplaced-scaffold	na	na	ANHX01000081.1	=	NZ_ANHX01000081.1	Primary Assembly	62679	na
+5104_82	unplaced-scaffold	na	na	ANHX01000082.1	=	NZ_ANHX01000082.1	Primary Assembly	89497	na
+5104_83	unplaced-scaffold	na	na	ANHX01000083.1	=	NZ_ANHX01000083.1	Primary Assembly	1215	na
+5104_84	unplaced-scaffold	na	na	ANHX01000084.1	=	NZ_ANHX01000084.1	Primary Assembly	65348	na
+5104_85	unplaced-scaffold	na	na	ANHX01000085.1	=	NZ_ANHX01000085.1	Primary Assembly	1715	na
+5104_86	unplaced-scaffold	na	na	ANHX01000086.1	=	NZ_ANHX01000086.1	Primary Assembly	177967	na
+5104_87	unplaced-scaffold	na	na	ANHX01000087.1	=	NZ_ANHX01000087.1	Primary Assembly	56904	na
+5104_88	unplaced-scaffold	na	na	ANHX01000088.1	=	NZ_ANHX01000088.1	Primary Assembly	1062	na
+5104_89	unplaced-scaffold	na	na	ANHX01000089.1	=	NZ_ANHX01000089.1	Primary Assembly	18025	na
+5104_90	unplaced-scaffold	na	na	ANHX01000090.1	=	NZ_ANHX01000090.1	Primary Assembly	1715	na
+5104_91	unplaced-scaffold	na	na	ANHX01000091.1	=	NZ_ANHX01000091.1	Primary Assembly	196242	na
+5104_92	unplaced-scaffold	na	na	ANHX01000092.1	=	NZ_ANHX01000092.1	Primary Assembly	163327	na

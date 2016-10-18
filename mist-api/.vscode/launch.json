@@ -1,0 +1,89 @@
+{
+	"version": "0.2.0",
+	"configurations": [
+		{
+			"name": "Run API",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/src/app.js",
+			"stopOnEntry": false,
+			"args": [],
+			"cwd": "${workspaceRoot}",
+			"preLaunchTask": null,
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "development",
+				"NODE_PATH": "${workspaceRoot}/node_modules"
+			},
+			"externalConsole": false,
+			"sourceMaps": false,
+			"outDir": null
+		},
+		{
+			"name": "Attach API",
+			"type": "node",
+			"request": "attach",
+			"port": 5859,
+			"address": "localhost",
+			"restart": false,
+			"sourceMaps": false,
+			"outDir": null,
+			"localRoot": "${workspaceRoot}",
+			"remoteRoot": "/home/biowonk/mist-api"
+		},
+		{
+			"name": "Undo migration",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/db/undo-migration.js",
+			"stopOnEntry": false,
+			"cwd": "${workspaceRoot}/pipeline",
+			"args": [
+				"-y"
+			],
+			"preLaunchTask": null,
+			"runtimeExecutable": null,
+			"runtimeArgs": [
+				"--nolazy"
+			],
+			"env": {
+				"NODE_ENV": "develop"
+			},
+			"externalConsole": false,
+			"sourceMaps": false,
+			"outDir": null
+		},
+		{
+			"name": "Unit tests (local)",
+			"type": "node",
+			"request": "launch",
+			"program": "${workspaceRoot}/node_modules/.bin/_mocha",
+			"stopOnEntry": false,
+			"cwd": "${workspaceRoot}",
+			"args": [
+				"--no-timeouts",
+				"--require", "testing/setup.js",
+				"pipeline/**/*.tests.js",
+				"services/**/*.tests.js",
+				"models/**/*.tests.js"
+			],
+			"runtimeExecutable": null
+		},
+		{
+			"name": "Unit tests (docker)",
+			"type": "node",
+			"request": "attach",
+			"port": 5858,
+			"preLaunchTask": "runMochaInDocker",
+			"address": "localhost",
+			"restart": false,
+			"sourceMaps": false,
+			"outDir": null,
+			"localRoot": "${workspaceRoot}/",
+			"remoteRoot": "/home/mist/api"
+		}
+	]
+}

@@ -1,0 +1,27 @@
+# Set all files to have line endings that end in line feeds
+* text eol=lf
+
+# Explicit declarations
+*.js text
+*.jsx text
+*.json text
+*.md text
+*.sh text
+*.sql text
+*.htm text
+*.html text
+*.jade text
+*.pug text
+*.xml text
+*.css text
+*.sass text
+
+# Denote all files that are truly binary and should not be modified.
+*.png binary
+*.jpg binary
+*.gif binary
+
+# HMMER3 files
+*.h3f binary
+*.h3m binary
+*.h3p binary

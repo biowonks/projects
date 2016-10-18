@@ -1,0 +1,43 @@
+h3.rest-endpoint(id=id, class=`http-${method.toLowerCase()}`)= name
+.api-route(class=`http-${method.toLowerCase()}`)
+	blockquote: p Example Request
+	if snippets
+		each snippet in snippets
+			| !{snippet}
+
+	if example
+		blockquote: p Example Response
+		| !{example.response.body}
+
+	header
+		span.http-method= method
+		code.uri= endpoint
+
+	if description
+		.description
+			| !{description}
+
+	if parameters
+		.parameters
+			h4 Parameters
+			table
+				thead
+					tr
+						th Name
+						th Type
+						th Description
+				tbody
+					each parameter, name in parameters
+						tr
+							td: em= name
+							td= parameter.type
+							td= parameter.description
+
+	if example
+		.example
+			h4 Example
+			p #{method.toUpperCase()}&nbsp;
+				if method === 'get'
+					a(target="_example", href=`${example.request.baseUrl}${example.request.endpoint}`)= example.request.baseUrl + example.request.endpoint
+				else
+					span.endpoint= example.request.endpoint

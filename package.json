@@ -1,48 +1,24 @@
 {
-  "name": "boiler-node-api",
-  "version": "0.0.1",
-  "description": "API description",
-  "private": true,
-  "main": "index.js",
-  "repository": {},
-  "scripts": {
-    "test": "npm test"
+  "name": "projects",
+  "version": "1.0.0",
+  "description": "BioWonks monorepo",
+  "scripts": {},
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/biowonks/projects.git"
   },
-  "author": "Luke Ulrich",
-  "license": "",
+  "keywords": [
+    "mist",
+    "seqdepot"
+  ],
+  "author": "BioWonks",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/biowonks/projects/issues"
+  },
+  "homepage": "https://github.com/biowonks/projects#readme",
   "dependencies": {
-    "bluebird": "2.x",
-    "body-parser": "1.x",
-    "bunyan": "1.x",
-    "corser": "2.x",
-    "debug": "2.x",
-    "express": "4.x",
-    "inflection": "^1.8.0",
-    "lazy.js": "0.x",
-    "lodash": "3.x",
-    "moment": "2.x",
-    "pg": "4.x",
-    "pg-hstore": "2.x",
-    "sequelize": "3.x",
-    "umzug": "1.x",
-    "universal-analytics": "0.3.x"
-  },
-  "devDependencies": {
-    "bluebird": "^2.10.2",
-    "bunyan": "^1.5.1",
-    "byline": "^4.2.1",
-    "chai": "^2.3.0",
-    "commander": "^2.9.0",
-    "csv-parse": "^1.0.1",
-    "eslint": "0.22.x",
-    "gulp": "3.x",
-    "gulp-eslint": "0.12.x",
-    "gulp-util": "3.x",
-    "mocha": "^2.3.4",
-    "moment": "^2.11.1",
-    "sinon": "^1.14.1",
-    "supertest": "1.x",
-    "supertest-as-promised": "2.x",
-    "temp": "^0.8.3"
+    "istanbul": "^0.4.5",
+    "junit-report-merger": "0.0.4"
   }
 }
