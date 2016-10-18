@@ -15,6 +15,7 @@ class MistBootService extends BootService {
 	 * @param {Object} [options = {}]
 	 * @param {String} [options.applicationName]
 	 * @param {Object} [options.logger] - bunyan compatible logger instance
+	 * @param {number} [options.advisoryLockKey] - key to use for advisory lock
 	 */
 	constructor(options = {}) {
 		dbConfig.applicationName = options.applicationName
