@@ -7,7 +7,7 @@
     "node": "6.4"
   },
   "scripts": {
-    "setup-docs": "cd src/docs; npm prune && npm install",
+    "setup-docs": "cd src/docs; npm prune && npm install && npm run build",
     "build-docs": "cd src/docs; npm run build",
     "merge-deps": "node ../bin/merge-deps.js -i ../core-lib/package.json ../seqdepot-lib/src/models/package.json ../mist-lib/package.json ./package.json",
     "preinstall": "npm run merge-deps",
