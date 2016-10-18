@@ -4,7 +4,7 @@ set -e
 
 # ---------------------------------------------------------
 # Setup default environment variables
-CERT_SUBJ=${CERT_SUBJ:=/C=US/ST=South Carolina/L=Charleston/O=BioWonks/OU=biowonks/CN=local-mist-db.com/emailAddress=biowonks@gmail.com}
+CERT_SUBJ=${CERT_SUBJ:=/C=US/ST=South Carolina/L=Charleston/O=BioWonks/OU=biowonks/CN=local-mistdb.com/emailAddress=biowonks@gmail.com}
 DB_USER=${DB_USER:=mist_dev}
 DB_NAME=${DB_NAME:=mist_dev}
 DB_PASSWORD=${DB_PASSWORD:=$&hxsALC!7_c}
@@ -24,6 +24,10 @@ echo "ssl = on" >> $CONF_FILE
 echo "ssl_ciphers = 'DEFAULT:!LOW:!EXP:!MD5:@STRENGTH'" >> $CONF_FILE
 echo "ssl_cert_file = '$PGDATA/server.crt'" >> $CONF_FILE
 echo "ssl_key_file = '$PGDATA/server.key'" >> $CONF_FILE
+
+if [[ -n "$PG_CONF" ]]; then
+    echo "$PG_CONF" >> $CONF_FILE
+fi
 
 # ---------------------------------------------------------
 # Local database setup
@@ -47,7 +51,3 @@ EOSQL
 # Lock down access to local and SSL + password for all other hosts.
 PG_HBA_FILE=$PGDATA/pg_hba.conf
 echo -e "hostssl	all	all	0.0.0.0/0	md5" > $PG_HBA_FILE
-# echo -e "local	all	all		trust" >> $PG_HBA_FILE
-
-# Reload to make the changes effective
-/etc/init.d/postgresql reload

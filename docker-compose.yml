@@ -111,6 +111,9 @@ services:
       - DB_USER
       - DB_PASSWORD
 
+      # To customize the postgresql configuration, pass any settings via the PG_CONF variable
+      - PG_CONF
+
 
 # -------------------------------------------------------
 volumes:
