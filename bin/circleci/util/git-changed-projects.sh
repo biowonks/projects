@@ -6,7 +6,7 @@
 # The following top-level folders are excluded:
 #   any beginning with . or _
 #   bin
-#   mist-local-db
+#   mist-pg-db
 #   fql
 
 set -e
@@ -27,4 +27,4 @@ if [[ -z $BRANCH ]]; then
 	exit 1
 fi
 
-git diff --name-only ${BRANCH}^ $BRANCH | awk 'BEGIN {FS="/"} /^[^._]+\// && $1 != "bin" && $1 != "mist-local-db" && $1 != "fql" {print $1}' | sort -u
+git diff --name-only ${BRANCH}^ $BRANCH | awk 'BEGIN {FS="/"} /^[^._]+\// && $1 != "bin" && $1 != "mist-pg-db" && $1 != "fql" {print $1}' | sort -u

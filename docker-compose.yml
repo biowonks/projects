@@ -10,10 +10,9 @@ services:
     image: biowonks/node-bootstrap
     container_name: biowonks-dev
     depends_on:
-      - mist-local-db
-      - node-bootstrap
+      - mist-pg-db
     links:
-      - mist-local-db
+      - mist-pg-db
     ports:
       - 5000:5000 # MiST-API port
       - 5858:5858 # Node debugging port
@@ -72,7 +71,7 @@ services:
     build:
       context: mist-pipeline
     links:
-      - mist-local-db
+      - mist-pg-db
     command: bash
 
 
@@ -84,7 +83,7 @@ services:
     build:
       context: mist-api
     links:
-      - mist-local-db
+      - mist-pg-db
     ports:
       - 5000:5000 # Port API is listening on
       - 5858:5858 # Node debugging port
@@ -93,16 +92,26 @@ services:
 
 
   # -------------------------------------------------------
-  mist-local-db:
+  mist-pg-db:
     build:
-      context: mist-local-db
-    image: biowonks/mist-local-db
+      context: mist-pg-db
+    image: biowonks/mist-pg-db
     volumes:
-      - db-9.5.4:/var/lib/postgresql/data
+      - db-9.6.0:/var/lib/postgresql/data
     ports:
       - 5432:5432
+    environment:
+      # The POSTGRES_* variables are passed to the postgresql image
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+
+      # These are used by postgres-setup.sh (which uses defaults if not specified)
+      - CERT_SUBJ
+      - DB_NAME
+      - DB_USER
+      - DB_PASSWORD
 
 
 # -------------------------------------------------------
 volumes:
-  db-9.5.4:
+  db-9.6.0:

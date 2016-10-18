@@ -1,4 +1,4 @@
-FROM postgres:9.5.4
+FROM postgres:9.6.0
 
 MAINTAINER BioWonks <biowonks@users.noreply.github.com>
 
