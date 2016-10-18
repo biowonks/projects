@@ -39,7 +39,8 @@ const kMsPerSecond = 1000,
 
 // Maintain reference to server variable because the handleUncaughtErrors middleware references it.
 let server = null,
-	bootService = new MistBootService(config.database, {
+	bootService = new MistBootService({
+		applicationName: 'mist-api',
 		logger: {
 			name: 'mist-api',
 			streams: [
