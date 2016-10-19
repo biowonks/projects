@@ -830,7 +830,7 @@ class GenbankStream extends stream.Transform {
 	parseQualifier_(featureInfo) {
 		let matches = /^\/([\w_\-'*]{1,20})(?:=(.+))?/.exec(featureInfo)
 		if (!matches)
-			throw new Error('Invalid feature qualifier line')
+			throw new Error(`Invalid feature qualifier line: ${featureInfo}`)
 
 		return {
 			name: matches[1],
