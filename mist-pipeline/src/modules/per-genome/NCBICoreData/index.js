@@ -6,7 +6,7 @@ const assert = require('assert'),
 	zlib = require('zlib')
 
 // Vendor
-const pump = require('pump'),
+const pumpify = require('pumpify'),
 	streamEach = require('stream-each')
 
 // Local
@@ -20,6 +20,7 @@ const PerGenomePipelineModule = require('lib/PerGenomePipelineModule'),
 	mutil = require('mist-lib/mutil'),
 	ncbiAssemblyReportStream = require('lib/streams/ncbi-assembly-report-stream')
 
+// Other
 let streamEachPromise = Promise.promisify(streamEach)
 
 module.exports =
@@ -114,18 +115,19 @@ class NCBICoreData extends PerGenomePipelineModule {
 	}
 
 	indexAssemblyReport_() {
-		let assemblyReportFile = this.fileMapper_.pathFor('assembly-report'),
-			readStream = fs.createReadStream(assemblyReportFile),
-			ncbiAssemblyReportReader = ncbiAssemblyReportStream()
+		return Promise.try(() => {
+			let assemblyReportFile = this.fileMapper_.pathFor('assembly-report'),
+				readStream = fs.createReadStream(assemblyReportFile),
+				ncbiAssemblyReportReader = ncbiAssemblyReportStream(),
+				pipeline = pumpify.obj(readStream, ncbiAssemblyReportReader)
 
-		pump(readStream, ncbiAssemblyReportReader)
-
-		return streamEachPromise(ncbiAssemblyReportReader, (assembly, next) => {
-			this.assemblyReportMap_.set(assembly.refseqAccession, assembly)
-			next()
-		})
-		.then(() => {
-			this.logger_.info(`Read ${this.assemblyReportMap_.size} row(s) from the assembly report`)
+			return streamEachPromise(pipeline, (assembly, next) => {
+				this.assemblyReportMap_.set(assembly.refseqAccession, assembly)
+				next()
+			})
+			.then(() => {
+				this.logger_.info(`Read ${this.assemblyReportMap_.size} row(s) from the assembly report`)
+			})
 		})
 	}
 
@@ -134,10 +136,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 			readStream = fs.createReadStream(genbankFlatFile),
 			gunzipStream = zlib.createGunzip(),
 			genbankReader = genbankStream(),
-			genbankMistReader = genbankMistStream(this.genome_.id),
-			index = 0
-
-		pump(readStream, gunzipStream, genbankReader, genbankMistReader)
+			genbankMistReader = genbankMistStream(this.genome_.id)
 
 		// Load the entire genome and its related data in a single transaction. Each "record"
 		// returned from the genbankMistReader is a component with its own set of genes, aseqs,
@@ -145,45 +144,53 @@ class NCBICoreData extends PerGenomePipelineModule {
 		return this.sequelize_.transaction({
 			isolationLevel: 'READ COMMITTED' // Necessary to avoid getting: could not serialize access due to concurrent update errors
 		}, (transaction) => {
-			return streamEachPromise(genbankMistReader, (mistData, next) => {
+			let pipeline = pumpify.obj(readStream, gunzipStream, genbankReader, genbankMistReader),
+				index = 0
+
+			return streamEachPromise(pipeline, (mistData, next) => {
 				let component = mistData.component,
 					tmpLogger = this.logger_.child({
-						component: {
-							accession: component.accession,
-							version: component.version
-						},
+						record: component.accession + '.' + component.version,
 						index
 					})
+
 				++index
 				tmpLogger.info('Successfully parsed Genbank record')
 
-				this.loadMistData_(mistData, transaction)
-				.then(() => next())
+				this.loadMistData_(mistData, transaction, tmpLogger)
+				.then(() => {
+					tmpLogger.info('Finished inserting component')
+					next()
+				})
 				.catch(next)
 			})
 		})
 	}
 
-	loadMistData_(mistData, transaction) {
+	loadMistData_(mistData, transaction, logger) {
 		let artificialGeneIds = []
 		return Promise.try(() => {
-			return this.loadGenomeReferences_(mistData.genomeReferences, transaction)
-			.then(() => this.loadComponent_(mistData.component, transaction))
+			return this.loadGenomeReferences_(mistData.genomeReferences, transaction, logger)
+			.then(() => this.loadComponent_(mistData.component, transaction, logger))
 			.then((dbComponent) => {
 				this.setForeignKeyIds_(mistData.genes, 'component_id', dbComponent.id)
 				this.setForeignKeyIds_(mistData.componentFeatures, 'component_id', dbComponent.id)
+				let nDseqs = mistData.geneSeqs.length
+				if (nDseqs) {
+					logger.info(`Loading (ignoring duplicates) ${mistData.geneSeqs.length} gene seqs (dseqs)`)
+					return this.dseqsService_.insertIgnoreSeqs(mistData.geneSeqs, transaction)
+				}
 			})
 			.then(() => {
-				this.logger_.info(`Loading (ignoring duplicates) ${mistData.geneSeqs.length} gene seqs (dseqs)`)
-				return this.dseqsService_.insertIgnoreSeqs(mistData.geneSeqs, transaction)
-			})
-			.then(() => {
-				this.logger_.info(`Loading (ignoring duplicates) ${mistData.proteinSeqs.length} protein seqs (aseqs)`)
-				return this.aseqsService_.insertIgnoreSeqs(mistData.proteinSeqs, transaction)
+				let nAseqs = mistData.proteinSeqs.length
+				if (nAseqs) {
+					logger.info(`Loading (ignoring duplicates) ${mistData.proteinSeqs.length} protein seqs (aseqs)`)
+					return this.aseqsService_.insertIgnoreSeqs(mistData.proteinSeqs, transaction)
+				}
 			})
 			.then(() => {
 				artificialGeneIds = mistData.genes.map((x) => x.id)
-				return this.loadGenes_(mistData.genes, transaction)
+				return this.loadGenes_(mistData.genes, transaction, logger)
 			})
 			.then((dbGenes) => {
 				assert(dbGenes.length === mistData.genes.length)
@@ -199,25 +206,31 @@ class NCBICoreData extends PerGenomePipelineModule {
 						feature.gene_id = dbGeneIdMap.get(feature.gene_id)
 				})
 				this.setIdsToNull_(mistData.xrefs)
-				this.logger_.info(`Loading ${mistData.xrefs.length} xrefs`)
-				return this.models_.Xref.bulkCreate(mistData.xrefs, {validate: true, transaction})
+				let nXrefs = mistData.xrefs.length
+				if (nXrefs) {
+					logger.info(`Loading ${mistData.xrefs.length} xrefs`)
+					return this.models_.Xref.bulkCreate(mistData.xrefs, {validate: true, transaction})
+				}
 			})
 			.then(() => {
-				this.logger_.info(`Loading ${mistData.componentFeatures.length} component features`)
-				this.setIdsToNull_(mistData.componentFeatures)
-				return this.models_.ComponentFeature.bulkCreate(mistData.componentFeatures, {
-					validate: true,
-					transaction
-				})
+				let nComponentFeatures = mistData.componentFeatures.length
+				if (nComponentFeatures) {
+					logger.info(`Loading ${mistData.componentFeatures.length} component features`)
+					this.setIdsToNull_(mistData.componentFeatures)
+					return this.models_.ComponentFeature.bulkCreate(mistData.componentFeatures, {
+						validate: true,
+						transaction
+					})
+				}
 			})
 		})
 	}
 
-	loadGenomeReferences_(genomeReferences, transaction) {
+	loadGenomeReferences_(genomeReferences, transaction, logger) {
 		if (this.loadedGenomeReferences_)
 			return Promise.resolve()
 
-		this.logger_.info(`Loading ${genomeReferences.length} genome references`)
+		logger.info(`Loading ${genomeReferences.length} genome references`)
 		this.setIdsToNull_(genomeReferences)
 		return this.models_.GenomeReference.bulkCreate(genomeReferences, {
 			validate: true,
@@ -228,8 +241,8 @@ class NCBICoreData extends PerGenomePipelineModule {
 		})
 	}
 
-	loadComponent_(component, transaction) {
-		this.logger_.info({dnaLength: component.length}, 'Loading component')
+	loadComponent_(component, transaction, logger) {
+		logger.info({dnaLength: component.length}, 'Loading component')
 		component.id = null
 		this.addAssemblyReportData_(component)
 		return this.models_.Component.create(component, {
@@ -252,8 +265,11 @@ class NCBICoreData extends PerGenomePipelineModule {
 		component.genbank_refseq_relationship = assemblyReport.genbankRefseqRelationship
 	}
 
-	loadGenes_(genes, transaction) {
-		this.logger_.info(`Loading ${genes.length} genes`)
+	loadGenes_(genes, transaction, logger) {
+		if (!genes.length)
+			return []
+
+		logger.info(`Loading ${genes.length} genes`)
 		this.setIdsToNull_(genes)
 		return this.models_.Gene.bulkCreate(genes, {
 			validate: true,
