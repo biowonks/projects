@@ -107,11 +107,11 @@ class SeedNewGenomes extends OncePipelineModule {
 				else
 					skippedFirstLine = true
 				done()
-			}),
-			stream = pumpify.obj(readStream, split(), skipLineStream, parser)
+			})
 
 		return new Promise((resolve, reject) => {
-			streamEach(stream, (row, next) => {
+			let pipeline = pumpify.obj(readStream, split(), skipLineStream, parser)
+			streamEach(pipeline, (row, next) => {
 				this.shutdownCheck_()
 				let genomeData = this.genomeDataFromRow_(row)
 				if (genomeData.refseq_category !== 'representative genome' &&
@@ -191,15 +191,16 @@ class SeedNewGenomes extends OncePipelineModule {
 	}
 
 	insertGenome_(genomeData) {
-		return this.sequelize_.transaction(() => {
+		return this.sequelize_.transaction((transaction) => {
 			return this.models_.Genome.find({
 				where: {
 					accession: genomeData.accession,
 					version: genomeData.version
-				}
+				},
+				transaction
 			})
 			.then((genome) => {
-				return !genome ? this.models_.Genome.create(genomeData) : null
+				return !genome ? this.models_.Genome.create(genomeData, {transaction}) : null
 			})
 		})
 	}
