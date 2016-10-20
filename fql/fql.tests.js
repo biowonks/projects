@@ -47,22 +47,28 @@ describe('Feature Query Language - FQL', function() {
 		beforeEach(function() {
 			fql = new Fql()
 		})
-		it('check behaviour _preprocess', () => {
-			let rules = [
+		it('check behaviour _seqDepotInfoToString', () => {
+			let setOfRules = [ 
 				{
-					resource: 'pfam28',
-					feature: 'CheW'
-				},
-				{
-					resource: 'pfam28',
-					feature: 'Response_reg'
-				},
-				{
-					resource: 'das',
-					feature: true
+					pos: [
+						{
+							resource: 'pfam28',
+							feature: 'CheW'
+						},
+						{
+							resource: 'pfam28',
+							feature: 'Response_reg'
+						}
+					],
+					Npos: [
+						{
+							resource: 'das',
+							feature: 'TM'
+						}
+					]
 				}
 			]
-			fql.loadRules(rules)
+			fql.loadRules(setOfRules)
 			let info = {
 				result: {
 					t: {
@@ -82,24 +88,81 @@ describe('Feature Query Language - FQL', function() {
 			expect(expression).equal('TM@dasCache_1@pfam28TM@dasHAMP@pfam28MCPsignal@pfam28')
 		})
 		it('check behaviour _getConfig')
-		it('check behaviour _rulesToRegex', () => {
-			let rules = [
+		it('check behaviour _addResources', () => {
+			let rc = 'pfam28'
+			fql._addResources(rc)
+			fql._addResources(rc)
+			rc = 'das'
+			fql._addResources(rc)
+			fql._addResources(rc)
+			expect(fql.resources).eql(['pfam28', 'das'])
+		})
+		it('check behaviour of _parseRules with missing pos',() => {
+			let setOfRules = [
 				{
-					resource: 'pfam28',
-					feature: 'CheW'
-				},
-				{
-					resource: 'pfam28',
-					feature: 'Response_reg'
-				},
-				{
-					resource: 'das',
-					feature: true
+					Npos: [
+						{
+							resource: 'pfam28',
+							feature: 'CheW'
+						}
+					]
 				}
 			]
-			fql.loadRules(rules)
-			let expr = fql.regexes
-			expect(expr).eql(['(CheW@pfam28)(Response_reg@pfam28)(TM@das)'])
+			fql.loadRules(setOfRules)
+			expect(fql.parsedRules[0].pos).to.be.null
+			expect(fql.parsedRules[0].Npos).to.not.be.null
+		})
+		it('check behaviour of _parseRules with missing Npos',() => {
+			let setOfRules = [
+				{
+					pos: [
+						{
+							resource: 'pfam28',
+							feature: 'CheW'
+						}
+					]
+				}
+			]
+			fql.loadRules(setOfRules)
+			expect(fql.parsedRules[0].pos).to.not.be.null
+			expect(fql.parsedRules[0].Npos).to.be.null
+		})
+		it('check behaviour of _parseRules with missing Npos and pos',() => {
+			let setOfRules = [{}]
+			fql.loadRules(setOfRules)
+			expect(fql.parsedRules[0].pos).to.be.null
+			expect(fql.parsedRules[0].Npos).to.be.null
+		})
+		it('check behaviour of _parseRules',() => {
+			let rules =  
+				{
+					pos: [
+						{
+							resource: 'pfam28',
+							feature: 'CheW'
+						},
+						{
+							resource: 'pfam28',
+							feature: 'Response_reg'
+						}
+					],
+					Npos: [
+						{
+							resource: 'das',
+							feature: 'TM'
+						}
+					]
+				}
+			let expected = { 
+				pos: '(CheW@pfam28)(Response_reg@pfam28)',                  Npos: [ 
+					[ 
+						'(TM@das)',
+						''
+					]
+				]
+			}
+			let parsed = fql._parseRules(rules)
+			expect(parsed).eql(expected)
 		})
 	})
 	describe('Loading the rules', () => {
@@ -107,7 +170,7 @@ describe('Feature Query Language - FQL', function() {
 		beforeEach(function() {
 			fql = new Fql()
 		})
-		it('Rules must load to .rules method', function() {
+		it('Rules must load to .rules method, even invalid ones', function() {
 			let simpleRule = [
 				{
 					resource: 'pfam29',
@@ -118,72 +181,222 @@ describe('Feature Query Language - FQL', function() {
 			expect(fql.rules).eql(simpleRule)
 		})
 		it('All resources used in rules should appear in .resources', function() {
-			let rules = [
+			let setOfRules = [
 				{
-					resource: 'pfam29',
-					feature: 'CheW'
-				},
-				{
-					resource: 'pfam29',
-					feature: 'Response_reg'
-				},
-				{
-					resource: 'das',
-					feature: true
+					pos: [
+						{
+							resource: 'pfam29',
+							feature: 'CheW'
+						},
+						{
+							resource: 'pfam29',
+							feature: 'Response_reg'
+						},
+						{
+							resource: 'das',
+							feature: 'TM'
+						}
+					]
 				}
 			]
-			fql.loadRules(rules)
+			fql.loadRules(setOfRules)
 			let expected = ['pfam29', 'das']
 			expect(fql.resources).eql(expected)
 		})
+		describe('Missing pos or Npos in arguments should pass pos and Npos null rules', () =>{
+			it('Missing pos should pass null for rules.pos', () => {
+				let setOfRules = [
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW'
+							}
+						]
+					}
+				]
+				fql.applyFilter
+			})
+		})
 		describe('Checking the integrity of rules - should throw informative Errors', () => {
-			it('Missing mandatory field resource should throw Error', () => {
-				let rules = [
+			it('Missing mandatory field in pos type rule resource should throw Error', () => {
+				let setOfRules = [
 					{
-						resource: 'pfam29',
-						feature: 'CheW'
-					},
-					{
-						feature: 'Response_reg'
-					},
-					{
-						resource: 'das',
-						feature: true
+						pos: [		
+							{
+								resource: 'pfam29',
+								feature: 'CheW'
+							},
+							{
+								feature: 'Response_reg'
+							},
+							{
+								resource: 'das',
+								feature: 'TM'
+							}
+						]
 					}
 				]
-				expect(fql.loadRules.bind(fql, rules)).to.throw('Each rule must explicitly define a resource')
+				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each pos rule must explicitly define a resource')
 			})
-			it('Missing mandatory field feature should throw Error', () => {
-				let rules = [
+			it('Missing mandatory field in pos type rule feature should throw Error', () => {
+				let setOfRules = [
 					{
-						resource: 'pfam29',
-						feature: 'CheW'
-					},
-					{
-						resource: 'pfam29'
-					},
-					{
-						resource: 'das',
-						feature: true
+						pos: [		
+							{
+								resource: 'pfam29',
+								feature: 'CheW'
+							},
+							{
+								resource: 'pfam29'
+							},
+							{
+								resource: 'das',
+								feature: 'TM'
+							}
+						]
 					}
 				]
-				expect(fql.loadRules.bind(fql, rules)).to.throw('Each rule must explicitly define a feature')
+				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each pos rule must explicitly define a feature')
 			})
-			it('Missing both mandatory fields resource and feature should throw Error', () => {
-				let rules = [
+			it('Missing both mandatory fields in pos type rule resource and feature should throw Error', () => {
+				let setOfRules = [
 					{
-						resource: 'pfam29',
-						feature: 'CheW'
-					},
-					{
-					},
-					{
-						resource: 'das',
-						feature: true
+						pos: [		
+							{
+								resource: 'pfam29',
+								feature: 'CheW'
+							},
+							{
+							},
+							{
+								resource: 'das',
+								feature: 'TM'
+							}
+						]
 					}
 				]
-				expect(fql.loadRules.bind(fql, rules)).to.throw('Each rule must explicitly define a resource and feature')
+				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each pos rule must explicitly define a resource and feature')
 			})
+			it('Missing mandatory field in Npos type rule resource should throw Error', () => {
+				let setOfRules = [
+					{
+						Npos: [		
+							{
+								resource: 'pfam29',
+								feature: 'CheW'
+							},
+							{
+								feature: 'Response_reg'
+							},
+							{
+								resource: 'das',
+								feature: 'TM'
+							}
+						]
+					}
+				]
+				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each Npos rule must explicitly define a resource')
+			})
+			it('Missing mandatory field in Npos type rule feature should throw Error', () => {
+				let setOfRules = [
+					{
+						Npos: [		
+							{
+								resource: 'pfam29',
+								feature: 'CheW'
+							},
+							{
+								resource: 'pfam29'
+							},
+							{
+								resource: 'das',
+								feature: 'TM'
+							}
+						]
+					}
+				]
+				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each Npos rule must explicitly define a feature')
+			})
+			it('Missing both mandatory fields in Npos type rule resource and feature should throw Error', () => {
+				let setOfRules = [
+					{
+						Npos: [		
+							{
+								resource: 'pfam29',
+								feature: 'CheW'
+							},
+							{
+							},
+							{
+								resource: 'das',
+								feature: 'TM'
+							}
+						]
+					}
+				]
+				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each Npos rule must explicitly define a resource and feature')
+			})
+		})
+		describe('Loading rules more than once', () => {
+			it('Loading second rule should reset .rules, .resources, .parsedRules', () => {
+				let setOfRules1 = [ 
+					{
+						pos: [
+							{
+								resource: 'pfam30',
+								feature: 'CheW'
+							},
+							{
+								resource: 'pfam28',
+								feature: 'Response_reg'
+							}
+						],
+						Npos: [
+							{
+								resource: 'das',
+								feature: 'TM'
+							}
+						]
+					}
+				]
+				let setOfRules2 = [ 
+					{
+						pos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW'
+							},
+							{
+								resource: 'pfam29',
+								feature: 'Response_reg'
+							}
+						],
+						Npos: [
+							{
+								resource: 'phobius',
+								feature: 'TM'
+							}
+						]
+					}
+				]
+				fql.loadRules(setOfRules1)
+				fql.loadRules(setOfRules2)
+				expect(fql.rules).eql(setOfRules2)
+				expect(fql.resources).eql(['pfam28', 'pfam29', 'phobius'])
+				let expectedParsedRule = [
+					{
+						"pos": "(CheW@pfam28)(Response_reg@pfam29)",
+						"Npos": [
+							[
+								"(TM@phobius)",
+								""
+							]
+						]
+					}
+				]
+				expect(fql.parsedRules).eql(expectedParsedRule)	
+			})			
 		})
 	})
 	describe('Initialize Fql with restrict dataset of Aseqs', function() {
@@ -201,16 +414,56 @@ describe('Feature Query Language - FQL', function() {
 		})
 		it('Nothing will search whole database')
 	})
+	describe('Non positional rules', () => {
+		it.only('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single domain from pfam29', function() {
+			let fql = new Fql()
+			let setOfRules = [
+				{
+					Npos: [
+						{
+							resource: 'pfam28',
+							feature: 'CheW'
+						}
+					]
+				}
+			]
+			fql.loadRules(setOfRules)
+			fql.applyFilter(sampleData)
+			let expected = [
+				true, // CheW | CheW
+				true, // CheW | Response_reg
+				true, // CheW
+				true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+				true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+				true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+				true, // CheW | CheW | CheW
+				true, // Response_reg | NMT1_2 | CheW
+				true, // CheW | CheR
+				true, // Response_reg | CheW
+				false, // TM | Cache_1 | TM | HAMP | MCPsignal
+				false, // HAMP | MCPsignal
+				false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+				false, // **
+				false, // **
+				false, // TM | TM | MCPsignal
+				false, // TM | MCPsignal | Rhodanese
+				false, // TM | TM | TM | TM | MCPsignal
+				false, // TM | TM | TM | TM | TM | TM | MCPsignal
+				false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+			]
+			expect(fql.match).eql(expected)
+		})
+	})
 	describe('Single feature request from single resource', function() {
 		it('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single domain from pfam29', function() {
 			let fql = new Fql()
-			let rules = [
+			let setOfRules = [
 				{
 					resource: 'pfam28',
 					feature: 'CheW'
 				}
 			]
-			fql.loadRules(rules)
+			fql.loadRules(setOfRules)
 			fql.applyFilter(sampleData)
 			let expected = [
 				true, // CheW | CheW
@@ -238,7 +491,7 @@ describe('Feature Query Language - FQL', function() {
 		})
 		it('Request protein sequences with 1 match and nothing else to a single domain from pfam29', function() {
 			let fql = new Fql()
-			let rules = [
+			let setOfRules = [
 				{
 					resource: 'fql',
 					feature: '^'
@@ -252,7 +505,7 @@ describe('Feature Query Language - FQL', function() {
 					feature: '$'
 				}
 			]
-			fql.loadRules(rules)
+			fql.loadRules(setOfRules)
 			fql.applyFilter(sampleData)
 			let expected = [
 				false, // CheW | CheW
@@ -281,7 +534,7 @@ describe('Feature Query Language - FQL', function() {
 		describe('Testing the behaviour of "count"', () => {
 			it('Request protein sequences with 2 matches and nothing else to a single domain from pfam28', function() {
 				let fql = new Fql()
-				let rules = [
+				let setOfRules = [
 					{
 						resource: 'fql',
 						feature: '^'
@@ -296,7 +549,7 @@ describe('Feature Query Language - FQL', function() {
 						feature: '$'
 					}
 				]
-				fql.loadRules(rules)
+				fql.loadRules(setOfRules)
 				fql.applyFilter(sampleData)
 				let expected = [
 					true, // CheW | CheW
@@ -324,7 +577,7 @@ describe('Feature Query Language - FQL', function() {
 			})
 			it('Request protein sequences with 3 matches and nothing else to a single domain from pfam28', function() {
 				let fql = new Fql()
-				let rules = [
+				let setOfRules = [
 					{
 						resource: 'fql',
 						feature: '^'
@@ -339,7 +592,7 @@ describe('Feature Query Language - FQL', function() {
 						feature: '$'
 					}
 				]
-				fql.loadRules(rules)
+				fql.loadRules(setOfRules)
 				fql.applyFilter(sampleData)
 				let expected = [
 					false, // CheW | CheW
@@ -367,7 +620,7 @@ describe('Feature Query Language - FQL', function() {
 			})
 			it('Request protein sequences with 2 or 3 matches and nothing else to a single domain from pfam28', function() {
 				let fql = new Fql()
-				let rules = [
+				let setOfRules = [
 					{
 						resource: 'fql',
 						feature: '^'
@@ -382,7 +635,7 @@ describe('Feature Query Language - FQL', function() {
 						feature: '$'
 					}
 				]
-				fql.loadRules(rules)
+				fql.loadRules(setOfRules)
 				fql.applyFilter(sampleData)
 				let expected = [
 					true, // CheW | CheW
@@ -408,9 +661,48 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(fql.match).eql(expected)
 			})
+			it('Request protein sequences with 2 or 3 matches at the end of the sequence to a single domain from pfam28', function() {
+				let fql = new Fql()
+				let setOfRules = [
+					{
+						resource: 'pfam28',
+						feature: 'CheW',
+						count: '{2,3}'
+					},
+					{
+						resource: 'fql',
+						feature: '$'
+					}
+				]
+				fql.loadRules(setOfRules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					true, // CheW | CheW
+					false, // CheW | Response_reg
+					false, // CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					true, // CheW | CheW | CheW
+					false, // Response_reg | NMT1_2 | CheW
+					false, // CheW | CheR
+					false, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					false, // TM | TM | MCPsignal
+					false, // TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(fql.match).eql(expected)
+			})
 			it('Request protein sequences with 2 TM regions anywhere in the sequence', function() {
 				let fql = new Fql()
-				let rules = [
+				let setOfRules = [
 					{
 						resource: 'das',
 						feature: 'TM',
@@ -421,7 +713,7 @@ describe('Feature Query Language - FQL', function() {
 						feature: 'MCPsignal'
 					}
 				]
-				fql.loadRules(rules)
+				fql.loadRules(setOfRules)
 				fql.applyFilter(sampleData)
 				let expected = [
 					false, // CheW | CheW
@@ -456,20 +748,20 @@ describe('Feature Query Language - FQL', function() {
 			describe('Invalie rules', () => {
 				describe('Error handling about missing information', function() {
 					it('Missing feature should throw Error', function() {
-						let rules = [{
+						let setOfRules = [{
 							resource: 'pfam29'
 						}]
-						expect(fql.loadRules.bind(fql, rules)).to.throw('Each rule must explicitly define a feature: \n{"resource":"pfam29"}')
+						expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each rule must explicitly define a feature: \n{"resource":"pfam29"}')
 					})
 					it('Missing resource should throw Error', function() {
-						let rules = [{
+						let setOfRules = [{
 							feature: 'CheW'
 						}]
-						expect(fql.loadRules.bind(fql, rules)).to.throw('Each rule must explicitly define a resource: \n{"feature":"CheW"}')
+						expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each rule must explicitly define a resource: \n{"feature":"CheW"}')
 					})
 					it('Missing feature and resource should throw Error', function() {
-						let rules = [{}]
-						expect(fql.loadRules.bind(fql, rules)).to.throw('Each rule must explicitly define a resource and feature: \n{}')
+						let setOfRules = [{}]
+						expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each rule must explicitly define a resource and feature: \n{}')
 					})
 				})
 				describe('Error handling for invalid format', function() {

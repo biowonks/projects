@@ -1,6 +1,7 @@
 'use strict'
 
 module.exports =
+/** Class of Feature Query Language */
 class Fql {
 	constructor(initialAseqs = []) {
 		this.input = {}
@@ -9,23 +10,30 @@ class Fql {
 		this.rules = []
 		this.match = []
 		this.resources = []
-		this.regexes = []
+		this.parsedRules = []
 	}
+
 	/**
-	* Load rules
-	* @param {Object} rules array of feature request rules
-	* @return null
-	*/
-	loadRules(rules) {
-		this.rules = rules
+	 * Load and parse the set of rules passed by the user in FQL standards.
+	 * 
+	 * The keys of the object that will be interpreted are two: Npos and pos. Everything else will be ignored.
+	 * 
+	 * Example of rule:
+	 * 
+	 * 
+	 * 
+	 * @param {Array{Objects}} - Raw set of rules object
+	 * @return {Boolean} - True if no problems occur.
+	 */
+	loadRules(setOfRules) {
+		this.rules = setOfRules
+		this.resources = []
+		this.parsedRules = []
 		let resources = []
-		rules.forEach((rule) => {
-			this._isValidRule(rule)
-			if (resources.indexOf(rule.resource) === -1)
-				resources.push(rule.resource)
+		setOfRules.forEach((rules) => {
+			this._isValidRule(rules)
+			this.parsedRules.push(this._parseRules(rules))
 		})
-		this.regexes = this._parseRules(rules)
-		this.resources = resources
 		return null
 	}
 
@@ -34,8 +42,9 @@ class Fql {
 		data.forEach((info) => {
 			let stringInfo = this._seqDepotInfoToString(info)
 			let isMatch = true
-			this.regexes.forEach((regex) => {
-				isMatch = isMatch && (stringInfo.match(regex) ? true : false)
+			this.parsedRules.forEach((parsedRule) => {
+				// NO .... need to work on this now. applying filters.
+				isMatch = isMatch && this._testPos(stringInfo, parsedRule.pos) && this._testNpos(stringInfo, parsedRule.Npos)
 			})
 			matchList.push(isMatch)
 		})
@@ -43,32 +52,84 @@ class Fql {
 		return matchList
 	}
 
-	_parseRules(rules) {
-		let regexes = [],
-			regex = '',
-			expr = ''
-		this.rules.forEach((rule) => {
-			let fixedRule = this._fixRule(rule)
-			if (fixedRule.resource == 'fql')
-				expr = fixedRule.feature
-			else
-				expr = '(' + fixedRule.feature + '@' + fixedRule.resource + ')'
-			if ('count' in fixedRule)
-				expr += fixedRule.count
-			regex += expr
-			//if ('count' in rule)
-			//	counts.push([expr, fixedRule.count])
-		})
-		regexes.push(regex)
-		//console.log(regex)
-		this.regexes = regexes
-		return regexes
+	_testPos(stringInfo, regex) {
+		return stringInfo.match(regex) ? true : false
 	}
 
-	_fixRule(rule) {
-		if (rule.resource === 'das')
-			rule.feature = 'TM'
-		return rule
+	/**
+	 * Add resource from rule to the array of resource used
+	 * @param {string} resource - identifier of the resource
+	 * @return null
+	 */
+	_addResources(resource) {
+		if (this.resources.indexOf(resource) === -1)
+			this.resources.push(resource)
+		return null
+	}
+
+	_getFeatures(rules) {
+		return null
+	}
+
+	/**
+	 * Parse filtering rules passed by the user
+	 * @params {Object} rules - Raw rules object passed to FQL
+	 * @return {Object} parsed - Same object but with the rules parsed 
+	 */
+	_parseRules(rules) {
+		let parsed = { 
+			pos: this._parsePosRules(rules.pos),
+			Npos: this._parseNPosRules(rules.Npos)
+		}
+		return parsed
+	}
+
+	/**
+	 * Parse pos type of rules. It will also populate the this.resources with the resources found here.
+	 * @params {Object} rules - Rule of Npos type object
+	 * @return {Array.<Array>} regex - Array of [ String to match the domain architecture of sequences, string of interval of how many times it should appear ].
+	 */
+	_parseNPosRules(rules) {
+		let parsedNposRule = []
+		if (rules) {
+			let expr = ''
+			let count = ''
+			rules.forEach((rule) => {
+				expr = '(' + rule.feature + '@' + rule.resource + ')'
+				if ('count' in rule)
+					count = rule.count
+					parsedNposRule.push([expr, count])
+				this._addResources(rule.resource)
+			})
+		}
+		else
+			parsedNposRule = null
+		return parsedNposRule
+	}
+
+	/**
+	 * Parse pos type of rules.
+	 * @params {Object} rules - Rule type obejct
+	 * @return {string} regex - Regular expression to match the domain architecture of sequences.
+	 */
+	_parsePosRules(rules) {
+		let regex = ''
+		if (rules) {
+			let expr = ''
+			rules.forEach((rule) => {
+				if (rule.resource == 'fql')
+					expr = rule.feature
+				else
+					this._addResources(rule.resource)
+					expr = '(' + rule.feature + '@' + rule.resource + ')'
+				if ('count' in rule)
+					expr = expr + rule.count + '(?!' + rule.feature + '@' + rule.resource + ')'
+				regex += expr
+			})
+		}
+		else
+			regex = null
+		return regex
 	}
 
 	_seqDepotInfoToString(info) {
@@ -95,7 +156,6 @@ class Fql {
 		features.forEach((feature) => {
 			expression += feature.ft + '@' + feature.rc
 		})
-		//console.log(expression)
 		return expression
 	}
 	/**
@@ -128,22 +188,50 @@ class Fql {
 		return null
 	}
 
+	/**
+	 * Validates rules passed by user
+	 * @param {Object} rule - Pass the object with Npos and pos rules
+	 * @throws {Error} If rule is missing feature, resource or both
+	 * @return
+	 */
+
 	_isValidRule(rule) {
-		let noResource = true,
-			noFeature = true
+		if ('pos' in rule) {
+			rule.pos.forEach((posRule) => {
+				let noResource = true,
+					noFeature = true
 
-		if ('resource' in rule)
-			noResource = false
-		if ('feature' in rule)
-			noFeature = false
+				if ('resource' in posRule)
+					noResource = false
+				if ('feature' in posRule)
+					noFeature = false
 
-		if (noResource && noFeature)
-			throw new Error('Each rule must explicitly define a resource and feature: \n' + JSON.stringify(rule))
-		else if (noResource)
-			throw new Error('Each rule must explicitly define a resource: \n' + JSON.stringify(rule))
-		else if (noFeature)
-			throw new Error('Each rule must explicitly define a feature: \n' + JSON.stringify(rule))
+				if (noResource && noFeature)
+					throw new Error('Each pos rule must explicitly define a resource and feature: \n' + JSON.stringify(posRule))
+				else if (noResource)
+					throw new Error('Each pos rule must explicitly define a resource: \n' + JSON.stringify(posRule))
+				else if (noFeature)
+					throw new Error('Each pos rule must explicitly define a feature: \n' + JSON.stringify(posRule))
+			})
+		}
+		if ('Npos' in rule) {
+			rule.Npos.forEach((nposRule) => {
+				let noResource = true,
+					noFeature = true
 
+				if ('resource' in nposRule)
+					noResource = false
+				if ('feature' in nposRule)
+					noFeature = false
+
+				if (noResource && noFeature)
+					throw new Error('Each Npos rule must explicitly define a resource and feature: \n' + JSON.stringify(nposRule))
+				else if (noResource)
+					throw new Error('Each Npos rule must explicitly define a resource: \n' + JSON.stringify(nposRule))
+				else if (noFeature)
+					throw new Error('Each Npos rule must explicitly define a feature: \n' + JSON.stringify(nposRule))
+			})
+		}
 		return null
 	}
 }
