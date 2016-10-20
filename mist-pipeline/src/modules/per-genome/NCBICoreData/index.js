@@ -16,6 +16,7 @@ const PerGenomePipelineModule = require('lib/PerGenomePipelineModule'),
 	DseqsService = require('mist-lib/services/DseqsService'),
 	LocationStringParser = require('mist-lib/bio/LocationStringParser'),
 	genbankStream = require('mist-lib/streams/genbank-stream'),
+	genbankFixerStream = require('mist-lib/streams/genbank-fixer-stream'),
 	genbankMistStream = require('lib/streams/genbank-mist-stream'),
 	mutil = require('mist-lib/mutil'),
 	ncbiAssemblyReportStream = require('lib/streams/ncbi-assembly-report-stream')
@@ -135,6 +136,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 		let genbankFlatFile = this.fileMapper_.pathFor('genomic-genbank'),
 			readStream = fs.createReadStream(genbankFlatFile),
 			gunzipStream = zlib.createGunzip(),
+			genbankFixerReader = genbankFixerStream(),
 			genbankReader = genbankStream(),
 			genbankMistReader = genbankMistStream(this.genome_.id)
 
@@ -144,7 +146,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 		return this.sequelize_.transaction({
 			isolationLevel: 'READ COMMITTED' // Necessary to avoid getting: could not serialize access due to concurrent update errors
 		}, (transaction) => {
-			let pipeline = pumpify.obj(readStream, gunzipStream, genbankReader, genbankMistReader),
+			let pipeline = pumpify.obj(readStream, gunzipStream, genbankFixerReader, genbankReader, genbankMistReader),
 				index = 0
 
 			return streamEachPromise(pipeline, (mistData, next) => {
@@ -176,17 +178,19 @@ class NCBICoreData extends PerGenomePipelineModule {
 				this.setForeignKeyIds_(mistData.genes, 'component_id', dbComponent.id)
 				this.setForeignKeyIds_(mistData.componentFeatures, 'component_id', dbComponent.id)
 				let nDseqs = mistData.geneSeqs.length
-				if (nDseqs) {
-					logger.info(`Loading (ignoring duplicates) ${mistData.geneSeqs.length} gene seqs (dseqs)`)
-					return this.dseqsService_.insertIgnoreSeqs(mistData.geneSeqs, transaction)
-				}
+				if (!nDseqs)
+					return null
+
+				logger.info(`Loading (ignoring duplicates) ${mistData.geneSeqs.length} gene seqs (dseqs)`)
+				return this.dseqsService_.insertIgnoreSeqs(mistData.geneSeqs, transaction)
 			})
 			.then(() => {
 				let nAseqs = mistData.proteinSeqs.length
-				if (nAseqs) {
-					logger.info(`Loading (ignoring duplicates) ${mistData.proteinSeqs.length} protein seqs (aseqs)`)
-					return this.aseqsService_.insertIgnoreSeqs(mistData.proteinSeqs, transaction)
-				}
+				if (!nAseqs)
+					return null
+
+				logger.info(`Loading (ignoring duplicates) ${mistData.proteinSeqs.length} protein seqs (aseqs)`)
+				return this.aseqsService_.insertIgnoreSeqs(mistData.proteinSeqs, transaction)
 			})
 			.then(() => {
 				artificialGeneIds = mistData.genes.map((x) => x.id)
@@ -207,21 +211,23 @@ class NCBICoreData extends PerGenomePipelineModule {
 				})
 				this.setIdsToNull_(mistData.xrefs)
 				let nXrefs = mistData.xrefs.length
-				if (nXrefs) {
-					logger.info(`Loading ${mistData.xrefs.length} xrefs`)
-					return this.models_.Xref.bulkCreate(mistData.xrefs, {validate: true, transaction})
-				}
+				if (!nXrefs)
+					return null
+
+				logger.info(`Loading ${mistData.xrefs.length} xrefs`)
+				return this.models_.Xref.bulkCreate(mistData.xrefs, {validate: true, transaction})
 			})
 			.then(() => {
 				let nComponentFeatures = mistData.componentFeatures.length
-				if (nComponentFeatures) {
-					logger.info(`Loading ${mistData.componentFeatures.length} component features`)
-					this.setIdsToNull_(mistData.componentFeatures)
-					return this.models_.ComponentFeature.bulkCreate(mistData.componentFeatures, {
-						validate: true,
-						transaction
-					})
-				}
+				if (!nComponentFeatures)
+					return null
+
+				logger.info(`Loading ${mistData.componentFeatures.length} component features`)
+				this.setIdsToNull_(mistData.componentFeatures)
+				return this.models_.ComponentFeature.bulkCreate(mistData.componentFeatures, {
+					validate: true,
+					transaction
+				})
 			})
 		})
 	}
