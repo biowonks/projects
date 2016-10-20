@@ -18,7 +18,7 @@
     "url": "https://github.com/sdelements/node-slate/issues"
   },
   "homepage": "https://github.com/sdelements/node-slate#readme",
-  "devDependencies": {
+  "dependencies": {
     "del": "^2.2.2",
     "gulp": "^3.9.1",
     "gulp-clean-css": "^2.0.13",
