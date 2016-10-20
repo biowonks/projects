@@ -36,9 +36,9 @@ describe('Feature Query Language - FQL', function() {
 		beforeEach(function() {
 			fql = new Fql()
 		})
-		it('If no rules are applied, should return only trues', function() {
+		it('If no rules are applied, should return only false', function() {
 			let results = fql.applyFilter(sampleData)
-			let expected = new Array(sampleData.length).fill(true)
+			let expected = new Array(sampleData.length).fill(false)
 			expect(expected).eql(results)
 		})
 	})
@@ -707,7 +707,7 @@ describe('Feature Query Language - FQL', function() {
 			})
 		})
 		describe('Multiple Rules - OR mode', () => {
-			it.only('Filter proteins sequences with at least 1 match to CheW domain in pfam28 OR only 1 match to HATPase_c domain in pfam28', function() {
+			it('Filter proteins sequences with at least 2 matches to CheW domain in pfam28 OR only 1 match to HATPase_c domain in pfam28', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
@@ -755,7 +755,7 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(expected).eql(fql.match)
 			})
-			it('Filter proteins sequences with at least 1 match to CheW domain in pfam28 AND only 1 match to HATPase_c domain in pfam28 AND NO matches to Response_reg in pfam28', function() {
+			it('Filter proteins sequences with at least 2 match to CheW domain in pfam28 OR only 1 match to HATPase_c domain in pfam28 OR only 1 matches to Response_reg in pfam28', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
@@ -763,17 +763,25 @@ describe('Feature Query Language - FQL', function() {
 							{
 								resource: 'pfam28',
 								feature: 'CheW',
-								count: '{1,}'
-							},
+								count: '{2,}'
+							}
+						]
+					},
+					{
+						Npos: [
 							{
 								resource: 'pfam28',
 								feature: 'HATPase_c',
 								count: '{1}'
 							},
+						]
+					},
+					{
+						Npos: [
 							{
 								resource: 'pfam28',
 								feature: 'Response_reg',
-								count: '{0}'
+								count: '{1}'
 							}
 						]
 					}
@@ -781,16 +789,16 @@ describe('Feature Query Language - FQL', function() {
 				fql.loadRules(setOfRules)
 				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
+					true, // CheW | CheW
+					true, // CheW | Response_reg
 					false, // CheW
 					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
 					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					true, // CheW | CheW | CheW
+					true, // Response_reg | NMT1_2 | CheW
 					false, // CheW | CheR
-					false, // Response_reg | CheW
+					true, // Response_reg | CheW
 					false, // TM | Cache_1 | TM | HAMP | MCPsignal
 					false, // HAMP | MCPsignal
 					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal

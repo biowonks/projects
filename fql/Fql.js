@@ -41,12 +41,15 @@ class Fql {
 		let matchList = []
 		data.forEach((info) => {
 			let stringInfo = this._seqDepotInfoToString(info)
-			let isMatch = true
+			let isMatch = false,
+				newMatch = true
 			this.parsedRules.forEach((parsedRule) => {
+				newMatch = true
 				if ( parsedRule.pos !== null)
-					isMatch = isMatch && this._testPos(stringInfo, parsedRule.pos) 
+					newMatch = this._testPos(stringInfo, parsedRule.pos) 
 				if ('Npos' in parsedRule)
-					isMatch = isMatch && this._testNpos(stringInfo, parsedRule.Npos)
+					newMatch = newMatch && this._testNpos(stringInfo, parsedRule.Npos)
+				isMatch = isMatch || newMatch
 			})
 			matchList.push(isMatch)
 		})
