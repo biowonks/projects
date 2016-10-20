@@ -43,13 +43,34 @@ class Fql {
 			let stringInfo = this._seqDepotInfoToString(info)
 			let isMatch = true
 			this.parsedRules.forEach((parsedRule) => {
-				// NO .... need to work on this now. applying filters.
-				isMatch = isMatch && this._testPos(stringInfo, parsedRule.pos) && this._testNpos(stringInfo, parsedRule.Npos)
+				if ( parsedRule.pos !== null)
+					isMatch = isMatch && this._testPos(stringInfo, parsedRule.pos) 
+				if ('Npos' in parsedRule)
+					isMatch = isMatch && this._testNpos(stringInfo, parsedRule.Npos)
 			})
 			matchList.push(isMatch)
 		})
 		this.match = matchList
 		return matchList
+	}
+
+	_testNpos(stringInfo, rules) {
+		let match = true
+		if (rules) {
+			rules.forEach((rule) => {
+				if (rule[1] == '')
+					match = match && ( stringInfo.indexOf(rule[0]) === -1 ? false : true )
+				else {
+					let interval = rule[1].match('\{([^}]+)\}')[1].split(',')
+					if (interval.length > 1) {
+						match = match && ( (stringInfo.split(rule[0]).length - 1 >= parseInt(interval[0]) ? true : false ) && (stringInfo.split(rule[0]).length - 1 <= parseInt(interval[1]) ? true : false ))
+					}
+					else
+						match = match && stringInfo.split(rule[0]).length - 1 === parseInt(interval[0])
+				}
+			})
+		}
+		return match
 	}
 
 	_testPos(stringInfo, regex) {
@@ -95,7 +116,7 @@ class Fql {
 			let expr = ''
 			let count = ''
 			rules.forEach((rule) => {
-				expr = '(' + rule.feature + '@' + rule.resource + ')'
+				expr = rule.feature + '@' + rule.resource
 				if ('count' in rule)
 					count = rule.count
 					parsedNposRule.push([expr, count])
@@ -117,13 +138,15 @@ class Fql {
 		if (rules) {
 			let expr = ''
 			rules.forEach((rule) => {
-				if (rule.resource == 'fql')
+				if (rule.resource === 'fql') {
 					expr = rule.feature
-				else
+				}	
+				else {
 					this._addResources(rule.resource)
 					expr = '(' + rule.feature + '@' + rule.resource + ')'
-				if ('count' in rule)
-					expr = expr + rule.count + '(?!' + rule.feature + '@' + rule.resource + ')'
+					if ('count' in rule)
+						expr = expr + rule.count + '(?!' + rule.feature + '@' + rule.resource + ')'
+				}
 				regex += expr
 			})
 		}
