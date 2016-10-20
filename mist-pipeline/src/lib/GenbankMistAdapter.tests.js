@@ -369,6 +369,27 @@ describe('GenbankMistAdapter', function() {
 		})
 
 		describe('features', function() {
+			it('next feature to gene without locus tag does not cause error', function() {
+				let x = new GenbankMistAdapter()
+				refSeq.features = [
+					{
+						location: '5..10',
+						key: 'gene',
+						locus_tag: 'X_1'
+					},
+					{
+						location: '10..20',
+						key: 'dummy'
+					}
+				]
+
+				let result = x.formatRefSeq(refSeq)
+				expect(result.genes.length).equal(1)
+				let gene = result.genes[0]
+				expect(gene.id).equal(1)
+				expect(gene.location).equal('5..10')
+			})
+
 			it('sorted by start, location length, location string, gene, remainder', function() {
 				let x = new GenbankMistAdapter()
 				refSeq.features = [
