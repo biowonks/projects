@@ -30,6 +30,9 @@ let Sequelize = null,
 
 try {
 	fs.mkdirSync('./build')
+
+	// Cheater way to get the favicon symlink to work as expected for the API
+	fs.symlinkSync('images/favicon.ico', './build/favicon.ico')
 }
 catch (error) {
 	// noop
