@@ -23,12 +23,7 @@ const pugCompileOptions = {
 	kRouteTemplateFile = path.resolve(__dirname, '..', 'source', 'templates', 'route.pug')
 
 // Other
-let routeTemplateFn = null,
-	languageMap = {
-		shell: 'bash',
-		node: 'javascript'
-	}
-
+let routeTemplateFn = null
 try {
 	routeTemplateFn = pug.compileFile(kRouteTemplateFile, pugCompileOptions)
 }
