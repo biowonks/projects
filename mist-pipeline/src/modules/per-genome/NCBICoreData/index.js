@@ -140,6 +140,10 @@ class NCBICoreData extends PerGenomePipelineModule {
 			genbankReader = genbankStream(),
 			genbankMistReader = genbankMistStream(this.genome_.id)
 
+		genbankReader.on('error', (error) => {
+			this.logger_.fatal(error, 'Genbank reader error')
+		})
+
 		// Load the entire genome and its related data in a single transaction. Each "record"
 		// returned from the genbankMistReader is a component with its own set of genes, aseqs,
 		// etc.
@@ -153,7 +157,8 @@ class NCBICoreData extends PerGenomePipelineModule {
 				let component = mistData.component,
 					tmpLogger = this.logger_.child({
 						record: component.accession + '.' + component.version,
-						index
+						index,
+						numComponents: this.assemblyReportMap_.size
 					})
 
 				++index
