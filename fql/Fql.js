@@ -63,6 +63,8 @@ class Fql {
 				else {
 					let interval = rule[1].match('\{([^}]+)\}')[1].split(',')
 					if (interval.length > 1) {
+						if (interval[1] === '')
+							interval[1] = Number.MAX_SAFE_INTEGER
 						match = match && ( (stringInfo.split(rule[0]).length - 1 >= parseInt(interval[0]) ? true : false ) && (stringInfo.split(rule[0]).length - 1 <= parseInt(interval[1]) ? true : false ))
 					}
 					else

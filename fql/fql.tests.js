@@ -415,161 +415,397 @@ describe('Feature Query Language - FQL', function() {
 		it('Nothing will search whole database')
 	})
 	describe('Non positional rules', () => {
-		it('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single domain from pfam29', function() {
-			let fql = new Fql()
-			let setOfRules = [
-				{
-					Npos: [
-						{
-							resource: 'pfam28',
-							feature: 'CheW'
-						}
-					]
-				}
-			]
-			fql.loadRules(setOfRules)
-			fql.applyFilter(sampleData)
-			let expected = [
-				true, // CheW | CheW
-				true, // CheW | Response_reg
-				true, // CheW
-				true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-				true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-				true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-				true, // CheW | CheW | CheW
-				true, // Response_reg | NMT1_2 | CheW
-				true, // CheW | CheR
-				true, // Response_reg | CheW
-				false, // TM | Cache_1 | TM | HAMP | MCPsignal
-				false, // HAMP | MCPsignal
-				false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-				false, // **
-				false, // **
-				false, // TM | TM | MCPsignal
-				false, // TM | MCPsignal | Rhodanese
-				false, // TM | TM | TM | TM | MCPsignal
-				false, // TM | TM | TM | TM | TM | TM | MCPsignal
-				false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-			]
-			expect(expected).eql(fql.match)
+		describe('Single Rule - If broken, fix this first', () => {
+			it('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single domain from pfam29', function() {
+				let fql = new Fql()
+				let setOfRules = [
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW'
+							}
+						]
+					}
+				]
+				fql.loadRules(setOfRules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					true, // CheW | CheW
+					true, // CheW | Response_reg
+					true, // CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					true, // CheW | CheW | CheW
+					true, // Response_reg | NMT1_2 | CheW
+					true, // CheW | CheR
+					true, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					false, // TM | TM | MCPsignal
+					false, // TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(expected).eql(fql.match)
+			})
+			it('Filter proteins sequences with 1 match, anywhere in the sequence, to a single domain from pfam29', function() {
+				let fql = new Fql()
+				let setOfRules = [
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW',
+								count: '{1}'
+							}
+						]
+					}
+				]
+				fql.loadRules(setOfRules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					false, // CheW | CheW
+					true, // CheW | Response_reg
+					true, // CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					false, // CheW | CheW | CheW
+					true, // Response_reg | NMT1_2 | CheW
+					true, // CheW | CheR
+					true, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					false, // TM | TM | MCPsignal
+					false, // TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(expected).eql(fql.match)
+			})
+			it('Filter proteins sequences with 1 or 2 matches, anywhere in the sequence, to a single domain from pfam29', function() {
+				let fql = new Fql()
+				let setOfRules = [
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW',
+								count: '{1,2}'
+							}
+						]
+					}
+				]
+				fql.loadRules(setOfRules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					true, // CheW | CheW
+					true, // CheW | Response_reg
+					true, // CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					false, // CheW | CheW | CheW
+					true, // Response_reg | NMT1_2 | CheW
+					true, // CheW | CheR
+					true, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					false, // TM | TM | MCPsignal
+					false, // TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(expected).eql(fql.match)
+			})
+			it('Filter proteins sequences with 2 or 3 matches, anywhere in the sequence, to a single domain from pfam29', function() {
+				let fql = new Fql()
+				let setOfRules = [
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW',
+								count: '{2,3}'
+							}
+						]
+					}
+				]
+				fql.loadRules(setOfRules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					true, // CheW | CheW
+					false, // CheW | Response_reg
+					false, // CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					true, // CheW | CheW | CheW
+					false, // Response_reg | NMT1_2 | CheW
+					false, // CheW | CheR
+					false, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					false, // TM | TM | MCPsignal
+					false, // TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(expected).eql(fql.match)
+			})
+			it('Filter proteins sequences with 3 or more transmembrane regions, anywhere in the sequence', function() {
+				let fql = new Fql()
+				let setOfRules = [
+					{
+						Npos: [
+							{
+								resource: 'das',
+								feature: 'TM',
+								count: '{3,}'
+							}
+						]
+					}
+				]
+				fql.loadRules(setOfRules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					false, // CheW | CheW
+					false, // CheW | Response_reg
+					false, // CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					false, // CheW | CheW | CheW
+					false, // Response_reg | NMT1_2 | CheW
+					false, // CheW | CheR
+					false, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					false, // TM | TM | MCPsignal
+					false, // TM | MCPsignal | Rhodanese
+					true, // TM | TM | TM | TM | MCPsignal
+					true, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(expected).eql(fql.match)
+			})
 		})
-		it('Filter proteins sequences with 1 match, anywhere in the sequence, to a single domain from pfam29', function() {
-			let fql = new Fql()
-			let setOfRules = [
-				{
-					Npos: [
-						{
-							resource: 'pfam28',
-							feature: 'CheW',
-							count: '{1}'
-						}
-					]
-				}
-			]
-			fql.loadRules(setOfRules)
-			fql.applyFilter(sampleData)
-			let expected = [
-				false, // CheW | CheW
-				true, // CheW | Response_reg
-				true, // CheW
-				true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-				false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-				true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-				false, // CheW | CheW | CheW
-				true, // Response_reg | NMT1_2 | CheW
-				true, // CheW | CheR
-				true, // Response_reg | CheW
-				false, // TM | Cache_1 | TM | HAMP | MCPsignal
-				false, // HAMP | MCPsignal
-				false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-				false, // **
-				false, // **
-				false, // TM | TM | MCPsignal
-				false, // TM | MCPsignal | Rhodanese
-				false, // TM | TM | TM | TM | MCPsignal
-				false, // TM | TM | TM | TM | TM | TM | MCPsignal
-				false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-			]
-			expect(expected).eql(fql.match)
+		describe('Multiple Rules - AND mode', () => {
+			it('Filter proteins sequences with at least 1 match to CheW domain in pfam28 AND only 1 match to HATPase_c domain in pfam28', function() {
+				let fql = new Fql()
+				let setOfRules = [
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW',
+								count: '{1,}'
+							},
+							{
+								resource: 'pfam28',
+								feature: 'HATPase_c',
+								count: '{1}'
+							}
+						]
+					}
+				]
+				fql.loadRules(setOfRules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					false, // CheW | CheW
+					false, // CheW | Response_reg
+					false, // CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					false, // CheW | CheW | CheW
+					false, // Response_reg | NMT1_2 | CheW
+					false, // CheW | CheR
+					false, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					false, // TM | TM | MCPsignal
+					false, // TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(expected).eql(fql.match)
+			})
+			it('Filter proteins sequences with at least 1 match to CheW domain in pfam28 AND only 1 match to HATPase_c domain in pfam28 AND NO matches to Response_reg in pfam28', function() {
+				let fql = new Fql()
+				let setOfRules = [
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW',
+								count: '{1,}'
+							},
+							{
+								resource: 'pfam28',
+								feature: 'HATPase_c',
+								count: '{1}'
+							},
+							{
+								resource: 'pfam28',
+								feature: 'Response_reg',
+								count: '{0}'
+							}
+						]
+					}
+				]
+				fql.loadRules(setOfRules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					false, // CheW | CheW
+					false, // CheW | Response_reg
+					false, // CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					false, // CheW | CheW | CheW
+					false, // Response_reg | NMT1_2 | CheW
+					false, // CheW | CheR
+					false, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					false, // TM | TM | MCPsignal
+					false, // TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(expected).eql(fql.match)
+			})
 		})
-		it('Filter proteins sequences with 1 or 2 matches, anywhere in the sequence, to a single domain from pfam29', function() {
-			let fql = new Fql()
-			let setOfRules = [
-				{
-					Npos: [
-						{
-							resource: 'pfam28',
-							feature: 'CheW',
-							count: '{1,2}'
-						}
-					]
-				}
-			]
-			fql.loadRules(setOfRules)
-			fql.applyFilter(sampleData)
-			let expected = [
-				true, // CheW | CheW
-				true, // CheW | Response_reg
-				true, // CheW
-				true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-				true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-				true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-				false, // CheW | CheW | CheW
-				true, // Response_reg | NMT1_2 | CheW
-				true, // CheW | CheR
-				true, // Response_reg | CheW
-				false, // TM | Cache_1 | TM | HAMP | MCPsignal
-				false, // HAMP | MCPsignal
-				false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-				false, // **
-				false, // **
-				false, // TM | TM | MCPsignal
-				false, // TM | MCPsignal | Rhodanese
-				false, // TM | TM | TM | TM | MCPsignal
-				false, // TM | TM | TM | TM | TM | TM | MCPsignal
-				false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-			]
-			expect(expected).eql(fql.match)
+		describe('Multiple Rules - OR mode', () => {
+			it.only('Filter proteins sequences with at least 1 match to CheW domain in pfam28 OR only 1 match to HATPase_c domain in pfam28', function() {
+				let fql = new Fql()
+				let setOfRules = [
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW',
+								count: '{2,}'
+							}
+						]
+					},
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: 'HATPase_c',
+								count: '{1}'
+							}
+						]
+					}
+				]
+				fql.loadRules(setOfRules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					true, // CheW | CheW
+					false, // CheW | Response_reg
+					false, // CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					true, // CheW | CheW | CheW
+					false, // Response_reg | NMT1_2 | CheW
+					false, // CheW | CheR
+					false, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					false, // TM | TM | MCPsignal
+					false, // TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(expected).eql(fql.match)
+			})
+			it('Filter proteins sequences with at least 1 match to CheW domain in pfam28 AND only 1 match to HATPase_c domain in pfam28 AND NO matches to Response_reg in pfam28', function() {
+				let fql = new Fql()
+				let setOfRules = [
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW',
+								count: '{1,}'
+							},
+							{
+								resource: 'pfam28',
+								feature: 'HATPase_c',
+								count: '{1}'
+							},
+							{
+								resource: 'pfam28',
+								feature: 'Response_reg',
+								count: '{0}'
+							}
+						]
+					}
+				]
+				fql.loadRules(setOfRules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					false, // CheW | CheW
+					false, // CheW | Response_reg
+					false, // CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					false, // CheW | CheW | CheW
+					false, // Response_reg | NMT1_2 | CheW
+					false, // CheW | CheR
+					false, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					false, // TM | TM | MCPsignal
+					false, // TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(expected).eql(fql.match)
+			})
 		})
-		it('Filter proteins sequences with 2 or 3 matches, anywhere in the sequence, to a single domain from pfam29', function() {
-			let fql = new Fql()
-			let setOfRules = [
-				{
-					Npos: [
-						{
-							resource: 'pfam28',
-							feature: 'CheW',
-							count: '{2,3}'
-						}
-					]
-				}
-			]
-			fql.loadRules(setOfRules)
-			fql.applyFilter(sampleData)
-			let expected = [
-				true, // CheW | CheW
-				false, // CheW | Response_reg
-				false, // CheW
-				false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-				true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-				false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-				true, // CheW | CheW | CheW
-				false, // Response_reg | NMT1_2 | CheW
-				false, // CheW | CheR
-				false, // Response_reg | CheW
-				false, // TM | Cache_1 | TM | HAMP | MCPsignal
-				false, // HAMP | MCPsignal
-				false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-				false, // **
-				false, // **
-				false, // TM | TM | MCPsignal
-				false, // TM | MCPsignal | Rhodanese
-				false, // TM | TM | TM | TM | MCPsignal
-				false, // TM | TM | TM | TM | TM | TM | MCPsignal
-				false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-			]
-			expect(expected).eql(fql.match)
-		})
+
 	})
 	describe('Single feature request from single resource', function() {
 		it('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single domain from pfam29', function() {

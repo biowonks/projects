@@ -29,12 +29,28 @@ The rules are passed as a JSON object to FQL and it has two keys: `Npos` for non
 
 The way rules are organized in FQL is the following:
 
-* Set of rules
-    * rules
-        * Individual rule.
+* Set of rules - Array containing alternative matching rules
+    * rules - Object containing matching rules that must all match. It is divided in positional and non-positional
+        * Individual rule. - single snipet of matching definition.
 
-The *set of rules*
+Example of a set of rules:
 
+```javascript
+[
+    {
+        pos: [
+            {
+                resource: 'fql',
+                feature: '^'
+            },
+            {
+                resources: 'pfam28',
+                feature: 'CheW'
+            },
+        ]
+    }
+]
+```
 
 Let's explore the types of rules:
 
@@ -50,14 +66,143 @@ If you want to select all sequences with any number of matches to the CheW domai
         "Npos": [
             {
                 resource: "pfam28"
-                feature: "CheW
+                feature: "CheW"
+            }
+        ]
+    }
+]
+```
+If you do not want to define how many times the domain must appear, you can use the key `count`. For example:
+
+If you want to select all sequences with only one matches to the CheW domain in Pfam28 database:
+
+```javascript
+[
+    {
+        "Npos": [
+            {
+                resource: "pfam28"
+                feature: "CheW",
+                count: '{1}'
             }
         ]
     }
 ]
 ```
 
+Notice that the *value* in `count` is between curly brackets and it is a `string`. This is because FQL borrows from the Regular Expression the notation for quantifiers which alows to not pass only numbers but also intervals. For example:
 
+If you want to select all sequences with 1, 2 or 3 matches to the CheW domain in Pfam28 database:
+
+```javascript
+[
+    {
+        "Npos": [
+            {
+                resource: "pfam28"
+                feature: "CheW",
+                count: '{1,3}'
+            }
+        ]
+    }
+]
+```
+
+If you want to select all sequences with 2 or more matches to the CheW domain in Pfam28 database:
+
+```javascript
+[
+    {
+        "Npos": [
+            {
+                resource: "pfam28"
+                feature: "CheW",
+                count: '{2,}'
+            }
+        ]
+    }
+]
+```
+
+Note that as in regular experession, FQL also does not include support for *no more than*. Instead you can use `{1,4}` to indicate presence and no more than 4 matches.
+
+The last important issue to know about **non-positional** rules in FQL is that you can add rules to the `Npos` array of objects and they all must match. It is a `AND` type of association. For example:
+
+If you want to select all sequences with at least 1 match to CheW domain in pfam28 AND only 1 match to HATPase_c domain in pfam28:
+
+```javascript
+[
+    {
+        "Npos": [
+            {
+                resource: "pfam28"
+                feature: "CheW",
+                count: '{1,}'
+            },
+            {
+                resource: "pfam28"
+                feature: "HATPase_c",
+                count: '{1}'
+            }
+        ]
+    }
+]
+```
+
+Finally, requirements for abscence of certain feature can be passed here as well by using `{0}`. For example:
+
+If you want to select all sequences with at least 1 match to CheW domain in pfam28 AND only 1 match to HATPase_c domain in pfam28 AND NO matches to `Response_reg` in pfam28:
+
+```javascript
+[
+    {
+        "Npos": [
+            {
+                resource: "pfam28"
+                feature: "CheW",
+                count: '{1,}'
+            },
+            {
+                resource: "pfam28"
+                feature: "HATPase_c",
+                count: '{1}'
+            },
+            {
+                resource: "pfam28"
+                feature: "Response_reg",
+                count: '{0}'
+            }
+        ]
+    }
+]
+```
+
+You can also pass alternative rules. For that you need a new object in the *set of rules*. For example:
+
+If you want to select all sequences with at least 1 match to CheW domain in pfam28 AND only 1 match to HATPase_c domain in pfam28:
+
+```javascript
+[
+    {
+        Npos: [
+            {
+                resource: 'pfam28',
+                feature: 'CheW',
+                count: '{2,}'
+            }
+        ]
+    },
+    {
+        Npos: [
+            {
+                resource: 'pfam28',
+                feature: 'HATPase_c',
+                count: '{1}'
+            }
+        ]
+    }
+]
+```
 
 
 
