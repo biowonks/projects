@@ -587,7 +587,7 @@ describe('streams', function() {
 		// ------------------------------------------------
 		// ------------------------------------------------
 		// SOURCE
-		describe('SOURCE', function() {
+		describe.only('SOURCE', function() {
 			it('emits error if empty value', function() {
 				return parseThrowsError(closeInput('SOURCE      '))
 			})
@@ -651,6 +651,22 @@ describe('streams', function() {
 							'Campylobacterales',
 							'Helicobacteraceae',
 							'Helicobacter'
+						]
+					})
+				})
+			})
+
+			it('single line for the taxonomy', function() {
+				let input = 'SOURCE      halophilic archaeon DL31\n' +
+					'  ORGANISM  halophilic archaeon DL31\n' +
+					'            Archaea.'
+				return parseSingle(closeInput(input))
+				.then((result) => {
+					expect(result.source).deep.equal({
+						commonName: 'halophilic archaeon DL31',
+						formalName: 'halophilic archaeon DL31',
+						taxonomicRanks: [
+							'Archaea'
 						]
 					})
 				})

@@ -18,14 +18,13 @@
     "url": "https://github.com/sdelements/node-slate/issues"
   },
   "homepage": "https://github.com/sdelements/node-slate#readme",
-  "devDependencies": {
+  "dependencies": {
     "del": "^2.2.2",
     "gulp": "^3.9.1",
     "gulp-clean-css": "^2.0.13",
     "gulp-cli": "^1.2.2",
     "gulp-concat": "^2.6.0",
     "gulp-if": "^2.0.1",
-    "gulp-open": "^2.0.0",
     "gulp-rename": "^1.2.2",
     "gulp-sass": "^2.3.2",
     "gulp-uglify": "^2.0.0",

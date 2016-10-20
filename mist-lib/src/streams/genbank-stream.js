@@ -612,7 +612,15 @@ class GenbankStream extends stream.Transform {
 			if (ontoTaxonomy) {
 				taxonomy += ` ${line}`
 			}
-			else if (line.indexOf(';') >= 0) {
+			else if (line.indexOf(';') >= 0 || /^\w+\.$/.test(line)) {
+				/** Special case                ^^^^^^^^^^^^^^^^^^^^
+				 * In the event that there is a single taxonomic rank without any semicolons but a
+				 * terminal period. For example:
+				 *
+				 * SOURCE      halophilic archaeon DL31
+				 *   ORGANISM  halophilic archaeon DL31
+				 *             Archaea.
+				 */
 				ontoTaxonomy = true
 				taxonomy = line
 			}
