@@ -20,10 +20,14 @@ chown postgres:postgres server.key server.crt
 chmod 600 server.key server.crt
 mv server.key server.crt $PGDATA
 
-echo "ssl = on" >> $CONF_FILE
-echo "ssl_ciphers = 'DEFAULT:!LOW:!EXP:!MD5:@STRENGTH'" >> $CONF_FILE
-echo "ssl_cert_file = '$PGDATA/server.crt'" >> $CONF_FILE
-echo "ssl_key_file = '$PGDATA/server.key'" >> $CONF_FILE
+echo "ssl = on
+ssl_ciphers = 'DEFAULT:!LOW:!EXP:!MD5:@STRENGTH'
+ssl_cert_file = '$PGDATA/server.crt'
+ssl_key_file = '$PGDATA/server.key'
+shared_preload_libraries = 'pg_stat_statements'
+pg_stat_statements.track = all
+track_activity_query_size = 2048
+" >> $CONF_FILE
 
 if [[ -n "$PG_CONF" ]]; then
     echo "$PG_CONF" >> $CONF_FILE
@@ -44,6 +48,9 @@ GRANT CONNECT ON DATABASE $DB_NAME TO $DB_USER;
 GRANT ALL ON DATABASE $DB_NAME TO $DB_USER;
 \c $DB_NAME;
 ALTER SCHEMA public OWNER TO $DB_USER;
+
+-- Enable statement tracking
+CREATE EXTENSION pg_stat_statements;
 
 EOSQL
 

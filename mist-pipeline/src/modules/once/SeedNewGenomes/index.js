@@ -1,3 +1,30 @@
+/**
+ * The SeedNewGenomes module handles downloading assembly summary files from NCBI, finding new
+ * genomes not in the MiST database, and inserting these into the genomes table. Only those fields
+ * contained in the summary file are are inserted. All other data (e.g. replicon metadata, DNA,
+ * genes, etc.) are added with other modules.
+ *
+ * This module uses the following approach:
+ * 1) Download the archaea and bacterial summary files from the NCBI FTP site (if they are not
+ *    already on the filesystem and are younger than 24 hours)
+ * 2) Read the entire assembly summary file into memory as an array of objects
+ * 3) Create a temporary table for storing genome summaries
+ * 4) Process the assembly summary file in batches. For each batch,
+ *    a) start transaction
+ *    b) load entire batch of summaries into the temporary table
+ *    c) insert new genomes in temporary table but not in genomes table up to the maximum of
+ *       the batch size or configured max number of genomes per run
+ *    d) truncate temporary table
+ *    e) commit transaction
+ *
+ * The temporary table is an optimization step. Prior efforts entailed querying the database for
+ * each genome one at a time. From a remote connection, each of these queries took ~42ms (vs 1ms
+ * locally). Even at 1ms, looping through 60,000 entries would still require a significant
+ * amount of time. To mitigate this, a batch of summaries are loaded into the temporary table
+ * and then left outer joined against the genomes table. Those records not already in the genomes
+ * table are inserted. This drastically improved performance.
+ */
+
 'use strict'
 
 // Core
@@ -13,7 +40,61 @@ const parse = require('csv-parse'),
 
 // Local
 const OncePipelineModule = require('lib/OncePipelineModule'),
+	generatorUtil = require('core-lib/generator-util'),
 	mutil = require('mist-lib/mutil')
+
+// Constants
+const kBatchSize = 50,
+	kTempTableName = 'seed_new_genomes__summaries',
+	kCreateTempTableSql = `CREATE TEMPORARY TABLE ${kTempTableName} (
+	accession text not null,
+	version integer not null,
+	genbank_assembly_accession text,
+	genbank_assembly_version integer,
+	taxonomy_id integer,
+	name text not null,
+	refseq_category text,
+	bioproject text,
+	biosample text,
+	wgs_master text,
+	strain text,
+	isolate text,
+	version_status text,
+	assembly_level text,
+	release_type text,
+	release_date date,
+	assembly_name text,
+	submitter text,
+	ftp_path text,
+
+	unique(accession, version)
+)`,
+	kTempTableFields = [
+		'accession',
+		'version',
+		'genbank_assembly_accession',
+		'genbank_assembly_version',
+		'taxonomy_id',
+		'name',
+		'refseq_category',
+		'bioproject',
+		'biosample',
+		'wgs_master',
+		'strain',
+		'isolate',
+		'version_status',
+		'assembly_level',
+		'release_type',
+		'release_date',
+		'assembly_name',
+		'submitter',
+		'ftp_path'
+	]
+
+/**
+ * Private error used to prematurely exit a Promise.each
+ */
+class ExitPromiseEachError extends Error {}
 
 module.exports =
 class SeedNewGenomes extends OncePipelineModule {
@@ -27,6 +108,7 @@ class SeedNewGenomes extends OncePipelineModule {
 		this.seedConfig_ = this.config_.seedNewGenomes
 		this.numGenomesSeeded_ = 0
 		this.dataDir_ = __dirname
+		this.QueryGenerator_ = this.models_.Genome.QueryGenerator
 	}
 
 	optimize() {
@@ -108,47 +190,30 @@ class SeedNewGenomes extends OncePipelineModule {
 					skippedFirstLine = true
 				done()
 			}),
-			stream = pumpify.obj(readStream, split(), skipLineStream, parser)
+			genomeSummaries = []
 
 		return new Promise((resolve, reject) => {
-			streamEach(stream, (row, next) => {
+			let pipeline = pumpify.obj(readStream, split(), skipLineStream, parser)
+			streamEach(pipeline, (row, next) => {
 				this.shutdownCheck_()
 				let genomeData = this.genomeDataFromRow_(row)
-				if (genomeData.refseq_category !== 'representative genome' &&
-					genomeData.refseq_category !== 'reference genome') {
-					next()
-					return
-				}
-
-				this.insertGenome_(genomeData)
-				.then((genome) => {
-					if (genome) {
-						this.logger_.info({
-							name: genome.name,
-							accession: genome.accession,
-							version: genome.version
-						}, 'Inserted new genome')
-
-						this.numGenomesSeeded_++
-						if (this.maximumGenomesSeeded_()) {
-							this.logger_.info({
-								numGenomesSeeded: this.numGenomesSeeded_
-							}, 'Maximum number of genomes have been seeded')
-							stream.destroy()
-							resolve()
-							return
-						}
-					}
-
-					next()
-				})
-				.catch(next)
+				if (genomeData.refseq_category === 'representative genome' ||
+					genomeData.refseq_category === 'reference genome')
+					genomeSummaries.push(genomeData)
+				next()
 			}, (error) => {
 				if (error)
 					reject(error)
 				else
 					resolve()
 			})
+		})
+		.then(() => {
+			this.logger_.info(`Read ${genomeSummaries.length} genome summaries`)
+
+			return this.createTemporaryTable_()
+			.then(() => this.insertNewGenomes_(genomeSummaries))
+			.then(this.dropTemporaryTable_.bind(this))
 		})
 	}
 
@@ -190,17 +255,72 @@ class SeedNewGenomes extends OncePipelineModule {
 		return matches ? matches[1] : null
 	}
 
-	insertGenome_(genomeData) {
-		return this.sequelize_.transaction(() => {
-			return this.models_.Genome.find({
-				where: {
-					accession: genomeData.accession,
-					version: genomeData.version
-				}
+	createTemporaryTable_() {
+		return this.sequelize_.query(kCreateTempTableSql)
+	}
+
+	insertNewGenomes_(genomeSummaries) {
+		return Promise.each(generatorUtil.batch(genomeSummaries, kBatchSize), (genomeSummariesBatch) => {
+			this.shutdownCheck_()
+			return this.sequelize_.transaction((transaction) => {
+				return this.bulkInsertGenomeSummaries_(genomeSummariesBatch, transaction)
+				.then(() => this.addNewGenomes_(transaction))
+				.then(() => this.truncateTemporaryTable_(transaction))
 			})
-			.then((genome) => {
-				return !genome ? this.models_.Genome.create(genomeData) : null
+			.then(() => {
+				if (this.maximumGenomesSeeded_())
+					throw new ExitPromiseEachError()
 			})
 		})
+		.catch(ExitPromiseEachError, () => {}) // noop
+	}
+
+	bulkInsertGenomeSummaries_(genomeSummaries, transaction) {
+		let sql = this.QueryGenerator_.bulkInsertQuery(
+			kTempTableName,
+			genomeSummaries,
+			{fields: kTempTableFields},
+			kTempTableFields
+		)
+
+		return this.sequelize_.query(sql, {transaction})
+	}
+
+	addNewGenomes_(transaction) {
+		let limit = this.seedConfig_.maxNewGenomesPerRun ?
+			Math.max(0, this.seedConfig_.maxNewGenomesPerRun - this.numGenomesSeeded_) :
+			null
+
+		let sql = `INSERT INTO ${this.models_.Genome.getTableName()} (${kTempTableFields.join(', ')})
+SELECT a.*
+FROM ${kTempTableName} a LEFT OUTER JOIN ${this.models_.Genome.getTableName()} b USING (accession, version)
+WHERE b.accession is null
+${limit ? 'LIMIT ' + limit : ''}
+RETURNING *`
+
+		return this.sequelize_.query(sql, {transaction, raw: true})
+		.then((result) => {
+			if (!result.length)
+				return
+
+			this.numGenomesSeeded_ += result.length
+			let newGenomes = result.map((genome) => {
+				return {
+					id: genome.id,
+					accession: genome.accession,
+					version: genome.version,
+					name: genome.name
+				}
+			})
+			this.logger_.info(newGenomes, `Inserted ${result.length} genome records`)
+		})
+	}
+
+	truncateTemporaryTable_(transaction) {
+		return this.sequelize_.query(`truncate table ${kTempTableName}`, {transaction})
+	}
+
+	dropTemporaryTable_() {
+		return this.sequelize_.query(`drop table ${kTempTableName}`)
 	}
 }

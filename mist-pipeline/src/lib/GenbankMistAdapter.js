@@ -249,7 +249,8 @@ class GenbankMistAdapter {
 
 				let nextFeature = features[i + 1],
 					sameLocation = nextFeature && geneData.location === nextFeature.location,
-					sameLocus = nextFeature && geneData.locus && geneData.locus === nextFeature.locus_tag[0]
+					sameLocus = nextFeature && geneData.locus && nextFeature.locus_tag &&
+						geneData.locus === nextFeature.locus_tag[0]
 				if (nextFeature && (sameLocation || sameLocus)) {
 					this.formatCognateGeneFeature_(nextFeature, geneData)
 					i++ // Skip the next feature since we are linking it with the gene
@@ -340,11 +341,11 @@ class GenbankMistAdapter {
 
 		features.sort(function(a, b) {
 			return a.$location.lowerBound() - b.$location.lowerBound() ||
-			geneIfSameLocus(a, b) ||
-			a.$location.length(isCircular, componentLength) - b.$location.length(isCircular, componentLength) ||
-			a.location.localeCompare(b.location) ||
-			(a.key === 'gene' ? -1 : 0) ||
-			(b.key === 'gene' ? 1 : 0)
+				geneIfSameLocus(a, b) ||
+				a.$location.length(isCircular, componentLength) - b.$location.length(isCircular, componentLength) ||
+				a.location.localeCompare(b.location) ||
+				(a.key === 'gene' ? -1 : 0) ||
+				(b.key === 'gene' ? 1 : 0)
 		})
 	}
 
@@ -453,7 +454,7 @@ class GenbankMistAdapter {
 		geneData.cognate_key = cognateFeature.key
 
 		let differentLocationSameLocus = geneData.location !== cognateFeature.location &&
-			geneData.locus && geneData.locus === cognateFeature.locus_tag[0]
+			geneData.locus && cognateFeature.locus_tag && geneData.locus === cognateFeature.locus_tag[0]
 		if (differentLocationSameLocus)
 			geneData.cognate_location = cognateFeature.location
 

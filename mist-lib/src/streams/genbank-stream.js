@@ -830,7 +830,7 @@ class GenbankStream extends stream.Transform {
 	parseQualifier_(featureInfo) {
 		let matches = /^\/([\w_\-'*]{1,20})(?:=(.+))?/.exec(featureInfo)
 		if (!matches)
-			throw new Error('Invalid feature qualifier line')
+			throw new Error(`Invalid feature qualifier line: ${featureInfo}`)
 
 		return {
 			name: matches[1],
@@ -851,7 +851,7 @@ class GenbankStream extends stream.Transform {
 				endsWithQuote = value.endsWith('"'),
 				freeFormText = startsWithQuote || endsWithQuote
 			if (startsWithQuote && !endsWithQuote || !startsWithQuote && endsWithQuote)
-				throw new Error(`Invalid qualifier free-form text for qualifier, ${this.currentQualifierName_}: missing beginning / end quotes`)
+				throw new Error(`Invalid qualifier free-form text for qualifier, ${this.currentQualifierName_}: missing beginning / end quotes (invalid value: ${value})`)
 			else if (freeFormText)
 				// Remove the leading and trailing quotes, and decode double quotes
 				value = value.slice(1, -1).replace(/""/g, '"')
