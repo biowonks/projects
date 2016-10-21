@@ -47,6 +47,7 @@ class FileMapper {
 
 		let urlAssemblyName = this.genome_.assembly_name.replace(/ /g, '_')
 			.replace(/#/g, '_')
+			.replace(/_{2,}/, '_')
 		return `${this.compoundAccession_()}_${urlAssemblyName}`
 	}
 
