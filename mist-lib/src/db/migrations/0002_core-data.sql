@@ -115,11 +115,10 @@ create table xrefs (
 	database text not null,
 	database_id text not null,
 
-	unique(gene_id, database_id),
+	unique(gene_id, database_id, database),
 
 	foreign key(gene_id) references genes(id) on update cascade on delete cascade
 );
-create index on xrefs(database_id);
 
 -- Catch all for the other features. Do not necessarily capture the DNA sequence because these will
 -- rarely be utilized. If necessary, these may be computed on demand.
