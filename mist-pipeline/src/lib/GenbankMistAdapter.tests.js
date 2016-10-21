@@ -511,6 +511,19 @@ describe('GenbankMistAdapter', function() {
 				})
 			})
 
+			it('gene synonym without a name', function() {
+				let x = new GenbankMistAdapter()
+				refSeq.features = [
+					{
+						key: 'gene',
+						location: '1..2',
+						gene_synonym: ['syn1']
+					}
+				]
+				let result = x.formatRefSeq(refSeq)
+				expect(result.genes[0].names).deep.equal(['syn1'])
+			})
+
 			it('gene + CDS populates CDS fields', function() {
 				let x = new GenbankMistAdapter()
 				refSeq.features = [

@@ -370,6 +370,8 @@ class GenbankMistAdapter {
 		geneData.old_locus = feature.old_locus_tag ? feature.old_locus_tag[0] : null
 		geneData.names = feature.gene || null
 		if (feature.gene_synonym) {
+			if (!geneData.names)
+				geneData.names = []
 			for (let synonym of feature.gene_synonym)
 				geneData.names.push(synonym)
 		}
