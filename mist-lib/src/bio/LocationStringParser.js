@@ -18,7 +18,8 @@ const LocationPoint = require('./LocationPoint'),
 	BoundedLocationPoint = require('./BoundedLocationPoint'),
 	Location = require('./Location'),
 	ComplementLocation = require('./ComplementLocation'),
-	JoinLocation = require('./JoinLocation')
+	JoinLocation = require('./JoinLocation'),
+	ArrayLocation = require('./ArrayLocation')
 
 // --------------------------------------------------------
 // --------------------------------------------------------
@@ -88,17 +89,16 @@ class ComplementNode extends Node {
 class JoinNode extends Node {
 	location() {
 		assert(this.hasChildren(), 'join nodes must have at least one child')
-		let locations = []
-		this.children().forEach((childNode) => {
-			locations.push(childNode.location())
-		})
+		let locations = this.children().map((childNode) => childNode.location())
 		return new JoinLocation(locations)
 	}
 }
 
 class OrderNode extends Node {
 	location() {
-		throw new Error('not yet implemented')
+		assert(this.hasChildren(), 'order nodes must have at least one child')
+		let locations = this.children().map((childNode) => childNode.location())
+		return new ArrayLocation(locations)
 	}
 }
 
@@ -150,7 +150,7 @@ class LocationStringParser {
 		else if (/^order\(/.test(locationString)) {
 			let node = new OrderNode()
 			parentNode.push(node)
-			this.recursivelyParse_(locationString.substr('join('.length), node)
+			this.recursivelyParse_(locationString.substr('order('.length), node)
 		}
 		else if (locationString[0] === ',') {
 			this.recursivelyParse_(locationString.substr(1), parentNode)

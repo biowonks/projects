@@ -587,7 +587,7 @@ describe('streams', function() {
 		// ------------------------------------------------
 		// ------------------------------------------------
 		// SOURCE
-		describe.only('SOURCE', function() {
+		describe('SOURCE', function() {
 			it('emits error if empty value', function() {
 				return parseThrowsError(closeInput('SOURCE      '))
 			})

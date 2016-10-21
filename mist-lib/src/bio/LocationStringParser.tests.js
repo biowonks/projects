@@ -1,3 +1,5 @@
+/* eslint-disable no-magic-numbers */
+
 'use strict'
 
 // Local
@@ -60,6 +62,24 @@ describe('LocationStringParser', function() {
 					let location = x.parse(example.locationString)
 					expect(location.transcriptFrom(seq).sequence()).equal(example.sequence)
 				})
+			})
+		})
+
+		describe('order', function() {
+			it('order(25348..25416,24661..24729)', function() {
+				let locationString = 'order(25348..25416,24661..24729)',
+					location = x.parse(locationString)
+
+				expect(location.lowerBound()).equal(25348)
+				expect(location.upperBound()).equal(24729)
+			})
+
+			it('complement(order(25348..25416,24661..24729))', function() {
+				let locationString = 'complement(order(25348..25416,24661..24729))',
+					location = x.parse(locationString)
+
+				expect(location.lowerBound()).equal(25348)
+				expect(location.upperBound()).equal(24729)
 			})
 		})
 	})
