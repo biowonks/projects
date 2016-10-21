@@ -46,6 +46,7 @@ class FileMapper {
 			throw new Error('Genome has not been set. Please call setGenome first')
 
 		let urlAssemblyName = this.genome_.assembly_name.replace(/ /g, '_')
+			.replace(/#/g, '_')
 		return `${this.compoundAccession_()}_${urlAssemblyName}`
 	}
 
