@@ -855,12 +855,20 @@ class GenbankStream extends stream.Transform {
 
 		let value = this.currentQualifierValue_
 		if (typeof value === 'string') {
+			if (value !== '""') { // Special case
+				if (this.hasInvalidLeadingQuotes_(value))
+					throw new Error(`Qualifier has invalid leading quotes (must be 0 or odd number): ${value}`)
+				if (this.hasInvalidTrailingQuotes_(value))
+					throw new Error(`Qualifier has invalid trailing quotes (must be 0 or odd number): ${value}`)
+			}
+
 			let startsWithQuote = value.startsWith('"'),
 				endsWithQuote = value.endsWith('"'),
 				freeFormText = startsWithQuote || endsWithQuote
 			if (startsWithQuote && !endsWithQuote || !startsWithQuote && endsWithQuote)
 				throw new Error(`Invalid qualifier free-form text for qualifier, ${this.currentQualifierName_}: missing beginning / end quotes (invalid value: ${value})`)
-			else if (freeFormText)
+
+			if (freeFormText)
 				// Remove the leading and trailing quotes, and decode double quotes
 				value = value.slice(1, -1).replace(/""/g, '"')
 			else if (/^-?\d+(\.\d*)?$/.test(value))
@@ -892,6 +900,38 @@ class GenbankStream extends stream.Transform {
 
 		this.currentQualifierName_ = null
 		this.currentQualifierValue_ = null
+	}
+
+	countLeadingQuotes_(value) {
+		if (!value)
+			return 0
+
+		let i = 0
+		while (value[i] === '"')
+			i++
+		return i
+	}
+
+	hasInvalidLeadingQuotes_(value) {
+		let numLeadingQuotes = this.countLeadingQuotes_(value)
+		return numLeadingQuotes > 0 && numLeadingQuotes % 2 === 0 // eslint-disable-line no-magic-numbers
+	}
+
+	countTrailingQuotes_(value) {
+		if (!value)
+			return 0
+		let i = value.length - 1,
+			n = 0
+		while (i >= 0 && value[i] === '"') {
+			n++
+			i--
+		}
+		return n
+	}
+
+	hasInvalidTrailingQuotes_(value) {
+		let numTrailingQuotes = this.countTrailingQuotes_(value)
+		return numTrailingQuotes > 0 && numTrailingQuotes % 2 === 0 // eslint-disable-line no-magic-numbers
 	}
 }
 

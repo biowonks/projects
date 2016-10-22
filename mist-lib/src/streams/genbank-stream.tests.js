@@ -1059,30 +1059,76 @@ describe('streams', function() {
 				])
 			})
 
-			it('empty free-form text is preserved as empty string', function() {
+			it('throws error if even number of double quotes at beginning', function() {
 				let input = featureWrapper(
 					'     source          1..204\n' +
-					'                     /name=""'
+					'                     /name=""here is a quote"'
 				)
-				return parseAndExpect(input, [
-					{
-						key: 'source',
-						location: '1..204',
-						name: ['']
-					}
-				])
+				return parseThrowsError(input)
 			})
 
-			it('free-form double quotes are converted to single quotes', function() {
+			it('throws error if even number of double quotes at end', function() {
 				let input = featureWrapper(
 					'     source          1..204\n' +
-					'                     /name="here is a ""quote""'
+					'                     /name="here is a quote""'
+				)
+				return parseThrowsError(input)
+			})
+
+
+			it('free-form double quotes at end are converted to single quotes', function() {
+				let input = featureWrapper(
+					'     source          1..204\n' +
+					'                     /name="here is a ""quote"""'
 				)
 				return parseAndExpect(input, [
 					{
 						key: 'source',
 						location: '1..204',
 						name: ['here is a "quote"']
+					}
+				])
+			})
+
+			it('free-form double quotes at beginning are converted to single quotes', function() {
+				let input = featureWrapper(
+					'     source          1..204\n' +
+					'                     /name="""here"" is a quote"'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'source',
+						location: '1..204',
+						name: ['"here" is a quote']
+					}
+				])
+			})
+
+			it('free-form double quotes in middle are converted to single quotes', function() {
+				let input = featureWrapper(
+					'     source          1..204\n' +
+					'                     /name="here ""is"" a quote"'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'source',
+						location: '1..204',
+						name: ['here "is" a quote']
+					}
+				])
+			})
+
+			it('double quotes at end of line followed by a continuation line', function() {
+				let input = featureWrapper(
+					'     source          1..204\n' +
+					'                     /name="here is a ""quote""\n' +
+					'                     that continues here."'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'source',
+						location: '1..204',
+						name: ['here is a "quote" that continues here.']
 					}
 				])
 			})
