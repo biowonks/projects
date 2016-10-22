@@ -732,14 +732,14 @@ class GenbankStream extends stream.Transform {
 	/**
 	 * Handles the parsing of all lines contained within the feature table section. There are
 	 * two cases that must be considered:
-	 * 1) The line begins a new feature
-	 * 2) The line is a continuation line of an existing feature
+	 * 1) The line is a continuation line of an existing feature
+	 * 2) The line begins a new feature
 	 *
 	 * @param {string} line input line belonging to feature table
 	 * @returns {undefined}
 	 */
 	handleFeatureLine_(line) {
-		// Case 2: continuation line
+		// Case 1: continuation line
 		// Continuation line logic before new feature lines because there will be more continuation
 		// lines than new feature lines
 		if (this.isFeatureContinuationLine_(line)) {
@@ -747,7 +747,7 @@ class GenbankStream extends stream.Transform {
 			return
 		}
 
-		// Case 1: a new feature is beginning
+		// Case 2: a new feature is beginning
 		let feature = this.featureFromLine_(line)
 		if (feature) {
 			if (!feature.location)
@@ -820,8 +820,27 @@ class GenbankStream extends stream.Transform {
 		return null
 	}
 
+	/**
+	 * Technically, this should also test for a non-whitespace character in the 22nd position;
+	 * however, some GenBank records have continuation lines with leading spaces. To mitigate this
+	 * becoming a problem, only the requisite whitespace and then at least one non-whitespace
+	 * character is inspected here. An example of an annotation with leading whitespace on an
+	 * annotation is:
+	 *
+	 * NC_003047
+	 * GCF_000006965.1
+	 * Sinorhizobium meliloti 1021 chromosome, complete genome
+	 *
+	 *      rep_origin      1..477
+	 *                      /note="oriC OR SMc04880;
+	 *                       ORIGIN OF REPLICATION;
+	 *                      predicted by Homology"
+	 *
+	 * @param {String} line
+	 * @returns {Boolean}
+	 */
 	isFeatureContinuationLine_(line) {
-		return /^ {21}\S/.test(line)
+		return /^ {21}.*?\S/.test(line)
 	}
 
 	extractFeatureInfo_(line) {

@@ -1016,7 +1016,7 @@ describe('streams', function() {
 				])
 			})
 
-			it('location spans multiple lines', function() {
+			it('location may span multiple lines', function() {
 				let input = featureWrapper(
 					'     source          1..\n' +
 					'                     204\n' +
@@ -1174,6 +1174,44 @@ describe('streams', function() {
 					}
 				])
 			})
+
+			it('leading and/or trailing space on continuation lines is trimmed', function() {
+				let input = featureWrapper(
+					'     gene            1..204\n' +
+					'                     /description="first line\n' +
+					'                      second line\n' +
+					'                     third line \n' +
+					'                      fourth line \n' +
+					'                     fifth."'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'gene',
+						location: '1..204',
+						description: ['first line second line third line fourth line fifth.']
+					}
+				])
+			})
+
+			it('empty continuation line throws error', function() {
+				let input = featureWrapper(
+					'     gene            1..204\n' +
+					'                     /description="first line\n' +
+					'                     '
+				)
+				return parseThrowsError(input)
+			})
+
+			it('continuation line with merely whitespace throws error', function() {
+				let input = featureWrapper(
+					'     gene            1..204\n' +
+					'                     /description="first line\n' +
+					'                          \n' +
+					'                     more stuff"'
+				)
+				return parseThrowsError(input)
+			})
+
 
 			let numbers = [0, 1, 2., 2.3, 0., 0.59]
 			numbers.forEach((number) => {
