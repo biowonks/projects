@@ -16,7 +16,7 @@ git checkout develop
 
 Start Docker:
 ```
-docker-compose -up -d biowonks-dev
+docker-compose up -d biowonks-dev
 ```
 
 Attach the bash session:
