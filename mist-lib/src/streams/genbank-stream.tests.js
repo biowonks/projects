@@ -76,7 +76,7 @@ function parseSingle(input) {
 }
 
 describe('streams', function() {
-	describe.only('genbank reader stream', function() {
+	describe('genbank reader stream', function() {
 		it('empty input does not return any records', function() {
 			return parse('')
 			.then((results) => {

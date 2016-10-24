@@ -81,6 +81,18 @@ describe('LocationStringParser', function() {
 				expect(location.lowerBound()).equal(25348)
 				expect(location.upperBound()).equal(24729)
 			})
+
+			it('behaves like a join when transcribing the sequence', function() {
+				let examples = [
+					{locationString: 'join(1..2,4)', sequence: 'ATG'}
+				]
+				examples.forEach(function(example) {
+					it(`${example.locationString} --> ${example.sequence}`, function() {
+						let location = x.parse(example.locationString)
+						expect(location.transcriptFrom(seq).sequence()).equal(example.sequence)
+					})
+				})
+			})
 		})
 	})
 })
