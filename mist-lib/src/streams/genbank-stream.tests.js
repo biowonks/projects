@@ -76,7 +76,7 @@ function parseSingle(input) {
 }
 
 describe('streams', function() {
-	describe('genbank reader stream', function() {
+	describe.only('genbank reader stream', function() {
 		it('empty input does not return any records', function() {
 			return parse('')
 			.then((results) => {
@@ -1059,6 +1059,7 @@ describe('streams', function() {
 				])
 			})
 
+			// quotes
 			it('throws error if even number of double quotes at beginning', function() {
 				let input = featureWrapper(
 					'     source          1..204\n' +
@@ -1074,7 +1075,6 @@ describe('streams', function() {
 				)
 				return parseThrowsError(input)
 			})
-
 
 			it('free-form double quotes at end are converted to single quotes', function() {
 				let input = featureWrapper(
@@ -1173,6 +1173,108 @@ describe('streams', function() {
 						description: [' transmutase ']
 					}
 				])
+			})
+			// end quotes
+
+			describe('generic qualifier tests', function() {
+				let examples = [
+					[
+						'no spaces if continuation line begins with /',
+						'                     /description="signal\n' +
+						'                     /transduction"',
+						'signal/transduction'
+					],
+					[
+						'adds space after line if space after opening qualifier',
+						'                     /description="signal\n' +
+						'                     / transduction"',
+						'signal / transduction'
+					],
+					[
+						'trims terminal space on each line',
+						'                     /description="signal \n' +
+						'                     / transduction"',
+						'signal / transduction'
+					],
+					// Quote stuff
+					[
+						'open qualifier with even-numbered quotes',
+						'                     /description="signal""\n' +
+						'                     / transduction"',
+						'signal" / transduction'
+					],
+					[
+						'open qualifier terminated with odd number of quotes',
+						'                     /description="signal\n' +
+						'                     / transduction"""',
+						'signal / transduction"'
+					],
+					[
+						'intermediate line with even number of quotes at beginning and end',
+						'                     /description="signal\n' +
+						'                     ""transduction""\n' +
+						'                     transducer"',
+						'signal "transduction" transducer'
+					],
+					// Other
+					[
+						'unquoted value that spans multiple lines',
+						'                     /description=signal\n' +
+						'                     transduction\n' +
+						'                     transducer',
+						'signal transduction transducer'
+					]
+				]
+
+				examples.forEach((example) => {
+					let testName = example[0],
+						inputDescription = example[1],
+						expectedDescription = example[2]
+					it(testName, function() {
+						let input = featureWrapper('     gene            1..204\n' + inputDescription)
+						return parseAndExpect(input, [
+							{
+								key: 'gene',
+								location: '1..204',
+								description: [expectedDescription]
+							}
+						])
+					})
+				})
+
+				it('throws error if mixes quoted value with unquoted value on same line', function() {
+					let input = featureWrapper(
+						'     gene            1..204\n' +
+						'                     /description="first line" more text\n'
+					)
+					return parseThrowsError(input)
+				})
+
+				it('throws error if mixes quoted value with unquoted value on different lines', function() {
+					let input = featureWrapper(
+						'     gene            1..204\n' +
+						'                     /description="first line"\n' +
+						'                     more text\n'
+					)
+					return parseThrowsError(input)
+				})
+
+				it('throws error if multiple quoted values on the same line', function() {
+					let input = featureWrapper(
+						'     gene            1..204\n' +
+						'                     /description="first line" "more text"'
+					)
+					return parseThrowsError(input)
+				})
+
+				it('throws error if multiple quoted values on different lines', function() {
+					let input = featureWrapper(
+						'     gene            1..204\n' +
+						'                     /description="first line"\n' +
+						'                     "more text"'
+					)
+					return parseThrowsError(input)
+				})
 			})
 
 			it('leading and/or trailing space on continuation lines is trimmed', function() {

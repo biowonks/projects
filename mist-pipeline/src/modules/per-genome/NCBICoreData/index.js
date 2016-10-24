@@ -16,7 +16,6 @@ const PerGenomePipelineModule = require('lib/PerGenomePipelineModule'),
 	DseqsService = require('mist-lib/services/DseqsService'),
 	LocationStringParser = require('mist-lib/bio/LocationStringParser'),
 	genbankStream = require('mist-lib/streams/genbank-stream'),
-	genbankFixerStream = require('mist-lib/streams/genbank-fixer-stream'),
 	genbankMistStream = require('lib/streams/genbank-mist-stream'),
 	mutil = require('mist-lib/mutil'),
 	ncbiAssemblyReportStream = require('lib/streams/ncbi-assembly-report-stream')
@@ -136,7 +135,6 @@ class NCBICoreData extends PerGenomePipelineModule {
 		let genbankFlatFile = this.fileMapper_.pathFor('genomic-genbank'),
 			readStream = fs.createReadStream(genbankFlatFile),
 			gunzipStream = zlib.createGunzip(),
-			genbankFixerReader = genbankFixerStream(),
 			genbankReader = genbankStream(),
 			genbankMistReader = genbankMistStream(this.genome_.id)
 
@@ -150,7 +148,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 		return this.sequelize_.transaction({
 			isolationLevel: 'READ COMMITTED' // Necessary to avoid getting: could not serialize access due to concurrent update errors
 		}, (transaction) => {
-			let pipeline = pumpify.obj(readStream, gunzipStream, genbankFixerReader, genbankReader, genbankMistReader),
+			let pipeline = pumpify.obj(readStream, gunzipStream, genbankReader, genbankMistReader),
 				index = 0
 
 			return streamEachPromise(pipeline, (mistData, next) => {

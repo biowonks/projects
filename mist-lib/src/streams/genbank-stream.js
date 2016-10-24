@@ -158,6 +158,7 @@ class GenbankStream extends stream.Transform {
 		this.currentFeature_ = null
 		this.currentQualifierName_ = null
 		this.currentQualifierValue_ = null
+		this.finishedCurrentFeatureLocation_ = false
 	}
 
 	// ----------------------------------------------------
@@ -759,6 +760,7 @@ class GenbankStream extends stream.Transform {
 			}
 
 			this.currentFeature_ = feature
+			this.finishedCurrentFeatureLocation_ = false
 			return
 		}
 
@@ -769,43 +771,94 @@ class GenbankStream extends stream.Transform {
 		if (!this.currentFeature_)
 			throw new Error('Feature continuation line found without associated feature key')
 
+		let featureInfo = this.extractFeatureInfo_(line)
+		if (!featureInfo)
+			throw new Error('Blank feature lines are not allowed')
+
 		// Three cases:
 		// 1) Continuation of the feature location
 		// 2) Beginning of a qualifier
 		// 3) Continuation of an existing qualifier
 
-		let featureInfo = this.extractFeatureInfo_(line),
-			isQualifier = featureInfo.startsWith('/')
-
-		if (!featureInfo)
-			throw new Error('Blank feature lines are not allowed')
-
-		// Case 2: start of another qualifier
-		if (isQualifier) {
-			let qualifier = this.parseQualifier_(featureInfo)
-			if (qualifier.name === 'key' || qualifier.name === 'location')
-				throw new Error('qualifier name must not be "key" or "location"')
-
-			this.handleCurrentQualifier_()
-
-			this.currentQualifierName_ = qualifier.name
-			this.currentQualifierValue_ = qualifier.value
-			return
-		}
-
 		// Case 1: location spans multiple lines
-		let isLocationContinuation = !isQualifier && !this.currentQualifierName_
+		let isLocationContinuation = !this.currentQualifierName_ && !featureInfo.startsWith('/')
 		if (isLocationContinuation) {
+			if (this.finishedCurrentFeatureLocation_)
+				throw new Error(`Missing qualifier key: ${featureInfo}`)
+
 			this.currentFeature_.location += featureInfo
 			return
 		}
 
-		// Case 3: qualifier continuation line
-		assert(this.currentQualifierName_, 'Feature qualifier continuation line is not associated qualifier name')
-		if (!this.currentQualifierValue_)
-			throw new Error('Feature qualifier continuation line is missing initial value')
+		// This flag helps catch invalid values not associated with a qualifier. For example,
+		// /product="transducer"
+		// "orphan value"
+		//
+		// With this flag, "orphan value" would be added to the feature's location
+		this.finishedCurrentFeatureLocation_ = true
 
-		this.currentQualifierValue_ += ` ${featureInfo}`
+		// Case 2: start of a new qualifier
+		if (!this.currentQualifierName_) {
+			this.createNewQualifier_(featureInfo)
+			return
+		}
+
+		assert(this.currentQualifierValue_)
+		assert(typeof this.currentQualifierValue_ === 'string')
+
+		if (this.currentQualifierValue_.startsWith('"')) {
+			/**
+			 * Special handling of slashes within quoted strings. Add a space before the value of
+			 * ${featureInfo} if it does not begin with / or it begins with '/ '.
+			 *
+			 * This is to handle such cases like the following:
+			 * /product="crotonobetainyl-CoA--carnitine CoA-transferase
+			 * /alpha-methylacyl-CoA racemase 1"
+			 *
+			 * /product="electron-transferring-flavoprotein dehydrogenase
+			 * / geranylgeranyl hydrogenase-like protein"
+			 *
+			 * where the desired result is (respectively):
+			 *
+			 * product="crotonobetainyl-CoA--carnitine CoA-transferase/alpha-methylacyl-CoA racemase 1"
+			 * product="electron-transferring-flavoprotein dehydrogenase / geranylgeranyl hydrogenase-like protein"
+			 */
+			if (!featureInfo.startsWith('/') || featureInfo.startsWith('/ '))
+				this.currentQualifierValue_ += ' '
+			this.currentQualifierValue_ += featureInfo
+
+			// If this qualifier value is completely self-contained on a single line, got ahead
+			// and process it.
+			if (this.hasClosingQuotes_(this.currentQualifierValue_))
+				this.handleCurrentQualifier_()
+
+			return
+		}
+
+		// Dealing with unquoted continuation lines
+		if (!featureInfo.startsWith('/')) {
+			this.currentQualifierValue_ += ` ${featureInfo}`
+			return
+		}
+
+		// A new qualifier has been found
+		this.handleCurrentQualifier_()
+		this.createNewQualifier_(featureInfo)
+	}
+
+	createNewQualifier_(featureInfo) {
+		assert(featureInfo.startsWith('/'))
+
+		let qualifier = this.parseQualifier_(featureInfo)
+		if (qualifier.name === 'key' || qualifier.name === 'location')
+			throw new Error('Qualifier name must not be "key" or "location"')
+
+		this.currentQualifierName_ = qualifier.name
+		this.currentQualifierValue_ = qualifier.value
+		if (qualifier.value === true ||
+				(qualifier.value.startsWith('"') && this.hasClosingQuotes_(qualifier.value))
+			)
+			this.handleCurrentQualifier_()
 	}
 
 	featureFromLine_(line) {
@@ -879,6 +932,8 @@ class GenbankStream extends stream.Transform {
 					throw new Error(`Qualifier has invalid leading quotes (must be 0 or odd number): ${value}`)
 				if (this.hasInvalidTrailingQuotes_(value))
 					throw new Error(`Qualifier has invalid trailing quotes (must be 0 or odd number): ${value}`)
+				if (this.hasUnescapedInternalQuotes_(value))
+					throw new Error(`Qualifier has unescaped internal quotes: ${value}`)
 			}
 
 			let startsWithQuote = value.startsWith('"'),
@@ -950,8 +1005,36 @@ class GenbankStream extends stream.Transform {
 
 	hasInvalidTrailingQuotes_(value) {
 		let numTrailingQuotes = this.countTrailingQuotes_(value)
-		return numTrailingQuotes > 0 && numTrailingQuotes % 2 === 0 // eslint-disable-line no-magic-numbers
+		return numTrailingQuotes > 0 && isEven(numTrailingQuotes)
 	}
+
+	hasClosingQuotes_(value) {
+		return isOdd(this.countTrailingQuotes_(value))
+	}
+
+	hasUnescapedInternalQuotes_(value) {
+		let n = 0
+		for (let i = 1, z = value.length - 2; i <= z; i++) { // eslint-disable-line no-magic-numbers
+			let isQuote = value[i] === '"'
+			if (!isQuote) {
+				if (n > 0 && isOdd(n))
+					return true
+				n = 0
+				continue
+			}
+			n++
+		}
+
+		return isOdd(n)
+	}
+}
+
+function isEven(value) {
+	return value % 2 === 0 // eslint-disable-line no-magic-numbers
+}
+
+function isOdd(value) {
+	return !isEven(value)
 }
 
 module.exports = function(options) {
