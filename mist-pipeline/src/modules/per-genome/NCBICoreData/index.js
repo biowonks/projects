@@ -149,7 +149,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 			isolationLevel: 'READ COMMITTED' // Necessary to avoid getting: could not serialize access due to concurrent update errors
 		}, (transaction) => {
 			let pipeline = pumpify.obj(readStream, gunzipStream, genbankReader, genbankMistReader),
-				index = 0
+				index = 1
 
 			return streamEachPromise(pipeline, (mistData, next) => {
 				let component = mistData.component,
@@ -264,9 +264,22 @@ class NCBICoreData extends PerGenomePipelineModule {
 		if (!assemblyReport)
 			throw new Error('Genbank record does not have corresponding assembly report entry')
 
-		let parts = mutil.parseAccessionVersion(assemblyReport.genbankAccession)
-		component.genbank_accession = parts[0]
-		component.genbank_version = parts[1]
+		/**
+		 * In some cases, there is no corresponding GenBank record. For example, take the plasmids
+		 * from Escherichia coli UMN026.
+		 * ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/026/325/GCF_000026325.1_ASM2632v1/GCF_000026325.1_ASM2632v1_assembly_report.txt
+		 *
+		 * Both plasmids have 'na' for their GenBank accession, but NC_011749.1, NC_011739.1 for
+		 * their RefSeq accessions.
+		 *
+		 * Thus, parse the GenBank accession only if it is not 'na' (otherwise, the database will
+		 * throw a validation error when attempting to save it).
+		 */
+		if (assemblyReport.genbankAccession !== 'na') {
+			let parts = mutil.parseAccessionVersion(assemblyReport.genbankAccession)
+			component.genbank_accession = parts[0]
+			component.genbank_version = parts[1]
+		}
 		component.name = assemblyReport.name
 		component.role = assemblyReport.role
 		component.assigned_molecule = assemblyReport.assignedMolecule
