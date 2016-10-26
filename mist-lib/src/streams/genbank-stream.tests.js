@@ -76,7 +76,7 @@ function parseSingle(input) {
 }
 
 describe('streams', function() {
-	describe.only('genbank reader stream', function() {
+	describe('genbank reader stream', function() {
 		it('empty input does not return any records', function() {
 			return parse('')
 			.then((results) => {
@@ -378,12 +378,32 @@ describe('streams', function() {
 			})
 
 			it('single resource and multiple identifiers with spacing', function() {
-				return parseSingle(closeInput('DBLINK      Sequence Read Archive: DRR003296, DRR003297'))
+				return parseSingle(closeInput('DBLINK      Sequence Read Archive: DRR003296, DRR003297 '))
 				.then((result) => {
 					expect(result.dbLink).deep.equal({
 						'Sequence Read Archive': [
 							'DRR003296',
 							'DRR003297'
+						]
+					})
+				})
+			})
+
+			it('multiple resources and multiple identifiers with spacing', function() {
+				return parseSingle(closeInput('DBLINK      BioProject: PRJNA224116\n' +
+					'            Sequence Read Archive: DRR003296, DRR003297\n' +
+					'            Assembly: GCF_000615945.1'))
+				.then((result) => {
+					expect(result.dbLink).deep.equal({
+						BioProject: [
+							'PRJNA224116'
+						],
+						'Sequence Read Archive': [
+							'DRR003296',
+							'DRR003297'
+						],
+						Assembly: [
+							'GCF_000615945.1'
 						]
 					})
 				})

@@ -498,7 +498,7 @@ class GenbankStream extends stream.Transform {
 		lines.forEach((line) => {
 			let resourceMatches = this.parseDbLinkResource_(line)
 			if (resourceMatches) {
-				result[currentResource] = currentIdString.split(',')
+				result[currentResource] = currentIdString.split(/\s*,\s*/)
 				currentResource = resourceMatches[1]
 				currentIdString = resourceMatches[2]
 			}
@@ -526,7 +526,7 @@ class GenbankStream extends stream.Transform {
 			result[resource].forEach((identifier, i) => {
 				let isInvalidIdentifier = !identifier || /\s/.test(identifier)
 				if (isInvalidIdentifier)
-					throw new Error(`DBLINK identifier cannot contain whitespace or be empty; associated resource: ${resource}`)
+					throw new Error(`DBLINK identifier cannot contain whitespace or be empty; associated resource: ${resource}; bad value: ${identifier}`)
 
 				if (/^\d+$/.test(identifier))
 					result[resource][i] = Number(identifier)
