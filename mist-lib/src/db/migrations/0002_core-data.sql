@@ -87,15 +87,14 @@ create table genes (
 	pseudo boolean not null default false,
 	notes text,						-- sourced from /note
 
-	cognate_key text,				-- CDS, \w+RNA, ... or null if not associated
-	cognate_location text,			-- For those cases where the cognate feature has a non-identical location, but is linked via its locus_tag
 	product text,					-- source from /product
 	codon_start integer,			-- 1, 2, or 3
 	translation_table integer,
 	-- associated qualifiers from CDS, etc. take precedence over any gene qualifiers that have the
 	-- same name
 	qualifiers jsonb not null default '{}',
-	cognate_qualifiers jsonb not null default '{}',
+	cds_location text,			-- For those cases where the CDS feature has a non-identical location, but is linked via its locus_tag
+	cds_qualifiers jsonb not null default '{}',
 
 	foreign key(component_id) references components(id) on update cascade on delete cascade
 );

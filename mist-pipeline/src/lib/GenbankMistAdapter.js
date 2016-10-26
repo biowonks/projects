@@ -61,6 +61,10 @@ class GenbankMistAdapter {
 		this.mistData_ = null
 		this.componentDnaSeq_ = null
 		this.geneXrefSet_ = new Set()
+
+		// {location} => [3, 5] - 3 and 5 are indices into the features array that have location
+		this.featureIndicesByLocation_ = new Map()
+		this.featureIndicesByLocus_ = new Map()
 	}
 
 	findRefSeqError(genbankRecord) {
@@ -121,6 +125,9 @@ class GenbankMistAdapter {
 	}
 
 	/**
+	 * Note: this method mutates ${genbankRecord}. Please provide a copy to this method if this
+	 * not the desired effect.
+	 *
 	 * @param {Object} genbankRecord an object representing an entire genbank record such as that
 	 *   returned from the genbankStream
 	 * @returns {Object} MiST database compatible object
@@ -137,8 +144,7 @@ class GenbankMistAdapter {
 
 		// Release internal references
 		let result = this.mistData_
-		this.mistData_ = null
-		this.componentDnaSeq_ = null
+		this.clearInternalReferences_()
 		return result
 	}
 
@@ -229,57 +235,180 @@ class GenbankMistAdapter {
 			return
 
 		this.createFeatureLocations_(features)
-		this.sortFeatures_(features)
+		this.indexFeatures_(features)
+		let geneFeatures = this.filterAndSortGeneFeatures_(features)
+		this.formatGeneFeatures_(geneFeatures, features)
+		this.formatOtherFeatures_(features)
+	}
 
-		// Maintain a reference to the last gene data in the event that multiple non-gene features
-		// share the same location. Having this reference handy enables linking these additional
-		// features to the relevant gene and also providing additional linking for database
-		// cross-references.
-		let lastGeneData = null
+	/**
+	 * Creates a Location object property at $location for each feature.
+	 *
+	 * @param {Array.<Object>} features
+	 */
+	createFeatureLocations_(features) {
+		for (let feature of features)
+			feature.$location = this.locationStringParser_.parse(feature.location)
+	}
 
-		// A for loop with variables is used below for more easily referencing neighboring features
-		// (which are relevant because ${features} is sorted before calling this function).
-		for (let i = 0, z = features.length; i < z; i++) {
-			let feature = features[i],
-				featureData = this.commonFeatureData_(feature)
+	/**
+	 * Index all ${features} by their location and locus. These are stored in the class members
+	 * this.featureIndicesByLocation_ and this.featureIndicesByLocus_.
+	 *
+	 * @param {Array} features - array of parsed NCBI features
+	 */
+	indexFeatures_(features) {
+		this.featureIndicesByLocation_.clear()
+		this.featureIndicesByLocus_.clear()
 
-			if (feature.key === 'gene') {
-				let geneData = lastGeneData = featureData
-				this.formatGene_(geneData, feature)
+		features.forEach((feature, i) => {
+			if (this.featureIndicesByLocation_.has(feature.location))
+				this.featureIndicesByLocation_.get(feature.location).push(i)
+			else
+				this.featureIndicesByLocation_.set(feature.location, [i])
 
-				let nextFeature = features[i + 1],
-					sameLocation = nextFeature && geneData.location === nextFeature.location,
-					sameLocus = nextFeature && geneData.locus && nextFeature.locus_tag &&
-						geneData.locus === nextFeature.locus_tag[0]
-				if (nextFeature && (sameLocation || sameLocus)) {
-					this.formatCognateGeneFeature_(nextFeature, geneData)
-					i++ // Skip the next feature since we are linking it with the gene
-				}
-				else {
-					this.geneXrefSet_.clear()
-				}
+			if (!feature.locus_tag || !feature.locus_tag[0])
+				return
 
-				this.mistData_.genes.push(geneData)
-			}
-			else {
-				let otherData = featureData
-				otherData.id = this.componentFeaturesIdSequence_.next().value
-				otherData.gene_id = null
-				if (lastGeneData && lastGeneData.location === otherData.location) {
-					otherData.gene_id = lastGeneData.id
-					this.formatXrefs_(feature, otherData.gene_id)
-					kIgnoreOtherQualifierSet.add('db_xref')
-					this.mergeQualfiers_(otherData, feature, kIgnoreOtherQualifierSet)
-					kIgnoreOtherQualifierSet.delete('db_xref')
-				}
-				else {
-					this.geneXrefSet_.clear()
-					this.mergeQualfiers_(otherData, feature, kIgnoreOtherQualifierSet)
-				}
+			let locus = feature.locus_tag[0]
+			if (this.featureIndicesByLocus_.has(locus))
+				this.featureIndicesByLocus_.get(locus).push(i)
+			else
+				this.featureIndicesByLocus_.set(locus, [i])
+		})
+	}
 
-				this.mistData_.componentFeatures.push(otherData)
-			}
+	/**
+	 * Extracts all gene features from ${features} and sorts them by their lower location bound,
+	 * length, and finally their location string text. Does not modify ${features}.
+	 *
+	 * @param {Array.<Object>} features
+	 * @returns {Array.<Object>}
+	 */
+	filterAndSortGeneFeatures_(features) {
+		let geneFeatures = features.filter((feature) => feature.key === 'gene'),
+			isCircular = this.mistData_.component.is_circular,
+			componentLength = this.mistData_.component.length
+		geneFeatures.sort((a, b) => {
+			return a.$location.lowerBound() - b.$location.lowerBound() ||
+				a.$location.length(isCircular, componentLength) - b.$location.length(isCircular, componentLength) ||
+				a.location.localeCompare(b.location)
+		})
+		return geneFeatures
+	}
+
+	/**
+	 * Formats each gene feature into a corresponding MiST record integrating any cognate CDS
+	 * feature.
+	 *
+	 * @param {Array.<Object>} geneFeatures
+	 * @param {Array.<Object>} features
+	 */
+	formatGeneFeatures_(geneFeatures, features) {
+		geneFeatures.forEach((geneFeature) => {
+			if (this.hasMultipleGenesAtLocation_(geneFeature.location, features))
+				throw new Error(`multiple genes cannot share the same location: ${geneFeature.location}`)
+
+			this.geneXrefSet_.clear()
+			let geneData = this.commonFeatureData_(geneFeature)
+			this.formatGene_(geneData, geneFeature)
+			geneFeature.id = geneData.id // Useful for associating non-CDS features with the gene
+
+			let cdsFeature = this.takeMatchingCdsFeature_(features, geneData.location, geneData.locus)
+			if (cdsFeature)
+				this.formatCognateCDS_(cdsFeature, geneData)
+
+			this.mistData_.genes.push(geneData)
+		})
+	}
+
+	hasMultipleGenesAtLocation_(location, features) {
+		let indices = this.featureIndicesByLocation_.get(location),
+			numGenes = 0
+		if (indices) {
+			indices.forEach((index) => {
+				let feature = features[index]
+				if (feature && feature.key === 'gene')
+					numGenes++
+			})
 		}
+
+		return numGenes > 1
+	}
+
+	/**
+	 * Formats all non-null and non-gene ${features} into their corresponding MiST component
+	 * features.
+	 *
+	 * @param {Array.<Object>} features
+	 */
+	formatOtherFeatures_(features) {
+		features.forEach((feature) => {
+			if (!feature || feature.key === 'gene')
+				return
+
+			let featureData = this.commonFeatureData_(feature),
+				locus = feature.locus_tag ? feature.locus_tag[0] : null,
+				geneFeature = this.firstMatchingGeneFeature_(features, featureData.location, locus)
+
+			featureData.id = this.componentFeaturesIdSequence_.next().value
+			featureData.gene_id = null
+			if (geneFeature) {
+				featureData.gene_id = geneFeature.id
+				this.mergeQualifiers_(featureData, feature, kIgnoreOtherQualifierSet)
+			}
+
+			this.mistData_.componentFeatures.push(featureData)
+		})
+	}
+
+	/**
+	 * Replaces with null the first CDS feature that is located at ${location} or is tagged with
+	 * ${locus} and returns it.
+	 *
+	 * @param {Array} features
+	 * @param {String} location
+	 * @param {String} [locus = null]
+	 * @returns {Object}
+	 */
+	takeMatchingCdsFeature_(features, location, locus = null) {
+		let indicesByLocation = this.featureIndicesByLocation_.get(location) || [],
+			indicesByLocus = this.featureIndicesByLocus_.get(locus) || [],
+			indices = [...indicesByLocation, ...indicesByLocus]
+
+		for (let i of indices) {
+			let feature = features[i]
+			if (feature && feature.key !== 'CDS')
+				continue
+
+			features[i] = null
+			return feature
+		}
+
+		return null
+	}
+
+	/**
+	 * Returns the first gene feature contained in ${features} that either has an equivalent
+	 * ${location} or ${locus}.
+	 *
+	 * @param {Array} features
+	 * @param {String} location
+	 * @param {String} [locus = null]
+	 * @returns {Object}
+	 */
+	firstMatchingGeneFeature_(features, location, locus = null) {
+		let indicesByLocation = this.featureIndicesByLocation_.get(location) || [],
+			indicesByLocus = this.featureIndicesByLocus_.get(locus) || [],
+			indices = [...indicesByLocation, ...indicesByLocus]
+
+		for (let i of indices) {
+			let feature = features[i]
+			if (feature && feature.key === 'gene')
+				return feature
+		}
+
+		return null
 	}
 
 	/**
@@ -306,50 +435,6 @@ class GenbankMistAdapter {
 	}
 
 	/**
-	 * Creates a Location object property at $location for each feature.
-	 *
-	 * @param {Array.<Object>} features
-	 */
-	createFeatureLocations_(features) {
-		for (let feature of features)
-			feature.$location = this.locationStringParser_.parse(feature.location)
-	}
-
-	/**
-	 * Sorts ${features} by:
-	 * 1) Location's lower bound position
-	 * 2) Gene if matching locus tags
-	 * 3) Location length
-	 * 4) Actual location string
-	 * 5) Gene feature key before all others
-	 *
-	 * @param {Array.<Object>} features
-	 */
-	sortFeatures_(features) {
-		let isCircular = this.mistData_.component.is_circular,
-			componentLength = this.mistData_.component.length
-
-		function geneIfSameLocus(a, b) {
-			if (a.locus_tag && b.locus_tag && a.locus_tag[0] === b.locus_tag[0]) {
-				if (a.key === 'gene')
-					return -1
-				else if (b.key === 'gene')
-					return 1
-			}
-			return 0
-		}
-
-		features.sort(function(a, b) {
-			return a.$location.lowerBound() - b.$location.lowerBound() ||
-				geneIfSameLocus(a, b) ||
-				a.$location.length(isCircular, componentLength) - b.$location.length(isCircular, componentLength) ||
-				a.location.localeCompare(b.location) ||
-				(a.key === 'gene' ? -1 : 0) ||
-				(b.key === 'gene' ? 1 : 0)
-		})
-	}
-
-	/**
 	 * Maps qualifiers contained in ${feature} to ${geneData} along with creating relevant database
 	 * cross-references.
 	 *
@@ -358,8 +443,7 @@ class GenbankMistAdapter {
 	 */
 	formatGene_(geneData, feature) {
 		Reflect.deleteProperty(geneData, 'key')
-		geneData.cognate_qualifiers = {}
-		geneData.cognate_key = null
+		geneData.cds_qualifiers = {}
 
 		let geneSeq = feature.$location.transcriptFrom(this.componentDnaSeq_)
 		this.mistData_.geneSeqs.push(geneSeq)
@@ -382,11 +466,14 @@ class GenbankMistAdapter {
 		geneData.aseq_id = null
 		geneData.accession = null
 		geneData.version = null
-		geneData.translation_table = null
-		geneData.codon_start = null
 		geneData.product = null
+		geneData.codon_start = null
+		geneData.translation_table = null
 
-		this.mergeQualfiers_(geneData, feature, kIgnoreGeneQualifierSet)
+		geneData.cds_location = null
+		geneData.cds_qualifiers = {}
+
+		this.mergeQualifiers_(geneData, feature, kIgnoreGeneQualifierSet)
 		this.formatXrefs_(feature, geneData.id)
 	}
 
@@ -396,7 +483,7 @@ class GenbankMistAdapter {
 	 * @param {Set?} ignoreSet set of qualifier names to ignore when merging qualifiers
 	 * @param {String?} qualifierPropertyName defaults to qualifiers
 	 */
-	mergeQualfiers_(target, feature, ignoreSet = null, qualifierPropertyName = 'qualifiers') {
+	mergeQualifiers_(target, feature, ignoreSet = null, qualifierPropertyName = 'qualifiers') {
 		assert(qualifierPropertyName in target)
 
 		for (let name in feature) {
@@ -424,6 +511,11 @@ class GenbankMistAdapter {
 			return
 
 		for (let dbXref of feature.db_xref) {
+			// Have we already observed this xref? Occurs when the same db_xref occurs in both a
+			// gene and a cognate feature (one that has the same location)
+			if (this.geneXrefSet_.has(dbXref))
+				continue
+
 			let xrefParts = dbXref.split(':'),
 				database = xrefParts[0],
 				database_id = xrefParts[1] // eslint-disable-line camelcase
@@ -432,43 +524,20 @@ class GenbankMistAdapter {
 			if (database === 'GI')
 				continue
 
-			// Have we already observed this xref? Occurs when the same db_xref occurs in both a
-			// gene and a cognate feature (one that has the same location)
-			if (this.geneXrefSet_.has(dbXref))
-				continue
-
-			// Note: these get cleared any time a new feature with a novel location is observed
+			// Note: these get cleared with each new gene feature
 			this.geneXrefSet_.add(dbXref)
 
-			let xrefData = {
+			this.mistData_.xrefs.push({
 				id: this.xrefsIdSequence_.next().value,
 				gene_id: geneId,
 				database,
 				database_id
-			}
-
-			this.mistData_.xrefs.push(xrefData)
+			})
 		}
 	}
 
-	formatCognateGeneFeature_(cognateFeature, geneData) {
-		assert(cognateFeature.key !== 'gene', 'two gene features are not permitted to have the same location')
-		geneData.cognate_key = cognateFeature.key
-
-		let differentLocationSameLocus = geneData.location !== cognateFeature.location &&
-			geneData.locus && cognateFeature.locus_tag && geneData.locus === cognateFeature.locus_tag[0]
-		if (differentLocationSameLocus)
-			geneData.cognate_location = cognateFeature.location
-
-		this.formatXrefs_(cognateFeature, geneData.id)
-
-		if (cognateFeature.key === 'CDS')
-			this.formatCognateCDS_(cognateFeature, geneData)
-		else
-			this.mergeQualfiers_(geneData, cognateFeature, kIgnoreGeneQualifierSet, 'cognate_qualifiers')
-	}
-
 	formatCognateCDS_(cdsFeature, geneData) {
+		geneData.cds_location = cdsFeature.location
 		geneData.product = cdsFeature.product ? cdsFeature.product[0] : null
 		geneData.codon_start = cdsFeature.codon_start ? Number(cdsFeature.codon_start[0]) : null
 		geneData.translation_table = cdsFeature.transl_table ? Number(cdsFeature.transl_table[0]) : null
@@ -482,6 +551,15 @@ class GenbankMistAdapter {
 		if (cdsFeature.protein_id)
 			[geneData.accession, geneData.version] = mutil.parseAccessionVersion(cdsFeature.protein_id[0])
 
-		this.mergeQualfiers_(geneData, cdsFeature, kIgnoreCDSQualifierSet, 'cognate_qualifiers')
+		this.mergeQualifiers_(geneData, cdsFeature, kIgnoreCDSQualifierSet, 'cds_qualifiers')
+		this.formatXrefs_(cdsFeature, geneData.id)
+	}
+
+	clearInternalReferences_() {
+		this.mistData_ = null
+		this.componentDnaSeq_ = null
+		this.geneXrefSet_.clear()
+		this.featureIndicesByLocation_.clear()
+		this.featureIndicesByLocus_.clear()
 	}
 }

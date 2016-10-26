@@ -18,12 +18,6 @@ module.exports = function(Sequelize, models, extras) {
 		start: extras.requiredPositiveInteger(),
 		stop: extras.requiredPositiveInteger(),
 		length: extras.requiredPositiveInteger(),
-		cognate_key: {
-			type: Sequelize.TEXT
-		},
-		cognate_location: {
-			type: Sequelize.TEXT
-		},
 		names: {
 			// eslint-disable-next-line new-cap
 			type: Sequelize.ARRAY(Sequelize.TEXT),
@@ -52,6 +46,9 @@ module.exports = function(Sequelize, models, extras) {
 				notEmpty: true
 			}
 		},
+		notes: {
+			type: Sequelize.TEXT
+		},
 		product: {
 			type: Sequelize.TEXT,
 			validate: {
@@ -72,10 +69,14 @@ module.exports = function(Sequelize, models, extras) {
 				min: 1
 			}
 		},
-		notes: {
+		qualifiers: {
+			type: Sequelize.JSONB,
+			defaultValue: {}
+		},
+		cds_location: {
 			type: Sequelize.TEXT
 		},
-		qualifiers: {
+		cds_qualifiers: {
 			type: Sequelize.JSONB,
 			defaultValue: {}
 		}

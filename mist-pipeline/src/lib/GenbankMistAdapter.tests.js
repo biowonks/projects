@@ -369,7 +369,7 @@ describe('GenbankMistAdapter', function() {
 		})
 
 		describe('features', function() {
-			it('next feature to gene without locus tag does not cause error', function() {
+			it('simple multiple features', function() {
 				let x = new GenbankMistAdapter()
 				refSeq.features = [
 					{
@@ -390,7 +390,7 @@ describe('GenbankMistAdapter', function() {
 				expect(gene.location).equal('5..10')
 			})
 
-			it('sorted by start, location length, location string, gene, remainder', function() {
+			it('sorted by start, location length, location string', function() {
 				let x = new GenbankMistAdapter()
 				refSeq.features = [
 					{
@@ -433,8 +433,7 @@ describe('GenbankMistAdapter', function() {
 				expect(gene.id).equal(2)
 				expect(gene.location).equal('join(1..5,6..10)')
 				expect(gene.qualifiers.custom).equal('C')
-				expect(gene.cognate_key).equal('CDS')
-				expect(gene.cognate_qualifiers.custom).equal('A')
+				expect(gene.cds_qualifiers.custom).equal('A')
 
 				gene = result.genes[2]
 				expect(gene.id).equal(3)
@@ -445,7 +444,9 @@ describe('GenbankMistAdapter', function() {
 				expect(gene.location).equal('5..10')
 
 				expect(result.componentFeatures.length).equal(1)
-				expect(result.componentFeatures[0].qualifiers.custom).equal('B')
+				let componentFeature = result.componentFeatures[0]
+				expect(componentFeature.qualifiers.custom).equal('B')
+				expect(componentFeature.gene_id).equal(2)
 			})
 
 			it('basic gene fields', function() {
@@ -488,8 +489,8 @@ describe('GenbankMistAdapter', function() {
 					qualifiers: {
 						custom: 'custom1; custom2'
 					},
-					cognate_key: null,
-					cognate_qualifiers: {},
+					cds_location: null,
+					cds_qualifiers: {},
 
 					accession: null,
 					version: null,
@@ -543,9 +544,9 @@ describe('GenbankMistAdapter', function() {
 					}
 				]
 
-				let result = x.formatRefSeq(refSeq),
-					geneSeq = new Seq(refSeq.origin.substr(0, 6)),
-					proteinSeq = new Seq(refSeq.features[1].translation[0])
+				let geneSeq = new Seq(refSeq.origin.substr(0, 6)),
+					proteinSeq = new Seq(refSeq.features[1].translation[0]),
+					result = x.formatRefSeq(refSeq)
 				expect(result.genes.length).equal(1)
 				expect(result.genes[0]).deep.equal({
 					id: 1,
@@ -562,8 +563,8 @@ describe('GenbankMistAdapter', function() {
 					pseudo: false,
 					notes: null,
 					qualifiers: {},
-					cognate_key: 'CDS',
-					cognate_qualifiers: {
+					cds_location: '1..6',
+					cds_qualifiers: {
 						custom: 'custom'
 					},
 					product: 'product',
@@ -578,10 +579,10 @@ describe('GenbankMistAdapter', function() {
 				expect(result.geneSeqs[0].sequence()).equal(refSeq.origin.substr(0, 6))
 
 				expect(result.proteinSeqs.length).equal(1)
-				expect(result.proteinSeqs[0].sequence()).equal(refSeq.features[1].translation[0])
+				expect(result.proteinSeqs[0].sequence()).equal('TY')
 			})
 
-			it('gene + tRNA', function() {
+			it('non-CDS features with same location as gene', function() {
 				let x = new GenbankMistAdapter()
 				refSeq.features = [
 					{
@@ -593,6 +594,10 @@ describe('GenbankMistAdapter', function() {
 						location: '1..6',
 						product: ['product'],
 						custom: ['custom']
+					},
+					{
+						key: 'dummy',
+						location: '1..6'
 					}
 				]
 
@@ -614,11 +619,8 @@ describe('GenbankMistAdapter', function() {
 					pseudo: false,
 					notes: null,
 					qualifiers: {},
-					cognate_key: 'tRNA',
-					cognate_qualifiers: {
-						custom: 'custom',
-						product: 'product'
-					},
+					cds_qualifiers: {},
+					cds_location: null,
 					product: null,
 					codon_start: null,
 					translation_table: null,
@@ -627,7 +629,9 @@ describe('GenbankMistAdapter', function() {
 					aseq_id: null
 				})
 
-				expect(result.componentFeatures.length).equal(0)
+				expect(result.componentFeatures.length).equal(2)
+				expect(result.componentFeatures[0].gene_id).equal(1)
+				expect(result.componentFeatures[1].gene_id).equal(1)
 			})
 
 			it('link gene with cognate feature using locus_tag but different location', function() {
@@ -648,8 +652,11 @@ describe('GenbankMistAdapter', function() {
 				expect(result.genes.length).equal(1)
 				expect(result.genes[0].location).equal('2..10')
 				expect(result.genes[0].locus).equal('my-locus-tag')
-				expect(result.genes[0].cognate_key).equal('tRNA')
-				expect(result.genes[0].cognate_location).equal(refSeq.features[1].location)
+
+				expect(result.componentFeatures.length).equal(1)
+				expect(result.componentFeatures[0].key).equal('tRNA')
+				expect(result.componentFeatures[0].location).equal('join(2..4,6..10)')
+				expect(result.componentFeatures[0].gene_id).equal(1)
 			})
 
 			it('two genes with same locations throws error', function() {
