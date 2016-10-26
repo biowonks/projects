@@ -473,9 +473,10 @@ class GenbankStream extends stream.Transform {
 	 * for each resource is encapsulated in an array.
 	 *
 	 * As of April 2013, the supported DBLINK cross-reference types are "Project" (predecessor of
-	 * BioProject), "BioProject", "BioSample", "Trace Assembly Archive", Sequence Read Archive",
-	 * and "Assembly". But rather than just support this set, generically parses all resources
-	 * that adhere to the format '<resource name>:<csv list of identifiers>'.
+	 * BioProject), "BioProject", "BioSample", "Trace Assembly Archive", "Sequence Read Archive",
+	 * and "Assembly". But rather than just support this set, generically parse all resources
+	 * that adhere to the format '<resource name>:<csv list of identifiers>'. Whitespace may appear
+	 * between entries in the CSV list.
 	 *
 	 * @param {GenbankKeywordNode} dbLinkNode associated keywordInfo lines
 	 * @returns {object} map of the associated resource and their associated identifiers
@@ -518,7 +519,7 @@ class GenbankStream extends stream.Transform {
 			}
 		})
 
-		result[currentResource] = currentIdString.split(',')
+		result[currentResource] = currentIdString.split(/\s*,\s*/)
 
 		// Check that there are no invalid identifiers
 		for (let resource in result) {

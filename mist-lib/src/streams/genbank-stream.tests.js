@@ -76,7 +76,7 @@ function parseSingle(input) {
 }
 
 describe('streams', function() {
-	describe('genbank reader stream', function() {
+	describe.only('genbank reader stream', function() {
 		it('empty input does not return any records', function() {
 			return parse('')
 			.then((results) => {
@@ -328,11 +328,14 @@ describe('streams', function() {
 				':',
 				'BioProject',
 				'BioProject:',
+				'BioProject:,',
 				':12345',
 				':12345,23435',
 				'BioProject :12345',
 				'BioProject:12345 ,',
-				'BioProject:12345,'
+				'BioProject:12345,',
+				'BioProject: 12 34',
+				'BioProject: 12, 3 4'
 			]
 			invalidDbLinks.forEach((invalidDbLink) => {
 				it(`emits error with invalid dblink value: ${invalidDbLink}`, function() {
@@ -369,6 +372,18 @@ describe('streams', function() {
 						BioProject: [
 							12345,
 							'AB12345'
+						]
+					})
+				})
+			})
+
+			it('single resource and multiple identifiers with spacing', function() {
+				return parseSingle(closeInput('DBLINK      Sequence Read Archive: DRR003296, DRR003297'))
+				.then((result) => {
+					expect(result.dbLink).deep.equal({
+						'Sequence Read Archive': [
+							'DRR003296',
+							'DRR003297'
 						]
 					})
 				})
