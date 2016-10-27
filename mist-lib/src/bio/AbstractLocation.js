@@ -22,7 +22,7 @@ class AbstractLocation {
 		assert(typeof seqLength === 'number', 'seqLength is not defined')
 		assert(lowerBound <= seqLength, 'lower bound exceeds sequence length')
 		assert(upperBound <= seqLength, 'upper bound exceeds sequence length')
-		assert(isCircular || lowerBound <= upperBound, 'lower bound exceeds upper bound on non-circular sequence')
+		assert(isCircular || lowerBound <= upperBound, `lower bound ${lowerBound} exceeds upper bound ${upperBound} on non-circular sequence`)
 
 		if (!isCircular || lowerBound <= upperBound)
 			return upperBound - lowerBound + 1
@@ -82,8 +82,8 @@ class AbstractLocation {
 			}
 		}
 		else {
-			assert(ourLowerBound <= ourUpperBound, 'this lower bound exceeds this upper bound on non-circular sequence')
-			assert(otherLowerBound <= otherUpperBound, 'other lower bound exceeds other upper bound on non-circular sequence')
+			assert(ourLowerBound <= ourUpperBound, `this lower bound, ${ourLowerBound}, exceeds this upper bound, ${ourUpperBound}, on non-circular sequence`)
+			assert(otherLowerBound <= otherUpperBound, `other lower bound, ${otherLowerBound}, exceeds other upper bound, ${otherUpperBound}, on non-circular sequence`)
 
 			ourSegments.push([ourLowerBound, ourUpperBound])
 			otherSegments.push([otherLowerBound, otherUpperBound])
