@@ -7,20 +7,24 @@ module.exports = function(Sequelize, models, extras) {
 			example: 3
 		}),
 		accession: Object.assign(extras.requiredAccessionWithoutVersion(), {
-			description: 'NCBI RefSeq accession number',
+			description: 'NCBI RefSeq assembly accession number',
 			example: 'GCF_000302455'
 		}),
-		version: Object.assign(extras.requiredPositiveInteger(), {
-			description: 'NCBI RefSeq version',
+		version: Object.assign(extras.requiredAccessionVersion(), {
+			description: 'NCBI RefSeq assembly accession number and version suffix',
+			example: 'GCF_000302455.1'
+		}),
+		version_number: Object.assign(extras.requiredPositiveInteger(), {
+			description: 'NCBI RefSeq assembly version',
 			example: 1
 		}),
-		genbank_assembly_accession: Object.assign(extras.accessionWithoutVersion(), {
-			description: 'cognate GenBank accession number',
+		genbank_accession: Object.assign(extras.accessionWithoutVersion(), {
+			description: 'cognate GenBank assembly accession number',
 			example: 'GCA_000302455'
 		}),
-		genbank_assembly_version: Object.assign(extras.positiveInteger(), {
-			description: 'cognate GenBank version',
-			example: 1
+		genbank_version: Object.assign(extras.accessionVersion(), {
+			description: 'cognate GenBank assembly accession number and version suffix',
+			example: 'GCA_000302455.1'
 		}),
 		taxonomy_id: Object.assign(extras.positiveInteger(), {
 			description: 'NCBI taxonomy id',
@@ -147,6 +151,11 @@ module.exports = function(Sequelize, models, extras) {
 		}
 	}
 
+	let validate = {
+		genbankAccessionVersion: extras.validate.bothNullOrBothNotEmpty('genbank_accession',
+			'genbank_version')
+	}
+
 	return {
 		description: 'Genome markdown goes here',
 		fields,
@@ -157,12 +166,7 @@ module.exports = function(Sequelize, models, extras) {
 				}
 			},
 			instanceMethods,
-			validate: {
-				genbankAssemblyAccessionVersion: extras.validate.bothNullOrBothNotEmpty(
-					'genbank_assembly_accession',
-					'genbank_assembly_version'
-				)
-			}
+			validate
 		}
 	}
 }

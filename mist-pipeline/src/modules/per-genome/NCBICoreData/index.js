@@ -16,7 +16,6 @@ const PerGenomePipelineModule = require('lib/PerGenomePipelineModule'),
 	DseqsService = require('mist-lib/services/DseqsService'),
 	LocationStringParser = require('mist-lib/bio/LocationStringParser'),
 	genbankStream = require('mist-lib/streams/genbank-stream'),
-	genbankFixerStream = require('mist-lib/streams/genbank-fixer-stream'),
 	genbankMistStream = require('lib/streams/genbank-mist-stream'),
 	mutil = require('mist-lib/mutil'),
 	ncbiAssemblyReportStream = require('lib/streams/ncbi-assembly-report-stream')
@@ -136,9 +135,8 @@ class NCBICoreData extends PerGenomePipelineModule {
 		let genbankFlatFile = this.fileMapper_.pathFor('genomic-genbank'),
 			readStream = fs.createReadStream(genbankFlatFile),
 			gunzipStream = zlib.createGunzip(),
-			genbankFixerReader = genbankFixerStream(),
 			genbankReader = genbankStream(),
-			genbankMistReader = genbankMistStream(this.genome_.id)
+			genbankMistReader = genbankMistStream(this.genome_.id, this.genome_.version)
 
 		genbankReader.on('error', (error) => {
 			this.logger_.fatal(error, 'Genbank reader error')
@@ -150,13 +148,13 @@ class NCBICoreData extends PerGenomePipelineModule {
 		return this.sequelize_.transaction({
 			isolationLevel: 'READ COMMITTED' // Necessary to avoid getting: could not serialize access due to concurrent update errors
 		}, (transaction) => {
-			let pipeline = pumpify.obj(readStream, gunzipStream, genbankFixerReader, genbankReader, genbankMistReader),
-				index = 0
+			let pipeline = pumpify.obj(readStream, gunzipStream, genbankReader, genbankMistReader),
+				index = 1
 
 			return streamEachPromise(pipeline, (mistData, next) => {
 				let component = mistData.component,
 					tmpLogger = this.logger_.child({
-						record: component.accession + '.' + component.version,
+						version: component.version,
 						index,
 						numComponents: this.assemblyReportMap_.size
 					})
@@ -262,13 +260,26 @@ class NCBICoreData extends PerGenomePipelineModule {
 	}
 
 	addAssemblyReportData_(component) {
-		let assemblyReport = this.assemblyReportMap_.get(component.accession + '.' + component.version)
+		let assemblyReport = this.assemblyReportMap_.get(component.version)
 		if (!assemblyReport)
 			throw new Error('Genbank record does not have corresponding assembly report entry')
 
-		let parts = mutil.parseAccessionVersion(assemblyReport.genbankAccession)
-		component.genbank_accession = parts[0]
-		component.genbank_version = parts[1]
+		/**
+		 * In some cases, there is no corresponding GenBank record. For example, take the plasmids
+		 * from Escherichia coli UMN026.
+		 * ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/026/325/GCF_000026325.1_ASM2632v1/GCF_000026325.1_ASM2632v1_assembly_report.txt
+		 *
+		 * Both plasmids have 'na' for their GenBank accession, but NC_011749.1, NC_011739.1 for
+		 * their RefSeq accessions.
+		 *
+		 * Thus, parse the GenBank accession only if it is not 'na' (otherwise, the database will
+		 * throw a validation error when attempting to save it).
+		 */
+		if (assemblyReport.genbankAccession !== 'na') {
+			let parts = mutil.parseAccessionVersion(assemblyReport.genbankAccession)
+			component.genbank_accession = parts[0]
+			component.genbank_version = assemblyReport.genbankAccession
+		}
 		component.name = assemblyReport.name
 		component.role = assemblyReport.role
 		component.assigned_molecule = assemblyReport.assignedMolecule

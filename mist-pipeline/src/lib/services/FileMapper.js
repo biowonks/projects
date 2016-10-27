@@ -46,7 +46,9 @@ class FileMapper {
 			throw new Error('Genome has not been set. Please call setGenome first')
 
 		let urlAssemblyName = this.genome_.assembly_name.replace(/ /g, '_')
-		return `${this.compoundAccession_()}_${urlAssemblyName}`
+			.replace(/#/g, '_')
+			.replace(/_{2,}/, '_')
+		return `${this.genome_.version}_${urlAssemblyName}`
 	}
 
 	ncbiUrlFor(sourceType) {
@@ -54,16 +56,10 @@ class FileMapper {
 	}
 
 	genomeRootPath() {
-		return path.resolve(this.rootGenomesPath_, this.compoundAccession_())
+		return path.resolve(this.rootGenomesPath_, this.genome_.version)
 	}
 
 	pathFor(sourceType) {
 		return path.resolve(this.genomeRootPath(), this.fileNameFor(sourceType))
-	}
-
-	// ----------------------------------------------------
-	// Private methods
-	compoundAccession_() {
-		return this.genome_.accession + '.' + this.genome_.version
 	}
 }
