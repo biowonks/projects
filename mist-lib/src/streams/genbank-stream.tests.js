@@ -1083,13 +1083,15 @@ describe('streams', function() {
 			it('empty free-form text is preserved as empty string', function() {
 				let input = featureWrapper(
 					'     source          1..204\n' +
-					'                     /name=""'
+					'                     /plasmid=""\n' +
+					'                     /mol_type="genomic DNA"'
 				)
 				return parseAndExpect(input, [
 					{
 						key: 'source',
 						location: '1..204',
-						name: ['']
+						plasmid: [''],
+						mol_type: ['genomic DNA']
 					}
 				])
 			})
