@@ -3,6 +3,7 @@
 
 // Local
 const ArrayLocation = require('./ArrayLocation'),
+	MockLocation = require('./MockLocation'),
 	Location = require('./Location'),
 	LocationPoint = require('./LocationPoint')
 
@@ -64,6 +65,50 @@ describe('ArrayLocation', function() {
 				x = new ArrayLocation([location])
 
 			expect(x.length(circular, 10)).equal(4)
+		})
+	})
+
+	describe('overlaps', function() {
+		let seqLength = 100,
+			examples = [
+				{
+					a: [[10, 20], [80, 90]],
+					b: [[50, 70]],
+					isCircular: true,
+					overlaps: false
+				},
+				{
+					a: [[80, 10], [30, 40]],
+					b: [[11, 15], [22, 29], [55, 60]],
+					isCircular: true,
+					overlaps: false
+				},
+				{
+					a: [[80, 10], [30, 40]],
+					b: [[35, 36]],
+					isCircular: true,
+					overlaps: true
+				}
+			]
+
+		examples.forEach((example) => {
+			let as = example.a.map((coords) => new MockLocation(coords[0], coords[1])),
+				a = new ArrayLocation(as),
+				aString = JSON.stringify(example.a),
+				bs = example.b.map((coords) => new MockLocation(coords[0], coords[1])),
+				b = new ArrayLocation(bs),
+				bString = JSON.stringify(example.b),
+				circulars = example.isCircular === 'both' ? [true, false] : [example.isCircular]
+
+			circulars.forEach((isCircular) => {
+				it(`(${aString}) vs (${bString}), circular: ${isCircular} --> ${example.overlaps}`, function() {
+					expect(a.overlaps(b, isCircular, seqLength)).equal(example.overlaps)
+				})
+
+				it(`(${bString}) vs (${aString}), circular: ${isCircular} --> ${example.overlaps}`, function() {
+					expect(b.overlaps(a, isCircular, seqLength)).equal(example.overlaps)
+				})
+			})
 		})
 	})
 
