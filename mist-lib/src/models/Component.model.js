@@ -10,7 +10,7 @@ module.exports = function(Sequelize, models, extras) {
 			description: 'NCBI RefSeq replicon / contig accession number',
 			example: 'NC_009634'
 		}),
-		version: Object.assign(extras.requiredPositiveInteger(), {
+		version: Object.assign(extras.requiredAccessionVersion(), {
 			description: 'NCBI RefSeq replicon / contig accession number and version suffix',
 			example: 'NC_009634.1'
 		}),
@@ -22,7 +22,7 @@ module.exports = function(Sequelize, models, extras) {
 			description: 'cognate GenBank replicon / contig accession number',
 			example: 'CP000742'
 		}),
-		genbank_version: Object.assign(extras.positiveInteger(), {
+		genbank_version: Object.assign(extras.accessionVersion(), {
 			description: 'cognate GenBank replicon /contig accession number and version suffix',
 			example: 'CP000742.1'
 		}),

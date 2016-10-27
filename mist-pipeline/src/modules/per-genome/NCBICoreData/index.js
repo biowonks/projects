@@ -136,7 +136,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 			readStream = fs.createReadStream(genbankFlatFile),
 			gunzipStream = zlib.createGunzip(),
 			genbankReader = genbankStream(),
-			genbankMistReader = genbankMistStream(this.genome_.id)
+			genbankMistReader = genbankMistStream(this.genome_.id, this.genome_.version)
 
 		genbankReader.on('error', (error) => {
 			this.logger_.fatal(error, 'Genbank reader error')
@@ -154,7 +154,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 			return streamEachPromise(pipeline, (mistData, next) => {
 				let component = mistData.component,
 					tmpLogger = this.logger_.child({
-						record: component.accession + '.' + component.version,
+						version: component.version,
 						index,
 						numComponents: this.assemblyReportMap_.size
 					})
@@ -260,7 +260,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 	}
 
 	addAssemblyReportData_(component) {
-		let assemblyReport = this.assemblyReportMap_.get(component.accession + '.' + component.version)
+		let assemblyReport = this.assemblyReportMap_.get(component.version)
 		if (!assemblyReport)
 			throw new Error('Genbank record does not have corresponding assembly report entry')
 
@@ -278,7 +278,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 		if (assemblyReport.genbankAccession !== 'na') {
 			let parts = mutil.parseAccessionVersion(assemblyReport.genbankAccession)
 			component.genbank_accession = parts[0]
-			component.genbank_version = parts[1]
+			component.genbank_version = assemblyReport.genbankAccession
 		}
 		component.name = assemblyReport.name
 		component.role = assemblyReport.role
