@@ -46,11 +46,13 @@ module.exports =
 class GenbankMistAdapter {
 	/**
 	 * @constructor
-	 * @param {Number?} genomeId defaults to 1
+	 * @param {Number} [genomeId = 1]
+	 * @param {String} [genomeVersion = null]
 	 */
-	constructor(genomeId = 1) {
+	constructor(genomeId = 1, genomeVersion = null) {
 		this.locationStringParser_ = new LocationStringParser()
 		this.genomeId_ = genomeId
+		this.genomeVersion_ = genomeVersion
 
 		this.referencesIdSequence_ = mutil.sequence()
 		this.componentsIdSequence_ = mutil.sequence()
@@ -189,12 +191,6 @@ class GenbankMistAdapter {
 	}
 
 	/**
-	 * The GenBank parser returns two accession related fields:
-	 * a) accession: this is the accession number without any version
-	 * b) version: this contains the accession number and version
-	 *
-	 * In MiST, accessions and their corresponding version numbers are stored in separated fields.
-	 *
 	 * @param {Object} genbankRecord
 	 * @returns {Object}
 	 */
@@ -206,7 +202,8 @@ class GenbankMistAdapter {
 			id: this.componentsIdSequence_.next().value,
 			genome_id: this.genomeId_,
 			accession: genbankRecord.accession.primary,
-			version: mutil.parseAccessionVersion(genbankRecord.version)[1] || null,
+			version: genbankRecord.version,
+			version_number: mutil.parseAccessionVersion(genbankRecord.version)[1] || null,
 			genbank_accession: null,
 			genbank_version: null,
 			name: null,
@@ -236,9 +233,27 @@ class GenbankMistAdapter {
 
 		this.createFeatureLocations_(features)
 		this.indexFeatures_(features)
-		let geneFeatures = this.filterAndSortGeneFeatures_(features)
-		this.formatGeneFeatures_(geneFeatures, features)
-		this.formatOtherFeatures_(features)
+
+		features.forEach((feature, i) => {
+			if (!feature)
+				return
+
+			if (feature.key === 'gene') {
+				this.formatGeneFeature_(feature, features, i)
+				return
+			}
+
+			// When dealing with non-gene features that is not yet associated with a gene, ensure
+			// that there are no other gene features with this exact location.
+			let geneAtThisLocation = this.firstMatchingGeneFeature_(features, feature.location)
+			if (geneAtThisLocation) {
+				let geneAlreadyFormatted = Reflect.has(geneAtThisLocation, '$id')
+				if (!geneAlreadyFormatted)
+					throw new Error(`${feature.key} feature location (${feature.location}) exactly matches a gene feature location; however, the ${feature.key} must come after the cognate gene feature`)
+			}
+
+			this.formatOtherFeature_(feature, features)
+		})
 	}
 
 	/**
@@ -252,8 +267,7 @@ class GenbankMistAdapter {
 	}
 
 	/**
-	 * Index all ${features} by their location and locus. These are stored in the class members
-	 * this.featureIndicesByLocation_ and this.featureIndicesByLocus_.
+	 * Index all ${features} by their location. These are stored in this.featureIndicesByLocation_.
 	 *
 	 * @param {Array} features - array of parsed NCBI features
 	 */
@@ -279,47 +293,43 @@ class GenbankMistAdapter {
 	}
 
 	/**
-	 * Extracts all gene features from ${features} and sorts them by their lower location bound,
-	 * length, and finally their location string text. Does not modify ${features}.
-	 *
-	 * @param {Array.<Object>} features
-	 * @returns {Array.<Object>}
-	 */
-	filterAndSortGeneFeatures_(features) {
-		let geneFeatures = features.filter((feature) => feature.key === 'gene'),
-			isCircular = this.mistData_.component.is_circular,
-			componentLength = this.mistData_.component.length
-		geneFeatures.sort((a, b) => {
-			return a.$location.lowerBound() - b.$location.lowerBound() ||
-				a.$location.length(isCircular, componentLength) - b.$location.length(isCircular, componentLength) ||
-				a.location.localeCompare(b.location)
-		})
-		return geneFeatures
-	}
-
-	/**
 	 * Formats each gene feature into a corresponding MiST record integrating any cognate CDS
 	 * feature.
 	 *
-	 * @param {Array.<Object>} geneFeatures
+	 * @param {Object} geneFeature
 	 * @param {Array.<Object>} features
+	 * @param {Number} i
 	 */
-	formatGeneFeatures_(geneFeatures, features) {
-		geneFeatures.forEach((geneFeature) => {
-			if (this.hasMultipleGenesAtLocation_(geneFeature.location, features))
-				throw new Error(`multiple genes cannot share the same location: ${geneFeature.location}`)
+	formatGeneFeature_(geneFeature, features, i) {
+		if (this.hasMultipleGenesAtLocation_(geneFeature.location, features))
+			throw new Error(`multiple genes cannot share the same location: ${geneFeature.location}`)
 
-			this.geneXrefSet_.clear()
-			let geneData = this.commonFeatureData_(geneFeature)
-			this.formatGene_(geneData, geneFeature)
-			geneFeature.id = geneData.id // Useful for associating non-CDS features with the gene
+		this.geneXrefSet_.clear()
+		let geneData = this.commonFeatureData_(geneFeature)
+		if (!geneData.locus)
+			throw new Error(`gene feature is missing locus_tag: ${geneFeature.location}`)
 
-			let cdsFeature = this.takeMatchingCdsFeature_(features, geneData.location, geneData.locus)
-			if (cdsFeature)
-				this.formatCognateCDS_(cdsFeature, geneData)
+		this.formatGene_(geneData, geneFeature)
+		geneFeature.$id = geneData.id // Useful for associating non-CDS features with the gene
 
-			this.mistData_.genes.push(geneData)
-		})
+		let cdsFeature = this.takeMatchingCdsFeature_(features, geneData.location)
+		if (!cdsFeature) {
+			// Associate with the next feature if it is a CDS
+			let nextFeature = features[i + 1]
+			if (nextFeature && nextFeature.key === 'CDS') {
+				cdsFeature = nextFeature
+				features[i + 1] = null
+			}
+		}
+
+		if (cdsFeature) {
+			if (!geneFeature.$location.overlaps(cdsFeature.$location, this.mistData_.component.is_circular, this.mistData_.component.length))
+				throw new Error(`gene feature location (${geneFeature.location}) does not overlap associated CDS feature location (${cdsFeature.location})`)
+
+			this.formatCognateCDS_(cdsFeature, geneData)
+		}
+
+		this.mistData_.genes.push(geneData)
 	}
 
 	hasMultipleGenesAtLocation_(location, features) {
@@ -337,29 +347,21 @@ class GenbankMistAdapter {
 	}
 
 	/**
-	 * Formats all non-null and non-gene ${features} into their corresponding MiST component
-	 * features.
-	 *
+	 * @param {Object} feature
 	 * @param {Array.<Object>} features
 	 */
-	formatOtherFeatures_(features) {
-		features.forEach((feature) => {
-			if (!feature || feature.key === 'gene')
-				return
+	formatOtherFeature_(feature, features) {
+		let featureData = this.commonFeatureData_(feature),
+			geneFeature = this.firstMatchingGeneFeature_(features, featureData.location, featureData.locus)
 
-			let featureData = this.commonFeatureData_(feature),
-				locus = feature.locus_tag ? feature.locus_tag[0] : null,
-				geneFeature = this.firstMatchingGeneFeature_(features, featureData.location, locus)
+		featureData.id = this.componentFeaturesIdSequence_.next().value
+		featureData.gene_id = null
+		if (geneFeature) {
+			featureData.gene_id = geneFeature.$id
+			this.mergeQualifiers_(featureData, feature, kIgnoreOtherQualifierSet)
+		}
 
-			featureData.id = this.componentFeaturesIdSequence_.next().value
-			featureData.gene_id = null
-			if (geneFeature) {
-				featureData.gene_id = geneFeature.id
-				this.mergeQualifiers_(featureData, feature, kIgnoreOtherQualifierSet)
-			}
-
-			this.mistData_.componentFeatures.push(featureData)
-		})
+		this.mistData_.componentFeatures.push(featureData)
 	}
 
 	/**
@@ -368,15 +370,12 @@ class GenbankMistAdapter {
 	 *
 	 * @param {Array} features
 	 * @param {String} location
-	 * @param {String} [locus = null]
 	 * @returns {Object}
 	 */
-	takeMatchingCdsFeature_(features, location, locus = null) {
-		let indicesByLocation = this.featureIndicesByLocation_.get(location) || [],
-			indicesByLocus = this.featureIndicesByLocus_.get(locus) || [],
-			indices = [...indicesByLocation, ...indicesByLocus]
+	takeMatchingCdsFeature_(features, location) {
+		let indicesByLocation = this.featureIndicesByLocation_.get(location) || []
 
-		for (let i of indices) {
+		for (let i of indicesByLocation) {
 			let feature = features[i]
 			if (feature && feature.key !== 'CDS')
 				continue
@@ -424,6 +423,7 @@ class GenbankMistAdapter {
 			// or other feature
 			id: null,
 			component_id: this.mistData_.component.id,
+			locus: feature.locus_tag ? feature.locus_tag[0] : null,
 			key: feature.key,
 			location: feature.location,
 			strand: feature.$location.strand(),
@@ -449,8 +449,8 @@ class GenbankMistAdapter {
 		this.mistData_.geneSeqs.push(geneSeq)
 
 		geneData.id = this.genesIdSequence_.next().value
+		geneData.stable_id = this.genomeVersion_ ? this.genomeVersion_ + '-' + geneData.locus : null
 		geneData.dseq_id = geneSeq.seqId()
-		geneData.locus = feature.locus_tag ? feature.locus_tag[0] : null
 		geneData.old_locus = feature.old_locus_tag ? feature.old_locus_tag[0] : null
 		geneData.names = feature.gene || null
 		if (feature.gene_synonym) {
@@ -548,8 +548,10 @@ class GenbankMistAdapter {
 			this.mistData_.proteinSeqs.push(proteinSeq)
 		}
 
-		if (cdsFeature.protein_id)
-			[geneData.accession, geneData.version] = mutil.parseAccessionVersion(cdsFeature.protein_id[0])
+		if (cdsFeature.protein_id) {
+			geneData.accession = mutil.parseAccessionVersion(cdsFeature.protein_id[0])[0]
+			geneData.version = cdsFeature.protein_id[0]
+		}
 
 		this.mergeQualifiers_(geneData, cdsFeature, kIgnoreCDSQualifierSet, 'cds_qualifiers')
 		this.formatXrefs_(cdsFeature, geneData.id)

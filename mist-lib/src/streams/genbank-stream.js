@@ -199,7 +199,7 @@ class GenbankStream extends stream.Transform {
 			// --------------------------------------------
 			if (this.isKeywordContinuationLine_(line)) {
 				if (!this.currentKeywordNode_)
-					throw new Error('Keyword continuation line found without associated keyword')
+					throw new Error('keyword continuation line found without associated keyword')
 
 				// Special handling of different
 				let keywordInfoOffset = null
@@ -232,7 +232,7 @@ class GenbankStream extends stream.Transform {
 				return
 			}
 
-			throw new Error(`Internal error; unhandled line: ${line}`)
+			throw new Error(`internal error; unhandled line: ${line}`)
 		}
 		catch (error) {
 			done(error)
@@ -241,7 +241,7 @@ class GenbankStream extends stream.Transform {
 
 	_flush(done) {
 		if (this.entry_)
-			done(new Error('Last record missing record terminator: //'))
+			done(new Error('last record missing record terminator: //'))
 		else
 			done()
 	}
@@ -288,7 +288,7 @@ class GenbankStream extends stream.Transform {
 
 			// Special case: REFERENCE may occur multiple times
 			if (keyword !== 'REFERENCE' && this.observedRootKeywords_.has(keyword))
-				throw new Error(`Record contains multiple ${keyword} lines`)
+				throw new Error(`record contains multiple ${keyword} lines`)
 			this.observedRootKeywords_.add(keyword)
 
 			this.rootKeywordNode_ =	this.currentKeywordNode_ = keywordNode
@@ -765,16 +765,16 @@ class GenbankStream extends stream.Transform {
 			return
 		}
 
-		throw new Error('Internal error: unexpected feature table line: ' + line)
+		throw new Error('internal error: unexpected feature table line: ' + line)
 	}
 
 	handleFeatureContinuationLine_(line) {
 		if (!this.currentFeature_)
-			throw new Error('Feature continuation line found without associated feature key')
+			throw new Error('feature continuation line found without associated feature key')
 
 		let featureInfo = this.extractFeatureInfo_(line)
 		if (!featureInfo)
-			throw new Error('Blank feature lines are not allowed')
+			throw new Error('blank feature lines are not allowed')
 
 		// Three cases:
 		// 1) Continuation of the feature location
@@ -785,7 +785,7 @@ class GenbankStream extends stream.Transform {
 		let isLocationContinuation = !this.currentQualifierName_ && !featureInfo.startsWith('/')
 		if (isLocationContinuation) {
 			if (this.finishedCurrentFeatureLocation_)
-				throw new Error(`Missing qualifier key: ${featureInfo}`)
+				throw new Error(`missing qualifier key: ${featureInfo}`)
 
 			this.currentFeature_.location += featureInfo
 			return
@@ -852,14 +852,18 @@ class GenbankStream extends stream.Transform {
 
 		let qualifier = this.parseQualifier_(featureInfo)
 		if (qualifier.name === 'key' || qualifier.name === 'location')
-			throw new Error('Qualifier name must not be "key" or "location"')
+			throw new Error('qualifier name must not be "key" or "location"')
 
 		this.currentQualifierName_ = qualifier.name
 		this.currentQualifierValue_ = qualifier.value
-		if (qualifier.value === true ||
+
+		// eslint-disable-next-line curly
+		if (qualifier.value === true || // e.g. /pseudo
+			qualifier.value === '""' || // e.g. /plasmid=""
 				(qualifier.value.startsWith('"') && this.hasClosingQuotes_(qualifier.value))
-			)
+			) {
 			this.handleCurrentQualifier_()
+		}
 	}
 
 	featureFromLine_(line) {
@@ -911,7 +915,7 @@ class GenbankStream extends stream.Transform {
 	parseQualifier_(featureInfo) {
 		let matches = /^\/([\w_\-'*]{1,20})(?:=(.+))?/.exec(featureInfo)
 		if (!matches)
-			throw new Error(`Invalid feature qualifier line: ${featureInfo}`)
+			throw new Error(`invalid feature qualifier line: ${featureInfo}`)
 
 		return {
 			name: matches[1],
@@ -930,18 +934,18 @@ class GenbankStream extends stream.Transform {
 		if (typeof value === 'string') {
 			if (value !== '""') { // Special case
 				if (this.hasInvalidLeadingQuotes_(value))
-					throw new Error(`Qualifier has invalid leading quotes (must be 0 or odd number): ${value}`)
+					throw new Error(`qualifier has invalid leading quotes (must be 0 or odd number): ${value}`)
 				if (this.hasInvalidTrailingQuotes_(value))
-					throw new Error(`Qualifier has invalid trailing quotes (must be 0 or odd number): ${value}`)
+					throw new Error(`qualifier has invalid trailing quotes (must be 0 or odd number): ${value}`)
 				if (this.hasUnescapedInternalQuotes_(value))
-					throw new Error(`Qualifier has unescaped internal quotes: ${value}`)
+					throw new Error(`qualifier has unescaped internal quotes: ${value}`)
 			}
 
 			let startsWithQuote = value.startsWith('"'),
 				endsWithQuote = value.endsWith('"'),
 				freeFormText = startsWithQuote || endsWithQuote
 			if (startsWithQuote && !endsWithQuote || !startsWithQuote && endsWithQuote)
-				throw new Error(`Invalid qualifier free-form text for qualifier, ${this.currentQualifierName_}: missing beginning / end quotes (invalid value: ${value})`)
+				throw new Error(`invalid qualifier free-form text for qualifier, ${this.currentQualifierName_}: missing beginning / end quotes (invalid value: ${value})`)
 
 			if (freeFormText)
 				// Remove the leading and trailing quotes, and decode double quotes
@@ -969,7 +973,7 @@ class GenbankStream extends stream.Transform {
 				this.currentFeature_[this.currentQualifierName_].push(value)
 		}
 		else {
-			// e.g. /pseudo
+			// e.g. /pseudo OR /plasmid=""
 			this.currentFeature_[this.currentQualifierName_] = value
 		}
 
