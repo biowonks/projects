@@ -407,25 +407,6 @@ describe('GenbankMistAdapter', function() {
 				expect(gene.stable_id).null
 			})
 
-			it('throws error if non-gene feature with same location as a gene occurs prior to the gene feature', function() {
-				let x = new GenbankMistAdapter()
-				refSeq.features = [
-					{
-						location: '1..10',
-						key: 'dummy'
-					},
-					{
-						location: '1..10',
-						key: 'gene',
-						locus_tag: ['X1']
-					}
-				]
-
-				expect(function() {
-					x.formatRefSeq(refSeq)
-				}).throw(Error)
-			})
-
 			it('throws error if cognate CDS feature does not overlap gene', function() {
 				let x = new GenbankMistAdapter()
 				refSeq.features = [

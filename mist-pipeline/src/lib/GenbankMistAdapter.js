@@ -234,25 +234,17 @@ class GenbankMistAdapter {
 		this.createFeatureLocations_(features)
 		this.indexFeatures_(features)
 
+		// Pass 1: deal with all gene features first in order to assign ids for these
+		//         and thus potentially link via their gene id
 		features.forEach((feature, i) => {
-			if (!feature)
-				return
-
-			if (feature.key === 'gene') {
+			if (feature && feature.key === 'gene')
 				this.formatGeneFeature_(feature, features, i)
-				return
-			}
+		})
 
-			// When dealing with non-gene features that is not yet associated with a gene, ensure
-			// that there are no other gene features with this exact location.
-			let geneAtThisLocation = this.firstMatchingGeneFeature_(features, feature.location)
-			if (geneAtThisLocation) {
-				let geneAlreadyFormatted = Reflect.has(geneAtThisLocation, '$id')
-				if (!geneAlreadyFormatted)
-					throw new Error(`${feature.key} feature location (${feature.location}) exactly matches a gene feature location; however, the ${feature.key} must come after the cognate gene feature`)
-			}
-
-			this.formatOtherFeature_(feature, features)
+		// Pass 2: deal with all other features next
+		features.forEach((feature, i) => {
+			if (feature && feature.key !== 'gene')
+				this.formatOtherFeature_(feature, features)
 		})
 	}
 
