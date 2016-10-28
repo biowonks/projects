@@ -1,0 +1,22 @@
+FROM biowonks/node-bootstrap
+
+MAINTAINER BioWonks <biowonks@users.noreply.github.com>
+
+COPY _common /app/_common
+COPY bin /app/bin
+COPY core-lib /app/core-lib
+COPY seqdepot-lib /app/seqdepot-lib
+COPY mist-lib /app/mist-lib
+COPY mist-pipeline /app/mist-pipeline
+
+RUN chown -R biowonks:biowonks /app
+
+USER biowonks
+
+WORKDIR /app/mist-pipeline
+
+RUN npm install
+
+ENV NODE_PATH=/app/mist-pipeline/node_modules
+
+ENTRYPOINT ["node", "/app/mist-pipeline/src/pipeline.js"]
