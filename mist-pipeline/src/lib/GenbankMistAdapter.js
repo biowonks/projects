@@ -227,11 +227,33 @@ class GenbankMistAdapter {
 			genbankRecord.locus.topology === 'circular' : null
 	}
 
+	/**
+	 * Some genomes have multiple genes at the exact same location. For example:
+	 *
+	 * GCF_000513475.1 / NC_023003.1 / Candidatus Babela massiliensis complete genome
+	 *
+	 *      gene            complement(293972..294312)   <---
+	 *                      /locus_tag="BABL1_RS05380"
+	 *      gene            complement(293972..294312)   <--- Oops!
+	 *                      /locus_tag="BABL1_RS05395"
+	 *      misc_RNA        complement(293972..294312)
+	 *                      /locus_tag="BABL1_RS05380"
+	 *                      /product="PMID: 20626900"
+	 *
+	 * Rather than have the pipeline bork, opt to systematically ignore all genes at the same
+	 * location. Perform a filtering step to remove any such genes.
+	 */
 	formatFeatures_(features) {
 		if (!features)
 			return
 
 		this.createFeatureLocations_(features)
+		this.indexFeatures_(features)
+
+		// Pre-filter to remove all but the first gene per location.
+		this.nullNonInitialDuplicatelyLocatedGenes_(features)
+		// Remove null features
+		features = features.filter((feature) => !!feature) // eslint-disable-line no-param-reassign
 		this.indexFeatures_(features)
 
 		// Pass 1: deal with all gene features first in order to assign ids for these
@@ -285,17 +307,47 @@ class GenbankMistAdapter {
 	}
 
 	/**
+	 * @param {Array.<Object>} features - array of parsed NCBI features
+	 */
+	nullNonInitialDuplicatelyLocatedGenes_(features) {
+		features.forEach((feature) => {
+			if (feature && feature.key === 'gene') {
+				let otherGeneIndices = this.otherGeneIndicesAtLocation_(feature, features)
+				otherGeneIndices.forEach((index) => {
+					features[index] = null
+				})
+			}
+		})
+	}
+
+	/**
+	 * @param {Object} feature
+	 * @param {Array.<Object>} features - array of parsed NCBI features
+	 * @returns {Array.<Number>}
+	 */
+	otherGeneIndicesAtLocation_(feature, features) {
+		let indices = this.featureIndicesByLocation_.get(feature.location),
+			result = []
+		if (indices) {
+			indices.forEach((index) => {
+				let otherFeature = features[index]
+				if (otherFeature && otherFeature.key === 'gene' && otherFeature !== feature)
+					result.push(index)
+			})
+		}
+
+		return result
+	}
+
+	/**
 	 * Formats each gene feature into a corresponding MiST record integrating any cognate CDS
 	 * feature.
 	 *
 	 * @param {Object} geneFeature
-	 * @param {Array.<Object>} features
+	 * @param {Array.<Object>} features - array of parsed NCBI features
 	 * @param {Number} i
 	 */
 	formatGeneFeature_(geneFeature, features, i) {
-		if (this.hasMultipleGenesAtLocation_(geneFeature.location, features))
-			throw new Error(`multiple genes cannot share the same location: ${geneFeature.location}`)
-
 		this.geneXrefSet_.clear()
 		let geneData = this.commonFeatureData_(geneFeature)
 		if (!geneData.locus)
@@ -322,20 +374,6 @@ class GenbankMistAdapter {
 		}
 
 		this.mistData_.genes.push(geneData)
-	}
-
-	hasMultipleGenesAtLocation_(location, features) {
-		let indices = this.featureIndicesByLocation_.get(location),
-			numGenes = 0
-		if (indices) {
-			indices.forEach((index) => {
-				let feature = features[index]
-				if (feature && feature.key === 'gene')
-					numGenes++
-			})
-		}
-
-		return numGenes > 1
 	}
 
 	/**
