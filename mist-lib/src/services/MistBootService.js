@@ -89,5 +89,12 @@ class MistBootService extends BootService {
 		classMethods.$criteriaAttributes = function() {
 			return null
 		}
+
+		/**
+		 * @returns {String} - name of sequence to be used by IdService; defaults to the model name
+		 */
+		classMethods.$idSequence = function() {
+			return this.name
+		}
 	}
 }

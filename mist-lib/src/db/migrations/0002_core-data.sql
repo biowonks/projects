@@ -1,3 +1,11 @@
+create table id_sequences (
+	id serial primary key,
+	name text not null,
+	last_value integer not null default 0,
+
+	unique(name)
+);
+
 -- Unless otherwise specified, all unqualified external database identifers are assumed to be from
 -- RefSeq. For example, components.accession refers to the RefSeq accession.
 
@@ -159,3 +167,4 @@ drop view genomes_genes;
 drop table genes;
 drop table components;
 drop table genomes_references;
+drop table id_sequences;
