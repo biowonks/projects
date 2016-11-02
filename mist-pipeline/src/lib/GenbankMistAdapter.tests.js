@@ -861,9 +861,11 @@ describe('GenbankMistAdapter', function() {
 						locus_tag: ['X1']
 					}
 				]
-				x.formatRefSeq(refSeq)
 				let result = x.formatRefSeq(refSeq)
+				expect(result.component.id).equal(1)
 				expect(result.genes.length).equal(1)
+				result = x.formatRefSeq(refSeq)
+				expect(result.component.id).equal(2)
 				expect(result.genes[0].id).equal(2)
 			})
 		})

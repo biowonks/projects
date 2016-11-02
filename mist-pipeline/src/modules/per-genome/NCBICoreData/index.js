@@ -14,6 +14,7 @@ const PerGenomePipelineModule = require('lib/PerGenomePipelineModule'),
 	NCBIDataHelper = require('./NCBIDataHelper'),
 	AseqsService = require('mist-lib/services/AseqsService'),
 	DseqsService = require('mist-lib/services/DseqsService'),
+	IdService = require('mist-lib/services/IdService'),
 	LocationStringParser = require('mist-lib/bio/LocationStringParser'),
 	genbankStream = require('mist-lib/streams/genbank-stream'),
 	genbankMistStream = require('lib/streams/genbank-mist-stream'),
@@ -23,6 +24,28 @@ const PerGenomePipelineModule = require('lib/PerGenomePipelineModule'),
 // Other
 let streamEachPromise = Promise.promisify(streamEach)
 
+/**
+ * This module handles downloading and loading raw genomic data into the database.
+ *
+ * For performance reasons, care is taken to insert all records (per table) with primary keys
+ * ordered in a contiguous, ungaped sequence. For example, if a genome has 10 components, the
+ * first component would have an id of X, the second of X + 1, and so on. The same applies for
+ * genes, xrefs, and the other tables. This is achieved by using a distinct table (id_sequences)
+ * to store specific sequences (which are by default named after the model name, See
+ * MistBootService::addGlobalClassMethods_). When allocating a specific sequence, this row is
+ * selected for update (locked), and updated with the relevant new sequence value. Of course,
+ * for this to work properly, all ids must be allocated on the client side using the IdService.
+ * This does not apply to all tables in the database, only those used in this module:
+ *
+ * - genomes_references
+ * - components
+ * - genes
+ * - components_features
+ * - xrefs
+ *
+ * Other tables, will most likely stick with the default serial, auto-incrementing database
+ * sequences to generate identifiers on insertion.
+ */
 module.exports =
 class NCBICoreData extends PerGenomePipelineModule {
 	static description() {
@@ -36,15 +59,16 @@ class NCBICoreData extends PerGenomePipelineModule {
 		this.locationStringParser_ = new LocationStringParser()
 		this.aseqsService_ = new AseqsService(this.models_.Aseq, this.logger_)
 		this.dseqsService_ = new DseqsService(this.models_.Dseq, this.logger_)
+		this.idService_ = new IdService(this.models_.IdSequence, this.logger_)
 		// {RefSeq accession: {}}
 		this.assemblyReportMap_ = new Map()
-
-		// Only load one set of references per genome. It appears that most GenBank encoded genomes
-		// repeat the same genome references for each "component". To avoid duplicate references,
-		// the first set of genome references are the only ones that are "inserted".
-		this.loadedGenomeReferences_ = false
 	}
 
+	/**
+	 * This module downloads files from NCBI and thus needs a directory to store these files.
+	 *
+	 * @returns {Boolean}
+	 */
 	needsDataDirectory() {
 		return true
 	}
@@ -103,6 +127,10 @@ class NCBICoreData extends PerGenomePipelineModule {
 
 	// ----------------------------------------------------
 	// Private methods
+	/**
+	 * @param {String} sourceType - type of data file to download for this genome; e.g. assembly-report. See FileMapper for a full list of options
+	 * @returns {Promise}
+	 */
 	download_(sourceType) {
 		return this.ncbiDataHelper_.isDownloaded(sourceType)
 		.then((isDownloaded) => {
@@ -114,6 +142,10 @@ class NCBICoreData extends PerGenomePipelineModule {
 		.then(() => this.shutdownCheck_())
 	}
 
+	/**
+	 * Downloads and indexes the information from the assembly report.
+	 * @returns {Promise}
+	 */
 	indexAssemblyReport_() {
 		return Promise.try(() => {
 			let assemblyReportFile = this.fileMapper_.pathFor('assembly-report'),
@@ -127,138 +159,196 @@ class NCBICoreData extends PerGenomePipelineModule {
 			})
 			.then(() => {
 				this.logger_.info(`Read ${this.assemblyReportMap_.size} row(s) from the assembly report`)
+				this.shutdownCheck_()
 			})
 		})
 	}
 
+	/**
+	 * At this point, the relevant data files have been downloaded successfully. This methods
+	 * governs the overall data processing:
+	 *
+	 * 1) Read entire GenBank data into memory
+	 * 2) Allocate a range of identifiers for all rows to be inserted for each table
+	 * 3) Load them into the database in a single transaction
+	 *
+	 * @returns {Promise}
+	 */
 	parseAndLoadGenome_() {
-		let genbankFlatFile = this.fileMapper_.pathFor('genomic-genbank'),
-			readStream = fs.createReadStream(genbankFlatFile),
-			gunzipStream = zlib.createGunzip(),
-			genbankReader = genbankStream(),
-			genbankMistReader = genbankMistStream(this.genome_.id, this.genome_.version)
-
-		genbankReader.on('error', (error) => {
-			this.logger_.fatal(error, 'Genbank reader error')
-		})
-
-		// Load the entire genome and its related data in a single transaction. Each "record"
-		// returned from the genbankMistReader is a component with its own set of genes, aseqs,
-		// etc.
-		return this.sequelize_.transaction({
-			isolationLevel: 'READ COMMITTED' // Necessary to avoid getting: could not serialize access due to concurrent update errors
-		}, (transaction) => {
-			let pipeline = pumpify.obj(readStream, gunzipStream, genbankReader, genbankMistReader),
-				index = 1
-
-			return streamEachPromise(pipeline, (mistData, next) => {
-				let component = mistData.component,
-					tmpLogger = this.logger_.child({
-						version: component.version,
-						index,
-						numComponents: this.assemblyReportMap_.size
-					})
-
-				++index
-				tmpLogger.info('Successfully parsed Genbank record')
-
-				this.loadMistData_(mistData, transaction, tmpLogger)
-				.then(() => {
-					tmpLogger.info('Finished inserting component')
-					next()
+		return this.readAllGenBankData_()
+		.then(this.reserveAndAssignIds_.bind(this))
+		.then((mistData) => {
+			return this.sequelize_.transaction({
+				isolationLevel: 'READ COMMITTED' // Necessary to avoid getting: could not serialize access due to concurrent update errors
+			}, (transaction) => {
+				mistData.components.forEach((component) => {
+					component.dna = 'ATGC'
+					component.length = 4
 				})
-				.catch(next)
+
+				return this.loadComponents_(mistData.components, transaction)
+				.then(() => this.bulkLoadRecords_(mistData.genomeReferences, this.models_.GenomeReference, transaction))
+				.then(() => this.loadGeneSeqs_(mistData.geneSeqs, transaction))
+				.then(() => this.loadProteinSeqs_(mistData.proteinSeqs, transaction))
+				.then(() => this.bulkLoadRecords_(mistData.genes, this.models_.Gene, transaction))
+				.then(() => this.bulkLoadRecords_(mistData.xrefs, this.models_.Xref, transaction))
+				.then(() => this.bulkLoadRecords_(mistData.componentFeatures, this.models_.ComponentFeature, transaction))
 			})
 		})
 	}
 
-	loadMistData_(mistData, transaction, logger) {
-		let artificialGeneIds = []
+	/**
+	 * Uses a chain of streams to read all raw data in the gzipped GenBank flatfile into arrays
+	 * of records with artificial (not database generated) identifiers.
+	 *
+	 * @returns {Promise.<Object>}
+	 */
+	readAllGenBankData_() {
+		let result = {
+			geneSeqs: [],
+			proteinSeqs: [],
+			genomeReferences: null, // special case: only save first batch of genome references
+			components: [],
+			genes: [],
+			componentFeatures: [],
+			xrefs: []
+		}
+
 		return Promise.try(() => {
-			return this.loadGenomeReferences_(mistData.genomeReferences, transaction, logger)
-			.then(() => this.loadComponent_(mistData.component, transaction, logger))
-			.then((dbComponent) => {
-				this.setForeignKeyIds_(mistData.genes, 'component_id', dbComponent.id)
-				this.setForeignKeyIds_(mistData.componentFeatures, 'component_id', dbComponent.id)
-				let nDseqs = mistData.geneSeqs.length
-				if (!nDseqs)
-					return null
+			let genbankFlatFile = this.fileMapper_.pathFor('genomic-genbank'),
+				readStream = fs.createReadStream(genbankFlatFile),
+				gunzipStream = zlib.createGunzip(),
+				genbankReader = genbankStream(),
+				genbankMistReader = genbankMistStream(this.genome_.id, this.genome_.version),
+				pipeline = pumpify.obj(readStream, gunzipStream, genbankReader, genbankMistReader)
 
-				logger.info(`Loading (ignoring duplicates) ${mistData.geneSeqs.length} gene seqs (dseqs)`)
-				return this.dseqsService_.insertIgnoreSeqs(mistData.geneSeqs, transaction)
+			genbankReader.on('error', (error) => {
+				this.logger_.fatal(error, 'Genbank reader error')
 			})
+
+			return streamEachPromise(pipeline, (parsedGenBankRecord, next) => {
+				// Only load one set of references per genome. It appears that most GenBank encoded genomes
+				// repeat the same genome references for each "component". To avoid duplicate references,
+				// the first set of genome references are the only ones that are "inserted".
+				if (result.genomeReferences === null)
+					result.genomeReferences = parsedGenBankRecord.genomeReferences
+				result.components.push(parsedGenBankRecord.component)
+				for (let key in result) {
+					if (key === 'genomeReferences')
+						continue
+
+					if (Reflect.has(parsedGenBankRecord, key))
+						result[key] = result[key].concat(parsedGenBankRecord[key])
+				}
+				next()
+			})
+		})
+		.then(() => result)
+	}
+
+	/**
+	 * Allocates a range of identifiers and replaces the artificial identifiers for each block of
+	 * records to be inserted into the database. Both primary and foreign key identifiers are
+	 * properly mapped.
+	 *
+	 * @param {Object.<String,Array.<Object>>} mistData
+	 * @returns {Promise}
+	 */
+	reserveAndAssignIds_(mistData) {
+		return this.assignIds_(mistData.genomeReferences, this.models_.GenomeReference)
+		.then(() => this.assignIds_(mistData.components, this.models_.Component))
+		.then((componentIdMap) => {
+			this.setForeignKeyIds_(mistData.genes, 'component_id', componentIdMap)
+			this.setForeignKeyIds_(mistData.componentFeatures, 'component_id', componentIdMap)
+			return this.assignIds_(mistData.genes, this.models_.Gene)
+		})
+		.then((geneIdMap) => {
+			this.setForeignKeyIds_(mistData.xrefs, 'gene_id', geneIdMap)
+			this.setForeignKeyIds_(mistData.componentFeatures, 'gene_id', geneIdMap)
+			return this.assignIds_(mistData.componentFeatures, this.models_.ComponentFeature)
+		})
+		.then(() => this.assignIds_(mistData.xrefs, this.models_.Xref))
+		.then(() => mistData)
+	}
+
+	/**
+	 * Allocates ${records.length} identifiers for the sequence associated with ${model} and
+	 * updates the ${record}s artificial identifiers with these. Returns a map object which
+	 * maps the old identifiers to their equivalent new ids.
+	 *
+	 * @param {Array.<Object>} records
+	 * @param {Model} model
+	 * @returns {Promise.<Map.<Number,Number>>|null} - Map instance mapping old identifers to the new identifers
+	 */
+	assignIds_(records, model) {
+		if (!records.length)
+			return new Map()
+
+		return this.idService_.reserve(model.$idSequence(), records.length)
+		.then((idRange) => {
+			let idSequence = mutil.sequence(idRange[0]),
+				idMap = new Map()
+			records.forEach((record) => {
+				let oldId = record.id
+				record.id = idSequence.next().value
+				idMap.set(oldId, record.id)
+			})
+			return idMap
+		})
+	}
+
+	/**
+	 * Helper method for updating foreign key values. Iterates through each record in ${records}
+	 * and replaces the value of record[${foreignKeyField}] with its corresponding value in
+	 * ${idMap}.
+	 *
+	 * @param {Array.<Object>} records
+	 * @param {String} foreignKeyField
+	 * @param {Map.<Number,Number>} idMap
+	 */
+	setForeignKeyIds_(records, foreignKeyField, idMap) {
+		records.forEach((record) => {
+			if (record[foreignKeyField] === null)
+				return
+
+			let oldForeignKeyId = record[foreignKeyField],
+				newForeignKeyId = idMap.get(oldForeignKeyId)
+			assert(!!newForeignKeyId)
+			record[foreignKeyField] = newForeignKeyId
+		})
+	}
+
+	/**
+	 * @param {Array.<Object>} components
+	 * @param {Transaction} transaction
+	 * @returns {Promise}
+	 */
+	loadComponents_(components, transaction) {
+		let numComponents = components.length
+		this.logger_.info(`Loading ${numComponents} components`)
+		return Promise.each(components, (component, i) => {
+			this.addAssemblyReportData_(component)
+			let logger = this.logger_.child({
+				version: component.version,
+				dnaLength: component.length,
+				componentName: component.name,
+				index: i + 1,
+				numComponents
+			})
+			logger.info(`about to insert component ${component.name}`)
+			return this.models_.Component.create(component, {transaction})
 			.then(() => {
-				let nAseqs = mistData.proteinSeqs.length
-				if (!nAseqs)
-					return null
-
-				logger.info(`Loading (ignoring duplicates) ${mistData.proteinSeqs.length} protein seqs (aseqs)`)
-				return this.aseqsService_.insertIgnoreSeqs(mistData.proteinSeqs, transaction)
-			})
-			.then(() => {
-				artificialGeneIds = mistData.genes.map((x) => x.id)
-				return this.loadGenes_(mistData.genes, transaction, logger)
-			})
-			.then((dbGenes) => {
-				assert(dbGenes.length === mistData.genes.length)
-				let dbGeneIdMap = new Map()
-				artificialGeneIds.forEach((artificialGeneId, i) => {
-					dbGeneIdMap.set(artificialGeneId, dbGenes[i].id)
-				})
-				mistData.xrefs.forEach((xref) => {
-					xref.gene_id = dbGeneIdMap.get(xref.gene_id)
-				})
-				mistData.componentFeatures.forEach((feature) => {
-					if (feature.gene_id)
-						feature.gene_id = dbGeneIdMap.get(feature.gene_id)
-				})
-				this.setIdsToNull_(mistData.xrefs)
-				let nXrefs = mistData.xrefs.length
-				if (!nXrefs)
-					return null
-
-				logger.info(`Loading ${mistData.xrefs.length} xrefs`)
-				return this.models_.Xref.bulkCreate(mistData.xrefs, {validate: true, transaction})
-			})
-			.then(() => {
-				let nComponentFeatures = mistData.componentFeatures.length
-				if (!nComponentFeatures)
-					return null
-
-				logger.info(`Loading ${mistData.componentFeatures.length} component features`)
-				this.setIdsToNull_(mistData.componentFeatures)
-				return this.models_.ComponentFeature.bulkCreate(mistData.componentFeatures, {
-					validate: true,
-					transaction
-				})
+				logger.info(`inserted component ${component.name}`)
 			})
 		})
 	}
 
-	loadGenomeReferences_(genomeReferences, transaction, logger) {
-		if (this.loadedGenomeReferences_)
-			return Promise.resolve()
-
-		logger.info(`Loading ${genomeReferences.length} genome references`)
-		this.setIdsToNull_(genomeReferences)
-		return this.models_.GenomeReference.bulkCreate(genomeReferences, {
-			validate: true,
-			transaction
-		})
-		.then(() => {
-			this.loadedGenomeReferences_ = true
-		})
-	}
-
-	loadComponent_(component, transaction, logger) {
-		logger.info({dnaLength: component.length}, 'Loading component')
-		component.id = null
-		this.addAssemblyReportData_(component)
-		return this.models_.Component.create(component, {
-			transaction
-		})
-	}
-
+	/**
+	 * Updates several fields in ${component} with the corresponding data values from the assembly
+	 * report file.
+	 *
+	 * @param {Object} component
+	 */
 	addAssemblyReportData_(component) {
 		let assemblyReport = this.assemblyReportMap_.get(component.version)
 		if (!assemblyReport)
@@ -287,36 +377,50 @@ class NCBICoreData extends PerGenomePipelineModule {
 		component.genbank_refseq_relationship = assemblyReport.genbankRefseqRelationship
 	}
 
-	loadGenes_(genes, transaction, logger) {
-		if (!genes.length)
-			return []
+	/**
+	 * Helper method to bulk load ${records} into the database.
+	 *
+	 * @param {Array.<Object>} records
+	 * @param {Model} model - the model to use to bulk load these into the database
+	 * @param {Transaction} transaction
+	 * @returns {Promise}
+	 */
+	bulkLoadRecords_(records, model, transaction) {
+		if (records.length === 0)
+			return null
 
-		logger.info(`Loading ${genes.length} genes`)
-		this.setIdsToNull_(genes)
-		return this.models_.Gene.bulkCreate(genes, {
+		this.logger_.info(`Loading ${records.length} ${model.name}s`)
+		return model.bulkCreate(records, {
 			validate: true,
-			returning: true,
 			transaction
 		})
 	}
 
 	/**
-	 * @param {Object|Array.<Object>} value
+	 * @param {Array.<Object>} geneSeqs
+	 * @param {Transaction} transaction
+	 * @returns {null|Promise}
 	 */
-	setIdsToNull_(value) {
-		if (Array.isArray(value)) {
-			value.forEach((x) => {
-				x.id = null
-			})
-		}
-		else {
-			value.id = null
-		}
+	loadGeneSeqs_(geneSeqs, transaction) {
+		let numDseqs = geneSeqs.length
+		if (!numDseqs)
+			return null
+
+		this.logger_.info(`Loading (ignoring duplicates) ${numDseqs} gene seqs (dseqs)`)
+		return this.dseqsService_.insertIgnoreSeqs(geneSeqs, transaction)
 	}
 
-	setForeignKeyIds_(records, foreignKeyField, foreignKeyId) {
-		records.forEach((record) => {
-			record[foreignKeyField] = foreignKeyId
-		})
+	/**
+	 * @param {Array.<Object>} proteinSeqs
+	 * @param {Transaction} transaction
+	 * @returns {null|Promise}
+	 */
+	loadProteinSeqs_(proteinSeqs, transaction) {
+		let numAseqs = proteinSeqs.length
+		if (!numAseqs)
+			return null
+
+		this.logger_.info(`Loading (ignoring duplicates) ${numAseqs} protein seqs (aseqs)`)
+		return this.aseqsService_.insertIgnoreSeqs(proteinSeqs, transaction)
 	}
 }
