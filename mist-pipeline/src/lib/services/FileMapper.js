@@ -50,6 +50,7 @@ class FileMapper {
 			.replace(/#/g, '_')
 			.replace(/_{2,}/, '_')
 			.replace(/,/g, '_')
+			.replace(/_{2,}/g, '_')
 		return `${this.genome_.version}_${urlAssemblyName}`
 	}
 
