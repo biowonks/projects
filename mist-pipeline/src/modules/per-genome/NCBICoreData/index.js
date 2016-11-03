@@ -181,11 +181,6 @@ class NCBICoreData extends PerGenomePipelineModule {
 			return this.sequelize_.transaction({
 				isolationLevel: 'READ COMMITTED' // Necessary to avoid getting: could not serialize access due to concurrent update errors
 			}, (transaction) => {
-				mistData.components.forEach((component) => {
-					component.dna = 'ATGC'
-					component.length = 4
-				})
-
 				return this.loadComponents_(mistData.components, transaction)
 				.then(() => this.bulkLoadRecords_(mistData.genomeReferences, this.models_.GenomeReference, transaction))
 				.then(() => this.loadGeneSeqs_(mistData.geneSeqs, transaction))
