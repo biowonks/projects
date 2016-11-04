@@ -10,7 +10,16 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 	]
 }
 
-module.exports.docs = {
-	name: 'Fetch Many Taxonomies',
-	description: 'Returns an array of taxonomic nodes'
+module.exports.docs = function(modelExamples) {
+	return {
+		name: 'Fetch Many Taxonomies',
+		description: 'Returns an array of taxonomic nodes',
+		example: {
+			response: {
+				body: [
+					modelExamples.Taxonomy
+				]
+			}
+		}
+	}
 }
