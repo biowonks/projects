@@ -24,21 +24,23 @@ class FileMapper {
 	 * @param {string} sourceType type of NCBI data file being analyzed
 	 * @returns {string} the relevant file name
 	 */
-	fileNameFor(sourceType) {
-		let prefix = this.ncbiPrefix()
-
+	localFileNameFor(sourceType) {
 		switch (sourceType) {
 			case 'checksums':				return 'md5checksums.txt'
-			case 'genomic-genbank':			return `${prefix}_genomic.gbff.gz`
-			case 'genomic-fasta':			return `${prefix}_genomic.fna.gz`
-			case 'protein-fasta':			return `${prefix}_protein.faa.gz`
-			case 'assembly-report':			return `${prefix}_assembly_report.txt`
-			case 'genes-gff':				return `${prefix}_genomic.gff.gz`
-			case 'feature-table':			return `${prefix}_feature_table.txt.gz`
+			case 'genomic-genbank':			return 'genomic.gbff.gz'
+			case 'genomic-fasta':			return 'genomic.fna.gz'
+			case 'protein-fasta':			return 'protein.faa.gz'
+			case 'assembly-report':			return 'assembly_report.txt'
+			case 'genes-gff':				return 'genomic.gff.gz'
+			case 'feature-table':			return 'feature_table.txt.gz'
 
 			default:
 				throw new Error(`${sourceType} is not supported`)
 		}
+	}
+
+	ncbiFileNameFor(sourceType) {
+		return this.ncbiPrefix() + '_' + this.localFileNameFor(sourceType)
 	}
 
 	ncbiPrefix() {
@@ -46,13 +48,24 @@ class FileMapper {
 			throw new Error('Genome has not been set. Please call setGenome first')
 
 		let urlAssemblyName = this.genome_.assembly_name.replace(/ /g, '_')
+			.replace(/\//g, '_')
 			.replace(/#/g, '_')
 			.replace(/_{2,}/, '_')
+			.replace(/,/g, '_')
+			.replace(/_{2,}/g, '_')
 		return `${this.genome_.version}_${urlAssemblyName}`
 	}
 
 	ncbiUrlFor(sourceType) {
-		return `${this.genome_.ftp_path}/${this.fileNameFor(sourceType)}`
+		return `${this.genome_.ftp_path}/${this.ncbiFileNameFor(sourceType)}`
+	}
+
+	ncbiRsyncUrlFor(sourceType) {
+		let url = `${this.genome_.ftp_path}/`.replace(/^ftp:/, 'rsync:')
+		if (sourceType !== 'checksums')
+			url += '*_'
+		url += this.localFileNameFor(sourceType)
+		return url
 	}
 
 	genomeRootPath() {
@@ -60,6 +73,6 @@ class FileMapper {
 	}
 
 	pathFor(sourceType) {
-		return path.resolve(this.genomeRootPath(), this.fileNameFor(sourceType))
+		return path.resolve(this.genomeRootPath(), this.localFileNameFor(sourceType))
 	}
 }

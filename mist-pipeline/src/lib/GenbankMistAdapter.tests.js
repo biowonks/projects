@@ -407,25 +407,6 @@ describe('GenbankMistAdapter', function() {
 				expect(gene.stable_id).null
 			})
 
-			it('throws error if non-gene feature with same location as a gene occurs prior to the gene feature', function() {
-				let x = new GenbankMistAdapter()
-				refSeq.features = [
-					{
-						location: '1..10',
-						key: 'dummy'
-					},
-					{
-						location: '1..10',
-						key: 'gene',
-						locus_tag: ['X1']
-					}
-				]
-
-				expect(function() {
-					x.formatRefSeq(refSeq)
-				}).throw(Error)
-			})
-
 			it('throws error if cognate CDS feature does not overlap gene', function() {
 				let x = new GenbankMistAdapter()
 				refSeq.features = [
@@ -732,22 +713,37 @@ describe('GenbankMistAdapter', function() {
 				expect(result.componentFeatures[0].gene_id).equal(1)
 			})
 
-			it('two genes with same locations throws error', function() {
+			it('ignore all but the first gene of those that have the same location', function() {
 				let x = new GenbankMistAdapter()
 				refSeq.features = [
 					{
 						key: 'gene',
-						location: '1..6'
+						location: '1..6',
+						locus_tag: ['X1']
 					},
 					{
 						key: 'gene',
-						location: '1..6'
+						location: '1..6',
+						locus_tag: ['X2'],
+						product: ['non-product']
+					},
+					{
+						key: 'CDS',
+						location: '1..6',
+						product: ['product']
+					},
+					{
+						key: 'gene',
+						location: '1..6',
+						locus_tag: ['X3'],
+						product: ['non-product 2']
 					}
 				]
 
-				expect(function() {
-					x.formatRefSeq(refSeq)
-				}).throw(Error)
+				let result = x.formatRefSeq(refSeq)
+				expect(result.genes.length).equal(1)
+				expect(result.genes[0].locus).equal('X1')
+				expect(result.genes[0].product).equal('product')
 			})
 
 			it('non-gene feature', function() {
@@ -865,9 +861,11 @@ describe('GenbankMistAdapter', function() {
 						locus_tag: ['X1']
 					}
 				]
-				x.formatRefSeq(refSeq)
 				let result = x.formatRefSeq(refSeq)
+				expect(result.component.id).equal(1)
 				expect(result.genes.length).equal(1)
+				result = x.formatRefSeq(refSeq)
+				expect(result.component.id).equal(2)
 				expect(result.genes[0].id).equal(2)
 			})
 		})

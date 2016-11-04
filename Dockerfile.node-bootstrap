@@ -13,7 +13,7 @@ RUN addgroup -g ${LOCAL_USER_ID:=1000} biowonks && \
 	adduser -S -G biowonks -s /bin/false -u ${LOCAL_USER_ID:=1000} biowonks && \
 	echo PS1=\"\(\\u@docker\) \\w $ \" >> /home/biowonks/.bashrc && \
 	echo http://nl.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
-	apk --update --no-cache add bash git ca-certificates su-exec build-base openssl python wget postgresql-client && \
+	apk --update --no-cache add bash git ca-certificates su-exec build-base openssl python wget postgresql-client rsync && \
 	mkdir /app && \
 	chown biowonks:biowonks /app
 
