@@ -130,7 +130,7 @@ class CriteriaService {
 				attributes: null,
 				where: null,
 				include: null,
-				limit: this.defaultPerPage_,
+				limit: 1,
 				offset: null,
 				order: null
 			},
@@ -154,48 +154,91 @@ class CriteriaService {
 	 * # Page (URL parameter name: page)
 	 * A positive integer indicating which page of results to fetch. If not provided, defaults to 1.
 	 *
+	 * # Order (URL parameter name: order)
+	 * A comma separated list of fields to sort by in ascending order. If prefixed with '-', the
+	 * sort is done in descending order for that field.
+	 *
 	 * @param {Model} primaryModel - the base model with which to analyze ${queryObject}
-	 * @param {Object} queryObject - a querystring (core module) compatible set of parameters; typically this originates from the query string of a URL
+	 * @param {Object} [queryObject = {}] - a querystring (core module) compatible set of parameters; typically this originates from the query string of a URL
+	 * @param {Number} [queryObject.per_page]
+	 * @param {Number} [queryObject.page]
+	 * @param {String} [queryObject.order]
+	 * @param {Object} [options = {}]
+	 * @param {Number} [options.defaultPerPage] - override default number of records per page
+	 * @param {Number} [options.maxPage] - override default maxPage setting
+	 * @param {Number} [options.maxPerPage] - override default maxPerPage setting
 	 * @returns {Object} - criteria object compatible with Sequelizejs find operations
 	 */
-	createFromQueryObjectForMany(primaryModel, queryObject = {}) {
+	createFromQueryObjectForMany(primaryModel, queryObject = {}, options = {}) {
 		let criteria = this.createFromQueryObject(primaryModel, queryObject),
-			perPage = this.perPageFrom(queryObject.per_page),
-			page = this.pageFrom(queryObject.page)
+			perPage = this.perPageFrom(queryObject.per_page, options.defaultPerPage, options.maxPerPage),
+			page = this.pageFrom(queryObject.page, options.maxPage)
 
 		criteria.limit = perPage
 		criteria.offset = this.offsetFromPage(page, perPage) || null
-		criteria.order = [
-			primaryModel.primaryKeyAttributes
-		]
+		criteria.order = this.orderFrom(primaryModel, queryObject.order)
 
 		return criteria
 	}
 
 	/**
 	 * @param {Number|String|null} perPage
+	 * @param {Number} [defaultPerPage = this.defaultPerPage_]
+	 * @param {Number} [maxPerPage = this.maxPerPage_]
 	 * @returns {Number} - amount to expect per page; if invalid, returns the default per page otherwise the result is clamped between 0 and the maximum per page
 	 */
-	perPageFrom(perPage) {
+	perPageFrom(perPage, defaultPerPage = this.defaultPerPage_, maxPerPage = this.maxPerPage_) {
+		if (defaultPerPage === null)
+			defaultPerPage = this.defaultPerPage_ // eslint-disable-line no-param-reassign
+		if (maxPerPage === null)
+			maxPerPage = this.maxPerPage_ // eslint-disable-line no-param-reassign
+
 		let isValidPerPage = !perPage || /^\d+$/.test(perPage)
 		if (!isValidPerPage)
 			throw new CriteriaError('invalid per_page query parameter: must be greater than or equal to 0')
 
-		let result = perPage || perPage === 0 ? Number(perPage) : this.defaultPerPage_
-		return Math.max(0, Math.min(result, this.maxPerPage_))
+		let result = perPage || perPage === 0 ? Number(perPage) : defaultPerPage
+		if (maxPerPage || maxPerPage === 0)
+			result = Math.min(result, maxPerPage)
+		return Math.max(0, result)
 	}
 
 	/**
 	 * @param {Number|String|null} page
+	 * @param {Number} [maxPage = this.maxPage_]
 	 * @returns {Number} - 1-based page number; defaults to 1
 	 */
-	pageFrom(page) {
+	pageFrom(page, maxPage = this.maxPage_) {
 		let isValidPage = (!page && page !== 0) || /^[1-9]\d*$/.test(page)
 		if (!isValidPage)
 			throw new CriteriaError('invalid page query parameter: must be greater than or equal to 1')
 
 		let result = !page ? 1 : Number(page)
-		return Math.min(result, this.maxPage_)
+		if (maxPage > 0)
+			result = Math.min(result, maxPage)
+
+		return result
+	}
+
+	orderFrom(primaryModel, order = null) {
+		if (!order)
+			return [primaryModel.primaryKeyAttributes]
+
+		let primaryOrderFields = order.split(/\s*,\s*/).filter((x) => !!x)
+		if (!primaryOrderFields.length)
+			return [primaryModel.primaryKeyAttributes]
+
+		return primaryOrderFields.map((field) => {
+			let actualField = field,
+				direction = null
+			if (field[0] === '-') {
+				actualField = field.substr(1)
+				direction = 'desc'
+				return [actualField, direction]
+			}
+
+			return [actualField]
+		})
 	}
 
 	/**
@@ -216,10 +259,22 @@ class CriteriaService {
 	/**
 	 * @param {Object} target
 	 * @param {Model} primaryModel
-	 * @param {Array.<Model>} [accessibleModels = null] - related models that may be included in the response
+	 * @param {Object} [criteriaOptions = {}]
+	 * @param {Array.<Model>} [criteriaOptions.accessibleModels] - related models that may be included in the response
+	 * @param {String|Array.<String>} [criteriaOptions.permittedOrderFields] - array of fields that may be ordered against; if '*', then assumes all fields may be ordered on
 	 * @returns {Array.<Object>}
 	 */
-	findErrors(target, primaryModel, accessibleModels = null) {
+	findErrors(criteria, primaryModel, criteriaOptions = {}) {
+		let attributeErrors = this.findAttributeErrors_(criteria, primaryModel, criteriaOptions.accessibleModels),
+			orderErrors = this.findOrderErrors_(criteria.order, primaryModel, criteriaOptions.permittedOrderFields || primaryModel.primaryKeyAttributes),
+			errors = [...attributeErrors, ...orderErrors]
+
+		return errors.length ? errors : null
+	}
+
+	// ----------------------------------------------------
+	// Private methods
+	findAttributeErrors_(target, primaryModel, accessibleModels = null) {
 		this.throwIfInvalidModel_(primaryModel)
 
 		let errors = [],
@@ -270,11 +325,54 @@ class CriteriaService {
 			}
 		}
 
-		return null
+		return errors
 	}
 
-	// ----------------------------------------------------
-	// Private methods
+	findOrderErrors_(orderArray, primaryModel, permittedOrderFields) {
+		let errors = []
+		if (!orderArray)
+			return errors
+
+		let orderFields = orderArray.map((order) => order[0]),
+			invalidAttributes = this.invalidAttributes_(orderFields, primaryModel)
+		if (invalidAttributes) {
+			errors.push({
+				// Technically, this is an invalid attribute; however, from the user's
+				// perspective, it is a "field"
+				type: 'InvalidFieldError',
+				fields: invalidAttributes,
+				model: primaryModel.name,
+				message: `${primaryModel.name} does not contain the following fields: ${invalidAttributes.join(', ')}`
+			})
+		}
+
+		if (permittedOrderFields !== '*') {
+			let unauthorizedOrderAttributes = []
+			if (!permittedOrderFields) {
+				unauthorizedOrderAttributes = orderFields
+			}
+			else {
+				orderFields.forEach((orderField) => {
+					let validField = Reflect.has(primaryModel.attributes, orderField),
+						permitted = permittedOrderFields.includes(orderField)
+					if (validField && !permitted)
+						unauthorizedOrderAttributes.push(orderField)
+				})
+			}
+
+			if (unauthorizedOrderAttributes.length) {
+				errors.push({
+					type: 'SortFieldError',
+					fields: unauthorizedOrderAttributes,
+					model: primaryModel.name,
+					message: `${primaryModel.name} may not be sorted with the following fields: ${unauthorizedOrderAttributes.join(', ')}`
+				})
+			}
+		}
+
+		return errors
+	}
+
 	throwIfInvalidModel_(model) {
 		if (!model)
 			throw new Error('model cannot be undefined')
