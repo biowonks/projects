@@ -220,11 +220,16 @@ class CriteriaService {
 		return result
 	}
 
-	orderFrom(primaryModel, order = null) {
-		if (!order)
+	/**
+	 * @param {Model} primaryModel
+	 * @param {String} [orderString = null]
+	 * @returns {Array}
+	 */
+	orderFrom(primaryModel, orderString = null) {
+		if (!orderString)
 			return [primaryModel.primaryKeyAttributes]
 
-		let primaryOrderFields = order.split(/\s*,\s*/).filter((x) => !!x)
+		let primaryOrderFields = orderString.split(/\s*,\s*/).filter((x) => !!x)
 		if (!primaryOrderFields.length)
 			return [primaryModel.primaryKeyAttributes]
 
@@ -257,7 +262,7 @@ class CriteriaService {
 	}
 
 	/**
-	 * @param {Object} target
+	 * @param {Object} criteria
 	 * @param {Model} primaryModel
 	 * @param {Object} [criteriaOptions = {}]
 	 * @param {Array.<Model>} [criteriaOptions.accessibleModels] - related models that may be included in the response
@@ -274,6 +279,12 @@ class CriteriaService {
 
 	// ----------------------------------------------------
 	// Private methods
+	/**
+	 * @param {Object} target
+	 * @param {Model} primaryModel
+	 * @param {Array.<Model>} [accessibleModels = null] - related models that may be included in the response
+	 * @returns {Array}
+	 */
 	findAttributeErrors_(target, primaryModel, accessibleModels = null) {
 		this.throwIfInvalidModel_(primaryModel)
 
@@ -328,6 +339,12 @@ class CriteriaService {
 		return errors
 	}
 
+	/**
+	 * @param {Array.<Array>} orderArray
+	 * @param {Model} primaryModel
+	 * @param {Array} permittedOrderFields
+	 * @returns {Array}
+	 */
 	findOrderErrors_(orderArray, primaryModel, permittedOrderFields) {
 		let errors = []
 		if (!orderArray)
@@ -373,6 +390,9 @@ class CriteriaService {
 		return errors
 	}
 
+	/**
+	 * @param {Model} model
+	 */
 	throwIfInvalidModel_(model) {
 		if (!model)
 			throw new Error('model cannot be undefined')

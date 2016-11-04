@@ -70,7 +70,7 @@ User.hasMany(Post)
 Post.belongsTo(User)
 
 describe('services', function() {
-	describe.only('CriteriaService', function() {
+	describe('CriteriaService', function() {
 		describe('defaultPerPage', function() {
 			it('setting to default + 10 works', function() {
 				let newDefaultPerPage = CriteriaService.kDefaults.perPage + 10,
@@ -596,6 +596,31 @@ describe('services', function() {
 			it('maxPage + 1 returns maxPage', function() {
 				let maxPage = x.maxPage()
 				expect(x.pageFrom(maxPage + 1)).equal(maxPage)
+			})
+		})
+
+		describe('orderFrom', function() {
+			let x = new CriteriaService()
+			it('empty orderString returns primary key attributes', function() {
+				expect(x.orderFrom(User)).eql([['id']])
+			})
+
+			it('empty string returns primary key attributes', function() {
+				expect(x.orderFrom(User, '')).eql([['id']])
+				expect(x.orderFrom(User, ',')).eql([['id']])
+				expect(x.orderFrom(User, ' , , ,,')).eql([['id']])
+			})
+
+			it('single order field', function() {
+				expect(x.orderFrom(User, 'id')).eql([['id']])
+			})
+
+			it('single order in desc order', function() {
+				expect(x.orderFrom(User, '-name')).eql([['name', 'desc']])
+			})
+
+			it('multiple fields', function() {
+				expect(x.orderFrom(User, '-name,id')).eql([['name', 'desc'], ['id']])
 			})
 		})
 
