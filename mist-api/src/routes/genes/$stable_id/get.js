@@ -5,26 +5,29 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		helper = app.get('lib').RouteHelper.for(models.Gene)
 
 	return [
-		middlewares.parseCriteriaForMany(models.Gene, {
+		middlewares.parseCriteria(models.Gene, {
 			accessibleModels: [
 				models.Component,
 				models.Aseq,
 				models.Dseq
 			]
 		}),
-		helper.findManyHandler()
+		helper.findHandler('stable_id')
 	]
 }
 
 module.exports.docs = function(modelExamples) {
 	return {
-		name: 'Fetch Many Genes',
-		description: 'Returns an array of genes',
+		name: 'Fetch Gene',
+		description: 'Returns a single gene',
 		example: {
+			request: {
+				parameters: {
+					stable_id: modelExamples.Gene.stable_id
+				}
+			},
 			response: {
-				body: [
-					modelExamples.Gene
-				]
+				body: modelExamples.Gene
 			}
 		}
 	}
