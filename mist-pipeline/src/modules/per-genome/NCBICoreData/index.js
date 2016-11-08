@@ -1,8 +1,7 @@
 'use strict'
 
 // Core
-const assert = require('assert'),
-	fs = require('fs'),
+const fs = require('fs'),
 	zlib = require('zlib')
 
 // Vendor
@@ -250,67 +249,20 @@ class NCBICoreData extends PerGenomePipelineModule {
 	 * @returns {Promise}
 	 */
 	reserveAndAssignIds_(mistData) {
-		return this.assignIds_(mistData.genomeReferences, this.models_.GenomeReference)
-		.then(() => this.assignIds_(mistData.components, this.models_.Component))
+		return this.idService_.assignIds(mistData.genomeReferences, this.models_.GenomeReference)
+		.then(() => this.idService_.assignIds(mistData.components, this.models_.Component))
 		.then((componentIdMap) => {
-			this.setForeignKeyIds_(mistData.genes, 'component_id', componentIdMap)
-			this.setForeignKeyIds_(mistData.componentFeatures, 'component_id', componentIdMap)
-			return this.assignIds_(mistData.genes, this.models_.Gene)
+			this.idService_.setForeignKeyIds(mistData.genes, 'component_id', componentIdMap)
+			this.idService_.setForeignKeyIds(mistData.componentFeatures, 'component_id', componentIdMap)
+			return this.idService_.assignIds(mistData.genes, this.models_.Gene)
 		})
 		.then((geneIdMap) => {
-			this.setForeignKeyIds_(mistData.xrefs, 'gene_id', geneIdMap)
-			this.setForeignKeyIds_(mistData.componentFeatures, 'gene_id', geneIdMap)
-			return this.assignIds_(mistData.componentFeatures, this.models_.ComponentFeature)
+			this.idService_.setForeignKeyIds(mistData.xrefs, 'gene_id', geneIdMap)
+			this.idService_.setForeignKeyIds(mistData.componentFeatures, 'gene_id', geneIdMap)
+			return this.idService_.assignIds(mistData.componentFeatures, this.models_.ComponentFeature)
 		})
-		.then(() => this.assignIds_(mistData.xrefs, this.models_.Xref))
+		.then(() => this.idService_.assignIds(mistData.xrefs, this.models_.Xref))
 		.then(() => mistData)
-	}
-
-	/**
-	 * Allocates ${records.length} identifiers for the sequence associated with ${model} and
-	 * updates the ${record}s artificial identifiers with these. Returns a map object which
-	 * maps the old identifiers to their equivalent new ids.
-	 *
-	 * @param {Array.<Object>} records
-	 * @param {Model} model
-	 * @returns {Promise.<Map.<Number,Number>>|null} - Map instance mapping old identifers to the new identifers
-	 */
-	assignIds_(records, model) {
-		if (!records.length)
-			return new Map()
-
-		return this.idService_.reserve(model.$idSequence(), records.length)
-		.then((idRange) => {
-			let idSequence = mutil.sequence(idRange[0]),
-				idMap = new Map()
-			records.forEach((record) => {
-				let oldId = record.id
-				record.id = idSequence.next().value
-				idMap.set(oldId, record.id)
-			})
-			return idMap
-		})
-	}
-
-	/**
-	 * Helper method for updating foreign key values. Iterates through each record in ${records}
-	 * and replaces the value of record[${foreignKeyField}] with its corresponding value in
-	 * ${idMap}.
-	 *
-	 * @param {Array.<Object>} records
-	 * @param {String} foreignKeyField
-	 * @param {Map.<Number,Number>} idMap
-	 */
-	setForeignKeyIds_(records, foreignKeyField, idMap) {
-		records.forEach((record) => {
-			if (record[foreignKeyField] === null)
-				return
-
-			let oldForeignKeyId = record[foreignKeyField],
-				newForeignKeyId = idMap.get(oldForeignKeyId)
-			assert(!!newForeignKeyId)
-			record[foreignKeyField] = newForeignKeyId
-		})
 	}
 
 	/**

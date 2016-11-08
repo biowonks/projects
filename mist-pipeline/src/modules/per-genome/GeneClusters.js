@@ -2,10 +2,11 @@
 
 // Local
 const PerGenomePipelineModule = require('lib/PerGenomePipelineModule'),
+	IdService = require('mist-lib/services/IdService'),
 	GeneClusterFinderService = require('mist-lib/services/GeneClusterFinder')
 
 module.exports =
-class GeneClusterFinder extends PerGenomePipelineModule {
+class GeneClusters extends PerGenomePipelineModule {
 	static description() {
 		return 'predicts chromosomal gene clusters'
 	}
@@ -17,6 +18,7 @@ class GeneClusterFinder extends PerGenomePipelineModule {
 	constructor(app, genome) {
 		super(app, genome)
 
+		this.idService_ = new IdService(this.models_.IdSequence, this.logger_)
 		this.GeneCluster_ = this.models_.GeneCluster
 		this.GeneClusterMember_ = this.models_.GeneClusterMember
 		this.clusterFinder_ = new GeneClusterFinderService()
@@ -118,20 +120,22 @@ class GeneClusterFinder extends PerGenomePipelineModule {
 	 * @returns {Promise}
 	 */
 	saveClusters_() {
-		this.logger_.info(`Saving ${this.geneClusterRecords_.length} gene clusters`)
-		return this.genome_.sequelize.transaction((transaction) => {
-			return this.GeneCluster_.bulkCreate(this.geneClusterRecords_, {
-				transaction,
-				returning: true // populate the instance identifiers
-			})
-			.then((geneClusters) => {
-				if (this.geneClusterRecords_.length !== geneClusters.length)
-					throw new Error('inserted different number of genes_clusters records than expected')
-
-				let members = this.extractMemberRecords_(geneClusters)
-				return this.GeneClusterMember_.bulkCreate(members, {
+		let geneClusterRecords = this.geneClusterRecords_,
+			members = null
+		this.logger_.info(`Saving ${geneClusterRecords.length} gene clusters`)
+		return this.idService_.assignIds(geneClusterRecords, this.GeneCluster_)
+		.then(() => {
+			members = this.extractMemberRecords_(geneClusterRecords)
+			return this.sequelize_.transaction((transaction) => {
+				this.logger_.info(`Inserting ${geneClusterRecords.length} gene clusters and ${members.length} gene members`)
+				return this.GeneCluster_.bulkCreate(geneClusterRecords, {
+					validate: true,
 					transaction
 				})
+				.then(() => this.GeneClusterMember_.bulkCreate(members, {
+					validate: true,
+					transaction
+				}))
 			})
 		})
 	}

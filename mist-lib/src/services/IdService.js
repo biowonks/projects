@@ -18,6 +18,33 @@ class IdService {
 	}
 
 	/**
+	 * Allocates ${records.length} identifiers for the sequence associated with ${model} and
+	 * updates the ${record}s artificial identifiers with these. Returns a map object which
+	 * maps the old identifiers to their equivalent new ids.
+	 *
+	 * @param {Array.<Object>} records
+	 * @param {Model} model
+	 * @returns {Promise.<Map.<Number,Number>>} - Map instance mapping old identifers to the new identifers
+	 */
+	assignIds(records, model) {
+		if (!records.length)
+			return new Map()
+
+		return this.reserve(model.$idSequence(), records.length)
+		.then((idRange) => {
+			let nextId = idRange[0],
+				idMap = new Map()
+			records.forEach((record) => {
+				let oldId = record.id
+				record.id = nextId
+				idMap.set(oldId, record.id)
+				++nextId
+			})
+			return idMap
+		})
+	}
+
+	/**
 	 * "reserves" or "allocates" ${amount} contiguous identifiers for the sequence named
 	 * ${sequenceName} and returns a 2-element array containing the beginning identifier and the
 	 * terminal identifier. It uses row-level locking to ensure that simultaneous requests for
@@ -69,6 +96,27 @@ class IdService {
 		.catch(SequenceNotFoundError, () => {
 			return this.createDoNothingOnConflict_(sequenceName)
 			.then(() => this.reserve(sequenceName, amount))
+		})
+	}
+
+	/**
+	 * Helper method for updating foreign key values. Iterates through each record in ${records}
+	 * and replaces the value of record[${foreignKeyField}] with its corresponding value in
+	 * ${idMap}.
+	 *
+	 * @param {Array.<Object>} records
+	 * @param {String} foreignKeyField
+	 * @param {Map.<Number,Number>} idMap
+	 */
+	setForeignKeyIds(records, foreignKeyField, idMap) {
+		records.forEach((record) => {
+			if (record[foreignKeyField] === null)
+				return
+
+			let oldForeignKeyId = record[foreignKeyField],
+				newForeignKeyId = idMap.get(oldForeignKeyId)
+			assert(!!newForeignKeyId)
+			record[foreignKeyField] = newForeignKeyId
 		})
 	}
 
