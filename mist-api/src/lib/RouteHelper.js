@@ -1,7 +1,8 @@
 'use strict'
 
 // Local
-const errors = require('./errors')
+const errors = require('./errors'),
+	headerNames = require('core-lib/header-names')
 
 // Other
 let routeHelperMap = new Map()
@@ -46,7 +47,8 @@ class RouteHelper {
 	 */
 	findManyHandler() {
 		return (req, res, next) => {
-			this.model_.findAll(res.locals.criteria)
+			let countRows = Reflect.has(req.query, 'count')
+			this.findAll_(res, countRows)
 			.then((entities) => {
 				res.json(entities)
 			})
@@ -93,5 +95,24 @@ class RouteHelper {
 			})
 			.catch(next)
 		}
+	}
+
+	// ----------------------------------------------------
+	// Private methods
+	findAll_(res, countRows = false) {
+		let criteria = res.locals.criteria
+		if (!countRows)
+			return this.model_.findAll(criteria)
+
+		// HACK! Sequelizejs bug workaround. If attributes is null, the aggregate function
+		// method in sequelizejs chokes with an error.
+		if (criteria && criteria.attributes === null)
+			Reflect.deleteProperty(criteria, 'attributes')
+
+		return this.model_.findAndCountAll(criteria)
+		.then((result) => {
+			res.append(headerNames.XTotalCount, result.count)
+			return result.rows
+		})
 	}
 }
