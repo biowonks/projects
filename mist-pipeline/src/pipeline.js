@@ -165,7 +165,7 @@ bootService.setup()
 	return saveWorkerError(error)
 })
 .catch(logError)
-.finally(() => bootService.sequelize().close())
+.finally(() => bootService.sequelize().close()) // faster shutdown
 
 // --------------------------------------------------------
 // --------------------------------------------------------
@@ -441,7 +441,6 @@ function lockNextAvailableGenome(app, undoModuleIds, moduleIds, lastGenomeId = n
 	let genomesTable = app.models.Genome.getTableName(),
 		workerModulesTable = app.models.WorkerModule.getTableName(),
 		minGenomeIdClause = lastGenomeId ? `AND a.id > ${lastGenomeId} ` : '',
-		// genomeIdClause = program.genomeIds ? `AND a.id IN (${program.genomeIds.join(',')}) ` : '',
 		queryUndoModuleArrayString = `ARRAY['${undoModuleIds.join("','")}']`,
 		queryModuleArrayString = `ARRAY['${moduleIds.join("','")}']`,
 		whereClauses = []
@@ -466,10 +465,11 @@ ORDER BY a.id
 LIMIT 1
 FOR UPDATE`
 
-	return app.sequelize.transaction({isolationLevel: kIsolationLevels.READ_COMMITTED}, () => {
+	return app.sequelize.transaction({isolationLevel: kIsolationLevels.READ_COMMITTED}, (transaction) => {
 		return app.sequelize.query(sql, {
 			model: app.models.Genome,
-			type: app.sequelize.QueryTypes.SELECT
+			type: app.sequelize.QueryTypes.SELECT,
+			transaction
 		})
 		.then((genomes) => {
 			if (!genomes.length)
@@ -477,7 +477,10 @@ FOR UPDATE`
 
 			return genomes[0].update({
 				worker_id: app.worker.id
-			}, {fields: ['worker_id']})
+			}, {
+				fields: ['worker_id'],
+				transaction
+			})
 			.then((genome) => {
 				logger.info({genomeId: genome.id, name: genome.name}, `Locked genome: ${genome.name}`)
 				return genome
