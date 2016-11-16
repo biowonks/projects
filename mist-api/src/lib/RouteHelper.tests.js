@@ -174,7 +174,5 @@ describe('RouteHelper', function() {
 				'</genomes>; rel="prev"'
 			])
 		})
-
-
 	})
 })
