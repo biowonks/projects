@@ -270,8 +270,9 @@ class CriteriaService {
 	 * @returns {Array.<Object>}
 	 */
 	findErrors(criteria, primaryModel, criteriaOptions = {}) {
-		let attributeErrors = this.findAttributeErrors_(criteria, primaryModel, criteriaOptions.accessibleModels),
-			orderErrors = this.findOrderErrors_(criteria.order, primaryModel, criteriaOptions.permittedOrderFields || primaryModel.primaryKeyAttributes),
+		let permittedOrderFields = criteriaOptions.permittedOrderFields || primaryModel.primaryKeyAttributes,
+			attributeErrors = this.findAttributeErrors_(criteria, primaryModel, criteriaOptions.accessibleModels),
+			orderErrors = this.findOrderErrors_(criteria.order, primaryModel, permittedOrderFields),
 			errors = [...attributeErrors, ...orderErrors]
 
 		return errors.length ? errors : null
