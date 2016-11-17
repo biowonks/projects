@@ -7,7 +7,7 @@ const assert = require('assert')
 const seqUtil = require('core-lib/bio/seq-util')
 
 // Constants
-const kToolIdFieldNames = ['pfam30', 'agfam2', 'segs', 'coils']
+const kToolIdFieldNames = ['pfam30', 'agfam2', 'segs', 'coils', 'tmhmm2']
 
 module.exports = function(Sequelize, models, extras) {
 	let fields = {
@@ -31,6 +31,10 @@ module.exports = function(Sequelize, models, extras) {
 		coils: {
 			type: Sequelize.JSONB,
 			description: 'array of ranges denoting coiled-coil regions'
+		},
+		tmhmm2: {
+			type: Sequelize.JSONB,
+			description: 'object containing two items: topology - array of arrays classifying all regions of the sequence, and tms - array of ranges denoting regions predicted to have transmembrane regions'
 		}
 	}
 
