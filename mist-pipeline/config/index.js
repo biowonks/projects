@@ -42,6 +42,13 @@ let config = {
 			binPath: path.resolve(vendorPath, 'hmmer3', '3.1b2', 'bin')
 		},
 
+		// Proprietary
+		tmhmm2: {
+			basePath: path.resolve(vendorPath, 'tmhmm2'),
+			libPath: path.resolve(vendorPath, 'tmhmm2', 'lib'),
+			binPath: path.resolve(vendorPath, 'tmhmm2', 'bin')
+		},
+
 		// Databases
 		agfam: {
 			version: '2.0',
