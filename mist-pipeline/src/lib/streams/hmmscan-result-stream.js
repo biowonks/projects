@@ -13,11 +13,8 @@ const split = require('split'),
 const kNumberOfDomainFields = 17
 
 /**
- * HmmscanResultReaderStream parses the textual output from the HMMER3 hmmscan tool
- * and streams out all the domain hits for each query sequence.
- *
- * By extending from LineStream, the input is processed line by line in a streaming
- * fashion for optimal performance.
+ * HmmscanResultStream parses the textual output from the HMMER3 hmmscan tool and streams out all
+ * the domain hits for each query sequence.
  */
 class HmmscanResultStream extends stream.Transform {
 	constructor(options = {}) {
