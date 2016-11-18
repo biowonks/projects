@@ -74,6 +74,9 @@ let config = {
 		agfam2: {
 			databasePath: path.resolve(vendorPath, 'agfam', '2.0', 'agfam.hmm'),
 			ticksPerProgressEvent: 1000
+		},
+		tmhmm2: {
+			ticksPerProgressEvent: 250
 		}
 	},
 
