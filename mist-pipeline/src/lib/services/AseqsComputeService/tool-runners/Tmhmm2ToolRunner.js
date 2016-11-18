@@ -6,6 +6,10 @@ const FastaStreamToolRunner = require('./FastaStreamToolRunner'),
 
 module.exports =
 class Tmhmm2ToolRunner extends FastaStreamToolRunner {
+	static isEnabled() {
+		return tmhmm2Stream.tmhmm2IsInstalled()
+	}
+
 	handleResult_(aseq, result) {
 		aseq.tmhmm2 = {
 			topology: result.topology,

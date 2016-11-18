@@ -1,7 +1,8 @@
 'use strict'
 
 // Core
-const path = require('path'),
+const fs = require('fs'),
+	path = require('path'),
 	spawn = require('child_process').spawn
 
 // Vendor
@@ -17,6 +18,9 @@ const config = require('../../../config'),
 const kTMHMM2ToolFile = path.resolve(config.vendor.tmhmm2.binPath, 'decodeanhmm.Linux_x86_64'),
 	kTMHMM2ModelFile = path.resolve(config.vendor.tmhmm2.libPath, 'TMHMM2.0.model'),
 	kTMHMM2OptionsFile = path.resolve(config.vendor.tmhmm2.libPath, 'TMHMM2.0.options')
+
+// Other
+let tmhmm2IsInstalled = null
 
 /**
  * TMHMM2 seems to always exit with a non-zero error code even when all runs as expected. Go
@@ -41,4 +45,22 @@ module.exports = function(options) {
 	streamMixins.all(pipeline)
 
 	return pipeline
+}
+
+module.exports.tmhmm2IsInstalled = function() {
+	if (tmhmm2IsInstalled === null)
+		tmhmm2IsInstalled = filesExist(kTMHMM2ToolFile, kTMHMM2ModelFile, kTMHMM2OptionsFile)
+
+	return tmhmm2IsInstalled
+}
+
+function filesExist(...files) {
+	try {
+		files.forEach((file) => fs.accessSync(file))
+	}
+	catch (error) {
+		return false
+	}
+
+	return true
 }

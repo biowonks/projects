@@ -35,6 +35,13 @@ class AbstractToolRunner extends EventEmitter {
 	}
 
 	/**
+	 * @returns {Boolean} - true if this tool runner is enabled; false otherwise. See Tmhmm2ToolRunner for an example of how this may be false
+	 */
+	static isEnabled() {
+		return true
+	}
+
+	/**
 	 * If ${aseqs} is empty, immediately resolves. This sidesteps some issues with tools that bork
 	 * if nothing is written to STDIN (because there are no aseqs) such as occurs with hmmscan.
 	 *
