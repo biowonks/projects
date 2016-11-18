@@ -16,10 +16,13 @@ if [[ -z "$BIN_PATH/decodeanhmm.Linux_x86_64" ]]; then
 	exit
 fi
 
-
 DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR
 
-./install-proprietary-tool.sh tmhmm2 TMHMM2_SECURE_URL $TARGET_DIR
+if [[ -z "$TMHMM2_SECURE_URL" ]]; then
+	echo "Please set the environment variable, TMHMM2_SECURE_URL, to install TMHMM2. This value should be an accessible URL containing the TMHMM2.0 source code. Skipping installation..."
+else
+	./install-proprietary-tool.sh tmhmm2 TMHMM2_SECURE_URL $TARGET_DIR
 
-chmod +x $BIN_PATH/decodeanhmm.Linux_x86_64
+	chmod +x $BIN_PATH/decodeanhmm.Linux_x86_64
+fi
