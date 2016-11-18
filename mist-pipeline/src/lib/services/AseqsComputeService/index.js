@@ -168,11 +168,17 @@ function discoverToolRunners() {
 	.map((fileName) => {
 		// eslint-disable-next-line no-mixed-requires
 		let runnerPath = `./${basePath}/${fileName}`,
-			runner = require(runnerPath), // eslint-disable-line global-require
-			meta = runner.meta || {}
+			runner = require(runnerPath) // eslint-disable-line global-require
 
-		meta.path = runnerPath
+		runner.$path = runnerPath
 
+		return runner
+	})
+	.filter((runner) => runner.isEnabled())
+	.map((runner) => {
+		let meta = runner.meta || {}
+		meta.path = runner.$path
+		Reflect.deleteProperty(runner, '$path')
 		return meta
 	})
 	// Only include those that have a non-null id

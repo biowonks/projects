@@ -42,6 +42,13 @@ let config = {
 			binPath: path.resolve(vendorPath, 'hmmer3', '3.1b2', 'bin')
 		},
 
+		// Proprietary
+		tmhmm2: {
+			basePath: path.resolve(vendorPath, 'tmhmm2'),
+			libPath: path.resolve(vendorPath, 'tmhmm2', 'lib'),
+			binPath: path.resolve(vendorPath, 'tmhmm2', 'bin')
+		},
+
 		// Databases
 		agfam: {
 			version: '2.0',
@@ -67,6 +74,9 @@ let config = {
 		agfam2: {
 			databasePath: path.resolve(vendorPath, 'agfam', '2.0', 'agfam.hmm'),
 			ticksPerProgressEvent: 1000
+		},
+		tmhmm2: {
+			ticksPerProgressEvent: 250
 		}
 	},
 
