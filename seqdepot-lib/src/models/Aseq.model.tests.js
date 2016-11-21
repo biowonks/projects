@@ -26,7 +26,7 @@ describe('models', function() {
 
 		describe('kToolIdFieldNames (static property)', function() {
 			it('returns a list of supported tool ids', function() {
-				expect(AseqModelFn.kToolIdFieldNames).members(['pfam30', 'agfam2', 'segs', 'coils'])
+				expect(AseqModelFn.kToolIdFieldNames).members(['pfam30', 'agfam2', 'segs', 'coils', 'tmhmm2'])
 			})
 		})
 
@@ -44,7 +44,7 @@ describe('models', function() {
 
 		describe('toolIdFieldNames', function() {
 			it('returns a list of supported tool ids', function() {
-				expect(Aseq.toolIdFieldNames()).members(['pfam30', 'agfam2', 'segs', 'coils'])
+				expect(Aseq.toolIdFieldNames()).members(['pfam30', 'agfam2', 'segs', 'coils', 'tmhmm2'])
 			})
 		})
 
