@@ -8,7 +8,7 @@ ROOT=$DIR/../..
 
 # Small speed-up; https://twitter.com/gavinjoyce/status/691773956144119808
 cd $ROOT
-npm set progress=false && npm prune && npm install
+npm set progress=false && npm install -g yarn && yarn
 
 # All tests will be run on the docker image
 $DIR/util/setup-test-docker-image.sh
