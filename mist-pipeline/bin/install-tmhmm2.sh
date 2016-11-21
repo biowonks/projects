@@ -3,7 +3,9 @@
 set -e
 
 TARGET_DIR=$1
-TMHMM2_SECURE_URL=$2
+if [[ -z "$TMHMM2_SECURE_URL" ]]; then
+	TMHMM2_SECURE_URL=$2
+fi
 
 if [[ -z "$TARGET_DIR" ]]; then
 	echo "Usage: $0 <target directory> <tmhmm2 source url>"
