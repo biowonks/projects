@@ -3,19 +3,12 @@
 set -e
 
 TOOL_NAME=$1
-ENV_VAR_NAME=$2
+URL=$2
 TARGET_DIR=$3
 BIN_PATH=$TARGET_DIR/bin
 
-if [[ -z "$TOOL_NAME" || -z "$ENV_VAR_NAME" || -z "$TARGET_DIR" ]]; then
-	echo "Usage: $0 <tool name> <environment variable name> <target directory>"
-	exit 1
-fi
-
-URL=${!ENV_VAR_NAME}
-
-if [[ -z "$URL" ]]; then
-	echo "The environmental variable ${ENV_VAR_NAME} is not defined"
+if [[ -z "$TOOL_NAME" || -z "$URL" || -z "$TARGET_DIR" ]]; then
+	echo "Usage: $0 <tool name> <url> <target directory>"
 	exit 1
 fi
 
