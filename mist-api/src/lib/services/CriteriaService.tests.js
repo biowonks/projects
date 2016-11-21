@@ -681,6 +681,17 @@ describe('services', function() {
 				expect(x).null
 			})
 
+			it('valid criteria with included model', function() {
+				queryObject.fields = 'id,name'
+				queryObject['fields.Post'] = 'title'
+				let criteria = service.createFromQueryObject(User, queryObject),
+					errors = service.findErrors(criteria, User, {
+						accessibleModels: [Post]
+					})
+
+				expect(errors).null
+			})
+
 			it('check for invalid attributes, excluded attributes, and inaccessible models', function() {
 				queryObject.fields = 'id,num_logins,bad_field,secret,another_bad_field'
 				queryObject['fields.Profile'] = 'false'

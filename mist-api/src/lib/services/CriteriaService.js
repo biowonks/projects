@@ -330,7 +330,7 @@ class CriteriaService {
 		if (target.include) {
 			for (let i = 0, z = target.include.length; i < z; i++) {
 				let include = target.include[i]
-				errors = this.findErrors(include, include.model, accessibleModels)
+				errors = this.findAttributeErrors_(include, include.model, accessibleModels)
 
 				if (errors && errors.length)
 					return errors
