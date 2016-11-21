@@ -22,7 +22,9 @@ describe('seq-util', function() {
 	})
 
 	describe('gcPercent', function() {
-		it('empty sequence returns 0')
+		it('empty sequence returns 0', function() {
+			expect(seqUtil.gcPercent()).equal(0)
+		})
 
 		it('all g/G/c/C characters contribute to the gc calculation')
 	})
