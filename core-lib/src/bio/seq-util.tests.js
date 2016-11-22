@@ -6,9 +6,25 @@ const seqUtil = require('./seq-util')
 
 describe('seq-util', function() {
 	describe('distribution', function() {
-		it('returns empty object if empty sequence')
+		it('returns empty object if empty sequence', function() {
+			expect(seqUtil.distribution()).eql({})
+			expect(seqUtil.distribution('')).eql({})
+		})
 
-		it('counts all characters including whitespace')
+		it('counts all characters including whitespace', function() {
+			expect(seqUtil.distribution('A')).eql({A: 1})
+			expect(seqUtil.distribution(' A ')).eql({A: 1, ' ': 2})
+			expect(seqUtil.distribution('ATCGatcg')).eql({
+				A: 1,
+				T: 1,
+				C: 1,
+				G: 1,
+				a: 1,
+				t: 1,
+				c: 1,
+				g: 1
+			})
+		})
 	})
 
 	describe('fasta', function() {
@@ -24,9 +40,20 @@ describe('seq-util', function() {
 	describe('gcPercent', function() {
 		it('empty sequence returns 0', function() {
 			expect(seqUtil.gcPercent()).equal(0)
+			expect(seqUtil.gcPercent(null)).equal(0)
+			expect(seqUtil.gcPercent('')).equal(0)
 		})
 
-		it('all g/G/c/C characters contribute to the gc calculation')
+		it('all g/G/c/C characters contribute to the gc calculation', function() {
+			expect(seqUtil.gcPercent('ATat')).equal(0)
+			expect(seqUtil.gcPercent('G')).equal(100.)
+			expect(seqUtil.gcPercent('GG')).equal(100.)
+			expect(seqUtil.gcPercent('CG')).equal(100.)
+			expect(seqUtil.gcPercent('AG')).equal(50.)
+			expect(seqUtil.gcPercent('Ag')).equal(50.)
+			expect(seqUtil.gcPercent('Ct')).equal(50.)
+			expect(seqUtil.gcPercent('ct')).equal(50.)
+		})
 	})
 
 	describe('parseMaskedRegions', function() {
