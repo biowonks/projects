@@ -98,7 +98,19 @@ class OrderNode extends Node {
 	location() {
 		assert(this.hasChildren(), 'order nodes must have at least one child')
 		let locations = this.children().map((childNode) => childNode.location())
-		return new ArrayLocation(locations)
+		return new JoinLocation(locations)
+		//         ^^^^^^^^^^^^ Not technically correct, but there is virtually no documentation
+		// discussing how to deal properly with order() operators in the feature table. For
+		// example, take the following annotation:
+		//
+		//      gene            order(147423..148106,148108..149580)
+		//                      /locus_tag="BN112_0149"
+		//                      /old_locus_tag="BB253_0149"
+		//                      /pseudo
+		//                      /db_xref="GeneID:13977207"
+		//
+		// From inspecting the sequence at GenBank, it appears like they treat it just like a
+		// join. For those reasons, we use a JoinLocation here.
 	}
 }
 

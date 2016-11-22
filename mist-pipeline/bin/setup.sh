@@ -4,6 +4,7 @@ set -e
 
 npm run install-vendor-tools
 npm run install-hmmer3
+npm run install-tmhmm2
 
 if [ -z ${CI+x} ]; then
 	npm run install-agfam

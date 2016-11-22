@@ -65,6 +65,22 @@ class AseqsComputeService extends AseqsService {
 		if (!toolIds.length)
 			return Promise.resolve(aseqs)
 
+		let aseqsCopy = aseqs.slice()
+
+		// Sort all records by their id field so as to update them in the primary key order
+		// and thereby avoid potential deadlock issues stemming from concurrent access.
+		//
+		// http://stackoverflow.com/questions/1520417/deadlock-error-in-insert-statement
+		// http://stackoverflow.com/a/1521183
+		aseqsCopy.sort((a, b) => {
+			if (a.id < b.id)
+				return -1
+			if (a.id > b.id)
+				return 1
+
+			return 0
+		})
+
 		let setSql = toolIds.map((toolId) => `${toolId} = coalesce(${toolId}, ?)`).join(', '),
 			nullClause = toolIds.map((toolId) => `${toolId} IS NULL`).join(' OR '),
 			replacements = [],
@@ -74,7 +90,7 @@ UPDATE ${this.model_.getTableName()}
 SET ${setSql}
 WHERE id = ? AND (${nullClause})`
 
-		return Promise.each(aseqs, (aseq) => {
+		return Promise.each(aseqsCopy, (aseq) => {
 			for (let i = 0; i < nToolIds; i++)
 				replacements[i] = JSON.stringify(aseq.getDataValue(toolIds[i]))
 			replacements[nToolIds] = aseq.id
@@ -152,11 +168,17 @@ function discoverToolRunners() {
 	.map((fileName) => {
 		// eslint-disable-next-line no-mixed-requires
 		let runnerPath = `./${basePath}/${fileName}`,
-			runner = require(runnerPath), // eslint-disable-line global-require
-			meta = runner.meta || {}
+			runner = require(runnerPath) // eslint-disable-line global-require
 
-		meta.path = runnerPath
+		runner.$path = runnerPath
 
+		return runner
+	})
+	.filter((runner) => runner.isEnabled())
+	.map((runner) => {
+		let meta = runner.meta || {}
+		meta.path = runner.$path
+		Reflect.deleteProperty(runner, '$path')
 		return meta
 	})
 	// Only include those that have a non-null id

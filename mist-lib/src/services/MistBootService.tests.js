@@ -32,6 +32,11 @@ describe('services', function() {
 				expect(mockModel.$criteriaAttributes).a('Function')
 				expect(mockModel.$criteriaAttributes()).null
 			})
+
+			it('$idSequence returns null', function() {
+				expect(mockModel.$idSequence).a('Function')
+				expect(mockModel.$idSequence()).equal('MockModel')
+			})
 		})
 	})
 })

@@ -15,9 +15,6 @@ class ArrayLocation extends AbstractLocation {
 		super()
 		assert(locations instanceof Array, 'locations argument must be an array')
 		assert(locations.length > 0, 'locations array must not be empty')
-		if (locations.length === 1)
-			// eslint-disable-next-line no-console
-			console.warn('ArrayLocation::constructor() - constructed with only one location')
 		this.locations_ = locations
 	}
 
@@ -34,6 +31,15 @@ class ArrayLocation extends AbstractLocation {
 
 	upperBound() {
 		return this.locations_[this.locations_.length - 1].upperBound()
+	}
+
+	overlaps(otherLocation, isCircular, seqLength) {
+		for (let ourLocation of this.locations_) {
+			if (otherLocation.overlaps(ourLocation, isCircular, seqLength))
+				return true
+		}
+
+		return false
 	}
 
 	strand() {

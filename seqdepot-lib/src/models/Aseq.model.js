@@ -7,19 +7,34 @@ const assert = require('assert')
 const seqUtil = require('core-lib/bio/seq-util')
 
 // Constants
-const kToolIdFieldNames = ['pfam30', 'agfam2', 'segs', 'coils']
+const kToolIdFieldNames = ['pfam30', 'agfam2', 'segs', 'coils', 'tmhmm2']
 
 module.exports = function(Sequelize, models, extras) {
 	let fields = {
-		length: extras.requiredPositiveInteger(),
-		sequence: extras.requiredSequence(),
-		pfam30: hmmer3(Sequelize, 'pfam30'),
-		agfam2: hmmer3(Sequelize, 'agfam2'),
+		length: Object.assign(extras.requiredPositiveInteger(), {
+			description: 'length of amino acid sequence',
+			example: '393'
+		}),
+		sequence: Object.assign(extras.requiredSequence(), {
+			description: 'normalized, amino acid sequence'
+		}),
+		pfam30: Object.assign(hmmer3(Sequelize, 'pfam30'), {
+			description: 'array of pfam30 predictions'
+		}),
+		agfam2: Object.assign(hmmer3(Sequelize, 'agfam2'), {
+			description: 'array of agfam2 predictions'
+		}),
 		segs: {
-			type: Sequelize.JSONB
+			type: Sequelize.JSONB,
+			description: 'array of ranges denoting low-complexity regions'
 		},
 		coils: {
-			type: Sequelize.JSONB
+			type: Sequelize.JSONB,
+			description: 'array of ranges denoting coiled-coil regions'
+		},
+		tmhmm2: {
+			type: Sequelize.JSONB,
+			description: 'object containing two items: topology - array of arrays classifying all regions of the sequence, and tms - array of ranges denoting regions predicted to have transmembrane regions'
 		}
 	}
 

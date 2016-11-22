@@ -18,8 +18,23 @@ class AbstractSeqsService {
 		if (!seqs.length)
 			return Promise.resolve()
 
-		let records = seqs.map(this.model_.dataFromSeq),
-			sql = this.model_.QueryGenerator.bulkInsertQuery(
+		let records = seqs.map(this.model_.dataFromSeq)
+
+		// Sort all records by their id field so as to insert them in the same order and thereby
+		// avoid potential deadlock issues.
+		//
+		// http://stackoverflow.com/questions/1520417/deadlock-error-in-insert-statement
+		// http://stackoverflow.com/a/1521183
+		records.sort((a, b) => {
+			if (a.id < b.id)
+				return -1
+			if (a.id > b.id)
+				return 1
+
+			return 0
+		})
+
+		let sql = this.model_.QueryGenerator.bulkInsertQuery(
 				this.model_.getTableName(),
 				records,
 				{fields},

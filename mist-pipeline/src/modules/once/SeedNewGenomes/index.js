@@ -48,9 +48,10 @@ const kBatchSize = 50,
 	kTempTableName = 'seed_new_genomes__summaries',
 	kCreateTempTableSql = `CREATE TEMPORARY TABLE ${kTempTableName} (
 	accession text not null,
-	version integer not null,
-	genbank_assembly_accession text,
-	genbank_assembly_version integer,
+	version text not null,
+	version_number integer not null,
+	genbank_accession text,
+	genbank_version text,
 	taxonomy_id integer,
 	name text not null,
 	refseq_category text,
@@ -72,8 +73,9 @@ const kBatchSize = 50,
 	kTempTableFields = [
 		'accession',
 		'version',
-		'genbank_assembly_accession',
-		'genbank_assembly_version',
+		'version_number',
+		'genbank_accession',
+		'genbank_version',
 		'taxonomy_id',
 		'name',
 		'refseq_category',
@@ -155,8 +157,17 @@ class SeedNewGenomes extends OncePipelineModule {
 	}
 
 	/**
-	 * Processes the summary file {$file} for new genomes to insert into the database. If ${file} is
-	 * null, then nothing is done.
+	 * Processes the summary file {$file} for new genomes to insert into the database. If ${file}
+	 * is null, then nothing is done.
+	 *
+	 * Because of special path conventions, all input values are initially preserved as strings
+	 * rather than relying on the csv_parse.auto_parse option. This is to accommodate looking up
+	 * paths on the NCBI FTP server where values like 1.0 or _05864 are converted to the numbers
+	 * 1 and 5864, respectively. While apparently innocuous, this now resolves to an invalid
+	 * lookup value on the FTP site.
+	 *
+	 * Examples:
+	 * GCF_000261485.1	PRJNA224116	SAMN02469481	AJQT00000000.1	representative genome	716928	716925	Ensifer sojae CCBAU 05684	strain=CCBAU 05684		latest	Contig	Major	Full	2012/05/03	05684	China Agricultural University	GCA_000261485.1	identical	ftp://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/261/485/GCF_000261485.1_05684
 	 *
 	 * @param {String?} file
 	 * @returns {Promise}
@@ -172,7 +183,7 @@ class SeedNewGenomes extends OncePipelineModule {
 			trim: true,
 			relax: true,
 			skip_empty_lines: true,
-			auto_parse: true
+			auto_parse: false	// do not attempt to convert input strings to native types
 		})
 
 		let readStream = fs.createReadStream(file),
@@ -222,10 +233,11 @@ class SeedNewGenomes extends OncePipelineModule {
 			genbankAccessionParts = mutil.parseAccessionVersion(row.gbrs_paired_asm),
 			genomeData = {
 				accession: refseqAccessionParts[0],
-				version: refseqAccessionParts[1],
-				genbank_assembly_accession: genbankAccessionParts[0],
-				genbank_assembly_version: genbankAccessionParts[1],
-				taxonomy_id: row.taxid,
+				version: row['# assembly_accession'],
+				version_number: refseqAccessionParts[1],
+				genbank_accession: genbankAccessionParts[0],
+				genbank_version: row.gbrs_paired_asm,
+				taxonomy_id: Number(row.taxid),
 				name: row.organism_name,
 				refseq_category: row.refseq_category,
 				bioproject: row.bioproject,

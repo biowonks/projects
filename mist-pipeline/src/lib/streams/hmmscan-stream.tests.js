@@ -20,7 +20,9 @@ describe('streams', function() {
 				hmmscan = hmmscanStream(hmmDatabaseFile, numHmmsInPfam29),
 				results = []
 
-			inStream.pipe(hmmscan)
+			inStream
+			.on('error', done)
+			.pipe(hmmscan)
 			.on('error', done)
 			.on('data', (result) => {
 				results.push(result)
