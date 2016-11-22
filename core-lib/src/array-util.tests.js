@@ -2,7 +2,7 @@
 'use strict'
 
 // Local
-let arrayUtil = require('./array-util')
+const arrayUtil = require('./array-util')
 
 describe('array-util', function() {
 	describe('difference', function() {
