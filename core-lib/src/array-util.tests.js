@@ -4,7 +4,7 @@
 // Local
 let arrayUtil = require('./array-util')
 
-describe.only('array-util', function() {
+describe('array-util', function() {
 	describe('difference', function() {
 		it('two empty arrays returns a new empty array', function() {
 			let a = [],
@@ -51,6 +51,41 @@ describe.only('array-util', function() {
 		examples.forEach((example) => {
 			it(`${JSON.stringify(example.a)} difference ${JSON.stringify(example.b)} -> ${JSON.stringify(example.expect)}`, function() {
 				let result = arrayUtil.difference(example.a, example.b)
+				expect(result).eql(example.expect)
+			})
+		})
+	})
+
+	describe('flatten', function() {
+		it('empty array returns new empty array', function() {
+			let a = [],
+				result = arrayUtil.flatten(a)
+			expect(result).not.equal(a)
+			expect(result).eql([])
+		})
+
+		let examples = [
+			{
+				a: [1, 2],
+				expect: [1, 2]
+			},
+			{
+				a: [1, [2]],
+				expect: [1, 2]
+			},
+			{
+				a: [[2], 1],
+				expect: [2, 1]
+			},
+			{
+				a: ['a', [1, 'b', [3], 'c'], {size: 'm'}],
+				expect: ['a', 1, 'b', 3, 'c', {size: 'm'}]
+			}
+		]
+
+		examples.forEach((example) => {
+			it(`${JSON.stringify(example.a)} -> ${JSON.stringify(example.expect)}`, function() {
+				let result = arrayUtil.flatten(example.a)
 				expect(result).eql(example.expect)
 			})
 		})
