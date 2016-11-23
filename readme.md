@@ -65,7 +65,7 @@ Run `pipeline.sh` without any arguments for help on how to use this command. For
 (biowonks @ docker) /app/mist-pipeline $ bin/pipeline.sh SeedNewGenomes Taxonomy NCBICoreData
 ```
 
-## MiST API
+### MiST API
 ```bash
 (biowonks @ docker) /app $ cd mist-api
 (biowonks @ docker) /app/mist-api $ npm install
