@@ -93,7 +93,7 @@ module.exports = function(routesPath, baseUrl, options = {}) {
 				routeDocs.parameters = finalizeRouteParameters(cascadingParameters.get(relPath), routeDocs.parameters)
 				routeDocs.endpoint = reformatEndpoint(routeDocs.endpoint, routeDocs.parameters)
 				routeDocs.description = toHTMLParagraphs(routeDocs.description)
-				routeDocs.snippets = buildHTMLSnippets(routeDocs.har, route.httpMethod, url, options.languages)
+				routeDocs.snippets = buildHTMLSnippets(routeDocs.har, route.httpMethod.toUpperCase(), url, options.languages)
 
 				normalizeExample(baseUrl, route.httpMethod, routeDocs.endpoint, routeDocs.example)
 
