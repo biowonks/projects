@@ -5,7 +5,10 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 
 	return [
 		(req, res, next) => {
-			taxonomyService.fetchGenomicChildren(req.params.id)
+			let	immediateChildren = req.params.immediate ? false : true
+			let	finalNodesOnly = req.params.finalNodesOnly ? true : false
+
+			taxonomyService.fetchChildren(req.params.id, finalNodesOnly, immediateChildren)
 			.then((result) => {
 				res.json(result)
 			})
