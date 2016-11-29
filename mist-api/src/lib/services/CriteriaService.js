@@ -517,8 +517,7 @@ class CriteriaService {
 			includes.push(include)
 		}
 
-		if (includes.length)
-			target.include = includes
+		target.include = includes
 	}
 
 	/**

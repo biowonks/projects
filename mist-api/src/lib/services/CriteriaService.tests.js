@@ -175,7 +175,7 @@ describe('services', function() {
 				expect(x).eql({
 					where: null,
 					attributes: null,
-					include: null,
+					include: [],
 					limit: 1,
 					offset: null,
 					order: null
@@ -187,7 +187,7 @@ describe('services', function() {
 				expect(x).eql({
 					where: null,
 					attributes: ['id', 'name', 'num_logins'],
-					include: null,
+					include: [],
 					limit: 1,
 					offset: null,
 					order: null
@@ -261,9 +261,6 @@ describe('services', function() {
 				})
 
 				function modelsToNames(criteria) {
-					if (!criteria.include)
-						return criteria
-
 					criteria.include.forEach((include) => {
 						if (include.model)
 							include.model = include.model.name
@@ -280,7 +277,8 @@ describe('services', function() {
 					expect(x.attributes).eql(['id', 'name', 'num_logins'])
 					expect(x.include).eql([
 						{
-							model: 'Profile'
+							model: 'Profile',
+							include: []
 						}
 					])
 				})
@@ -292,11 +290,13 @@ describe('services', function() {
 					expect(x.attributes).eql(['id', 'name', 'num_logins'])
 					expect(x.include).eql([
 						{
-							model: 'Profile'
+							model: 'Profile',
+							include: []
 						},
 						{
 							model: 'Post',
-							attributes: ['title']
+							attributes: ['title'],
+							include: []
 						}
 					])
 				})
@@ -310,10 +310,12 @@ describe('services', function() {
 					expect(x.include).eql([
 						{
 							model: 'Profile',
-							attributes: []
+							attributes: [],
+							include: []
 						},
 						{
-							model: 'Post'
+							model: 'Post',
+							include: []
 						}
 					])
 				})
@@ -343,7 +345,7 @@ describe('services', function() {
 				expect(x).eql({
 					where: null,
 					attributes: null,
-					include: null,
+					include: [],
 					limit: service.defaultPerPage(),
 					offset: null,
 					order: [
