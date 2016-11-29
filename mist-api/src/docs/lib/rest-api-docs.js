@@ -451,7 +451,8 @@ function normalizeRequest(baseUrl, endpoint, request) {
 		// Interpolate all endpoint parameters
 		Object.keys(result.parameters).forEach((parameterName) => {
 			let value = result.parameters[parameterName],
-				regex = new RegExp('{' + parameterName + '}', 'g')
+				regex = new RegExp('\\$' + parameterName + '\\b', 'g')
+
 			result.endpoint = result.endpoint.replace(regex, value)
 		})
 	}
