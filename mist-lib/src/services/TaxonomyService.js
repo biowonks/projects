@@ -194,12 +194,11 @@ class TaxonomyService {
 	 * @param {Number} taxonomyId - NCBI taxonomy id
 	 * @returns {List} genomic children of given taxonomy id
 	 */
-	fetchChildren(taxonomyId, immediate, finalNodesOnly) {
+	fetchChildren(taxonomyId, options) {
 		let taxonomyTableName = this.taxonomyModel_.getTableName(),
 			sql = ''
-
-		if (immediate) {
-			if (finalNodesOnly)
+		if (options.isImmediate) {
+			if (options.isLeafOnly)
 				sql = `select a.* from ${taxonomyTableName} a join genomes b ON (a.id = b.taxonomy_id) where parent_taxonomy_id = ?`
 			else
 				sql = `select * from ${taxonomyTableName} where parent_taxonomy_id = ?`
@@ -210,7 +209,7 @@ class TaxonomyService {
 	union all
 	select a.* from ${taxonomyTableName} a, tree_nodes where tree_nodes.id = a.parent_taxonomy_id
 )`
-			if (finalNodesOnly)
+			if (options.isLeafOnly)
 				sql += 'select a.* from tree_nodes a join genomes b ON (a.id = b.taxonomy_id)'
 			else
 				sql += 'select * from tree_nodes'
