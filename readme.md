@@ -51,12 +51,12 @@ This builds a base docker image including various dependencies and tools (e.g. N
 
 
 ## Setting up and running specific projects
-Most projects are written in Node.js and in general may be setup by navigating to the relevant top-level project folder (inside the docker container) and executing `npm install`. For details about each project, see each project's readme.
+Most projects are written in Node.js and in general may be setup by navigating to the relevant top-level project folder (inside the docker container) and executing `yarn`. For details about each project, see each project's readme.
 
 ### MiST Pipeline
 ```bash
 (biowonks @ docker) /app $ cd mist-pipeline
-(biowonks @ docker) /app/mist-pipeline $ npm install
+(biowonks @ docker) /app/mist-pipeline $ yarn
 ```
 
 Run `pipeline.sh` without any arguments for help on how to use this command. For example, to seed new genomes, download each genomes taxonomy, and load this data from NCBI RefSeq:
@@ -68,17 +68,17 @@ Run `pipeline.sh` without any arguments for help on how to use this command. For
 ## MiST API
 ```bash
 (biowonks @ docker) /app $ cd mist-api
-(biowonks @ docker) /app/mist-api $ npm install
+(biowonks @ docker) /app/mist-api $ yarn
 ```
 
 To start the API service:
 ```
-(biowonks @ docker) /app/mist-api $ npm start
+(biowonks @ docker) /app/mist-api $ yarn start
 ```
 
 Open `http://localhost:5000` to view the API documentation and ensure the API is running as expected.
 
 To stop the API service:
 ```
-(biowonks @ docker) /app/mist-api $ npm stop
+(biowonks @ docker) /app/mist-api $ yarn stop
 ```

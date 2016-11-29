@@ -57,7 +57,7 @@ module.exports = function(Sequelize, models, extras) {
 			// eslint-disable-next-line new-cap
 			type: Sequelize.ARRAY(Sequelize.TEXT),
 			description: 'symbol of the gene corresponding to a sequence region',
-			example: '[hisH]',
+			example: ['hisH'],
 			validate: {
 				noEmptyValues: function(value) {
 					if (!value)
