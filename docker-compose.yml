@@ -11,6 +11,7 @@ services:
     container_name: biowonks-dev
     depends_on:
       - mist-pg-db
+      - node-bootstrap
     links:
       - mist-pg-db
     ports:
