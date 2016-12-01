@@ -14,19 +14,16 @@ const kSrcDir = path.resolve(__dirname, 'src'),
 	kDistDir = path.resolve(__dirname, 'dist')
 
 // Other
-const kEnvName = process.env.NODE_ENV || 'develop'
+const kEnvName = process.env.NODE_ENV || 'develop',
+	extractCSS = new ExtractTextPlugin('styles/main.css')
 
 let config = {
 	devtool: 'eval',
 	entry: {
-		main: path.join(kSrcDir, 'main.js'),
-		vendor: [
-			'react',
-			'react-dom'
-		]
+		'js/main': path.join(kSrcDir, 'main.js')
 	},
 	output: {
-		path: path.join(kDistDir, 'js'),
+		path: kDistDir,
 		filename: '[name].bundle.js'
 	},
 	module: {
@@ -46,13 +43,13 @@ let config = {
 			{
 				test: /\.(jpe?g|png|gif|svg)$/i,
 				loaders: [
-					'file?hash=sha512&digest=hex&name=[hash].[ext]',
+					'file?hash=sha512&digest=hex&name=images/[hash].[ext]',
 					'image-webpack?bypassOnDebug&optimizationLevel=7&interlaced=false'
 				]
 			},
 			{
 				test: /\.(scss|sass)$/,
-				loader: ExtractTextPlugin.extract('style', 'css!postcss!sass')
+				loader: extractCSS.extract(['css', 'postcss!sass'])
 			}
 		]
 	},
@@ -65,15 +62,24 @@ let config = {
 	},
 	devServer: {
 		contentBase: kDistDir,
-		port: 9000
+		port: 8080
 	},
 	plugins: [
-		new ExtractTextPlugin('main.css'),
-		new webpack.optimize.CommonsChunkPlugin('vendor', 'vendor.bundle.js'),
+		extractCSS,
+		new webpack.optimize.CommonsChunkPlugin({
+			name: 'js/vendor',
+			minChunks: (module) => {
+				let userRequest = module.userRequest
+				if (typeof userRequest !== 'string')
+					return false
+
+				return userRequest.indexOf('node_modules') >= 0
+			}
+		}),
 		new webpack.HotModuleReplacementPlugin(),
 		new HtmlWebpackPlugin({
 			template: path.join(kSrcDir, 'index.pug'),
-			filename: '../index.html', // Because this is relative to the output bundle path
+			filename: 'index.html', // Because this is relative to the output bundle path
 			inject: 'body'
 		})
 	]
