@@ -5,7 +5,9 @@ const path = require('path')
 
 // Vendor
 const webpack = require('webpack'),
-	HtmlWebpackPlugin = require('html-webpack-plugin')
+	autoprefixer = require('autoprefixer'),
+	HtmlWebpackPlugin = require('html-webpack-plugin'),
+	ExtractTextPlugin = require('extract-text-webpack-plugin')
 
 // Constants
 const kSrcDir = path.resolve(__dirname, 'src'),
@@ -40,7 +42,25 @@ let config = {
 					'react-hot',
 					'babel'
 				]
+			},
+			{
+				test: /\.(jpe?g|png|gif|svg)$/i,
+				loaders: [
+					'file?hash=sha512&digest=hex&name=[hash].[ext]',
+					'image-webpack?bypassOnDebug&optimizationLevel=7&interlaced=false'
+				]
+			},
+			{
+				test: /\.(scss|sass)$/,
+				loader: ExtractTextPlugin.extract('style', 'css!postcss!sass')
 			}
+		]
+	},
+	postcss: function() {
+		return [
+			autoprefixer({
+				browsers: ['last 2 versions']
+			})
 		]
 	},
 	devServer: {
@@ -48,6 +68,7 @@ let config = {
 		port: 9000
 	},
 	plugins: [
+		new ExtractTextPlugin('main.css'),
 		new webpack.optimize.CommonsChunkPlugin('vendor', 'vendor.bundle.js'),
 		new webpack.HotModuleReplacementPlugin(),
 		new HtmlWebpackPlugin({
