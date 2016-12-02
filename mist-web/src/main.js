@@ -1,12 +1,23 @@
 require('./index.pug') // Not stricly necessary, but live reloads any changes to index.pug
+require('./assets/styles/main.scss')
 
 import React from 'react'
 import {render} from 'react-dom'
+import { Provider } from 'react-redux'
+import {createStore, applyMiddleware} from 'redux'
+import ReduxPromise from 'redux-promise'
+import {hashHistory, Router} from 'react-router'
+import rootReducer from './modules/root-reducer'
+import rootRoute from './routes'
 
-class App extends React.Component {
-	render() {
-		return <p>Hello MiST!</p>
-	}
-}
+const initialState = undefined
+const store = createStore(rootReducer, initialState, applyMiddleware(ReduxPromise))
 
-render(<App />, document.getElementById('root'))
+render(
+	<Provider store={store}>
+		<Router history={hashHistory}>
+			{rootRoute}
+		</Router>
+	</Provider>
+	, document.getElementById('root')
+)

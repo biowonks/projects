@@ -36,7 +36,6 @@ let config = {
 				test: /\.jsx?$/,
 				include: kSrcDir,
 				loaders: [
-					'react-hot',
 					'babel'
 				]
 			},
@@ -66,6 +65,7 @@ let config = {
 	},
 	plugins: [
 		extractCSS,
+		// http://stackoverflow.com/a/38733864
 		new webpack.optimize.CommonsChunkPlugin({
 			name: 'js/vendor',
 			minChunks: (module) => {
@@ -91,6 +91,12 @@ if (kEnvName === 'production') {
 	config.plugins.push(new webpack.DefinePlugin({
 		'process.env': {
 			NODE_ENV: JSON.stringify('production')
+		}
+	}))
+
+	config.plugins.push(new webpack.optimize.UglifyJsPlugin({
+		compress: {
+			warnings: true
 		}
 	}))
 }
