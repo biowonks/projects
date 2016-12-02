@@ -26,6 +26,7 @@ const bodyParser = require('body-parser'),
 // Local
 const config = require('../config'),
 	errorHandler = require('lib/error-handler'),
+	coreHeaderNames = require('core-lib/header-names'),
 	loadServices = require('./services'),
 	errors = require('lib/errors'),
 	latestDocs = require('./routes/docs/use'),
@@ -198,9 +199,11 @@ function throwErrorIfNotSSL(req, res, next) {
 }
 
 function cors() {
+	const coreHeaders = Object.keys(coreHeaderNames).map((key) => coreHeaderNames[key])
+
 	return corser.create({
 		methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'DELETE'],
 		requestHeaders: [...corser.simpleRequestHeaders, config.headerNames.apiToken],
-		responseHeaders: [...corser.simpleResponseHeaders, config.headerNames.version]
+		responseHeaders: [...corser.simpleResponseHeaders, config.headerNames.version, ...coreHeaders]
 	})
 }
