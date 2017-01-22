@@ -230,24 +230,27 @@ For example: to filter sequences with **only** **1** match to a CheW domain from
 ```javascript
 [
     {
-        resource: 'fql',
-        id: '^'
-    },
-    {
-        resource: 'pfam28',
-        id: 'CheW'
-    }
-    {
-        resource: 'fql',
-        id: '$'
+        pos: [
+            {
+                resource: 'fql',
+                id: '^'
+            },
+            {
+                resource: 'pfam28',
+                id: 'CheW'
+            }
+            {
+                resource: 'fql',
+                id: '$'
+            }
+        ]
     }
 ]
 ```
 
-This is different from a positional rule because here no other element of the resources mentioned in the rule is allowed anywhere in the sequence.
+This is different from a non-positional rule because here no other element of the resources mentioned in the rule is allowed anywhere in the sequence. This will be more important when we discuss `scope of search` in FQL.
 
-
-Notice that to use the fql special characters, the value of `resource` is `'fql'`.
+#### Count in positional rule
 
 As in **non-positional** rules, FQL can also be used with the key `count`. Note that when using `count` with positional rules the value passed to `count` will be added to the query rule as regular expression quantifier. For example:
 
@@ -256,17 +259,21 @@ For example: to filter only sequences with CheW - CheW domain architecture and n
 ```javascript
 [
     {
-        resource: null,
-        id: '^'
-    },
-    {
-        resource: 'pfam29',
-        id: 'CheW',
-        count: '{2}'
-    }
-    {
-        resource: null,
-        id: '$'
+        pos: [
+            {
+                resource: 'fql',
+                id: '^'
+            },
+            {
+                resource: 'pfam29',
+                id: 'CheW',
+                count: '{2}'
+            }
+            {
+                resource: 'fql',
+                id: '$'
+            }
+        ]
     }
 ]
 ```
@@ -278,24 +285,95 @@ For example: to Filter protein sequences with only 2 or 3 CheWs and nothing else
 ```javascript
 [
     {
-        resource: null,
-        id: '^'
-    },
-    {
-        resource: 'pfam29',
-        id: 'CheW',
-        count: '{2,3}'
+        pos: [
+            {
+                resource: 'fql',
+                id: '^'
+            },
+            {
+                resource: 'pfam29',
+                id: 'CheW',
+                count: '{2,3}'
+            }
+            {
+                resource: 'fql',
+                id: '$'
+            }
+        ]
     }
+]
+```
+Another example is to combine these elements to: filter proteins with 2 or 3 CheW protein domain at the end of the sequence, but allow anything else in the N-terminus:
+
+```javascript
+[
     {
-        resource: null,
-        id: '$'
+        pos: [
+            {
+                resource: 'pfam29',
+                id: 'CheW',
+                count: '{2,3}'
+            }
+            {
+                resource: 'fql',
+                id: '$'
+            }
+        ]
+    }
+]
+```
+
+FQL also includes the wild card `*` to allow any feature of a certain resource:
+
+For example if I want to search for any chemoreceptor (ending with MCPsignal) with any number more than 1 of any domains from pfam28 between two TM regions we use:
+
+```javascript
+[
+    {
+        pos: [
+            {
+                resource: 'fql',
+                id: '^'
+            },
+            {
+                resource: 'das',
+                id: 'TM',
+                count: '{1}'
+            },
+            {
+                resource: 'pfam28',
+                id: '*',
+                count: '{1,}'
+            },
+            {
+                resource: 'das',
+                id: 'TM',
+                count: '{1}'
+            },
+            {
+                resource: 'pfam28',
+                id: '*',
+                count: '{1,}'
+            },
+            {
+                resource: 'pfam28',
+                id: 'MCPsignal',
+                count: '{1}'
+            },
+            {
+                resource: 'fql',
+                id: '$'
+            }
+        ]
     }
 ]
 ```
 
 #### Combining positional and non-positional rules.
 
+#### Scope of search.
 
+#### Overlapping features.
 
 ----- END -------
 below this is just ideas that must be looked at before finishing the project.
@@ -303,7 +381,34 @@ below this is just ideas that must be looked at before finishing the project.
 
 
 
+This brings us to discuss `scope of search` in FQL. For positional rules, any feature of all resources mentioned will be considered together. The consequences of this is complicated since several resources will map overlapping features. We will deal with overlaping features later.
 
+For example: To pick
+
+
+```javascript
+[
+    {
+        Npos: [
+            {
+                resource: 'das',
+                feature: 'TM',
+                count: '{2}'
+            }
+        ],
+        pos: [
+            {
+                resource: 'pfam28',
+                feature: 'MCPsignal'
+            },
+            {
+                resource: 'fql',
+                feature: '$'
+            }
+        ]
+    }
+]
+```
 
 
 But this won't match something like this:

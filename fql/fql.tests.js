@@ -928,7 +928,7 @@ describe('Feature Query Language - FQL', function() {
 			]
 			expect(fql.match).eql(expected)
 		})
-		describe('Testing the behaviour of "count"', () => {
+		describe('Testing the behaviour of "count" for positional rules', () => {
 			it('Request protein sequences with 2 matches and nothing else to a single domain from pfam28', function() {
 				let fql = new Fql()
 				let setOfRules = [
@@ -976,7 +976,7 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(fql.match).eql(expected)
 			})
-			it('Request protein sequences with 2 matches and nothing else to a single domain from pfam28', function() {
+			it('Request protein sequences with 3 matches and nothing else to a single domain from pfam28', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
@@ -1023,7 +1023,7 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(fql.match).eql(expected)
 			})
-			it('Request protein sequences with 2 or 3 matches and nothing else to a single domain from pfam28', function() {
+			it('Filter protein sequences with 2 or 3 matches and nothing else to a single domain from pfam28', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
@@ -1155,6 +1155,75 @@ describe('Feature Query Language - FQL', function() {
 					false, // **
 					true, // **
 					true,  // TM | TM | MCPsignal
+					false,  // TM | TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					true  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(fql.match).eql(expected)
+			})
+		})
+		describe('Testing the behaviour of wildcard for positional rules', () => {
+			it('Filter protein sequences with 1 or more domains between 2 TM regions in the begigging of the sequence and with MCPsignal at the end', function() {
+				let fql = new Fql()
+				let setOfRules = [
+					{
+						pos: [
+							{
+								resource: 'fql',
+								feature: '^'
+							},
+							{
+								resource: 'das',
+								feature: 'TM',
+								count: '{1}'
+							},
+							{
+								resource: 'pfam28',
+								feature: '.',
+								count: '{1,}'
+							},
+							{
+								resource: 'das',
+								feature: 'TM',
+								count: '{1}'
+							},
+							{
+								resource: 'pfam28',
+								feature: '.',
+								count: '{1,}'
+							},
+							{
+								resource: 'pfam28',
+								feature: 'MCPsignal',
+								count: '{1}'
+							},
+							{
+								resource: 'fql',
+								feature: '$'
+							}
+						]
+					}
+				]
+				fql.loadRules(setOfRules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					false, // CheW | CheW
+					false, // CheW | Response_reg
+					false, // CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					false, // CheW | CheW | CheW
+					false, // Response_reg | NMT1_2 | CheW
+					false, // CheW | CheR
+					false, // Response_reg | CheW
+					true, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					false,  // TM | TM | MCPsignal
 					false,  // TM | TM | MCPsignal | Rhodanese
 					false, // TM | TM | TM | TM | MCPsignal
 					false, // TM | TM | TM | TM | TM | TM | MCPsignal
