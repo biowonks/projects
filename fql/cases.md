@@ -223,79 +223,9 @@ For example, to accomplish the same result as for to select all sequences with o
 ]
 ```
 
+To allow for complex queries FQL, we borrow the *Regular Expression* lexicon `^` to determine the N-terminus of the sequence and `$` the C-terminus.
 
-
-
-#### Combining positional and non-positional rules.
-
-
-
------ END -------
-below this is just ideas that must be looked at before finishing the project.
-
-### Scope of search
-
-### Single feature filter
-
-
-
-
-
-Filter sequences with **any** number of matches to a CheW domain from Pfam29 **anywhere** in the sequence..
-
-```javascript
-[
-    {
-        resource: 'pfam29',
-        id: 'CheW'
-    }
-]
-```
-
-In FQL, the filtering rule is passed as an Array of objects. Each object is called a feature. The mandatory keys are:
- * `resource` in which you must specify which `SeqDepot` resource you are using.
- * `id` which is the identifier or name of the feature to be present.
-
-Other examples of simple rules like this will be:
-
-Filter sequences with **any** number of matches to a CheW domain from SuperFamily **anywhere** in the sequence.
-
-```javascript
-[
-    {
-        resource: 'superfam',
-        id: 'SSF50341'
-    }
-]
-```
-
-Filter sequences with **any** number of matches to a CheW domain from SMART **anywhere** in the sequence.
-
-```javascript
-[
-    {
-        resource: 'smart',
-        id: 'SM00260'
-    }
-]
-```
-
-Filter sequences with **any** number of matches to a CheW domain from ProSite **anywhere** in the sequence.
-
-```javascript
-[
-    {
-        resource: 'proscan',
-        id: 'PS50851'
-    }
-]
-```
-
-Since FQL is in essence a filter, sequences with other domains besides `CheW` will be selected.
-
-To select only sequences with CheW domains, you must specify the boundaries in which you want to find the domain. For that we borrow the *Regular Expression* lexicon `^` to determine the N-terminus of the sequence and `$` the end. For example:
-
-Filter sequences with **1** match to a CheW domains from Pfam29, and **only** CheW domains from Pfam29.
+For example: to filter sequences with **only** **1** match to a CheW domain from Pfam28.
 
 ```javascript
 [
@@ -304,7 +234,7 @@ Filter sequences with **1** match to a CheW domains from Pfam29, and **only** Ch
         id: '^'
     },
     {
-        resource: 'pfam29',
+        resource: 'pfam28',
         id: 'CheW'
     }
     {
@@ -314,10 +244,14 @@ Filter sequences with **1** match to a CheW domains from Pfam29, and **only** Ch
 ]
 ```
 
-Notice that the value of `resource` is `'fql'` since it is not to be searched in any database but it is part of the FQ language.
+This is different from a positional rule because here no other element of the resources mentioned in the rule is allowed anywhere in the sequence.
 
-Another important aspect of FQL to filter queries based in single feature is the number or appearences you want to select.
-For that FQL has the special key `count`. Note that when using `count` positional information is tricky and here starts some conventions that FQL must make. The argument passed to `count` in items between the items signaling the begin `^` and end `$` will be added to the query rule as regular expression quantifier and for that reason we will use the *curly brackets* notation `{}` as in regular expression. Note that quantifiers in regular expression is related to immediate repeat. For example:
+
+Notice that to use the fql special characters, the value of `resource` is `'fql'`.
+
+As in **non-positional** rules, FQL can also be used with the key `count`. Note that when using `count` with positional rules the value passed to `count` will be added to the query rule as regular expression quantifier. For example:
+
+For example: to filter only sequences with CheW - CheW domain architecture and no other match to the pfam29 database will be selected.
 
 ```javascript
 [
@@ -328,7 +262,7 @@ For that FQL has the special key `count`. Note that when using `count` positiona
     {
         resource: 'pfam29',
         id: 'CheW',
-        count: '{3}'
+        count: '{2}'
     }
     {
         resource: null,
@@ -337,7 +271,9 @@ For that FQL has the special key `count`. Note that when using `count` positiona
 ]
 ```
 
-In this case, only sequences with CheW - CheW - CheW domain architecture and no other match to the pfam29 database will be selected. If you want to pick sequences with only 2 or 3 CheWs and nothing else:
+The key `count` can also be used to select a range of number of acceptable repeats of the domain.
+
+For example: to Filter protein sequences with only 2 or 3 CheWs and nothing else:
 
 ```javascript
 [
@@ -356,6 +292,19 @@ In this case, only sequences with CheW - CheW - CheW domain architecture and no 
     }
 ]
 ```
+
+#### Combining positional and non-positional rules.
+
+
+
+----- END -------
+below this is just ideas that must be looked at before finishing the project.
+
+
+
+
+
+
 
 But this won't match something like this:
 ![img](http://seqdepot.net/api/v1/aseqs/7hMuWLhwA4TkUJ5akVyt8Q.png)

@@ -882,7 +882,7 @@ describe('Feature Query Language - FQL', function() {
 			fqlNP.applyFilter(sampleData)
 			expect(fqlP.match).eql(fqlNP.match)
 		})
-		it('Request protein sequences with 1 match and nothing else to a single domain from pfam29', function() {
+		it('Filter protein sequences with 1 match to a CheW domain from Pfam28', function() {
 			let fql = new Fql()
 			let setOfRules = [
 				{
@@ -976,7 +976,7 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(fql.match).eql(expected)
 			})
-			it('Request protein sequences with 3 matches and nothing else to a single domain from pfam28', function() {
+			it('Request protein sequences with 2 matches and nothing else to a single domain from pfam28', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
