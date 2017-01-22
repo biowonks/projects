@@ -25,7 +25,7 @@ FQL is a flexible feature querying language for proteins that is based in a filt
 
 In FQL, there are two types of rules: **non-positional** and **positional**. The first one allows you to select sequences by simple presence or abscence of features. The second one, more elaborated, allows you to be more specific and pass the order in which the domains should appear.
 
-The rules are passed as a JSON object to FQL and it has two keys: `Npos` for non-positional rules and `pos` for positional rules. None of these keys are mandatory and FQL will return `true` match to everysequence is rules is an empty object. Other keys will be ignored.
+The rules are passed as a JSON object to FQL and it has two keys: `Npos` for non-positional rules and `pos` for positional rules. None of these keys are mandatory and FQL will return `true` match to every sequence if rules is an empty object. Other keys will be ignored.
 
 The way rules are organized in FQL is the following:
 
@@ -179,7 +179,7 @@ If you want to select all sequences with at least 1 match to CheW domain in pfam
 
 You can also pass alternative rules. For that you need a new object in the *set of rules*. For example:
 
-If you want to select all sequences with at least 1 match to CheW domain in pfam28 AND only 1 match to HATPase_c domain in pfam28:
+If you want to select all sequences with at least 1 match to CheW domain in pfam28 OR only 1 match to HATPase_c domain in pfam28:
 
 ```javascript
 [
@@ -204,7 +204,34 @@ If you want to select all sequences with at least 1 match to CheW domain in pfam
 ]
 ```
 
+#### The **positional** rules
 
+Positional rules are a bit more complicated and highly based on regular expression. It can also mimic the some behavior of non-positional rules as we will see it later.
+
+For example, to accomplish the same result as for to select all sequences with only one matches to the CheW domain in Pfam28 database using positonal rules:
+
+```javascript
+[
+    {
+        pos: [
+            {
+                resource: 'pfam28',
+                feature: 'CheW'
+            }
+        ]
+    }
+]
+```
+
+
+
+
+#### Combining positional and non-positional rules.
+
+
+
+----- END -------
+below this is just ideas that must be looked at before finishing the project.
 
 ### Scope of search
 
