@@ -369,6 +369,11 @@ For example if I want to search for any chemoreceptor (ending with MCPsignal) wi
 ]
 ```
 
+cases
+
+* Start with TM region and have anything but another TM region following.
+* Start with TM and end with MCPsignal
+
 #### Combining positional and non-positional rules.
 
 #### Scope of search.
