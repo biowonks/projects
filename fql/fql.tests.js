@@ -97,7 +97,7 @@ describe('Feature Query Language - FQL', function() {
 			fql._addResources(rc)
 			expect(fql.resources).eql(['pfam28', 'das'])
 		})
-		it('check behaviour of _parseRules with missing pos',() => {
+		it('check behaviour of _parseRules with missing pos', () => {
 			let setOfRules = [
 				{
 					Npos: [
@@ -112,7 +112,7 @@ describe('Feature Query Language - FQL', function() {
 			expect(fql.parsedRules[0].pos).to.be.null
 			expect(fql.parsedRules[0].Npos).to.not.be.null
 		})
-		it('check behaviour of _parseRules with missing Npos',() => {
+		it('check behaviour of _parseRules with missing Npos', () => {
 			let setOfRules = [
 				{
 					pos: [
@@ -127,13 +127,13 @@ describe('Feature Query Language - FQL', function() {
 			expect(fql.parsedRules[0].pos).to.not.be.null
 			expect(fql.parsedRules[0].Npos).to.be.null
 		})
-		it('check behaviour of _parseRules with missing Npos and pos',() => {
+		it('check behaviour of _parseRules with missing Npos and pos', () => {
 			let setOfRules = [{}]
 			fql.loadRules(setOfRules)
 			expect(fql.parsedRules[0].pos).to.be.null
 			expect(fql.parsedRules[0].Npos).to.be.null
 		})
-		it('check behaviour of _parseRules',() => {
+		it('check behaviour of _parseRules', () => {
 			let rules =
 				{
 					pos: [
@@ -154,7 +154,8 @@ describe('Feature Query Language - FQL', function() {
 					]
 				}
 			let expected = {
-				pos: '(CheW@pfam28)(Response_reg@pfam28)',                  Npos: [
+				pos: '(CheW@pfam28)(Response_reg@pfam28)',
+				Npos: [
 					[
 						'TM@das',
 						''
@@ -203,7 +204,7 @@ describe('Feature Query Language - FQL', function() {
 			let expected = ['pfam29', 'das']
 			expect(fql.resources).eql(expected)
 		})
-		describe('Missing pos or Npos in arguments should pass pos and Npos null rules', () =>{
+		describe('Missing pos or Npos in arguments should pass pos and Npos null rules', () => {
 			it('Missing pos should pass null for rules.pos', () => {
 				let setOfRules = [
 					{
@@ -215,6 +216,7 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
+				fql.loadRules(setOfRules)
 				fql.applyFilter
 			})
 		})
@@ -386,11 +388,11 @@ describe('Feature Query Language - FQL', function() {
 				expect(fql.resources).eql(['pfam28', 'pfam29', 'phobius'])
 				let expectedParsedRule = [
 					{
-						"pos": "(CheW@pfam28)(Response_reg@pfam29)",
-						"Npos": [
+						pos: '(CheW@pfam28)(Response_reg@pfam29)',
+						Npos: [
 							[
-								"TM@phobius",
-								""
+								'TM@phobius',
+								''
 							]
 						]
 					}
