@@ -1,7 +1,7 @@
 'use strict'
 
 module.exports =
-/* Class of Feature Query Language */
+/**ass of Feature Query Language */
 class Fql {
 	constructor(initialAseqs = []) {
 		this.input = {}
@@ -13,7 +13,7 @@ class Fql {
 		this.parsedRules = []
 	}
 
-	/*
+	/**
 	 * Load and parse the set of rules passed by the user in FQL standards.
 	 *
 	 * The keys of the object that will be interpreted are two: Npos and pos. Everything else will be ignored.
@@ -23,7 +23,7 @@ class Fql {
 	 *
 	 *
 	 * @param {Array{Objects}} - Raw set of rules object
-	 * @return {Boolean} - True if no problems occur.
+	 * @returns {Boolean} - True if no problems occur.
 	 */
 	loadRules(setOfRules) {
 		this.rules = setOfRules
@@ -40,7 +40,8 @@ class Fql {
 	applyFilter(data) {
 		let matchList = []
 		data.forEach((info) => {
-			let stringInfo = this._seqDepotInfoToString(info)
+			let arrayInfo = this._seqDepotInfoToArray(info),
+				stringInfo = arrayInfo.join('')
 			let isMatch = false,
 				newMatch = true
 			this.parsedRules.forEach((parsedRule) => {
@@ -80,20 +81,20 @@ class Fql {
 		return match
 	}
 
-	/*
+	/**
 	 * Test if the domain architecture of a sequence matches the filter.
 	 * @param {string} stringInfo - domain architecture information in string.
 	 * @param {string} regular expression type of rule
-	 * @return {Boolean} - True if matches
+	 * @returns {Boolean} - True if matches
 	 */
 	_testPos(stringInfo, regex) {
 		return stringInfo.match(regex) ? true : false
 	}
 
-	/*
+	/**
 	 * Add resource from rule to the array of resource used
 	 * @param {string} resource - identifier of the resource
-	 * @return null
+	 * @returns null
 	 */
 	_addResources(resource) {
 		if (this.resources.indexOf(resource) === -1)
@@ -105,10 +106,10 @@ class Fql {
 		return null
 	}
 
-	/*
+	/**
 	 * Parse filtering rules passed by the user
 	 * @params {Object} rules - Raw rules object passed to FQL
-	 * @return {Object} parsed - Same object but with the rules parsed
+	 * @returns {Object} parsed - Same object but with the rules parsed
 	 */
 	_parseRules(rules) {
 		let parsed = {
@@ -118,10 +119,10 @@ class Fql {
 		return parsed
 	}
 
-	/*
+	/**
 	 * Parse pos type of rules. It will also populate the this.resources with the resources found here.
-	 * @params {Object} rules - Rule of Npos type object
-	 * @return {Array.<Array>} regex - Array of [ String to match the domain architecture of sequences, string of interval of how many times it should appear ].
+	 * @param {Object} rules - Rule of Npos type object
+	 * @returns {Array.<Array>} regex - Array of [ String to match the domain architecture of sequences, string of interval of how many times it should appear ].
 	 */
 	_parseNPosRules(rules) {
 		let parsedNposRule = []
@@ -142,10 +143,10 @@ class Fql {
 		return parsedNposRule
 	}
 
-	/*
+	/**
 	 * Parse pos type of rules.
-	 * @params {Object} rules - Rule type obejct
-	 * @return {string} regex - Regular expression to match the domain architecture of sequences.
+	 * @param {Object} rules - Rule type obejct
+	 * @returns {string} regex - Regular expression to match the domain architecture of sequences.
 	 */
 	_parsePosRules(rules) {
 		let regex = ''
@@ -170,7 +171,12 @@ class Fql {
 		return regex
 	}
 
-	_seqDepotInfoToString(info) {
+	/**
+	 * Parse SeqDepot type of domain architecture response.
+	 * @param {string} info - SeqDepot-formated feature information
+	 * @returns {Object} Returns an array with features information formated as: feature@resource
+	 */
+	_seqDepotInfoToArray(info) {
 		let features = []
 		let config = {}
 		this.resources.forEach((resource) => {
@@ -190,17 +196,17 @@ class Fql {
 		features.sort((a, b) => {
 			return a.pos - b.pos
 		})
-		let expression = ''
+		let expression = []
 		features.forEach((feature) => {
-			expression += feature.ft + '@' + feature.rc
+			expression.push(feature.ft + '@' + feature.rc)
 		})
 		return expression
 	}
-	/*
+	/**
 	* Get configuration to search each tool.
 	* Better is to link this to SeqDepot via API - so changes there, change this too.
 	* @param {string} Name of the resource
-	* @return {Object} Object with attribute pos and ft with the indexes where to find this info in the array from each tool
+	* @returns {Object} Object with attribute pos and ft with the indexes where to find this info in the array from each tool
 	*/
 	_getConfig(rc) {
 		let config = {}
@@ -226,7 +232,7 @@ class Fql {
 		return null
 	}
 
-	/*
+	/**
 	 * Validates rules passed by user
 	 * @param {Object} rule - Pass the object with Npos and pos rules
 	 * @throws {Error} If rule is missing feature, resource or both

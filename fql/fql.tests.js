@@ -47,7 +47,7 @@ describe('Feature Query Language - FQL', function() {
 		beforeEach(function() {
 			fql = new Fql()
 		})
-		it('check behaviour _seqDepotInfoToString', () => {
+		it('check behaviour _seqDepotInfoToArray', () => {
 			let setOfRules = [
 				{
 					pos: [
@@ -84,8 +84,15 @@ describe('Feature Query Language - FQL', function() {
 					}
 				}
 			}
-			let expression = fql._seqDepotInfoToString(info)
-			expect(expression).equal('TM@dasCache_1@pfam28TM@dasHAMP@pfam28MCPsignal@pfam28')
+			let expression = fql._seqDepotInfoToArray(info)
+			expect(expression).eql(
+				[
+					'TM@das',
+					'Cache_1@pfam28',
+					'TM@das',
+					'HAMP@pfam28',
+					'MCPsignal@pfam28'
+				])
 		})
 		it('check behaviour _getConfig')
 		it('check behaviour _addResources', () => {
