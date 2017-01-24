@@ -168,7 +168,10 @@ class Fql {
 	/**
 	 * Parse pos type of rules.
 	 * @param {Object} rules - Rule type obejct
-	 * @returns {string} regex - Regular expression to match the domain architecture of sequences.
+	 * @returns {Object} Object with instructions for positional matching. There are three values:
+	 * 	hardStart {Boolean} - true if matters that first rule match first info.
+	 * rules {Object} - Array with rules
+	 * hardStop {Boolean} - true if matters that the last rule match last info.
 	 */
 	_parsePosRules(rules) {
 		let parsedRule = {
