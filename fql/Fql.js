@@ -47,7 +47,7 @@ class Fql {
 			this.parsedRules.forEach((parsedRule) => {
 				newMatch = true
 				if (parsedRule.pos !== null)
-					newMatch = this._testPos(stringInfo, parsedRule.pos)
+					newMatch = this._testPos(arrayInfo, parsedRule.pos)
 				if ('Npos' in parsedRule)
 					newMatch = newMatch && this._testNpos(stringInfo, parsedRule.Npos)
 				isMatch = isMatch || newMatch
@@ -87,8 +87,30 @@ class Fql {
 	 * @param {string} regular expression type of rule
 	 * @returns {Boolean} - True if matches
 	 */
-	_testPos(stringInfo, regex) {
-		return stringInfo.match(regex) ? true : false
+	_testPos(arrayInfo, instructions) {
+		let match = false,
+			pos = 0
+
+		//console.log(JSON.stringify(arrayInfo))
+		//console.log(JSON.stringify(instructions))
+		return 0
+
+
+
+
+		for (let indexInstr = 0; indexInstr < instructions.length; indexInstr++) {
+			if (rule[0] === '^' && indexInstr === 0) {
+				let k = 0
+
+			}
+		}
+
+
+		for (let i = 0; i < arrayInfo.length; i++) {
+			let b = 2
+		}
+
+		return match
 	}
 
 	/**
@@ -149,26 +171,66 @@ class Fql {
 	 * @returns {string} regex - Regular expression to match the domain architecture of sequences.
 	 */
 	_parsePosRules(rules) {
-		let regex = ''
+		let parsedRule = {
+			hardStart: false,
+			rules: [],
+			hardStop: false
+		}
 		if (rules) {
-			let expr = ''
-			rules.forEach((rule) => {
+			let expr = '',
+				count = 1,
+				interval = []
+			rules.forEach((rule, i) => {
+				interval = [1]
 				if (rule.resource === 'fql') {
-					expr = rule.feature
+					if (rule.feature === '^' && i === 0) {
+						parsedRule.hardStart = true
+					}
+					if (rule.feature === '$' && i === rules.length) {
+						parsedRule.hardStop = true
+					}
 				}
 				else {
 					this._addResources(rule.resource)
-					expr = '(' + rule.feature + '@' + rule.resource + ')'
+
 					if ('count' in rule)
-						expr = expr + rule.count + '(?!' + rule.feature + '@' + rule.resource + ')'
+						interval = this._parseCount(rule.count)
+					expr = [ rule.feature + '@' + rule.resource, interval ]
+					parsedRule.rules.push(expr)
 				}
-				regex += expr
 			})
 		}
 		else {
-			regex = null
+			parsedRule = null
 		}
-		return regex
+		return parsedRule
+	}
+
+	/**
+	 * Parse RegEx-like repeat info.
+	 * @param {string} countString - RegEx formated count string
+	 * @returns {Object} Returns an array (lentgh 2) with the interval to be used. NaN is used in the second item in case a 'at least` statement is passed. Ex.: {3,} - at least 3.
+	 */
+	_parseCount(countString) {
+		let toBeParsed = countString
+			.replace('{', '')
+			.replace('}', '')
+			.split(','),
+			intervalMaxLength = 2,
+			interval = []
+		if (toBeParsed.length > intervalMaxLength)
+			throw new Error('Invalid count value (too many commas): ' + countString)
+		toBeParsed.forEach((n, i) => {
+			if (n.match(/^\d+$/))
+				interval.push(parseInt(n))
+			else if (n === '' && i !== 0)
+				interval.push(NaN)
+			else if (n === '' && i === 0)
+				interval.push(0)
+			else
+				throw new Error('Invalid count value (only integers): ' + countString)
+		})
+		return interval
 	}
 
 	/**

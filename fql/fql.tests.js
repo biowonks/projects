@@ -161,7 +161,14 @@ describe('Feature Query Language - FQL', function() {
 					]
 				}
 			let expected = {
-				pos: '(CheW@pfam28)(Response_reg@pfam28)',
+				pos: {
+					hardStart: false,
+					rules: [
+						['CheW@pfam28', [1]],
+						['Response_reg@pfam28', [1]]
+					],
+					hardStop: false
+				},
 				Npos: [
 					[
 						'TM@das',
@@ -429,7 +436,14 @@ describe('Feature Query Language - FQL', function() {
 				expect(fql.resources).eql(['pfam28', 'pfam29', 'phobius'])
 				let expectedParsedRule = [
 					{
-						pos: '(CheW@pfam28)(Response_reg@pfam29)',
+						pos: {
+							hardStart: false,
+							rules: [
+								['CheW@pfam28', [1]],
+								['Response_reg@pfam29', [1]]
+							],
+							hardStop: false
+						},
 						Npos: [
 							[
 								'TM@phobius',

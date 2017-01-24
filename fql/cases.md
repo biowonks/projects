@@ -374,11 +374,21 @@ cases
 * Start with TM region and have anything but another TM region following.
 * Start with TM and end with MCPsignal
 
+#### Negatives in positional rules (notfeature):
+
+* Start with a TM, do not have Cache_2, end with MCPsignal
+
+
 #### Combining positional and non-positional rules.
 
 #### Scope of search.
 
 #### Overlapping features.
+
+## Tests TODO
+
+
+
 
 ----- END -------
 below this is just ideas that must be looked at before finishing the project.
