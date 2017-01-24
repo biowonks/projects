@@ -89,22 +89,32 @@ class Fql {
 	 */
 	_testPos(arrayInfo, instructions) {
 		let match = false,
-			pos = 0
+			indexInfo = 0,
+			nextRule = []
 
 		//console.log(JSON.stringify(arrayInfo))
 		//console.log(JSON.stringify(instructions))
 		return 0
 
-
-
-
-		for (let indexInstr = 0; indexInstr < instructions.length; indexInstr++) {
-			if (rule[0] === '^' && indexInstr === 0) {
-				let k = 0
-
+		if (instructions.hardStart === true) {
+			for (let indexInstr = 0; indexInstr < instructions.rules.length; indexInstr++) {
+				if (indexInstr !== instructions.rules.length - 1)
+					nextRule = instructions.rules[indexInstr + 1]
+				let actuRule = instructions.rules[indexInstr],
+					numMatches = 0
+				for (let j = indexInfo; j < arrayInfo.length; j++) {
+					if (arrayInfo[j].match(actuRule[0])) {
+						numMatches++
+					}
+					else {
+						indexInfo = j - 1
+						break
+					}
+				}
+				let interval = actuRule[0]
+				//if (numMatches > actuRule[1][0])
 			}
 		}
-
 
 		for (let i = 0; i < arrayInfo.length; i++) {
 			let b = 2
@@ -212,7 +222,7 @@ class Fql {
 	/**
 	 * Parse RegEx-like repeat info.
 	 * @param {string} countString - RegEx formated count string
-	 * @returns {Object} Returns an array (lentgh 2) with the interval to be used. NaN is used in the second item in case a 'at least` statement is passed. Ex.: {3,} - at least 3.
+	 * @returns {Object} Returns an array (lentgh 2) with the interval to be used. Infinity is used in the second item in case a 'at least` statement is passed. Ex.: {3,} - at least 3.
 	 */
 	_parseCount(countString) {
 		let toBeParsed = countString
@@ -227,12 +237,14 @@ class Fql {
 			if (n.match(/^\d+$/))
 				interval.push(parseInt(n))
 			else if (n === '' && i !== 0)
-				interval.push(NaN)
+				interval.push(Infinity)
 			else if (n === '' && i === 0)
 				interval.push(0)
 			else
 				throw new Error('Invalid count value (only integers): ' + countString)
 		})
+		if (interval.length === 1)
+			interval.push(interval[0])
 		return interval
 	}
 

@@ -195,7 +195,7 @@ describe('Feature Query Language - FQL', function() {
 			it('It must work with single number', () => {
 				let countInfo = '{7}',
 					parsed = fql._parseCount(countInfo)
-				expect(parsed).eql([7])
+				expect(parsed).eql([7,7])
 			})
 			it('It must work with two numbers', () => {
 				let countInfo = '{1,7}',
@@ -210,7 +210,7 @@ describe('Feature Query Language - FQL', function() {
 			it('It must work with no number in the second place', () => {
 				let countInfo = '{1,}',
 					parsed = fql._parseCount(countInfo)
-				expect(parsed).eql([1, NaN])
+				expect(parsed).eql([1, Infinity])
 			})
 		})
 	})
