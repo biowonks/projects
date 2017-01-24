@@ -15,13 +15,13 @@ class Fql {
 
 	/**
 	 * Load and parse the set of rules passed by the user in FQL standards.
-	 * 
+	 *
 	 * The keys of the object that will be interpreted are two: Npos and pos. Everything else will be ignored.
-	 * 
+	 *
 	 * Example of rule:
-	 * 
-	 * 
-	 * 
+	 *
+	 *
+	 *
 	 * @param {Array{Objects}} - Raw set of rules object
 	 * @return {Boolean} - True if no problems occur.
 	 */
@@ -46,7 +46,7 @@ class Fql {
 			this.parsedRules.forEach((parsedRule) => {
 				newMatch = true
 				if ( parsedRule.pos !== null)
-					newMatch = this._testPos(stringInfo, parsedRule.pos) 
+					newMatch = this._testPos(stringInfo, parsedRule.pos)
 				if ('Npos' in parsedRule)
 					newMatch = newMatch && this._testNpos(stringInfo, parsedRule.Npos)
 				isMatch = isMatch || newMatch
@@ -78,6 +78,12 @@ class Fql {
 		return match
 	}
 
+	/**
+	 * Test if the domain architecture of a sequence matches the filter.
+	 * @param {string} stringInfo - domain architecture information in string.
+	 * @param {string} regular expression type of rule
+	 * @return {Boolean} - True if matches
+	 */
 	_testPos(stringInfo, regex) {
 		return stringInfo.match(regex) ? true : false
 	}
@@ -100,10 +106,10 @@ class Fql {
 	/**
 	 * Parse filtering rules passed by the user
 	 * @params {Object} rules - Raw rules object passed to FQL
-	 * @return {Object} parsed - Same object but with the rules parsed 
+	 * @return {Object} parsed - Same object but with the rules parsed
 	 */
 	_parseRules(rules) {
-		let parsed = { 
+		let parsed = {
 			pos: this._parsePosRules(rules.pos),
 			Npos: this._parseNPosRules(rules.Npos)
 		}
@@ -145,7 +151,7 @@ class Fql {
 			rules.forEach((rule) => {
 				if (rule.resource === 'fql') {
 					expr = rule.feature
-				}	
+				}
 				else {
 					this._addResources(rule.resource)
 					expr = '(' + rule.feature + '@' + rule.resource + ')'
