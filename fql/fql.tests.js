@@ -172,6 +172,40 @@ describe('Feature Query Language - FQL', function() {
 			let parsed = fql._parseRules(rules)
 			expect(parsed).eql(expected)
 		})
+		describe('Checking behaviour of _parseCount', () => {
+			it('Too many commas', () => {
+				let countInfo = '{1,2,3}'
+				expect(fql._parseCount.bind(fql, countInfo)).to.throw('Invalid count value (too many commas): ' + countInfo)
+			})
+			it('It must be an integer 1', () => {
+				let countInfo = '{1,a}'
+				expect(fql._parseCount.bind(fql, countInfo)).to.throw('Invalid count value (only integers): ' + countInfo)
+			})
+			it('It must be an integer 2', () => {
+				let countInfo = '{1,2.3}'
+				expect(fql._parseCount.bind(fql, countInfo)).to.throw('Invalid count value (only integers): ' + countInfo)
+			})
+			it('It must work with single number', () => {
+				let countInfo = '{7}',
+					parsed = fql._parseCount(countInfo)
+				expect(parsed).eql([7])
+			})
+			it('It must work with two numbers', () => {
+				let countInfo = '{1,7}',
+					parsed = fql._parseCount(countInfo)
+				expect(parsed).eql([1, 7])
+			})
+			it('It must work with no number in the first place', () => {
+				let countInfo = '{,7}',
+					parsed = fql._parseCount(countInfo)
+				expect(parsed).eql([0, 7])
+			})
+			it('It must work with no number in the second place', () => {
+				let countInfo = '{1,}',
+					parsed = fql._parseCount(countInfo)
+				expect(parsed).eql([1, NaN])
+			})
+		})
 	})
 	describe('Loading the rules', () => {
 		let fql = null
