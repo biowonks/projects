@@ -90,36 +90,106 @@ class Fql {
 	_testPos(arrayInfo, instructions) {
 		let match = false,
 			indexInfo = 0,
+			newIndexInfo = 0,
+			numMatches = 0,
 			nextRule = []
 
-		//console.log(JSON.stringify(arrayInfo))
+		let firstRule = instructions.rules[0],
+			lastRule = instructions.rules[instructions.rules.length - 1],
+			lowNumMatches = firstRule[1][0],
+			highNumMatches = firstRule[1][1],
+			indexInstr = 0,
+			lastMatchIndex = 0
+
+		//console.log('\n' + JSON.stringify(arrayInfo))
 		//console.log(JSON.stringify(instructions))
-		return 0
 
 		if (instructions.hardStart === true) {
-			for (let indexInstr = 0; indexInstr < instructions.rules.length; indexInstr++) {
-				if (indexInstr !== instructions.rules.length - 1)
-					nextRule = instructions.rules[indexInstr + 1]
-				let actuRule = instructions.rules[indexInstr],
-					numMatches = 0
-				for (let j = indexInfo; j < arrayInfo.length; j++) {
-					if (arrayInfo[j].match(actuRule[0])) {
-						numMatches++
-					}
-					else {
-						indexInfo = j - 1
-						break
-					}
+			for (let j = indexInfo; j < arrayInfo.length; j++) {
+				if (arrayInfo[j].match(firstRule[0])) {
+					numMatches++
+					lastMatchIndex = j
 				}
-				let interval = actuRule[0]
-				//if (numMatches > actuRule[1][0])
+				else if (numMatches === 0) {
+					return false
+				}
+				else {
+					break
+				}
+			}
+
+			indexInstr++
+
+			//console.log('test instructions number ' + highNumMatches + ' ' + lowNumMatches + ' ' + numMatches)
+			if (instructions.rules.length === 1) {
+				if (instructions.hardStop === false && numMatches >= lowNumMatches)
+					return true
+				else if (numMatches >= lowNumMatches && numMatches <= highNumMatches && arrayInfo.length >= lowNumMatches && arrayInfo.length <= highNumMatches)
+					return true
+				else
+					return false
+			}
+			else if (numMatches < lowNumMatches || numMatches > highNumMatches) {
+				return false
 			}
 		}
 
-		for (let i = 0; i < arrayInfo.length; i++) {
-			let b = 2
-		}
 
+		//console.log('out of first loop ' + indexInstr + ' ' + instructions.rules.length)
+		for (let i = indexInstr; i < instructions.rules.length; i++) {
+			if (i !== instructions.rules.length - 1)
+				nextRule = instructions.rules[i + 1]
+
+			let actuRule = instructions.rules[i],
+				maxIteration = 0,
+
+
+			lowNumMatches = actuRule[1][0]
+			highNumMatches = actuRule[1][1]
+			numMatches = 0
+
+			for (let j = indexInfo; j < arrayInfo.length; j++) {
+				if (arrayInfo[j].match(actuRule[0])) {
+					numMatches++
+					lastMatchIndex = j
+				}
+				else if (numMatches !== 0) {
+					newIndexInfo = j - 1
+					break
+				}
+				//console.log(arrayInfo[j])
+				//console.log(actuRule[0])
+				//console.log(numMatches)
+			}
+			//console.log('out')
+			//console.log(numMatches)
+			//console.log('last match: ' + lastMatchIndex)
+			if (i + 1 === instructions.rules.length && numMatches > 0) {
+				if (instructions.hardStop === false)
+					return true
+				else if (instructions.rules.length === arrayInfo.length)
+					return false
+			}
+			//console.log('out2')
+			//console.log(newIndexInfo)
+			if (numMatches >= lowNumMatches && numMatches <= highNumMatches)
+				match = true
+			indexInfo = newIndexInfo
+
+			////console.log(match)
+		}
+		//console.log('got here')
+		//console.log(match)
+		//console.log(lastMatchIndex)
+		//console.log(arrayInfo.length)
+		if (instructions.hardStop === true) {
+			if (lastMatchIndex === arrayInfo.length - 1 && numMatches >= lowNumMatches)
+				match = true
+			else
+				return false
+		}
+		////console.log('endOfLoop')
+		//console.log(match)
 		return match
 	}
 
@@ -194,12 +264,12 @@ class Fql {
 				count = 1,
 				interval = []
 			rules.forEach((rule, i) => {
-				interval = [1]
+				interval = [1, 1]
 				if (rule.resource === 'fql') {
 					if (rule.feature === '^' && i === 0) {
 						parsedRule.hardStart = true
 					}
-					if (rule.feature === '$' && i === rules.length) {
+					if (rule.feature === '$' && i === rules.length - 1) {
 						parsedRule.hardStop = true
 					}
 				}
@@ -208,7 +278,7 @@ class Fql {
 
 					if ('count' in rule)
 						interval = this._parseCount(rule.count)
-					expr = [ rule.feature + '@' + rule.resource, interval ]
+					expr = [rule.feature + '@' + rule.resource, interval]
 					parsedRule.rules.push(expr)
 				}
 			})

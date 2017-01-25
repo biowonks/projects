@@ -871,7 +871,7 @@ describe('Feature Query Language - FQL', function() {
 			})
 		})
 	})
-	describe('Positional rules', function() {
+	describe.only('Positional rules :: ', function() {
 		it('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single domain from pfam28', function() {
 			let fql = new Fql()
 			let setOfRules = [
@@ -969,6 +969,91 @@ describe('Feature Query Language - FQL', function() {
 				false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
 				false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
 				false, // CheW | CheW | CheW
+				false, // Response_reg | NMT1_2 | CheW
+				false, // CheW | CheR
+				false, // Response_reg | CheW
+				false, // TM | Cache_1 | TM | HAMP | MCPsignal
+				false, // HAMP | MCPsignal
+				false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+				false, // **
+				false, // **
+				false, // TM | TM | MCPsignal
+				false, // TM | MCPsignal | Rhodanese
+				false, // TM | TM | TM | TM | MCPsignal
+				false, // TM | TM | TM | TM | TM | TM | MCPsignal
+				false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+			]
+			expect(fql.match).eql(expected)
+		})
+		it('Filter protein sequences starting with 1 match to a CheW domain from Pfam28', function() {
+			let fql = new Fql()
+			let setOfRules = [
+				{
+					pos: [
+						{
+							resource: 'fql',
+							feature: '^'
+						},
+						{
+							resource: 'pfam28',
+							feature: 'CheW'
+						}
+					]
+				}
+			]
+			fql.loadRules(setOfRules)
+			fql.applyFilter(sampleData)
+			let expected = [
+				true, // CheW | CheW
+				true, // CheW | Response_reg
+				true, // CheW
+				false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+				false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+				false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+				true, // CheW | CheW | CheW
+				false, // Response_reg | NMT1_2 | CheW
+				true, // CheW | CheR
+				false, // Response_reg | CheW
+				false, // TM | Cache_1 | TM | HAMP | MCPsignal
+				false, // HAMP | MCPsignal
+				false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+				false, // **
+				false, // **
+				false, // TM | TM | MCPsignal
+				false, // TM | MCPsignal | Rhodanese
+				false, // TM | TM | TM | TM | MCPsignal
+				false, // TM | TM | TM | TM | TM | TM | MCPsignal
+				false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+			]
+			expect(fql.match).eql(expected)
+		})
+		it('Filter protein sequences starting with 2 CheW domains from Pfam28', function() {
+			let fql = new Fql()
+			let setOfRules = [
+				{
+					pos: [
+						{
+							resource: 'fql',
+							feature: '^'
+						},
+						{
+							resource: 'pfam28',
+							feature: 'CheW',
+							count: '{2}'
+						}
+					]
+				}
+			]
+			fql.loadRules(setOfRules)
+			fql.applyFilter(sampleData)
+			let expected = [
+				true, // CheW | CheW
+				false, // CheW | Response_reg
+				false, // CheW
+				false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+				false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+				false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+				true, // CheW | CheW | CheW
 				false, // Response_reg | NMT1_2 | CheW
 				false, // CheW | CheR
 				false, // Response_reg | CheW
@@ -1237,7 +1322,7 @@ describe('Feature Query Language - FQL', function() {
 							},
 							{
 								resource: 'pfam28',
-								feature: '.',
+								feature: '.*',
 								count: '{1,}'
 							},
 							{
@@ -1247,7 +1332,7 @@ describe('Feature Query Language - FQL', function() {
 							},
 							{
 								resource: 'pfam28',
-								feature: '.',
+								feature: '.*',
 								count: '{1,}'
 							},
 							{
@@ -1287,6 +1372,7 @@ describe('Feature Query Language - FQL', function() {
 					true  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
 				expect(fql.match).eql(expected)
+				console.log(JSON.stringify(fql.match))
 			})
 		})
 	})
