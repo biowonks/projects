@@ -204,6 +204,24 @@ If you want to select all sequences with at least 1 match to CheW domain in pfam
 ]
 ```
 
+Finally, you can use `count` to define a domain that should **NOT** be there. A negative. For that you just need to pass the value `{0}`. For example:
+
+Filter proteins without TM region:
+
+```javascript
+[
+    {
+        Npos: [
+            {
+                resource: 'das',
+                feature: 'TM',
+                count: '{0}'
+            }
+        ]
+    }
+]
+```
+
 #### The **positional** rules
 
 Positional rules are a bit more complicated and highly based on regular expression. It can also mimic the some behavior of non-positional rules as we will see it later.

@@ -667,6 +667,45 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(expected).eql(fql.match)
 			})
+			it('Filter proteins sequences without transmembrane regions', function() {
+				let fql = new Fql()
+				let setOfRules = [
+					{
+						Npos: [
+							{
+								resource: 'das',
+								feature: 'TM',
+								count: '{0}'
+							}
+						]
+					}
+				]
+				fql.loadRules(setOfRules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					true, // CheW | CheW
+					true, // CheW | Response_reg
+					true, // CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					true, // CheW | CheW | CheW
+					true, // Response_reg | NMT1_2 | CheW
+					true, // CheW | CheR
+					true, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					true, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					true, // **
+					false, // **
+					false, // TM | TM | MCPsignal
+					false, // TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(expected).eql(fql.match)
+			})
 		})
 		describe('Multiple Rules - AND mode', () => {
 			it('Filter proteins sequences with at least 1 match to CheW domain in pfam28 AND only 1 match to HATPase_c domain in pfam28', function() {
