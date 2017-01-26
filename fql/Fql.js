@@ -101,8 +101,8 @@ class Fql {
 			indexInstr = 0,
 			lastMatchIndex = 0
 
-		console.log('\n' + JSON.stringify(arrayInfo))
-		console.log(JSON.stringify(instructions))
+		//console.log('\n' + JSON.stringify(arrayInfo))
+		//console.log(JSON.stringify(instructions))
 
 		if (instructions.hardStart === true) {
 			for (let j = indexInfo; j < arrayInfo.length; j++) {
@@ -110,6 +110,10 @@ class Fql {
 				if (arrayInfo[j].match(firstRule[0])) {
 					numMatches++
 					lastMatchIndex = j
+					if (isNaN(highNumMatches)) {
+						indexInfo++
+						break
+					}
 				}
 				else if (numMatches === 0) {
 					return false
@@ -119,9 +123,11 @@ class Fql {
 				}
 			}
 
-			console.log('test instructions number ' + highNumMatches + ' ' + lowNumMatches + ' ' + numMatches)
+			//console.log('test instructions number ' + highNumMatches + ' ' + lowNumMatches + ' ' + numMatches)
 			if (instructions.rules.length === 1) {
 				if (instructions.hardStop === false && numMatches >= lowNumMatches)
+					return true
+				else if (isNaN(highNumMatches) && numMatches >= lowNumMatches && arrayInfo.length === lowNumMatches)
 					return true
 				else if (numMatches >= lowNumMatches && numMatches <= highNumMatches && arrayInfo.length >= lowNumMatches && arrayInfo.length <= highNumMatches)
 					return true
@@ -136,9 +142,9 @@ class Fql {
 
 
 
-		console.log('out of first loop ' + indexInstr + ' ' + indexInfo)
+		//console.log('out of first loop ' + indexInstr + ' ' + indexInfo)
 		for (let i = indexInstr; i < instructions.rules.length; i++) {
-			console.log('---')
+			//console.log('---')
 			if (i !== instructions.rules.length - 1)
 				nextRule = instructions.rules[i + 1]
 			else
@@ -151,64 +157,72 @@ class Fql {
 			numMatches = 0
 
 			for (let j = indexInfo; j < arrayInfo.length; j++) {
-				console.log(arrayInfo[j])
-				console.log(actuRule[0])
+				//console.log(arrayInfo[j])
+				//console.log(actuRule[0])
 				if (arrayInfo[j].match(actuRule[0])) {
 					if (nextRule) {
-						console.log('nextRule exists')
-						console.log( arrayInfo[j] + ' - ' + nextRule[0])
-						console.log( arrayInfo[j-1] + ' - ' + nextRule[0])
+						//console.log('nextRule exists')
+						//console.log( arrayInfo[j] + ' - ' + nextRule[0])
+						//console.log( arrayInfo[j-1] + ' - ' + nextRule[0])
 						if (arrayInfo[j].match(nextRule[0]) && !(arrayInfo[j-1].match(nextRule[0]))) {
-							console.log('exiting via nextRule break')
+							//console.log('exiting via nextRule break')
 							newIndexInfo = j
 							break
 						}
 						else {
 							numMatches++
 							lastMatchIndex = j
+							if (isNaN(highNumMatches))
+								break
 						}
 					}
 					else {
 						numMatches++
 						lastMatchIndex = j
+						if (isNaN(highNumMatches))
+							break
 					}
 				}
 				else if (numMatches !== 0) {
 					newIndexInfo = j
 					break
 				}
-				console.log(numMatches)
+				//console.log(numMatches)
 			}
-			console.log('out of the array loop')
-			console.log(actuRule[0])
-			console.log(numMatches)
-			console.log('last match: ' + lastMatchIndex)
+			//console.log('out of the array loop')
+			//console.log(actuRule[0])
+			//console.log(numMatches)
+			//console.log('last match: ' + lastMatchIndex)
 			if (i + 1 === instructions.rules.length && numMatches > 0) {
 				if (instructions.hardStop === false)
 					return true
 				else if (arrayInfo.length === newIndexInfo)
 					return false
 			}
-			console.log('out2')
-			console.log(newIndexInfo)
-			if (numMatches >= lowNumMatches && numMatches <= highNumMatches)
+			//console.log('out2')
+			//console.log(newIndexInfo)
+			if (numMatches >= lowNumMatches && isNaN(highNumMatches))
+				match = true
+			else if (numMatches >= lowNumMatches && numMatches <= highNumMatches)
 				match = true
 			indexInfo = newIndexInfo
 
-			console.log(match)
+			//console.log(match)
 		}
-		console.log('got here')
-		console.log(match)
-		console.log(lastMatchIndex)
-		console.log(arrayInfo.length)
+		//console.log('got here')
+		//console.log(match)
+		//console.log(lastMatchIndex)
+		//console.log(arrayInfo.length)
 		if (instructions.hardStop === true) {
-			if (lastMatchIndex === arrayInfo.length - 1 && numMatches >= lowNumMatches)
+			if (lastMatchIndex === arrayInfo.length - 1 && isNaN(highNumMatches))
+				match = true
+			else if (lastMatchIndex === arrayInfo.length - 1 && numMatches >= lowNumMatches)
 				match = true
 			else
 				return false
 		}
-		console.log('endOfLoop')
-		console.log(match)
+		//console.log('endOfLoop')
+		//console.log(match)
 		return match
 	}
 
@@ -283,7 +297,7 @@ class Fql {
 				count = 1,
 				interval = []
 			rules.forEach((rule, i) => {
-				interval = [1, 1]
+				interval = [1, NaN]
 				if (rule.resource === 'fql') {
 					if (rule.feature === '^' && i === 0) {
 						parsedRule.hardStart = true

@@ -164,8 +164,8 @@ describe('Feature Query Language - FQL', function() {
 				pos: {
 					hardStart: false,
 					rules: [
-						['CheW@pfam28', [1, 1]],
-						['Response_reg@pfam28', [1, 1]]
+						['CheW@pfam28', [1, NaN]],
+						['Response_reg@pfam28', [1, NaN]]
 					],
 					hardStop: false
 				},
@@ -439,8 +439,8 @@ describe('Feature Query Language - FQL', function() {
 						pos: {
 							hardStart: false,
 							rules: [
-								['CheW@pfam28', [1, 1]],
-								['Response_reg@pfam29', [1, 1]]
+								['CheW@pfam28', [1, NaN]],
+								['Response_reg@pfam29', [1, NaN]]
 							],
 							hardStop: false
 						},
@@ -456,7 +456,7 @@ describe('Feature Query Language - FQL', function() {
 			})
 		})
 	})
-	describe('Initialize Fql with restrict dataset of Aseqs', function() {
+	describe('Initialize Fql with restrict dataset of Aseqs :: ', function() {
 		it('List of aseqs, restricted search in list', function() {
 			let aseqArray = [
 				'yg8A8H8N-4x1Ezf8WW-YbA',
@@ -471,7 +471,7 @@ describe('Feature Query Language - FQL', function() {
 		})
 		it('Nothing will search whole database')
 	})
-	describe('Non positional rules', () => {
+	describe('Non positional rules :: ', () => {
 		describe('Single Rule - If broken, fix this first', () => {
 			it('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single domain from pfam29', function() {
 				let fql = new Fql()
@@ -1070,7 +1070,7 @@ describe('Feature Query Language - FQL', function() {
 			]
 			expect(fql.match).eql(expected)
 		})
-		describe('Testing the behaviour of "count" for positional rules', () => {
+		describe('Testing the behaviour of "count" for positional rules :: ', () => {
 			it('Request protein sequences with 2 matches and nothing else to a single domain from pfam28', function() {
 				let fql = new Fql()
 				let setOfRules = [
@@ -1373,7 +1373,7 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(fql.match).eql(expected)
 			})
-			it.only('Filter sequences that start with TM and end with MCPsignal.', function() {
+			it('Filter sequences that start with TM and end with MCPsignal.', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
@@ -1422,7 +1422,7 @@ describe('Feature Query Language - FQL', function() {
 					false, // **
 					false, // **
 					true,  // TM | TM | MCPsignal
-					true,  // TM | TM | MCPsignal | Rhodanese
+					false,  // TM | TM | MCPsignal | Rhodanese
 					true, // TM | TM | TM | TM | MCPsignal
 					true, // TM | TM | TM | TM | TM | TM | MCPsignal
 					true  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
@@ -1470,7 +1470,6 @@ describe('Feature Query Language - FQL', function() {
 					false, // TM | TM | TM | TM | TM | TM | MCPsignal
 					false  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				console.log(JSON.stringify(fql.match))
 				expect(fql.match).eql(expected)
 			})
 		})
