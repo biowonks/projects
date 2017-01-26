@@ -369,10 +369,57 @@ For example if I want to search for any chemoreceptor (ending with MCPsignal) wi
 ]
 ```
 
-cases
+Wild cards can be used for resources as well. For example,
+
+To filter sequences that start with TM and end with MCPsignal.
+
+```javascript
+[
+    {
+        pos: [
+            {
+                resource: 'fql',
+                id: '^'
+            },
+            {
+                resource: 'das',
+                id: 'TM',
+                count: '{1}'
+            },
+            {
+                resource: 'pfam28',
+                id: '*',
+                count: '{1,}'
+            },
+            {
+                resource: 'das',
+                id: 'TM',
+                count: '{1}'
+            },
+            {
+                resource: 'pfam28',
+                id: '*',
+                count: '{1,}'
+            },
+            {
+                resource: 'pfam28',
+                id: 'MCPsignal',
+                count: '{1}'
+            },
+            {
+                resource: 'fql',
+                id: '$'
+            }
+        ]
+    }
+]
+```
+
 
 * Start with TM region and have anything but another TM region following.
-* Start with TM and end with MCPsignal
+
+
+
 
 #### Negatives in positional rules (notfeature):
 
@@ -387,6 +434,7 @@ cases
 
 ## Tests TODO
 
+test that makes up for the next rule.
 
 
 
