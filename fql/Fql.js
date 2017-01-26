@@ -101,11 +101,12 @@ class Fql {
 			indexInstr = 0,
 			lastMatchIndex = 0
 
-		//console.log('\n' + JSON.stringify(arrayInfo))
-		//console.log(JSON.stringify(instructions))
+		console.log('\n' + JSON.stringify(arrayInfo))
+		console.log(JSON.stringify(instructions))
 
 		if (instructions.hardStart === true) {
 			for (let j = indexInfo; j < arrayInfo.length; j++) {
+				indexInfo = j
 				if (arrayInfo[j].match(firstRule[0])) {
 					numMatches++
 					lastMatchIndex = j
@@ -118,9 +119,7 @@ class Fql {
 				}
 			}
 
-			indexInstr++
-
-			//console.log('test instructions number ' + highNumMatches + ' ' + lowNumMatches + ' ' + numMatches)
+			console.log('test instructions number ' + highNumMatches + ' ' + lowNumMatches + ' ' + numMatches)
 			if (instructions.rules.length === 1) {
 				if (instructions.hardStop === false && numMatches >= lowNumMatches)
 					return true
@@ -132,64 +131,84 @@ class Fql {
 			else if (numMatches < lowNumMatches || numMatches > highNumMatches) {
 				return false
 			}
+			indexInstr++
 		}
 
 
-		//console.log('out of first loop ' + indexInstr + ' ' + instructions.rules.length)
+
+		console.log('out of first loop ' + indexInstr + ' ' + indexInfo)
 		for (let i = indexInstr; i < instructions.rules.length; i++) {
+			console.log('---')
 			if (i !== instructions.rules.length - 1)
 				nextRule = instructions.rules[i + 1]
+			else
+				nextRule = null
 
-			let actuRule = instructions.rules[i],
-				maxIteration = 0,
-
+			let actuRule = instructions.rules[i]
 
 			lowNumMatches = actuRule[1][0]
 			highNumMatches = actuRule[1][1]
 			numMatches = 0
 
 			for (let j = indexInfo; j < arrayInfo.length; j++) {
+				console.log(arrayInfo[j])
+				console.log(actuRule[0])
 				if (arrayInfo[j].match(actuRule[0])) {
-					numMatches++
-					lastMatchIndex = j
+					if (nextRule) {
+						console.log('nextRule exists')
+						console.log( arrayInfo[j] + ' - ' + nextRule[0])
+						console.log( arrayInfo[j-1] + ' - ' + nextRule[0])
+						if (arrayInfo[j].match(nextRule[0]) && !(arrayInfo[j-1].match(nextRule[0]))) {
+							console.log('exiting via nextRule break')
+							newIndexInfo = j
+							break
+						}
+						else {
+							numMatches++
+							lastMatchIndex = j
+						}
+					}
+					else {
+						numMatches++
+						lastMatchIndex = j
+					}
 				}
 				else if (numMatches !== 0) {
-					newIndexInfo = j - 1
+					newIndexInfo = j
 					break
 				}
-				//console.log(arrayInfo[j])
-				//console.log(actuRule[0])
-				//console.log(numMatches)
+				console.log(numMatches)
 			}
-			//console.log('out')
-			//console.log(numMatches)
-			//console.log('last match: ' + lastMatchIndex)
+			console.log('out of the array loop')
+			console.log(actuRule[0])
+			console.log(numMatches)
+			console.log('last match: ' + lastMatchIndex)
 			if (i + 1 === instructions.rules.length && numMatches > 0) {
 				if (instructions.hardStop === false)
 					return true
-				else if (instructions.rules.length === arrayInfo.length)
+				else if (arrayInfo.length === newIndexInfo)
 					return false
 			}
-			//console.log('out2')
-			//console.log(newIndexInfo)
+			console.log('out2')
+			console.log(newIndexInfo)
 			if (numMatches >= lowNumMatches && numMatches <= highNumMatches)
 				match = true
 			indexInfo = newIndexInfo
 
-			////console.log(match)
+			console.log(match)
 		}
-		//console.log('got here')
-		//console.log(match)
-		//console.log(lastMatchIndex)
-		//console.log(arrayInfo.length)
+		console.log('got here')
+		console.log(match)
+		console.log(lastMatchIndex)
+		console.log(arrayInfo.length)
 		if (instructions.hardStop === true) {
 			if (lastMatchIndex === arrayInfo.length - 1 && numMatches >= lowNumMatches)
 				match = true
 			else
 				return false
 		}
-		////console.log('endOfLoop')
-		//console.log(match)
+		console.log('endOfLoop')
+		console.log(match)
 		return match
 	}
 
