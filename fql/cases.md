@@ -72,7 +72,7 @@ If you want to select all sequences with any number of matches to the CheW domai
     }
 ]
 ```
-If you do not want to define how many times the domain must appear, you can use the key `count`. For example:
+If you want to define how many times the domain must appear, you can use the key `count`. For example:
 
 If you want to select all sequences with only one matches to the CheW domain in Pfam28 database:
 
@@ -414,12 +414,6 @@ To filter sequences that start with TM and end with MCPsignal.
     }
 ]
 ```
-
-
-* Start with TM region and have anything but another TM region following.
-
-
-
 
 #### Negatives in positional rules (notfeature):
 
