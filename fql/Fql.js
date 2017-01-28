@@ -87,143 +87,49 @@ class Fql {
 	 * @param {string} regular expression type of rule
 	 * @returns {Boolean} - True if matches
 	 */
-	_testPos(arrayInfo, instructions) {
-		let match = false,
-			indexInfo = 0,
-			newIndexInfo = 0,
-			numMatches = 0,
-			nextRule = []
+	_testPos(arrayInfo, parsedRules) {
+		let indexInfo = 0,
+			isOk = true
 
-		let firstRule = instructions.rules[0],
-			lastRule = instructions.rules[instructions.rules.length - 1],
-			lowNumMatches = firstRule[1][0],
-			highNumMatches = firstRule[1][1],
-			indexInstr = 0,
-			lastMatchIndex = 0
+		console.log('\n This is the data: ' + JSON.stringify(arrayInfo))
+		console.log(JSON.stringify(parsedRules))
 
-		//console.log('\n' + JSON.stringify(arrayInfo))
-		//console.log(JSON.stringify(instructions))
+		for (let i = 0; i < parsedRules.rules.length; i++) { // check each rule
+			let isRuleOk = true,
+				currRule = parsedRules.rules[i],
+				nextRule = parsedRules.rules[i + 1],
+				matches = []
 
-		if (instructions.hardStart === true) {
-			for (let j = indexInfo; j < arrayInfo.length; j++) {
-				indexInfo = j
-				if (arrayInfo[j].match(firstRule[0])) {
-					numMatches++
-					lastMatchIndex = j
-					if (isNaN(highNumMatches)) {
-						indexInfo++
-						break
-					}
-				}
-				else if (numMatches === 0) {
-					return false
-				}
-				else {
-					break
-				}
-			}
+			console.log('Rule -> ' + JSON.stringify(currRule))
 
-			//console.log('test instructions number ' + highNumMatches + ' ' + lowNumMatches + ' ' + numMatches)
-			if (instructions.rules.length === 1) {
-				if (instructions.hardStop === false && numMatches >= lowNumMatches)
-					return true
-				else if (isNaN(highNumMatches) && numMatches >= lowNumMatches && arrayInfo.length === lowNumMatches)
-					return true
-				else if (numMatches >= lowNumMatches && numMatches <= highNumMatches && arrayInfo.length >= lowNumMatches && arrayInfo.length <= highNumMatches)
-					return true
-				else
-					return false
-			}
-			else if (numMatches < lowNumMatches || numMatches > highNumMatches) {
-				return false
-			}
-			indexInstr++
-		}
+			currRule.forEach((instr) => { //check Instruction
+				console.log('	Instruction -> ' + JSON.stringify(instr))
+				let lowNumMatches = instr[1][0],
+					highNumMatches = instr[1][1],
+					indexInfoTemp = indexInfo,
+					match = [],
+					isInstrOk = true
 
-
-
-		//console.log('out of first loop ' + indexInstr + ' ' + indexInfo)
-		for (let i = indexInstr; i < instructions.rules.length; i++) {
-			//console.log('---')
-			if (i !== instructions.rules.length - 1)
-				nextRule = instructions.rules[i + 1]
-			else
-				nextRule = null
-
-			let actuRule = instructions.rules[i]
-
-			lowNumMatches = actuRule[1][0]
-			highNumMatches = actuRule[1][1]
-			numMatches = 0
-
-			for (let j = indexInfo; j < arrayInfo.length; j++) {
-				//console.log(arrayInfo[j])
-				//console.log(actuRule[0])
-				if (arrayInfo[j].match(actuRule[0])) {
-					if (nextRule) {
-						//console.log('nextRule exists')
-						//console.log( arrayInfo[j] + ' - ' + nextRule[0])
-						//console.log( arrayInfo[j-1] + ' - ' + nextRule[0])
-						if (arrayInfo[j].match(nextRule[0]) && !(arrayInfo[j-1].match(nextRule[0]))) {
-							//console.log('exiting via nextRule break')
-							newIndexInfo = j
-							break
-						}
-						else {
-							numMatches++
-							lastMatchIndex = j
-							if (isNaN(highNumMatches))
-								break
-						}
-					}
-					else {
-						numMatches++
-						lastMatchIndex = j
-						if (isNaN(highNumMatches))
+				for (let j = indexInfoTemp; j < arrayInfo.length; j++) {
+					if (arrayInfo[j].match(instr[0])) {
+						if (matches.length === 0 || matches[matches.length - 1] === j - 1) // Is it consecutive match
+							matches.push(j)
+						else
 							break
 					}
 				}
-				else if (numMatches !== 0) {
-					newIndexInfo = j
-					break
+				console.log('	Number of matches: ' + matches.length)
+				console.log('	Matches: ' + JSON.stringify(matches))
+				if (parsedRules.hardStart === true) {
+					let first = matches[0],
+						last = matches[matches.length - 1]
+					console.log('	low limit: ' + lowNumMatches)
+					if (first !== 0 || matches.length < lowNumMatches || matches.length > highNumMatches)
+						isOk = false
 				}
-				//console.log(numMatches)
-			}
-			//console.log('out of the array loop')
-			//console.log(actuRule[0])
-			//console.log(numMatches)
-			//console.log('last match: ' + lastMatchIndex)
-			if (i + 1 === instructions.rules.length && numMatches > 0) {
-				if (instructions.hardStop === false)
-					return true
-				else if (arrayInfo.length === newIndexInfo)
-					return false
-			}
-			//console.log('out2')
-			//console.log(newIndexInfo)
-			if (numMatches >= lowNumMatches && isNaN(highNumMatches))
-				match = true
-			else if (numMatches >= lowNumMatches && numMatches <= highNumMatches)
-				match = true
-			indexInfo = newIndexInfo
-
-			//console.log(match)
+			})
 		}
-		//console.log('got here')
-		//console.log(match)
-		//console.log(lastMatchIndex)
-		//console.log(arrayInfo.length)
-		if (instructions.hardStop === true) {
-			if (lastMatchIndex === arrayInfo.length - 1 && isNaN(highNumMatches))
-				match = true
-			else if (lastMatchIndex === arrayInfo.length - 1 && numMatches >= lowNumMatches)
-				match = true
-			else
-				return false
-		}
-		//console.log('endOfLoop')
-		//console.log(match)
-		return match
+		return isOk
 	}
 
 	/**
@@ -292,28 +198,27 @@ class Fql {
 			rules: [],
 			hardStop: false
 		}
+
 		if (rules) {
 			let expr = '',
-				count = 1,
-				interval = []
+				instructions = []
 			rules.forEach((rule, i) => {
-				interval = [1, NaN]
-				if (rule.resource === 'fql') {
-					if (rule.feature === '^' && i === 0) {
+				if (rule.constructor === Object)
+					instructions = [rule]
+				else
+					instructions = rule
+				let parsed = []
+				instructions.forEach((instr) => {
+					expr = this._parseThePosInstruction(instr, i, rules.length)
+					if (expr === 'hardStart')
 						parsedRule.hardStart = true
-					}
-					if (rule.feature === '$' && i === rules.length - 1) {
+					else if (expr === 'hardStop')
 						parsedRule.hardStop = true
-					}
-				}
-				else {
-					this._addResources(rule.resource)
-
-					if ('count' in rule)
-						interval = this._parseCount(rule.count)
-					expr = [rule.feature + '@' + rule.resource, interval]
-					parsedRule.rules.push(expr)
-				}
+					else
+						parsed.push(expr)
+				})
+				if (parsed.length !== 0)
+					parsedRule.rules.push(parsed)
 			})
 		}
 		else {
@@ -321,6 +226,34 @@ class Fql {
 		}
 		return parsedRule
 	}
+
+	/**
+	 * Loop to parse individual rules
+	 * @param {Object} rule - Instruction to be parsed.
+	 * @param {number} i - index of the rule
+	 * @param {number} L - number of rules.
+	 * @return {Object.Array|string} Parsed rule or
+ 	 */
+	_parseThePosInstruction(rule, i, L) {
+		let interval = [1, NaN],
+			expr = ''
+		if (rule.resource === 'fql') {
+			if (rule.feature === '^' && i === 0)
+				expr = 'hardStart'
+			if (rule.feature === '$' && i === L - 1)
+				expr = 'hardStop'
+		}
+		else {
+			this._addResources(rule.resource)
+			if ('count' in rule)
+				interval = this._parseCount(rule.count)
+			expr = [rule.feature + '@' + rule.resource, interval]
+		}
+		return expr
+	}
+
+
+
 
 	/**
 	 * Parse RegEx-like repeat info.

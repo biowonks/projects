@@ -341,7 +341,29 @@ Another example is to combine these elements to: filter proteins with 2 or 3 Che
 ]
 ```
 
-FQL also includes the wild card `*` to allow any feature of a certain resource:
+Also it is worth notice that the `count` value is very limitant. for example:
+
+```javascript
+[
+    {
+        pos: [
+            {
+                resource: 'fql',
+                id: '^'
+            },
+            {
+                resource: 'pfam29',
+                id: 'CheW',
+                count: '{2}'
+            }
+        ]
+    }
+]
+```
+
+will filter domain architecture such as CheW-CheW but not CheW-CheW-CheW. To pick the last one also, you must change the value `count` to `{2,3}`. If you omit `count`, then any sequence that have starts with CheW, independently of the next domain, will be filtered.
+
+FQL also includes the wild card `.*` to allow any feature of a certain resource:
 
 For example if I want to search for any chemoreceptor (ending with MCPsignal) with any number more than 1 of any domains from pfam28 between two TM regions we use:
 
@@ -406,9 +428,71 @@ To filter sequences that start with TM and end with MCPsignal.
             },
             {
                 resource: 'pfam28',
-                id: '*',
+                id: '.*',
                 count: '{1,}'
             },
+            {
+                resource: 'das',
+                id: 'TM',
+                count: '{1}'
+            },
+            {
+                resource: 'pfam28',
+                id: '.*',
+                count: '{1,}'
+            },
+            {
+                resource: 'pfam28',
+                id: 'MCPsignal',
+                count: '{1}'
+            },
+            {
+                resource: 'fql',
+                id: '$'
+            }
+        ]
+    }
+]
+```
+
+#### Negatives in positional rules and positional AND associations:
+
+Before start to work with negatives we must talk about `AND` type of rules for a specific position.
+
+> We did not code `OR` type of association of instructions for each position because it can be accomplished by the association of two entire set of rule, which is already implemented.
+
+So far positional rules was composed by a list of objects each containing an instruction. Now, we will pass several instructions to the same position that MUST be matched in order to be selected.
+
+To do that, each instruction can be passed as a list of instructions. This does not make much sense unless we use a negative.
+
+To use negatives, you can use the same type of instruction with the `count` key with `{0}` value.  For example:
+
+Filter proteins that starts with a TM region, and in between the two TM regions have any domain but Cache_1 form pfam28.
+
+```javascript
+[
+    {
+        pos: [
+            {
+                resource: 'fql',
+                id: '^'
+            },
+            {
+                resource: 'das',
+                id: 'TM',
+                count: '{1}'
+            },
+            [
+                {
+                    resource: 'pfam28',
+                    id: 'Cache_1',
+                    count: '{0}'
+                },
+                 {
+                    resource: 'pfam28',
+                    id: '.*',
+                    count: '{1}'
+                }
             {
                 resource: 'das',
                 id: 'TM',
@@ -433,9 +517,10 @@ To filter sequences that start with TM and end with MCPsignal.
 ]
 ```
 
-#### Negatives in positional rules (notfeature):
+***
+New tests:
 
-* Start with a TM, do not have Cache_2, end with MCPsignal
+* Start with a TM, any two domain but not XXX in either, another TM and end with MCPsignal
 
 
 #### Combining positional and non-positional rules.
@@ -447,6 +532,14 @@ To filter sequences that start with TM and end with MCPsignal.
 ## Tests TODO
 
 test that makes up for the next rule.
+
+
+
+#### Expect error if
+
+| Ok | Not ok|
+| ---- | ---- |
+| A{3} | A{2}, A |
 
 
 
