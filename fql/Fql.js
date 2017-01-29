@@ -149,6 +149,10 @@ class Fql {
 			}
 			indexLastMatch = commonMatches[commonMatches.length - 1]
 			//console.log('New last match: ' + indexLastMatch)
+			if (parsedRules.hardStop === true && i === parsedRules.rules.length - 1) {
+				if (indexLastMatch !== arrayInfo.length - 1)
+					isOk = false
+			}
 		}
 		//console.log('	' + isOk)
 		return isOk
@@ -278,6 +282,14 @@ class Fql {
 		}
 		else {
 			parsedRule = null
+		}
+		if (parsedRule.hardStart === true && parsedRule.hardStop === true) {
+			for (let i = 0; i < parsedRule.rules.length; i++) {
+				for (let j = 0; j < parsedRule.rules[i].length; j++) {
+					if (isNaN(parsedRule.rules[i][j][1][1]))
+						parsedRule.rules[i][j][1][1] = 1
+				}
+			}
 		}
 		return parsedRule
 	}
