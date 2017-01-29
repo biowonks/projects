@@ -98,7 +98,8 @@ class Fql {
 			let isRuleOk = true,
 				currRule = parsedRules.rules[i],
 				nextRule = parsedRules.rules[i + 1],
-				matches = []
+				indexLastMatch = NaN,
+				matchArchive = []
 
 			console.log('Rule -> ' + JSON.stringify(currRule))
 
@@ -107,8 +108,7 @@ class Fql {
 				let lowNumMatches = instr[1][0],
 					highNumMatches = instr[1][1],
 					indexInfoTemp = indexInfo,
-					match = [],
-					isInstrOk = true
+					matches = []
 
 				for (let j = indexInfoTemp; j < arrayInfo.length; j++) {
 					if (arrayInfo[j].match(instr[0])) {
@@ -120,17 +120,52 @@ class Fql {
 				}
 				console.log('	Number of matches: ' + matches.length)
 				console.log('	Matches: ' + JSON.stringify(matches))
-				if (parsedRules.hardStart === true) {
-					let first = matches[0],
-						last = matches[matches.length - 1]
-					console.log('	low limit: ' + lowNumMatches)
+				if (parsedRules.hardStart === true && i === 0) {
+					let first = matches[0]
 					if (first !== 0 || matches.length < lowNumMatches || matches.length > highNumMatches)
 						isOk = false
 				}
+				matchArchive.push({matches: matches, isOk: isOk})
+				console.log(isOk)
+			})
+			indexLastMatch = matchArchive.forEach((match) => {
+
 			})
 		}
+		console.log('	' + isOk)
 		return isOk
 	}
+
+	/**
+	 * Find the index of the last feature in the sequence to match a positional instruction. - Need its own test.
+	 * @param {Array.Object} matchArchive - Array containing the object of matches and isOk for each rule.
+	 * @returns {Array} Return a list of match index common to all instructions in the rule.
+	 */
+	_commonMatches(matchArchive) {
+		let listOfMatches = matchArchive.map((matches) => {
+				return matches.matches
+			}),
+			lowMatchNumber = Math.min.apply(Math, (listOfMatches.map((matches) => {
+				return matches.length
+			}))),
+			common = []
+		for (let i = 0; i < lowMatchNumber; i++) {
+			let newValue = NaN
+			for (let j = 0; j < listOfMatches.length; j++) {
+				if (!(newValue)) {
+					newValue = listOfMatches[j][i]
+				}
+				else if (newValue !== listOfMatches[j][i]) {
+					newValue = NaN
+					break
+				}
+			}
+			if (newValue)
+				common.push(newValue)
+		}
+		return common
+	}
+
 
 	/**
 	 * Add resource from rule to the array of resource used
