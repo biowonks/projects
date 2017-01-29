@@ -251,15 +251,15 @@ For example: to filter sequences with **only** **1** match to a CheW domain from
         pos: [
             {
                 resource: 'fql',
-                id: '^'
+                feature: '^'
             },
             {
                 resource: 'pfam28',
-                id: 'CheW'
+                feature: 'CheW'
             }
             {
                 resource: 'fql',
-                id: '$'
+                feature: '$'
             }
         ]
     }
@@ -280,16 +280,16 @@ For example: to filter only sequences with CheW - CheW domain architecture and n
         pos: [
             {
                 resource: 'fql',
-                id: '^'
+                feature: '^'
             },
             {
                 resource: 'pfam29',
-                id: 'CheW',
+                feature: 'CheW',
                 count: '{2}'
             }
             {
                 resource: 'fql',
-                id: '$'
+                feature: '$'
             }
         ]
     }
@@ -306,16 +306,16 @@ For example: to Filter protein sequences with only 2 or 3 CheWs and nothing else
         pos: [
             {
                 resource: 'fql',
-                id: '^'
+                feature: '^'
             },
             {
                 resource: 'pfam29',
-                id: 'CheW',
+                feature: 'CheW',
                 count: '{2,3}'
             }
             {
                 resource: 'fql',
-                id: '$'
+                feature: '$'
             }
         ]
     }
@@ -329,12 +329,12 @@ Another example is to combine these elements to: filter proteins with 2 or 3 Che
         pos: [
             {
                 resource: 'pfam29',
-                id: 'CheW',
+                feature: 'CheW',
                 count: '{2,3}'
             }
             {
                 resource: 'fql',
-                id: '$'
+                feature: '$'
             }
         ]
     }
@@ -349,11 +349,11 @@ Also it is worth notice that the `count` value is very limitant. for example:
         pos: [
             {
                 resource: 'fql',
-                id: '^'
+                feature: '^'
             },
             {
                 resource: 'pfam29',
-                id: 'CheW',
+                feature: 'CheW',
                 count: '{2}'
             }
         ]
@@ -373,36 +373,36 @@ For example if I want to search for any chemoreceptor (ending with MCPsignal) wi
         pos: [
             {
                 resource: 'fql',
-                id: '^'
+                feature: '^'
             },
             {
                 resource: 'das',
-                id: 'TM',
+                feature: 'TM',
                 count: '{1}'
             },
             {
                 resource: 'pfam28',
-                id: '*',
+                feature: '*',
                 count: '{1,}'
             },
             {
                 resource: 'das',
-                id: 'TM',
+                feature: 'TM',
                 count: '{1}'
             },
             {
                 resource: 'pfam28',
-                id: '*',
+                feature: '*',
                 count: '{1,}'
             },
             {
                 resource: 'pfam28',
-                id: 'MCPsignal',
+                feature: 'MCPsignal',
                 count: '{1}'
             },
             {
                 resource: 'fql',
-                id: '$'
+                feature: '$'
             }
         ]
     }
@@ -419,36 +419,36 @@ To filter sequences that start with TM and end with MCPsignal.
         pos: [
             {
                 resource: 'fql',
-                id: '^'
+                feature: '^'
             },
             {
                 resource: 'das',
-                id: 'TM',
+                feature: 'TM',
                 count: '{1}'
             },
             {
                 resource: 'pfam28',
-                id: '.*',
+                feature: '.*',
                 count: '{1,}'
             },
             {
                 resource: 'das',
-                id: 'TM',
+                feature: 'TM',
                 count: '{1}'
             },
             {
                 resource: 'pfam28',
-                id: '.*',
+                feature: '.*',
                 count: '{1,}'
             },
             {
                 resource: 'pfam28',
-                id: 'MCPsignal',
+                feature: 'MCPsignal',
                 count: '{1}'
             },
             {
                 resource: 'fql',
-                id: '$'
+                feature: '$'
             }
         ]
     }
@@ -475,42 +475,42 @@ Filter proteins that starts with a TM region, and in between the two TM regions 
         pos: [
             {
                 resource: 'fql',
-                id: '^'
+                feature: '^'
             },
             {
                 resource: 'das',
-                id: 'TM',
+                feature: 'TM',
                 count: '{1}'
             },
             [
                 {
                     resource: 'pfam28',
-                    id: 'Cache_1',
+                    feature: 'Cache_1',
                     count: '{0}'
                 },
                  {
                     resource: 'pfam28',
-                    id: '.*',
+                    feature: '.*',
                     count: '{1}'
                 }
             {
                 resource: 'das',
-                id: 'TM',
+                feature: 'TM',
                 count: '{1}'
             },
             {
                 resource: 'pfam28',
-                id: '*',
+                feature: '*',
                 count: '{1,}'
             },
             {
                 resource: 'pfam28',
-                id: 'MCPsignal',
+                feature: 'MCPsignal',
                 count: '{1}'
             },
             {
                 resource: 'fql',
-                id: '$'
+                feature: '$'
             }
         ]
     }
@@ -588,12 +588,12 @@ For that you need to eliminate the `^` part of the rule:
 [
     {
         resource: 'pfam29',
-        id: 'CheW',
+        feature: 'CheW',
         count: '{2,3}'
     }
     {
         resource: null,
-        id: '$'
+        feature: '$'
     }
 ]
 ```
