@@ -112,8 +112,20 @@ class Fql {
 
 				//console.log('	Instruction -> ' + JSON.stringify(instr))
 
-				for (let k = indexInfoTemp; k < arrayInfo.length; k++) {
+				for (let k = (indexLastMatch + 1 ? indexLastMatch + 1 : 0); k < arrayInfo.length; k++) {
 					if (arrayInfo[k].match(instr[0])) {
+						if (nextRule) {
+							//console.log('	--> Testing match to next rule - ' + JSON.stringify(nextRule))
+							let skip = false
+							for (let l = 0; l < nextRule.length; l++) {
+								//console.log('	--> Match next rule, instruction ' + k + '? : ' + arrayInfo[k].match(nextRule[l][0]))
+								//console.log('	--> Previous also match next rule, instruction ' + (k - 1) + ' ? : ' + (k > 1 ? arrayInfo[k - 1].match(nextRule[l][0]) : false))
+								if (arrayInfo[k].match(nextRule[l][0]) && !(arrayInfo[k - 1].match(nextRule[l][0])))
+									skip = true
+							}
+							if (skip)
+								break
+						}
 						if (matches.length === 0 || matches[matches.length - 1] === k - 1) // Is it consecutive match
 							matches.push(k)
 						else
@@ -140,7 +152,7 @@ class Fql {
 			let commonMatches = this._commonMatches(matchArchive)
 			//console.log('Common matches - ' + JSON.stringify(commonMatches))
 			//console.log('lastmatch: ' + indexLastMatch)
-			//console.log('consecutive match: ' + (commonMatches[0] - 1 !== indexLastMatch))
+			//console.log('not consecutive match: ' + (commonMatches[0] - 1 !== indexLastMatch))
 			if (!(isNaN(indexLastMatch))) {
 				if (isOk === false || commonMatches === [] || commonMatches[0] - 1 !== indexLastMatch) {
 					isOk = false
@@ -421,21 +433,27 @@ class Fql {
 
 	_isValidRule(rule) {
 		if ('pos' in rule) {
-			rule.pos.forEach((posRule) => {
-				let noResource = true,
-					noFeature = true
+			rule.pos.forEach((posRules) => {
+				let posRulesFixed = posRules
+				if (posRules.constructor === Object)
+					posRulesFixed = [posRules]
 
-				if ('resource' in posRule)
-					noResource = false
-				if ('feature' in posRule)
-					noFeature = false
+				posRulesFixed.forEach((posRule) => {
+					let noResource = true,
+						noFeature = true
 
-				if (noResource && noFeature)
-					throw new Error('Each pos rule must explicitly define a resource and feature: \n' + JSON.stringify(posRule))
-				else if (noResource)
-					throw new Error('Each pos rule must explicitly define a resource: \n' + JSON.stringify(posRule))
-				else if (noFeature)
-					throw new Error('Each pos rule must explicitly define a feature: \n' + JSON.stringify(posRule))
+					if ('resource' in posRule)
+						noResource = false
+					if ('feature' in posRule)
+						noFeature = false
+
+					if (noResource && noFeature)
+						throw new Error('Each pos rule must explicitly define a resource and feature: \n' + JSON.stringify(posRule))
+					else if (noResource)
+						throw new Error('Each pos rule must explicitly define a resource: \n' + JSON.stringify(posRule))
+					else if (noFeature)
+						throw new Error('Each pos rule must explicitly define a feature: \n' + JSON.stringify(posRule))
+				})
 			})
 		}
 		if ('Npos' in rule) {
