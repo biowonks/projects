@@ -96,23 +96,50 @@ describe('Feature Query Language - FQL', function() {
 				])
 		})
 		it('check behaviour _getConfig')
-		it.only('check behaviour _commonMatches', () => {
-			let matchArchive = [
-				{
-					matches: [1, 2, 3, 5, 6],
-					isOk: true
-				},
-				{
-					matches: [1, 2, 3, 4, 6],
-					isOk: true
-				},
-				{
-					matches: [1, 2, 5],
-					isOk: true
-				}
-			]
-			let common = [1, 2]
-			expect(fql._commonMatches(matchArchive)).eql(common)
+		describe('check behaviour of _commonMatches ::', () => {
+			it('with empty match', () => {
+				let matchArchive = []
+				let common = []
+				expect(fql._commonMatches(matchArchive)).eql(common)
+			})
+			it('with single instruction and single match', () => {
+				let matchArchive = [
+					{
+						matches: [0],
+						isOk: true
+					}
+				]
+				let common = [0]
+				expect(fql._commonMatches(matchArchive)).eql(common)
+			})
+			it('with single instruction', () => {
+				let matchArchive = [
+					{
+						matches: [1, 2, 3, 4, 5],
+						isOk: true
+					}
+				]
+				let common = [1, 2, 3, 4, 5]
+				expect(fql._commonMatches(matchArchive)).eql(common)
+			})
+			it('with multiple instructions', () => {
+				let matchArchive = [
+					{
+						matches: [1, 2, 3, 4, 5, 6],
+						isOk: true
+					},
+					{
+						matches: [1, 2, 3, 4],
+						isOk: true
+					},
+					{
+						matches: [1, 2, 3],
+						isOk: true
+					}
+				]
+				let common = [1, 2, 3]
+				expect(fql._commonMatches(matchArchive)).eql(common)
+			})
 		})
 		it('check behaviour _addResources', () => {
 			let rc = 'pfam28'
@@ -1063,7 +1090,7 @@ describe('Feature Query Language - FQL', function() {
 			})
 		})
 	})
-	describe('Positional rules :: ', function() {
+	describe.only('Positional rules :: ', function() {
 		it('Filter protein sequences starting with 1 match to a CheW domain from Pfam28', function() {
 			let fql = new Fql()
 			let setOfRules = [

@@ -89,50 +89,68 @@ class Fql {
 	 */
 	_testPos(arrayInfo, parsedRules) {
 		let indexInfo = 0,
+			indexLastMatch = NaN,
 			isOk = true
 
-		console.log('\n This is the data: ' + JSON.stringify(arrayInfo))
-		console.log(JSON.stringify(parsedRules))
+		//console.log('\n This is the data: ' + JSON.stringify(arrayInfo))
+		//console.log(JSON.stringify(parsedRules))
 
 		for (let i = 0; i < parsedRules.rules.length; i++) { // check each rule
 			let isRuleOk = true,
 				currRule = parsedRules.rules[i],
 				nextRule = parsedRules.rules[i + 1],
-				indexLastMatch = NaN,
 				matchArchive = []
 
-			console.log('Rule -> ' + JSON.stringify(currRule))
+			//console.log('Rule -> ' + JSON.stringify(currRule))
 
-			currRule.forEach((instr) => { //check Instruction
-				console.log('	Instruction -> ' + JSON.stringify(instr))
-				let lowNumMatches = instr[1][0],
+			for (let j = 0; j < currRule.length; j++) {
+				let instr = currRule[j],
+					lowNumMatches = instr[1][0],
 					highNumMatches = instr[1][1],
 					indexInfoTemp = indexInfo,
 					matches = []
 
-				for (let j = indexInfoTemp; j < arrayInfo.length; j++) {
-					if (arrayInfo[j].match(instr[0])) {
-						if (matches.length === 0 || matches[matches.length - 1] === j - 1) // Is it consecutive match
-							matches.push(j)
+				//console.log('	Instruction -> ' + JSON.stringify(instr))
+
+				for (let k = indexInfoTemp; k < arrayInfo.length; k++) {
+					if (arrayInfo[k].match(instr[0])) {
+						if (matches.length === 0 || matches[matches.length - 1] === k - 1) // Is it consecutive match
+							matches.push(k)
 						else
 							break
 					}
 				}
-				console.log('	Number of matches: ' + matches.length)
-				console.log('	Matches: ' + JSON.stringify(matches))
+				//console.log('	Number of matches: ' + matches.length)
+				//console.log('	Matches: ' + JSON.stringify(matches))
 				if (parsedRules.hardStart === true && i === 0) {
 					let first = matches[0]
 					if (first !== 0 || matches.length < lowNumMatches || matches.length > highNumMatches)
 						isOk = false
 				}
-				matchArchive.push({matches: matches, isOk: isOk})
-				console.log(isOk)
-			})
-			indexLastMatch = matchArchive.forEach((match) => {
+				if (matches.length < lowNumMatches || matches.length > highNumMatches || isOk === false) {
+					//console.log('	wrong number of matches - BREAKING ')
+					isOk = false
+					break
+				}
 
-			})
+				matchArchive.push({matches: matches, isOk: isOk})
+				//console.log(isOk)
+			}
+			//console.log('Match Archive: ' + JSON.stringify(matchArchive))
+			let commonMatches = this._commonMatches(matchArchive)
+			//console.log('Common matches - ' + JSON.stringify(commonMatches))
+			//console.log('lastmatch: ' + indexLastMatch)
+			//console.log('consecutive match: ' + (commonMatches[0] - 1 !== indexLastMatch))
+			if (!(isNaN(indexLastMatch))) {
+				if (isOk === false || commonMatches === [] || commonMatches[0] - 1 !== indexLastMatch) {
+					isOk = false
+					break
+				}
+			}
+			indexLastMatch = commonMatches[commonMatches.length - 1]
+			//console.log('New last match: ' + indexLastMatch)
 		}
-		console.log('	' + isOk)
+		//console.log('	' + isOk)
 		return isOk
 	}
 
@@ -149,19 +167,21 @@ class Fql {
 				return matches.length
 			}))),
 			common = []
-		for (let i = 0; i < lowMatchNumber; i++) {
-			let newValue = NaN
-			for (let j = 0; j < listOfMatches.length; j++) {
-				if (!(newValue)) {
-					newValue = listOfMatches[j][i]
+		if (matchArchive.length !== 0) {
+			for (let i = 0; i < lowMatchNumber; i++) {
+				let newValue = NaN
+				for (let j = 0; j < listOfMatches.length; j++) {
+					if (!(newValue)) {
+						newValue = listOfMatches[j][i]
+					}
+					else if (newValue !== listOfMatches[j][i]) {
+						newValue = NaN
+						break
+					}
 				}
-				else if (newValue !== listOfMatches[j][i]) {
-					newValue = NaN
-					break
-				}
+				if (!(isNaN(newValue)))
+					common.push(newValue)
 			}
-			if (newValue)
-				common.push(newValue)
 		}
 		return common
 	}
