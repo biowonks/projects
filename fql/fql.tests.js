@@ -96,7 +96,7 @@ describe('Feature Query Language - FQL', function() {
 				])
 		})
 		it('check behaviour _getConfig')
-		describe('check behaviour of _commonMatches ::', () => {
+		describe.only('check behaviour of _commonMatches ::', () => {
 			it('with empty match', () => {
 				let matchArchive = []
 				let common = []
@@ -106,7 +106,7 @@ describe('Feature Query Language - FQL', function() {
 				let matchArchive = [
 					{
 						matches: [0],
-						isOk: true
+						negative: false
 					}
 				]
 				let common = [0]
@@ -116,7 +116,7 @@ describe('Feature Query Language - FQL', function() {
 				let matchArchive = [
 					{
 						matches: [1, 2, 3, 4, 5],
-						isOk: true
+						negative: false
 					}
 				]
 				let common = [1, 2, 3, 4, 5]
@@ -126,15 +126,33 @@ describe('Feature Query Language - FQL', function() {
 				let matchArchive = [
 					{
 						matches: [1, 2, 3, 4, 5, 6],
-						isOk: true
+						negative: false
 					},
 					{
 						matches: [1, 2, 3, 4],
-						isOk: true
+						negative: false
 					},
 					{
 						matches: [1, 2, 3],
-						isOk: true
+						negative: false
+					}
+				]
+				let common = [1, 2, 3]
+				expect(fql._commonMatches(matchArchive)).eql(common)
+			})
+			it('with multiple instructions with negative', () => {
+				let matchArchive = [
+					{
+						matches: [],
+						negative: true
+					},
+					{
+						matches: [1, 2, 3, 4],
+						negative: false
+					},
+					{
+						matches: [1, 2, 3],
+						negative: false
 					}
 				]
 				let common = [1, 2, 3]
@@ -1090,7 +1108,7 @@ describe('Feature Query Language - FQL', function() {
 			})
 		})
 	})
-	describe.only('Positional rules :: ', function() {
+	describe.skip('Positional rules :: ', function() {
 		it('Filter protein sequences starting with 1 match to a CheW domain from Pfam28', function() {
 			let fql = new Fql()
 			let setOfRules = [
@@ -1731,7 +1749,7 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(fql.match).eql(expected)
 			})
-			it('Filter protein sequences starting with no Cache_1 between two TM and ending a MCPsignal', function() {
+			it.skip('Filter protein sequences starting with no Cache_1 between two TM and ending a MCPsignal', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
@@ -1745,11 +1763,18 @@ describe('Feature Query Language - FQL', function() {
 								feature: 'TM',
 								count: '{1}'
 							},
-							{
-								resource: 'pfam28',
-								feature: 'Cache_1',
-								count: '{0}'
-							},
+							[
+								{
+									resource: 'pfam28',
+									feature: 'Cache_1',
+									count: '{0}'
+								},
+								{
+									resource: 'pfam28',
+									feature: '.*',
+									count: '{1,}'
+								}
+							],
 							{
 								resource: 'das',
 								feature: 'TM',

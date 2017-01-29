@@ -92,8 +92,8 @@ class Fql {
 			indexLastMatch = NaN,
 			isOk = true
 
-		//console.log('\n This is the data: ' + JSON.stringify(arrayInfo))
-		//console.log(JSON.stringify(parsedRules))
+		console.log('\n This is the data: ' + JSON.stringify(arrayInfo))
+		console.log(JSON.stringify(parsedRules))
 
 		for (let i = 0; i < parsedRules.rules.length; i++) { // check each rule
 			let isRuleOk = true,
@@ -101,7 +101,7 @@ class Fql {
 				nextRule = parsedRules.rules[i + 1],
 				matchArchive = []
 
-			//console.log('Rule -> ' + JSON.stringify(currRule))
+			console.log('Rule -> ' + JSON.stringify(currRule))
 
 			for (let j = 0; j < currRule.length; j++) {
 				let instr = currRule[j],
@@ -110,16 +110,16 @@ class Fql {
 					indexInfoTemp = indexInfo,
 					matches = []
 
-				//console.log('	Instruction -> ' + JSON.stringify(instr))
+				console.log('	Instruction -> ' + JSON.stringify(instr))
 
 				for (let k = (indexLastMatch + 1 ? indexLastMatch + 1 : 0); k < arrayInfo.length; k++) {
 					if (arrayInfo[k].match(instr[0])) {
 						if (nextRule) {
-							//console.log('	--> Testing match to next rule - ' + JSON.stringify(nextRule))
+							console.log('	--> Testing match to next rule - ' + JSON.stringify(nextRule))
 							let skip = false
 							for (let l = 0; l < nextRule.length; l++) {
-								//console.log('	--> Match next rule, instruction ' + k + '? : ' + arrayInfo[k].match(nextRule[l][0]))
-								//console.log('	--> Previous also match next rule, instruction ' + (k - 1) + ' ? : ' + (k > 1 ? arrayInfo[k - 1].match(nextRule[l][0]) : false))
+								console.log('	--> Match next rule, instruction ' + k + '? : ' + arrayInfo[k].match(nextRule[l][0]))
+								console.log('	--> Previous also match next rule, instruction ' + (k - 1) + ' ? : ' + (k > 1 ? arrayInfo[k - 1].match(nextRule[l][0]) : false))
 								if (arrayInfo[k].match(nextRule[l][0]) && !(arrayInfo[k - 1].match(nextRule[l][0])))
 									skip = true
 							}
@@ -132,27 +132,27 @@ class Fql {
 							break
 					}
 				}
-				//console.log('	Number of matches: ' + matches.length)
-				//console.log('	Matches: ' + JSON.stringify(matches))
+				console.log('	Number of matches: ' + matches.length)
+				console.log('	Matches: ' + JSON.stringify(matches))
 				if (parsedRules.hardStart === true && i === 0) {
 					let first = matches[0]
 					if (first !== 0 || matches.length < lowNumMatches || matches.length > highNumMatches)
 						isOk = false
 				}
 				if (matches.length < lowNumMatches || matches.length > highNumMatches || isOk === false) {
-					//console.log('	wrong number of matches - BREAKING ')
+					console.log('	wrong number of matches - BREAKING ')
 					isOk = false
 					break
 				}
 
-				matchArchive.push({matches: matches, isOk: isOk})
-				//console.log(isOk)
+				matchArchive.push({matches: matches, negative: (highNumMatches === 0 && lowNumMatches === 0)})
+				console.log(isOk)
 			}
-			//console.log('Match Archive: ' + JSON.stringify(matchArchive))
+			console.log('Match Archive: ' + JSON.stringify(matchArchive))
 			let commonMatches = this._commonMatches(matchArchive)
-			//console.log('Common matches - ' + JSON.stringify(commonMatches))
-			//console.log('lastmatch: ' + indexLastMatch)
-			//console.log('not consecutive match: ' + (commonMatches[0] - 1 !== indexLastMatch))
+			console.log('Common matches - ' + JSON.stringify(commonMatches))
+			console.log('lastmatch: ' + indexLastMatch)
+			console.log('not consecutive match: ' + (commonMatches[0] - 1 !== indexLastMatch))
 			if (!(isNaN(indexLastMatch))) {
 				if (isOk === false || commonMatches === [] || commonMatches[0] - 1 !== indexLastMatch) {
 					isOk = false
@@ -160,13 +160,13 @@ class Fql {
 				}
 			}
 			indexLastMatch = commonMatches[commonMatches.length - 1]
-			//console.log('New last match: ' + indexLastMatch)
+			console.log('New last match: ' + indexLastMatch)
 			if (parsedRules.hardStop === true && i === parsedRules.rules.length - 1) {
 				if (indexLastMatch !== arrayInfo.length - 1)
 					isOk = false
 			}
 		}
-		//console.log('	' + isOk)
+		console.log('	' + isOk)
 		return isOk
 	}
 
@@ -176,13 +176,16 @@ class Fql {
 	 * @returns {Array} Return a list of match index common to all instructions in the rule.
 	 */
 	_commonMatches(matchArchive) {
-		let listOfMatches = matchArchive.map((matches) => {
-				return matches.matches
-			}),
-			lowMatchNumber = Math.min.apply(Math, (listOfMatches.map((matches) => {
+		let listOfMatches = []
+		for (let i = 0; i < matchArchive.length; i++ ) {
+			if (!(matchArchive[i].negative))
+				listOfMatches.push(matchArchive[i].matches)
+		}
+		let lowMatchNumber = Math.min.apply(Math, (listOfMatches.map((matches) => {
 				return matches.length
 			}))),
 			common = []
+
 		if (matchArchive.length !== 0) {
 			for (let i = 0; i < lowMatchNumber; i++) {
 				let newValue = NaN
