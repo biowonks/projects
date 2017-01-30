@@ -113,14 +113,15 @@ class Fql {
 				console.log('	Instruction -> ' + JSON.stringify(instr))
 
 				for (let k = (indexLastMatch + 1 ? indexLastMatch + 1 : 0); k < arrayInfo.length; k++) {
+					console.log('	Test feature ' + k + ' -> ' + JSON.stringify(arrayInfo[k]))
 					if (arrayInfo[k].match(instr[0])) {
 						if (nextRule) {
 							console.log('	--> Testing match to next rule - ' + JSON.stringify(nextRule))
 							let skip = false
 							for (let l = 0; l < nextRule.length; l++) {
-								console.log('	--> Match next rule, instruction ' + k + '? : ' + arrayInfo[k].match(nextRule[l][0]))
-								console.log('	--> Previous also match next rule, instruction ' + (k - 1) + ' ? : ' + (k > 1 ? arrayInfo[k - 1].match(nextRule[l][0]) : false))
-								if (arrayInfo[k].match(nextRule[l][0]) && !(arrayInfo[k - 1].match(nextRule[l][0])))
+								console.log('	--> Match next rule, instruction ' + l + '? : ' + arrayInfo[k].match(nextRule[l][0]))
+								console.log('	--> Previous also match next rule, instruction ? : ' + (k > 0 ? arrayInfo[k - 1].match(nextRule[l][0]) : false))
+								if (arrayInfo[k].match(nextRule[l][0]) && !(arrayInfo[k - 1].match(nextRule[l][0]))) //not enough
 									skip = true
 							}
 							if (skip)
@@ -177,10 +178,17 @@ class Fql {
 	 */
 	_commonMatches(matchArchive) {
 		let listOfMatches = []
+		console.log(JSON.stringify(matchArchive))
 		for (let i = 0; i < matchArchive.length; i++ ) {
 			if (!(matchArchive[i].negative))
 				listOfMatches.push(matchArchive[i].matches)
 		}
+		console.log('--')
+		console.log(JSON.stringify(listOfMatches))
+		console.log('--')
+		if (listOfMatches.length === 0)
+			return []
+
 		let lowMatchNumber = Math.min.apply(Math, (listOfMatches.map((matches) => {
 				return matches.length
 			}))),

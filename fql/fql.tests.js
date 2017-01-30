@@ -96,7 +96,7 @@ describe('Feature Query Language - FQL', function() {
 				])
 		})
 		it('check behaviour _getConfig')
-		describe.only('check behaviour of _commonMatches ::', () => {
+		describe('check behaviour of _commonMatches ::', () => {
 			it('with empty match', () => {
 				let matchArchive = []
 				let common = []
@@ -156,6 +156,16 @@ describe('Feature Query Language - FQL', function() {
 					}
 				]
 				let common = [1, 2, 3]
+				expect(fql._commonMatches(matchArchive)).eql(common)
+			})
+			it('with single negative instruction', () => {
+				let matchArchive = [
+					{
+						matches: [],
+						negative: true
+					}
+				]
+				let common = []
 				expect(fql._commonMatches(matchArchive)).eql(common)
 			})
 		})
@@ -1108,7 +1118,7 @@ describe('Feature Query Language - FQL', function() {
 			})
 		})
 	})
-	describe.skip('Positional rules :: ', function() {
+	describe.only('Positional rules :: ', function() {
 		it('Filter protein sequences starting with 1 match to a CheW domain from Pfam28', function() {
 			let fql = new Fql()
 			let setOfRules = [
@@ -1749,7 +1759,7 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(fql.match).eql(expected)
 			})
-			it.skip('Filter protein sequences starting with no Cache_1 between two TM and ending a MCPsignal', function() {
+			it('Filter protein sequences starting with no Cache_1 between two TM and ending a MCPsignal', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
@@ -1827,7 +1837,7 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(fql.match).eql(expected)
 			})
-			it('Filter protein sequences starting with TM followed by any two domains from pfam28 but Cache_1 followed by another TM and ending a MCPsignal', function() {
+			it('Filter protein sequences starting with TM followed by any two domains from pfam28 but no Cache_1 followed by another TM and ending a MCPsignal', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
@@ -1841,16 +1851,18 @@ describe('Feature Query Language - FQL', function() {
 								feature: 'TM',
 								count: '{1}'
 							},
-							{
-								resource: 'pfam28',
-								feature: '.*',
-								count: '{2}'
-							},
-							{
-								resource: 'pfam28',
-								feature: 'Cache_1',
-								count: '{0}'
-							},
+							[
+								{
+									resource: 'pfam28',
+									feature: '.*',
+									count: '{2}'
+								},
+								{
+									resource: 'pfam28',
+									feature: 'Cache_1',
+									count: '{0}'
+								}
+							],
 							{
 								resource: 'das',
 								feature: 'TM',
@@ -1903,7 +1915,7 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(fql.match).eql(expected)
 			})
-			it('Filter protein sequences starting with TM followed by any two domains from pfam28 but Cache_1 not in the first of the two followed by another TM and ending a MCPsignal', function() {
+			it.only('Filter protein sequences starting with TM followed by any two domains from pfam28 but Cache_1 not in the first of the two followed by another TM and ending a MCPsignal', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
