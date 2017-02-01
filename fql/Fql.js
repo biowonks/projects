@@ -92,83 +92,153 @@ class Fql {
 			indexLastMatch = NaN,
 			isOk = true
 
-		console.log('\n This is the data: ' + JSON.stringify(arrayInfo))
-		console.log(JSON.stringify(parsedRules))
+		//console.log('_testPos :: ' + '-------------------------------------------------------------------------------------------------')
+		//console.log('_testPos :: ' + ' This is the data: ' + JSON.stringify(arrayInfo))
+		//console.log('_testPos :: ' + JSON.stringify(parsedRules))
 
 		for (let i = 0; i < parsedRules.rules.length; i++) { // check each rule
-			let isRuleOk = true,
-				currRule = parsedRules.rules[i],
-				nextRule = parsedRules.rules[i + 1],
-				matchArchive = []
+			let currRule = {rule: parsedRules.rules[i], hardStart: parsedRules.hardStart, hardStop: parsedRules.hardStop},
+				nextRule = {rule: parsedRules.rules[i + 1], hardStart: parsedRules.hardStart, hardStop: parsedRules.hardStop}
 
-			console.log('Rule -> ' + JSON.stringify(currRule))
+			//console.log('_testPos :: ' + 'Rule -> ' + JSON.stringify(currRule))
 
-			for (let j = 0; j < currRule.length; j++) {
-				let instr = currRule[j],
-					lowNumMatches = instr[1][0],
-					highNumMatches = instr[1][1],
-					indexInfoTemp = indexInfo,
-					matches = []
+			let currResults = this._findMatch(currRule, arrayInfo, indexLastMatch, i),
+				commonMatches = currResults.matches
+			isOk = currResults.isOk
 
-				console.log('	Instruction -> ' + JSON.stringify(instr))
+			//console.log('_testPos :: ' + 'Common matches - ' + JSON.stringify(commonMatches))
+			//console.log('_testPos :: ' + 'lastmatch: ' + indexLastMatch)
+			//console.log('_testPos :: ' + 'not consecutive match: ' + (commonMatches[0] - 1 !== indexLastMatch))
 
-				for (let k = (indexLastMatch + 1 ? indexLastMatch + 1 : 0); k < arrayInfo.length; k++) {
-					console.log('	Test feature ' + k + ' -> ' + JSON.stringify(arrayInfo[k]))
-					if (arrayInfo[k].match(instr[0])) {
-						if (nextRule) {
-							console.log('	--> Testing match to next rule - ' + JSON.stringify(nextRule))
-							let skip = false
-							for (let l = 0; l < nextRule.length; l++) {
-								console.log('	--> Match next rule, instruction ' + l + '? : ' + arrayInfo[k].match(nextRule[l][0]))
-								console.log('	--> Previous also match next rule, instruction ? : ' + (k > 0 ? arrayInfo[k - 1].match(nextRule[l][0]) : false))
-								if (arrayInfo[k].match(nextRule[l][0]) && !(arrayInfo[k - 1].match(nextRule[l][0]))) //not enough
-									skip = true
-							}
-							if (skip)
-								break
-						}
-						if (matches.length === 0 || matches[matches.length - 1] === k - 1) // Is it consecutive match
-							matches.push(k)
+			if (indexLastMatch && (commonMatches[0] - 1 !== indexLastMatch))
+				isOk = false
+
+			if (nextRule.rule && commonMatches.length !== 0) {
+				//console.log('_testPos :: ' + ' ----- NEXT RULE -----')
+				let nextResults = this._findMatch(nextRule, arrayInfo, indexLastMatch + 1, i + 1),
+					nextCommonMatches = nextResults.matches,
+					nextIsOk = nextResults.isOk
+				//console.log('_testPos :: ' + 'Next Rule - Common matches - ' + JSON.stringify(nextCommonMatches))
+				//console.log('_testPos :: ' + 'Next Rule - not consecutive match: ' + (nextCommonMatches[0] - 1 !== commonMatches[commonMatches.length - 1]))
+
+				if (commonMatches === nextCommonMatches) {
+					//console.log('_testPos :: ' + 'same matching between current and next rule : impossible overall match')
+					isOk = false
+				}
+				else {
+					let currNextMatches = [commonMatches[0]]
+					for (let j = 1; j < commonMatches.length; j++) {
+						if (nextCommonMatches.indexOf(commonMatches[j]) === -1)
+							currNextMatches.push(commonMatches[j])
 						else
 							break
 					}
-				}
-				console.log('	Number of matches: ' + matches.length)
-				console.log('	Matches: ' + JSON.stringify(matches))
-				if (parsedRules.hardStart === true && i === 0) {
-					let first = matches[0]
-					if (first !== 0 || matches.length < lowNumMatches || matches.length > highNumMatches)
+					if (commonMatches.length < currResults.low || commonMatches.length > currResults.high) {
+						//console.log('_testPos :: ' + '	wrong number of matches after revision of Next Rule')
 						isOk = false
+						break
+					}
+					if (currNextMatches.length !== 0)
+						//console.log('_testPos :: ' + ' Going to make commonMatches = ' + JSON.stringify(currNextMatches))
+						commonMatches = currNextMatches
 				}
-				if (matches.length < lowNumMatches || matches.length > highNumMatches || isOk === false) {
-					console.log('	wrong number of matches - BREAKING ')
-					isOk = false
-					break
-				}
-
-				matchArchive.push({matches: matches, negative: (highNumMatches === 0 && lowNumMatches === 0)})
-				console.log(isOk)
+				//console.log('_testPos :: ' + ' ----- END of NEXT RULE -----')
 			}
-			console.log('Match Archive: ' + JSON.stringify(matchArchive))
-			let commonMatches = this._commonMatches(matchArchive)
-			console.log('Common matches - ' + JSON.stringify(commonMatches))
-			console.log('lastmatch: ' + indexLastMatch)
-			console.log('not consecutive match: ' + (commonMatches[0] - 1 !== indexLastMatch))
+
+			//console.log('_testPos :: ' + 'New common matches after next rule: ' + JSON.stringify(commonMatches))
+
+			if (commonMatches.length === 0) {
+				isOk = false
+				break
+			}
+
 			if (!(isNaN(indexLastMatch))) {
 				if (isOk === false || commonMatches === [] || commonMatches[0] - 1 !== indexLastMatch) {
 					isOk = false
 					break
 				}
 			}
+			//console.log('_testPos :: ' + 'List of matches: ' + JSON.stringify(commonMatches))
 			indexLastMatch = commonMatches[commonMatches.length - 1]
-			console.log('New last match: ' + indexLastMatch)
+		
+			//console.log('_testPos :: ' + 'New last match: ' + indexLastMatch)
 			if (parsedRules.hardStop === true && i === parsedRules.rules.length - 1) {
 				if (indexLastMatch !== arrayInfo.length - 1)
 					isOk = false
 			}
+			if (isOk === false)
+				break
 		}
-		console.log('	' + isOk)
+		//console.log('_testPos :: ' + 'FINAL = ' + isOk)
 		return isOk
+	}
+
+	/**
+	 * Find if certain rule will match the expression. (NEED TEST)
+	 * @param {Object} currRule - Set of instructions.
+	 * @param {Object.Array} arrayInfo - Array containing the features of sequence.
+	 * @param {number} indexLastMatch - Index of last match: where it will start looking for matches in the arrayInfo.
+	 * @param {number} i - index of the rule.
+	 * @return {Array} Returns array of index that matches all instructions in the currRule set.
+	 */
+
+	_findMatch(currRule, arrayInfo, indexLastMatch, i) {
+		let matchArchive = [],
+			isOk = true,
+			commonMatches = []
+
+		//console.log('_findMatch :: ' + ' - -- - ')
+
+		for (let j = 0; j < currRule.rule.length; j++) {
+			let instr = currRule.rule[j],
+				lowNumMatches = instr[1][0],
+				highNumMatches = instr[1][1],
+				matches = []
+
+			//console.log('_findMatch :: ' + '	Instruction -> ' + JSON.stringify(instr))
+
+			for (let k = (indexLastMatch + 1 ? indexLastMatch + 1 : 0); k < arrayInfo.length; k++) {
+				//console.log('_findMatch :: ' + '	Test feature ' + k + ' -> ' + JSON.stringify(arrayInfo[k]))
+				if (arrayInfo[k].match(instr[0])) {
+					if (matches.length === 0 || matches[matches.length - 1] === k - 1) {
+						//console.log('_findMatch :: ' + '	--> consecutive match') // Is it consecutive match
+						matches.push(k)
+					}
+					else {
+						//console.log('_findMatch :: ' + '	--> not consecutive match - BREAKING')
+						break
+					}
+				}
+				else {
+					//console.log('_findMatch :: ' + '	--> No match')
+				}
+			}
+			//console.log('_findMatch :: ' + '	Number of matches: ' + matches.length)
+			//console.log('_findMatch :: ' + '	Matches: ' + JSON.stringify(matches))
+			//console.log('_findMatch :: ' + '	Hard start: ' + currRule.hardStart)
+			//console.log('_findMatch :: ' + '	Rule number: ' + i)
+			if (currRule.hardStart === true && i === 0) {
+				let first = matches[0]
+				if (first !== 0 || matches.length < lowNumMatches || matches.length > highNumMatches)
+					isOk = false
+			}
+			//console.log('_findMatch :: Right before test if is wildcard or obey limits: isOk = ' + isOk)
+			//console.log('_findMatch :: remind the instruction = ' + JSON.stringify(instr))
+			if (matches.length < lowNumMatches || (instr[0].indexOf('.*') === -1 && matches.length > highNumMatches) || isOk === false) {
+				//console.log('_findMatch :: ' + '	wrong number of matches - BREAKING ')
+				isOk = false
+				break
+			}
+			if (instr[0].indexOf('.*') !== -1)
+				matches.splice(highNumMatches)
+
+			matchArchive.push({matches: matches, negative: (highNumMatches === 0 && lowNumMatches === 0)})
+			//console.log('_findMatch :: ' + isOk)
+		}
+
+		//console.log('_findMatch :: ' + 'Match Archive: ' + JSON.stringify(matchArchive))
+		commonMatches = this._findCommonMatches(matchArchive)
+		return {matches: commonMatches, isOk: isOk}
 	}
 
 	/**
@@ -176,40 +246,46 @@ class Fql {
 	 * @param {Array.Object} matchArchive - Array containing the object of matches and isOk for each rule.
 	 * @returns {Array} Return a list of match index common to all instructions in the rule.
 	 */
-	_commonMatches(matchArchive) {
+	_findCommonMatches(matchArchive) {
 		let listOfMatches = []
-		console.log(JSON.stringify(matchArchive))
+		//console.log(' _findCommonMatches ---> ' + JSON.stringify(matchArchive))
 		for (let i = 0; i < matchArchive.length; i++ ) {
 			if (!(matchArchive[i].negative))
 				listOfMatches.push(matchArchive[i].matches)
 		}
-		console.log('--')
-		console.log(JSON.stringify(listOfMatches))
-		console.log('--')
+		//console.log(' _findCommonMatches ---> ' + '--')
+		//console.log(' _findCommonMatches ---> ' + JSON.stringify(listOfMatches))
+		//console.log(' _findCommonMatches ---> ' + '--')
 		if (listOfMatches.length === 0)
 			return []
 
 		let lowMatchNumber = Math.min.apply(Math, (listOfMatches.map((matches) => {
 				return matches.length
 			}))),
-			common = []
-
-		if (matchArchive.length !== 0) {
-			for (let i = 0; i < lowMatchNumber; i++) {
-				let newValue = NaN
-				for (let j = 0; j < listOfMatches.length; j++) {
-					if (!(newValue)) {
-						newValue = listOfMatches[j][i]
+			common = [],
+			tried = []
+		//console.log(' _findCommonMatches ---> ' + '-<> number of lists: ' + listOfMatches.length)
+		if (listOfMatches.length > 1) {
+			for (let i = 0; i < listOfMatches.length - 1; i++) {
+				//console.log(' _findCommonMatches ---> ' + '=> match list 1: ' + listOfMatches[i])
+				for (let j = 0; j < listOfMatches[i].length; j++) {
+					let newValue = listOfMatches[i][j],
+						numOfIns = 0
+					//console.log(' _findCommonMatches ---> ' + '=> ' + j + ' matching value: ' + newValue)
+					for (let k = i + 1; k < listOfMatches.length; k++) {
+						if (listOfMatches[k].indexOf(newValue) !== -1)
+							numOfIns++
 					}
-					else if (newValue !== listOfMatches[j][i]) {
-						newValue = NaN
-						break
-					}
+					if (numOfIns + 1 === listOfMatches.length)
+						common.push(newValue)
 				}
-				if (!(isNaN(newValue)))
-					common.push(newValue)
 			}
 		}
+		else if (listOfMatches.length === 1) {
+			//console.log(' _findCommonMatches ---> ' + 'single list matches all')
+			common = listOfMatches[0]
+		}
+		//console.log(' _findCommonMatches ---> ' + 'Return: ' +  JSON.stringify(common))
 		return common
 	}
 
@@ -306,7 +382,7 @@ class Fql {
 		else {
 			parsedRule = null
 		}
-		if (parsedRule.hardStart === true && parsedRule.hardStop === true) {
+		if (parsedRule && parsedRule.hardStart === true && parsedRule.hardStop === true) {
 			for (let i = 0; i < parsedRule.rules.length; i++) {
 				for (let j = 0; j < parsedRule.rules[i].length; j++) {
 					if (isNaN(parsedRule.rules[i][j][1][1]))

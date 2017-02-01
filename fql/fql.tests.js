@@ -100,7 +100,7 @@ describe('Feature Query Language - FQL', function() {
 			it('with empty match', () => {
 				let matchArchive = []
 				let common = []
-				expect(fql._commonMatches(matchArchive)).eql(common)
+				expect(fql._findCommonMatches(matchArchive)).eql(common)
 			})
 			it('with single instruction and single match', () => {
 				let matchArchive = [
@@ -110,7 +110,7 @@ describe('Feature Query Language - FQL', function() {
 					}
 				]
 				let common = [0]
-				expect(fql._commonMatches(matchArchive)).eql(common)
+				expect(fql._findCommonMatches(matchArchive)).eql(common)
 			})
 			it('with single instruction', () => {
 				let matchArchive = [
@@ -120,7 +120,7 @@ describe('Feature Query Language - FQL', function() {
 					}
 				]
 				let common = [1, 2, 3, 4, 5]
-				expect(fql._commonMatches(matchArchive)).eql(common)
+				expect(fql._findCommonMatches(matchArchive)).eql(common)
 			})
 			it('with multiple instructions', () => {
 				let matchArchive = [
@@ -138,7 +138,7 @@ describe('Feature Query Language - FQL', function() {
 					}
 				]
 				let common = [1, 2, 3]
-				expect(fql._commonMatches(matchArchive)).eql(common)
+				expect(fql._findCommonMatches(matchArchive)).eql(common)
 			})
 			it('with multiple instructions with negative', () => {
 				let matchArchive = [
@@ -156,7 +156,49 @@ describe('Feature Query Language - FQL', function() {
 					}
 				]
 				let common = [1, 2, 3]
-				expect(fql._commonMatches(matchArchive)).eql(common)
+				expect(fql._findCommonMatches(matchArchive)).eql(common)
+			})
+			it('with two instructions, one negative', () => {
+				let matchArchive = [
+					{
+						matches: [],
+						negative: true
+					},
+					{
+						matches: [1, 2, 3],
+						negative: false
+					}
+				]
+				let common = [1, 2, 3]
+				expect(fql._findCommonMatches(matchArchive)).eql(common)
+			})
+			it('with two instructions, one negative 2 - Order should not matter', () => {
+				let matchArchive = [
+					{
+						matches: [1, 2, 3],
+						negative: false
+					},
+					{
+						matches: [],
+						negative: true
+					}
+				]
+				let common = [1, 2, 3]
+				expect(fql._findCommonMatches(matchArchive)).eql(common)
+			})
+			it('with two instructions, not matching from the first element', () => {
+				let matchArchive = [
+					{
+						matches: [1, 2, 3],
+						negative: false
+					},
+					{
+						matches: [2, 3],
+						negative: false
+					}
+				]
+				let common = [2, 3]
+				expect(fql._findCommonMatches(matchArchive)).eql(common)
 			})
 			it('with single negative instruction', () => {
 				let matchArchive = [
@@ -166,7 +208,7 @@ describe('Feature Query Language - FQL', function() {
 					}
 				]
 				let common = []
-				expect(fql._commonMatches(matchArchive)).eql(common)
+				expect(fql._findCommonMatches(matchArchive)).eql(common)
 			})
 		})
 		it('check behaviour _addResources', () => {
@@ -332,7 +374,7 @@ describe('Feature Query Language - FQL', function() {
 						hardStart: true,
 						rules: [
 							[
-								['CheW@pfam28', [1, NaN]]
+								['CheW@pfam28', [1, 1]]
 							]
 						],
 						hardStop: true
@@ -1118,7 +1160,7 @@ describe('Feature Query Language - FQL', function() {
 			})
 		})
 	})
-	describe.only('Positional rules :: ', function() {
+	describe('Positional rules :: ', function() {
 		it('Filter protein sequences starting with 1 match to a CheW domain from Pfam28', function() {
 			let fql = new Fql()
 			let setOfRules = [
@@ -1915,7 +1957,7 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(fql.match).eql(expected)
 			})
-			it.only('Filter protein sequences starting with TM followed by any two domains from pfam28 but Cache_1 not in the first of the two followed by another TM and ending a MCPsignal', function() {
+			it('Filter protein sequences starting with TM followed by any two domains from pfam28 but Cache_1 not in the first of the two followed by another TM and ending a MCPsignal', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
