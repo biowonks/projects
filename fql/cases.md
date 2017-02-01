@@ -29,9 +29,10 @@ The rules are passed as a JSON object to FQL and it has two keys: `Npos` for non
 
 The way rules are organized in FQL is the following:
 
-* Set of rules - Array containing alternative matching rules
-    * rules - Object containing matching rules that must all match. It is divided in positional and non-positional
-        * Individual rule. - single snipet of matching definition.
+* Query - Array containing alternative matching rules to define a protein family
+    * Set of rules - Object containing rules that must all match. It is divided in positional and non-positional
+        * rule - single instruction or set of instructions that must match.
+            * instruction - single snipet of matching definition.
 
 Example of a set of rules:
 

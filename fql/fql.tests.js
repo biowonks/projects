@@ -96,7 +96,7 @@ describe('Feature Query Language - FQL', function() {
 				])
 		})
 		it('check behaviour _getConfig')
-		describe('check behaviour of _commonMatches ::', () => {
+		describe.skip('check behaviour of _commonMatches ::', () => {
 			it('with empty match', () => {
 				let matchArchive = []
 				let common = []
@@ -2040,7 +2040,7 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(fql.match).eql(expected)
 			})
-			it('Filter sequences that start with TM and end with MCPsignal.', function() {
+			it.only('Filter sequences that start with TM and end with MCPsignal.', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
