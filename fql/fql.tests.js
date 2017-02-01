@@ -2040,7 +2040,7 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(fql.match).eql(expected)
 			})
-			it.only('Filter sequences that start with TM and end with MCPsignal.', function() {
+			it('Filter sequences that start with TM and end with MCPsignal.', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
