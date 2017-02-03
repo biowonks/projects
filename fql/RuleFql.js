@@ -8,10 +8,23 @@ module.exports =
  * @param {string?} optSequence defauls to the empty string
  */
 class RuleFql {
-	constructor(rule = {}) {
-		this.instructions = rule.instructions
-		this.matches = []
+	constructor(rule = {rule: [], pos: -1}) {
+		if (rule.instructions)
+			this.instructions = rule.instructions
+		else
+			this.instructions = []
+
 		this.pos = rule.pos
+
+		this.matches = []
+		this.lowNumMatches = []
+		this.highNumMatches = []
+		this.isOk = true
+
+		if (this.instructions)
+			this.numOfIns = this.instructions.length
+		else
+			this.numOfIns = 0
 	}
 
 	/**
@@ -23,19 +36,21 @@ class RuleFql {
 	 * @return {Array} Returns array of index that matches all instructions in the self set.
 	 */
 
-	findMatches(arrayInfo, startPos = NaN) {
+	findMatches(arrayInfo, startPos = NaN, endPos = NaN) {
 		let matchArchive = [],
 			isOk = true,
-			commonMatches = []
+			commonMatches = [],
+			lowNumMatches = [],
+			highNumMatches = []
 
 		//console.log('_findMatch :: ' + ' - -- - ')
 
-		for (let j = 0; j < this.instructions.length; j++) {
+		for (let j = 0; j < this.numOfIns; j++) {
 			let instr = this.instructions[j],
 				matches = []
 
-			this.lowNumMatches = instr[1][0]
-			this.highNumMatches = instr[1][1]
+			lowNumMatches.push(instr[1][0])
+			highNumMatches.push(instr[1][1])
 
 			//console.log('_findMatch :: ' + '	Instruction -> ' + JSON.stringify(instr))
 
@@ -63,20 +78,34 @@ class RuleFql {
 			//console.log('_findMatch :: remind the instruction = ' + JSON.stringify(instr))
 
 			if (instr[0].indexOf('.*') !== -1)
-				matches.splice(this.highNumMatches)
+				matches.splice(highNumMatches[j])
 
-			matchArchive.push({matches: matches, negative: (this.highNumMatches === 0 && this.lowNumMatches === 0)})
+			//console.log('_findMatch :: ' + '	high number ' + highNumMatches[j])
+			//console.log('_findMatch :: ' + '	low number: ' + lowNumMatches[j])
+			//console.log('_findMatch :: ' + '	matches: ' + JSON.stringify(matches))
+
+			let negative = false
+			if (highNumMatches[j] === 0 && lowNumMatches[j] === 0)
+				negative = true
+
+			matchArchive.push({matches: matches, negative: negative})
+			this.matches = matches
+			//console.log('_findMatch :: ' + '	pushed: ' + JSON.stringify(matchArchive[matchArchive.length - 1]))
 			//console.log('_findMatch :: ' + isOk)
 		}
 
 		//console.log('_findMatch :: ' + 'Match Archive: ' + JSON.stringify(matchArchive))
-		commonMatches = this._findCommonMatches(matchArchive)
-		this.matches = commonMatches
+		if (this.instructions.length > 1) {
+			commonMatches = this._findCommonMatches(matchArchive)
+			this.matches = commonMatches
+		}
+		this.lowNumMatches = lowNumMatches
+		this.highNumMatches = highNumMatches
 		this.isOk = isOk
 	}
 
 	/**
-	 * Find the index of the last feature in the sequence to match a positional instruction. - Need its own test.
+	 * Find the index of the last feature in the sequence to match a positional instruction.
 	 * @param {Array.Object} matchArchive - Array containing the object of matches and isOk for each rule.
 	 * @returns {Array} Return a list of match index common to all instructions in the rule.
 	 */
@@ -86,7 +115,13 @@ class RuleFql {
 		for (let i = 0; i < matchArchive.length; i++) {
 			if (!(matchArchive[i].negative))
 				listOfMatches.push(matchArchive[i].matches)
+			else if (matchArchive[i].matches.length > 0)
+				return []
 		}
+
+		listOfMatches.sort((a, b) => {
+			return a.length < b.length
+		})
 		//console.log(' _findCommonMatches ---> ' + '--')
 		//console.log(' _findCommonMatches ---> ' + JSON.stringify(listOfMatches))
 		//console.log(' _findCommonMatches ---> ' + '--')
@@ -96,8 +131,7 @@ class RuleFql {
 		let lowMatchNumber = Math.min.apply(Math, (listOfMatches.map((matches) => {
 				return matches.length
 			}))),
-			common = [],
-			tried = []
+			common = []
 		//console.log(' _findCommonMatches ---> ' + '-<> number of lists: ' + listOfMatches.length)
 		if (listOfMatches.length > 1) {
 			for (let i = 0; i < listOfMatches.length - 1; i++) {
@@ -107,7 +141,8 @@ class RuleFql {
 						numOfIns = 0
 					//console.log(' _findCommonMatches ---> ' + '=> ' + j + ' matching value: ' + newValue)
 					for (let k = i + 1; k < listOfMatches.length; k++) {
-						if (listOfMatches[k].indexOf(newValue) !== -1)
+						//console.log(' _findCommonMatches -----> ' + '=> match list 2: ' + JSON.stringify(listOfMatches[k]))
+						if (listOfMatches[k].indexOf(newValue) !== -1 || (listOfMatches[k].length === 0 && matchArchive[k].negative))
 							numOfIns++
 					}
 					if (numOfIns + 1 === listOfMatches.length)
@@ -136,10 +171,17 @@ class RuleFql {
 
 	checkNumMatches() {
 		//console.log('checkNumMatches :: ' + JSON.stringify(this))
-		if (this.matches.length < this.lowNumMatches || (this.instructions[0].indexOf('.*') === -1 && this.matches.length > this.highNumMatches) || this.isOk === false) {
-			//console.log('checkNumMatches :: ' + '	wrong number of matches - BREAKING ')
-			this.isOk = false
-			//console.log('checkNumMatches :: ' + JSON.stringify(this))
+		for (let i = 0; i < this.numOfIns; i++) {
+			//console.log('checkNumMatches :: ' + ' Instruction ' + i )
+			if (this.lowNumMatches[i] !== 0 && this.highNumMatches !== 0) {
+				if (this.matches.length < this.lowNumMatches[i] || (this.instructions[0].indexOf('.*') === -1 && this.matches.length > this.highNumMatches[i]) || this.isOk === false) {
+					
+					//console.log('checkNumMatches :: ' + '	wrong number of matches - BREAKING ')
+					this.isOk = false
+					//console.log('checkNumMatches :: ' + JSON.stringify(this))
+				}
+			}
+			//console.log('checkNumMatches :: ' + 'Deciding - ' + this.isOk)
 		}
 		return this.isOk
 	}

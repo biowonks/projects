@@ -101,9 +101,11 @@ class Fql {
 		for (let i = 0; i < parsedRules.rules.length; i++) { // check each rule
 
 			let currRule = new RuleFql({instructions: parsedRules.rules[i], pos: i}),
-				nextRule = new RuleFql({instructions: parsedRules.rules[i + 1], pos: i + 1})
+				nextRule = new RuleFql({instructions: parsedRules.rules[i + 1], pos: i + 1}),
+				classifiedMatches = {hard: [], soft: [], next: []}
 
 			//console.log('_testPos :: ' + 'Rule -> ' + JSON.stringify(currRule))
+
 
 			currRule.findMatches(arrayInfo, indexLastMatch)
 			isOk = currRule.isOk
@@ -117,28 +119,52 @@ class Fql {
 
 			if (nextRule.instructions && currRule.matches.length !== 0) {
 				//console.log('_testPos :: ' + ' ----- NEXT RULE -----')
-				nextRule.findMatches(arrayInfo, indexLastMatch + 1)
-				let nextIsOk = nextRule.isOk
+				if (isNaN(indexLastMatch))
+					nextRule.findMatches(arrayInfo, 0)
+				else
+					nextRule.findMatches(arrayInfo, indexLastMatch + 1)
 				//console.log('_testPos :: ' + 'Next Rule - Common matches - ' + JSON.stringify(nextRule.matches))
 				//console.log('_testPos :: ' + 'Next Rule - not consecutive match: ' + (nextRule.matches[0] - 1 !== currRule.matches[currRule.matches.length - 1]))
 
-				if (currRule.matches === nextRule.matches) {
-					//console.log('_testPos :: ' + 'same matching between current and next rule : impossible overall match')
-					isOk = false
-				}
-				else {
-					let currNextMatches = [currRule.matches[0]]
-					for (let j = 1; j < currRule.matches.length; j++) {
-						if (nextRule.matches.indexOf(currRule.matches[j]) === -1)
-							currNextMatches.push(currRule.matches[j])
-						else
-							break
+				classifiedMatches = this._classifyMatches(currRule, nextRule)
+				
+				//console.log('_testPos :: ' + ' Classifying matches: ' + JSON.stringify(classifiedMatches))
+
+				let foundMatch = false
+
+				for (let j = 0; j < classifiedMatches.soft.length; j++) {
+					//console.log('_testPos :: ' + JSON.stringify(classifiedMatches.soft.slice(0, j)))
+					//console.log('_testPos :: ' + JSON.stringify(classifiedMatches.hard.concat(classifiedMatches.soft.slice(0, j))))
+					//console.log('_testPos :: ' + JSON.stringify(classifiedMatches.soft.slice(j, classifiedMatches.soft.length).concat(classifiedMatches.next)))
+					currRule.matches = classifiedMatches.hard.concat(classifiedMatches.soft.slice(0, j))
+					nextRule.matches = classifiedMatches.soft.slice(j, classifiedMatches.soft.length).concat(classifiedMatches.next)
+
+					//console.log('_testPos :: ' + 'Current rule -> ' + JSON.stringify(currRule))
+					//console.log('_testPos :: ' + 'Next Rule -> ' + JSON.stringify(nextRule))
+
+					if (i === 0) {
+						//console.log('_testPos :: ' + 'Testing first rule')
+						currRule.checkFirstRule(parsedRules.hardStart)
+						nextRule.checkFirstRule(parsedRules.hardStart)
 					}
-					if (currNextMatches.length !== 0) {
-						//console.log('_testPos :: ' + ' Going to make currRule.matches = ' + JSON.stringify(currNextMatches))
-						currRule.matches = currNextMatches
+					else {
+						//console.log('_testPos :: ' + 'Testing the other rules')
+						currRule.checkNumMatches()
+						nextRule.checkNumMatches()
+					}
+					//console.log('_testPos :: ' + 'Current rule -> ' + JSON.stringify(currRule))
+					//console.log('_testPos :: ' + 'Next Rule -> ' + JSON.stringify(nextRule))
+					if (currRule.isOk && nextRule.isOk) {
+						//indexLastMatch = currRule.matches[currRule.matches.length - 1]
+						////console.log('_testPos :: ' + 'lastmatch: ' + indexLastMatch)
+						foundMatch = true
+						break
 					}
 				}
+			
+				if (foundMatch)
+					isOk = true
+
 				//console.log('_testPos :: ' + ' ----- END of NEXT RULE -----')
 			}
 
@@ -158,12 +184,17 @@ class Fql {
 			}
 
 			if (currRule.matches.length === 0) {
+				//console.log('_testPos :: ' + ' False by having no matches')
 				isOk = false
 				break
 			}
 
 			if (!(isNaN(indexLastMatch))) {
+				//console.log('_testPos :: ' + ' is still ok? : ' + isOk)
+				//console.log('_testPos :: ' + ' final match : ' + currRule.matches[0])
+				//console.log('_testPos :: ' + ' last index : ' + indexLastMatch)
 				if (isOk === false || currRule.matches === [] || currRule.matches[0] - 1 !== indexLastMatch) {
+					//console.log('_testPos :: ' + ' False by having no consecutive match')
 					isOk = false
 					break
 				}
@@ -176,11 +207,37 @@ class Fql {
 				if (indexLastMatch !== arrayInfo.length - 1)
 					isOk = false
 			}
+
 			if (isOk === false)
 				break
 		}
 		//console.log('_testPos :: ' + 'FINAL = ' + isOk)
 		return isOk
+	}
+
+	/**
+	 * Classify matches into hard and soft matches.
+	 * @param {RuleFql} currRule - Current Rule
+	 * @param {RuleFql} nextRule - Next rule
+	 * @returns {Object} { hard: [], soft: []}
+	 */
+
+	_classifyMatches(currRule, nextRule) {
+		let hard = [],
+			soft = [],
+			next = []
+
+		for (let i = 0; i < currRule.matches.length; i++) {
+			if (nextRule.matches.indexOf(currRule.matches[i]) === -1)
+				hard.push(currRule.matches[i])
+			else
+				soft.push(currRule.matches[i])
+		}
+		for (let i = 0; i < nextRule.matches.length; i++) {
+			if (soft.indexOf(nextRule.matches[i]) === -1)
+				next.push(nextRule.matches[i])
+		}
+		return {hard: hard, soft: soft, next: next}
 	}
 
 	/**

@@ -1897,7 +1897,19 @@ describe('Feature Query Language - FQL', function() {
 								{
 									resource: 'pfam28',
 									feature: '.*',
-									count: '{2}'
+									count: '{1}'
+								},
+								{
+									resource: 'pfam28',
+									feature: 'Cache_1',
+									count: '{0}'
+								}
+							],
+							[
+								{
+									resource: 'pfam28',
+									feature: '.*',
+									count: '{1}'
 								},
 								{
 									resource: 'pfam28',
