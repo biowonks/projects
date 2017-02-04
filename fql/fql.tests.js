@@ -95,122 +95,7 @@ describe('Feature Query Language - FQL', function() {
 					'MCPsignal@pfam28'
 				])
 		})
-		it('check behaviour _getConfig')
-		describe.skip('check behaviour of _commonMatches ::', () => {
-			it('with empty match', () => {
-				let matchArchive = []
-				let common = []
-				expect(fql._findCommonMatches(matchArchive)).eql(common)
-			})
-			it('with single instruction and single match', () => {
-				let matchArchive = [
-					{
-						matches: [0],
-						negative: false
-					}
-				]
-				let common = [0]
-				expect(fql._findCommonMatches(matchArchive)).eql(common)
-			})
-			it('with single instruction', () => {
-				let matchArchive = [
-					{
-						matches: [1, 2, 3, 4, 5],
-						negative: false
-					}
-				]
-				let common = [1, 2, 3, 4, 5]
-				expect(fql._findCommonMatches(matchArchive)).eql(common)
-			})
-			it('with multiple instructions', () => {
-				let matchArchive = [
-					{
-						matches: [1, 2, 3, 4, 5, 6],
-						negative: false
-					},
-					{
-						matches: [1, 2, 3, 4],
-						negative: false
-					},
-					{
-						matches: [1, 2, 3],
-						negative: false
-					}
-				]
-				let common = [1, 2, 3]
-				expect(fql._findCommonMatches(matchArchive)).eql(common)
-			})
-			it('with multiple instructions with negative', () => {
-				let matchArchive = [
-					{
-						matches: [],
-						negative: true
-					},
-					{
-						matches: [1, 2, 3, 4],
-						negative: false
-					},
-					{
-						matches: [1, 2, 3],
-						negative: false
-					}
-				]
-				let common = [1, 2, 3]
-				expect(fql._findCommonMatches(matchArchive)).eql(common)
-			})
-			it('with two instructions, one negative', () => {
-				let matchArchive = [
-					{
-						matches: [],
-						negative: true
-					},
-					{
-						matches: [1, 2, 3],
-						negative: false
-					}
-				]
-				let common = [1, 2, 3]
-				expect(fql._findCommonMatches(matchArchive)).eql(common)
-			})
-			it('with two instructions, one negative 2 - Order should not matter', () => {
-				let matchArchive = [
-					{
-						matches: [1, 2, 3],
-						negative: false
-					},
-					{
-						matches: [],
-						negative: true
-					}
-				]
-				let common = [1, 2, 3]
-				expect(fql._findCommonMatches(matchArchive)).eql(common)
-			})
-			it('with two instructions, not matching from the first element', () => {
-				let matchArchive = [
-					{
-						matches: [1, 2, 3],
-						negative: false
-					},
-					{
-						matches: [2, 3],
-						negative: false
-					}
-				]
-				let common = [2, 3]
-				expect(fql._findCommonMatches(matchArchive)).eql(common)
-			})
-			it('with single negative instruction', () => {
-				let matchArchive = [
-					{
-						matches: [],
-						negative: true
-					}
-				]
-				let common = []
-				expect(fql._findCommonMatches(matchArchive)).eql(common)
-			})
-		})
+		it.skip('check behaviour _getConfig')
 		it('check behaviour _addResources', () => {
 			let rc = 'pfam28'
 			fql._addResources(rc)
@@ -312,7 +197,8 @@ describe('Feature Query Language - FQL', function() {
 								{
 									resource: 'pfam28',
 									feature: 'Response_reg',
-									count: '{0}'								},
+									count: '{0}'
+								},
 								{
 									resource: 'pfam28',
 									feature: '.*',
@@ -401,7 +287,7 @@ describe('Feature Query Language - FQL', function() {
 			it('It must work with single number', () => {
 				let countInfo = '{7}',
 					parsed = fql._parseCount(countInfo)
-				expect(parsed).eql([7,7])
+				expect(parsed).eql([7, 7])
 			})
 			it('It must work with two numbers', () => {
 				let countInfo = '{1,7}',
@@ -459,7 +345,7 @@ describe('Feature Query Language - FQL', function() {
 			expect(fql.resources).eql(expected)
 		})
 		describe('Missing pos or Npos in arguments should pass pos and Npos null rules', () => {
-			it('Missing pos should pass null for rules.pos', () => {
+			it('Missing pos should pass undefined for rules.pos', () => {
 				let setOfRules = [
 					{
 						Npos: [
@@ -471,7 +357,7 @@ describe('Feature Query Language - FQL', function() {
 					}
 				]
 				fql.loadRules(setOfRules)
-				fql.applyFilter
+				expect(fql.rules.pos).to.be.undefined
 			})
 		})
 		describe('Checking the integrity of rules - should throw informative Errors', () => {

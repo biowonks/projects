@@ -3,7 +3,9 @@
 let RuleFql = require('./RuleFql.js')
 
 module.exports =
-/**ass of Feature Query Language */
+/**
+ * Class of Feature Query Language
+ * */
 class Fql {
 	constructor(initialAseqs = []) {
 		this.input = {}
@@ -17,21 +19,17 @@ class Fql {
 
 	/**
 	 * Load and parse the set of rules passed by the user in FQL standards.
-	 *
 	 * The keys of the object that will be interpreted are two: Npos and pos. Everything else will be ignored.
-	 *
 	 * Example of rule:
-	 *
-	 *
-	 *
+	 * Find if certain rule will match the expression. (NEED TEST)
 	 * @param {Array{Objects}} - Raw set of rules object
-	 * @returns {Boolean} - True if no problems occur.
+	 * @return {Boolean} - True if no problems occur.
 	 */
+
 	loadRules(setOfRules) {
 		this.rules = setOfRules
 		this.resources = []
 		this.parsedRules = []
-		let resources = []
 		setOfRules.forEach((rules) => {
 			this._isValidRule(rules)
 			this.parsedRules.push(this._parseRules(rules))
@@ -65,14 +63,14 @@ class Fql {
 		if (rules) {
 			rules.forEach((rule) => {
 				if (rule[1] === '') {
-					match = match && (stringInfo.indexOf(rule[0]) === -1 ? false : true)
+					match = match && stringInfo.indexOf(rule[0]) !== -1
 				}
 				else {
 					let interval = rule[1].match('{([^}]+)}')[1].split(',')
 					if (interval.length > 1) {
 						if (interval[1] === '')
 							interval[1] = Number.MAX_SAFE_INTEGER
-						match = match && ((stringInfo.split(rule[0]).length - 1 >= parseInt(interval[0]) ? true : false) && (stringInfo.split(rule[0]).length - 1 <= parseInt(interval[1]) ? true : false))
+						match = match && (stringInfo.split(rule[0]).length - 1 >= parseInt(interval[0]) && (stringInfo.split(rule[0]).length - 1 <= parseInt(interval[1])))
 					}
 					else {
 						match = match && stringInfo.split(rule[0]).length - 1 === parseInt(interval[0])
@@ -85,124 +83,119 @@ class Fql {
 
 	/**
 	 * Test if the domain architecture of a sequence matches the filter.
-	 * @param {string} stringInfo - domain architecture information in string.
-	 * @param {string} regular expression type of rule
+	 * @param {string} arrayInfo - domain architecture information in string.
+	 * @param {Object} parsedRules - Object containing the rules
 	 * @returns {Boolean} - True if matches
 	 */
 	_testPos(arrayInfo, parsedRules) {
-		let indexInfo = 0,
-			indexLastMatch = NaN,
+		let indexLastMatch = NaN,
 			isOk = true
 
-		//console.log('_testPos :: ' + '-------------------------------------------------------------------------------------------------')
-		//console.log('_testPos :: ' + ' This is the data: ' + JSON.stringify(arrayInfo))
-		//console.log('_testPos :: ' + JSON.stringify(parsedRules))
+		// console.log('_testPos :: ' + '-------------------------------------------------------------------------------------------------')
+		// console.log('_testPos :: ' + ' This is the data: ' + JSON.stringify(arrayInfo))
+		// console.log('_testPos :: ' + JSON.stringify(parsedRules))
 
 		for (let i = 0; i < parsedRules.rules.length; i++) { // check each rule
-
 			let currRule = new RuleFql({instructions: parsedRules.rules[i], pos: i}),
 				nextRule = new RuleFql({instructions: parsedRules.rules[i + 1], pos: i + 1}),
 				classifiedMatches = {hard: [], soft: [], next: []}
 
-			//console.log('_testPos :: ' + 'Rule -> ' + JSON.stringify(currRule))
+			// console.log('_testPos :: ' + 'Rule -> ' + JSON.stringify(currRule))
 
 
 			currRule.findMatches(arrayInfo, indexLastMatch)
 			isOk = currRule.isOk
 
-			//console.log('_testPos :: ' + 'Common matches - ' + JSON.stringify(currRule.matches))
-			//console.log('_testPos :: ' + 'lastmatch: ' + indexLastMatch)
-			//console.log('_testPos :: ' + 'not consecutive match: ' + (currRule.matches[0] - 1 !== indexLastMatch))
+			// console.log('_testPos :: ' + 'Common matches - ' + JSON.stringify(currRule.matches))
+			// console.log('_testPos :: ' + 'lastmatch: ' + indexLastMatch)
+			// console.log('_testPos :: ' + 'not consecutive match: ' + (currRule.matches[0] - 1 !== indexLastMatch))
 
 			if (indexLastMatch && (currRule.matches[0] - 1 !== indexLastMatch))
 				isOk = false
 
 			if (nextRule.instructions && currRule.matches.length !== 0) {
-				//console.log('_testPos :: ' + ' ----- NEXT RULE -----')
+				// console.log('_testPos :: ' + ' ----- NEXT RULE -----')
 				if (isNaN(indexLastMatch))
 					nextRule.findMatches(arrayInfo, 0)
 				else
 					nextRule.findMatches(arrayInfo, indexLastMatch + 1)
-				//console.log('_testPos :: ' + 'Next Rule - Common matches - ' + JSON.stringify(nextRule.matches))
-				//console.log('_testPos :: ' + 'Next Rule - not consecutive match: ' + (nextRule.matches[0] - 1 !== currRule.matches[currRule.matches.length - 1]))
+				// console.log('_testPos :: ' + 'Next Rule - Common matches - ' + JSON.stringify(nextRule.matches))
+				// console.log('_testPos :: ' + 'Next Rule - not consecutive match: ' + (nextRule.matches[0] - 1 !== currRule.matches[currRule.matches.length - 1]))
 
 				classifiedMatches = this._classifyMatches(currRule, nextRule)
-				
-				//console.log('_testPos :: ' + ' Classifying matches: ' + JSON.stringify(classifiedMatches))
+
+				// console.log('_testPos :: ' + ' Classifying matches: ' + JSON.stringify(classifiedMatches))
 
 				let foundMatch = false
 
 				for (let j = 0; j < classifiedMatches.soft.length; j++) {
-					//console.log('_testPos :: ' + JSON.stringify(classifiedMatches.soft.slice(0, j)))
-					//console.log('_testPos :: ' + JSON.stringify(classifiedMatches.hard.concat(classifiedMatches.soft.slice(0, j))))
-					//console.log('_testPos :: ' + JSON.stringify(classifiedMatches.soft.slice(j, classifiedMatches.soft.length).concat(classifiedMatches.next)))
+					// console.log('_testPos :: ' + JSON.stringify(classifiedMatches.soft.slice(0, j)))
+					// console.log('_testPos :: ' + JSON.stringify(classifiedMatches.hard.concat(classifiedMatches.soft.slice(0, j))))
+					// console.log('_testPos :: ' + JSON.stringify(classifiedMatches.soft.slice(j, classifiedMatches.soft.length).concat(classifiedMatches.next)))
 					currRule.matches = classifiedMatches.hard.concat(classifiedMatches.soft.slice(0, j))
 					nextRule.matches = classifiedMatches.soft.slice(j, classifiedMatches.soft.length).concat(classifiedMatches.next)
 
-					//console.log('_testPos :: ' + 'Current rule -> ' + JSON.stringify(currRule))
-					//console.log('_testPos :: ' + 'Next Rule -> ' + JSON.stringify(nextRule))
+					// console.log('_testPos :: ' + 'Current rule -> ' + JSON.stringify(currRule))
+					// console.log('_testPos :: ' + 'Next Rule -> ' + JSON.stringify(nextRule))
 
 					if (i === 0) {
-						//console.log('_testPos :: ' + 'Testing first rule')
+						// console.log('_testPos :: ' + 'Testing first rule')
 						currRule.checkFirstRule(parsedRules.hardStart)
 						nextRule.checkFirstRule(parsedRules.hardStart)
 					}
 					else {
-						//console.log('_testPos :: ' + 'Testing the other rules')
+						// console.log('_testPos :: ' + 'Testing the other rules')
 						currRule.checkNumMatches()
 						nextRule.checkNumMatches()
 					}
-					//console.log('_testPos :: ' + 'Current rule -> ' + JSON.stringify(currRule))
-					//console.log('_testPos :: ' + 'Next Rule -> ' + JSON.stringify(nextRule))
+					// console.log('_testPos :: ' + 'Current rule -> ' + JSON.stringify(currRule))
+					// console.log('_testPos :: ' + 'Next Rule -> ' + JSON.stringify(nextRule))
 					if (currRule.isOk && nextRule.isOk) {
-						//indexLastMatch = currRule.matches[currRule.matches.length - 1]
-						////console.log('_testPos :: ' + 'lastmatch: ' + indexLastMatch)
+						// indexLastMatch = currRule.matches[currRule.matches.length - 1]
+						// //console.log('_testPos :: ' + 'lastmatch: ' + indexLastMatch)
 						foundMatch = true
 						break
 					}
 				}
-			
 				if (foundMatch)
 					isOk = true
-
-				//console.log('_testPos :: ' + ' ----- END of NEXT RULE -----')
+				// console.log('_testPos :: ' + ' ----- END of NEXT RULE -----')
 			}
 
-			//console.log('_testPos :: ' + 'New common matches after next rule: ' + JSON.stringify(currRule.matches))
+			// console.log('_testPos :: ' + 'New common matches after next rule: ' + JSON.stringify(currRule.matches))
 
-			//console.log('_testPos :: ' + ' Now, let\'s make the test about the number of matches of the special first rule')
-			//console.log('_testPos :: ' + 'Rule -> ' + JSON.stringify(currRule))
+			// console.log('_testPos :: ' + ' Now, let\'s make the test about the number of matches of the special first rule')
+			// console.log('_testPos :: ' + 'Rule -> ' + JSON.stringify(currRule))
 			if (!(currRule.checkFirstRule(parsedRules.hardStart))) {
 				isOk = currRule.isOk
 				break
 			}
 
-			//console.log('_testPos :: ' + ' And check if the number of matches are within the interval')
+			// console.log('_testPos :: ' + ' And check if the number of matches are within the interval')
 			if (!(currRule.checkNumMatches())) {
 				isOk = currRule.isOk
 				break
 			}
 
 			if (currRule.matches.length === 0) {
-				//console.log('_testPos :: ' + ' False by having no matches')
+				// console.log('_testPos :: ' + ' False by having no matches')
 				isOk = false
 				break
 			}
 
 			if (!(isNaN(indexLastMatch))) {
-				//console.log('_testPos :: ' + ' is still ok? : ' + isOk)
-				//console.log('_testPos :: ' + ' final match : ' + currRule.matches[0])
-				//console.log('_testPos :: ' + ' last index : ' + indexLastMatch)
+				// console.log('_testPos :: ' + ' is still ok? : ' + isOk)
+				// console.log('_testPos :: ' + ' final match : ' + currRule.matches[0])
+				// console.log('_testPos :: ' + ' last index : ' + indexLastMatch)
 				if (isOk === false || currRule.matches === [] || currRule.matches[0] - 1 !== indexLastMatch) {
-					//console.log('_testPos :: ' + ' False by having no consecutive match')
+					// console.log('_testPos :: ' + ' False by having no consecutive match')
 					isOk = false
 					break
 				}
 			}
-			//console.log('_testPos :: ' + 'List of matches: ' + JSON.stringify(currRule.matches))
+			// console.log('_testPos :: ' + 'List of matches: ' + JSON.stringify(currRule.matches))
 			indexLastMatch = currRule.matches[currRule.matches.length - 1]
-		
-			//console.log('_testPos :: ' + 'New last match: ' + indexLastMatch)
+			// console.log('_testPos :: ' + 'New last match: ' + indexLastMatch)
 			if (parsedRules.hardStop === true && i === parsedRules.rules.length - 1) {
 				if (indexLastMatch !== arrayInfo.length - 1)
 					isOk = false
@@ -211,7 +204,7 @@ class Fql {
 			if (isOk === false)
 				break
 		}
-		//console.log('_testPos :: ' + 'FINAL = ' + isOk)
+		// console.log('_testPos :: ' + 'FINAL = ' + isOk)
 		return isOk
 	}
 
@@ -237,13 +230,17 @@ class Fql {
 			if (soft.indexOf(nextRule.matches[i]) === -1)
 				next.push(nextRule.matches[i])
 		}
-		return {hard: hard, soft: soft, next: next}
+		return {
+			hard,
+			soft,
+			next
+		}
 	}
 
 	/**
 	 * Add resource from rule to the array of resource used
 	 * @param {string} resource - identifier of the resource
-	 * @returns null
+	 * @returns {null}
 	 */
 	_addResources(resource) {
 		if (this.resources.indexOf(resource) === -1)
@@ -257,7 +254,7 @@ class Fql {
 
 	/**
 	 * Parse filtering rules passed by the user
-	 * @params {Object} rules - Raw rules object passed to FQL
+	 * @param {Object} rules - Raw rules object passed to FQL
 	 * @returns {Object} parsed - Same object but with the rules parsed
 	 */
 	_parseRules(rules) {
@@ -348,7 +345,7 @@ class Fql {
 	 * @param {Object} rule - Instruction to be parsed.
 	 * @param {number} i - index of the rule
 	 * @param {number} L - number of rules.
-	 * @return {Object.Array|string} Parsed rule or
+	 * @returns {Object.Array|string} Parsed rule or
  	 */
 	_parseThePosInstruction(rule, i, L) {
 		let interval = [1, NaN],
@@ -367,8 +364,6 @@ class Fql {
 		}
 		return expr
 	}
-
-
 
 
 	/**
@@ -434,7 +429,7 @@ class Fql {
 	/**
 	* Get configuration to search each tool.
 	* Better is to link this to SeqDepot via API - so changes there, change this too.
-	* @param {string} Name of the resource
+	* @param {string} rc - Name of the resource
 	* @returns {Object} Object with attribute pos and ft with the indexes where to find this info in the array from each tool
 	*/
 	_getConfig(rc) {
@@ -450,15 +445,6 @@ class Fql {
 			}
 		}
 		return config
-	}
-
-	_checkIfToolWasCalculated(info) {
-		return true
-	}
-
-
-	_readRule(rule) {
-		return null
 	}
 
 	/**

@@ -72,4 +72,131 @@ describe('Class RuleFql ::', function() {
 			expect(ruleFql).eql(result)
 		})
 	})
+	describe('check behaviour of _commonMatches ::', () => {
+		let ruleFql = new RuleFql()
+		it('with empty match', () => {
+			let matchArchive = []
+			let common = []
+			expect(ruleFql._findCommonMatches(matchArchive)).eql(common)
+		})
+		it('with single instruction and single match', () => {
+			let matchArchive = [
+				{
+					matches: [0],
+					negative: false
+				}
+			]
+			let common = [0]
+			expect(ruleFql._findCommonMatches(matchArchive)).eql(common)
+		})
+		it('with single instruction', () => {
+			let matchArchive = [
+				{
+					matches: [1, 2, 3, 4, 5],
+					negative: false
+				}
+			]
+			let common = [1, 2, 3, 4, 5]
+			expect(ruleFql._findCommonMatches(matchArchive)).eql(common)
+		})
+		it('with multiple instructions', () => {
+			let matchArchive = [
+				{
+					matches: [1, 2, 3, 4, 5, 6],
+					negative: false
+				},
+				{
+					matches: [1, 2, 3, 4],
+					negative: false
+				},
+				{
+					matches: [1, 2, 3],
+					negative: false
+				}
+			]
+			let common = [1, 2, 3]
+			expect(ruleFql._findCommonMatches(matchArchive)).eql(common)
+		})
+		it('with multiple instructions with negative', () => {
+			let matchArchive = [
+				{
+					matches: [],
+					negative: true
+				},
+				{
+					matches: [1, 2, 3, 4],
+					negative: false
+				},
+				{
+					matches: [1, 2, 3],
+					negative: false
+				}
+			]
+			let common = [1, 2, 3]
+			expect(ruleFql._findCommonMatches(matchArchive)).eql(common)
+		})
+		it('with two instructions, one negative', () => {
+			let matchArchive = [
+				{
+					matches: [],
+					negative: true
+				},
+				{
+					matches: [1, 2, 3],
+					negative: false
+				}
+			]
+			let common = [1, 2, 3]
+			expect(ruleFql._findCommonMatches(matchArchive)).eql(common)
+		})
+		it('with two instructions, one negative 2 - Order should not matter', () => {
+			let matchArchive = [
+				{
+					matches: [1, 2, 3],
+					negative: false
+				},
+				{
+					matches: [],
+					negative: true
+				}
+			]
+			let common = [1, 2, 3]
+			expect(ruleFql._findCommonMatches(matchArchive)).eql(common)
+		})
+		it('with two instructions, not matching from the first element', () => {
+			let matchArchive = [
+				{
+					matches: [1, 2, 3],
+					negative: false
+				},
+				{
+					matches: [2, 3],
+					negative: false
+				}
+			]
+			let common = [2, 3]
+			expect(ruleFql._findCommonMatches(matchArchive)).eql(common)
+		})
+		it('with single negative instruction', () => {
+			let matchArchive = [
+				{
+					matches: [],
+					negative: true
+				}
+			]
+			let common = []
+			expect(ruleFql._findCommonMatches(matchArchive)).eql(common)
+		})
+	})
+	describe.skip('RuleFql methods', () => {
+		describe('check behaviour of findMatches ::', () => {
+			it('')
+		})
+		describe('check behaviour of checkFirstRule ::', () => {
+			it('')
+		})
+		describe('check behaviour of checkNumMatches ::', () => {
+			it('')
+		})
+	})
 })
