@@ -1,5 +1,6 @@
 /* eslint-disable no-magic-numbers, no-undefined */
 'use strict'
+let expect = require('chai').expect
 
 let RuleFql = require('./RuleFql.js')
 

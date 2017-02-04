@@ -1,31 +1,6 @@
 /* eslint-disable no-magic-numbers, no-undefined */
 'use strict'
-/*
-AseqIDs sample
-
-_G9KV6UChp5fA--pLFsKtw CheW-Response_reg
-s97yGnmuNdJLDTrYUUN8Mg CheW
-95iqLX6QoJUvvaHbpnbCfQ CheA, no RR
-7hMuWLhwA4TkUJ5akVyt8Q CheA with 2xCheW
-pg1GXegkB3AzHlO4KfwrlQ CheA with RR
-ImjKGgv7DEZQ4pUVmUz1ow CheW-CheW-CheW
-Q8FnjCriQtVZo3BOPDEZ5g RR-NMT_1_2-CheW
-1c2aUAJmZbYZAbzGtN9gaw CheW and CheR
-LcvBrwNhLzw5U-ks-qIYTw Inverted CheV
-aAd5V_e-gatRKwzG5oQbBA TM-Cache1-TM-HAMP-MCPsignal
-9fuU3zLn87XIQz-ndLORrA HAMP-MCPsignal
-f_3u566PtgMFBqutHB0FSw PAS_9-TM-TM-MCPsignal
-y6f7QqYgh9Nz6T15YTWbYA PAS_9-PAS_9-MCPsignal
-Gehbo63iKYELF32Gr6Wo2A PAS_9-TM-TM-HAMP-MCPsignal
-4TA3sXo7TTSvuCyMPWFQ0Q TM-TM-MCPsignal
-9tPW0dc69o71ksFptDhEoQ TM-MCPsignal-Rhodanese
-tNRr1mGTQfYEf01hYpdEww TM-TM-TM-TM-MCPsignal
-X89W3CfknQQjf9Rpnwl7WA TM-TM-TM-TM-TM-TM-MCPsignal
-4bB2LMeohCWN0zoLoRV6Cw TM-Cache_2-Cache_2-TM-HAMP-MCPsignal
-jHNUam7VrGX4D5aqqH4Oig TM-CHASE3-TM-HAMP-MCPsignal
-
-
-*/
+let expect = require('chai').expect
 
 let Fql = require('./Fql.js')
 let sampleData = require('./test-data/sample-input-fql.json')

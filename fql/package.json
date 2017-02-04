@@ -7,7 +7,8 @@
     "test": "find ./ -name '*.tests.js' | NODE_PATH=node_modules xargs node_modules/.bin/mocha --reporter ${MOCHA_REPORTER-spec} -r ../_common/test.globals.js",
     "coverage": "NODE_PATH=node_modules node_modules/.bin/istanbul cover --config ../_common/.istanbul.js node_modules/mocha/bin/_mocha -- --reporter ${MOCHA_REPORTER-spec} -r ../_common/test.globals.js '*.tests.js'",
     "cover": "NODE_PATH=node_modules istanbul cover ./node_modules/mocha/bin/_mocha -r ../_common/test.globals.js --report lcovonly -- -R spec *tests.js && cat ./coverage/lcov.info | ./node_modules/coveralls/bin/coveralls.js && rm -rf ./coverage",
-    "eslint": "node_modules/.bin/eslint '*.js'"
+    "eslint": "node_modules/.bin/eslint '*.js'",
+    "performance": "node --allow-natives-syntax ./node_modules/mocha/bin/_mocha --reporter mocha-performance *tests.js"
   },
   "author": "BioWonks",
   "license": "",
@@ -34,6 +35,7 @@
     "eslint": "^3.14.1",
     "istanbul": "^0.4.5",
     "mocha": "^3.2.0",
+    "mocha-performance": "^0.1.1",
     "sinon": "^1.17.7"
   }
 }
