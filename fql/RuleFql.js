@@ -41,7 +41,7 @@ class RuleFql {
 			lowNumMatches = [],
 			highNumMatches = []
 
-		// console.log('_findMatch :: ' + ' - -- - ')
+		//console.log('findMatches :: ' + ' - -- - ')
 
 		for (let j = 0; j < this.numOfIns; j++) {
 			let instr = this.instructions[j],
@@ -49,50 +49,54 @@ class RuleFql {
 
 			lowNumMatches.push(instr[1][0])
 			highNumMatches.push(instr[1][1])
-
-			// console.log('_findMatch :: ' + '	Instruction -> ' + JSON.stringify(instr))
-
-			for (let k = (startPos + 1 ? startPos + 1 : 0); k < arrayInfo.length; k++) {
-				// console.log('_findMatch :: ' + '	Test feature ' + k + ' -> ' + JSON.stringify(arrayInfo[k]))
-				if (arrayInfo[k].match(instr[0])) {
-					if (matches.length === 0 || matches[matches.length - 1] === k - 1) {
-						// console.log('_findMatch :: ' + '	--> consecutive match') // Is it consecutive match
-						matches.push(k)
-					}
-					else {
-						// console.log('_findMatch :: ' + '	--> not consecutive match - BREAKING')
-						break
-					}
-				}
-				else {
-					// console.log('_findMatch :: ' + '	--> No match')
-				}
-			}
-			// console.log('_findMatch :: ' + '	Number of matches: ' + matches.length)
-			// console.log('_findMatch :: ' + '	Matches: ' + JSON.stringify(matches))
-			// console.log('_findMatch :: ' + '	Rule number: ' + this.pos)
-
-			// console.log('_findMatch :: Right before test if is wildcard or obey limits: isOk = ' + isOk)
-			// console.log('_findMatch :: remind the instruction = ' + JSON.stringify(instr))
-
-			if (instr[0].indexOf('.*') !== -1)
-				matches.splice(highNumMatches[j])
-
-			// console.log('_findMatch :: ' + '	high number ' + highNumMatches[j])
-			// console.log('_findMatch :: ' + '	low number: ' + lowNumMatches[j])
-			// console.log('_findMatch :: ' + '	matches: ' + JSON.stringify(matches))
-
+			
 			let negative = false
 			if (highNumMatches[j] === 0 && lowNumMatches[j] === 0)
 				negative = true
 
+			//console.log('findMatches :: ' + '	Instruction -> ' + JSON.stringify(instr))
+
+			for (let k = (startPos + 1 ? startPos + 1 : 0); k < arrayInfo.length; k++) {
+				//console.log('findMatches :: ' + '	Test feature ' + k + ' -> ' + JSON.stringify(arrayInfo[k]))
+				if (arrayInfo[k].match(instr[0]) && !(negative)) {
+					if (matches.length === 0 || matches[matches.length - 1] === k - 1) {
+						//console.log('findMatches :: ' + '	--> consecutive match') // Is it consecutive match
+						matches.push(k)
+					}
+					else {
+						//console.log('findMatches :: ' + '	--> not consecutive match - BREAKING')
+						break
+					}
+				}
+				else if (!(arrayInfo[k].match(instr[0])) && negative) {
+					//console.log('findMatches :: ' + '	--> negative match')
+					matches.push(k)
+				}
+				else {
+					//console.log('findMatches :: ' + '	--> No match')
+				}
+			}
+			//console.log('findMatches :: ' + '	Number of matches: ' + matches.length)
+			//console.log('findMatches :: ' + '	Matches: ' + JSON.stringify(matches))
+			//console.log('findMatches :: ' + '	Rule number: ' + this.pos)
+
+			//console.log('findMatches :: Right before test if is wildcard or obey limits: isOk = ' + isOk)
+			//console.log('findMatches :: remind the instruction = ' + JSON.stringify(instr))
+
+			if (instr[0].indexOf('.*') !== -1)
+				matches.splice(highNumMatches[j])
+
+			//console.log('findMatches :: ' + '	high number ' + highNumMatches[j])
+			//console.log('findMatches :: ' + '	low number: ' + lowNumMatches[j])
+			//console.log('findMatches :: ' + '	matches: ' + JSON.stringify(matches))
+
 			matchArchive.push({matches, negative})
 			this.matches = matches
-			// console.log('_findMatch :: ' + '	pushed: ' + JSON.stringify(matchArchive[matchArchive.length - 1]))
-			// console.log('_findMatch :: ' + isOk)
+			//console.log('findMatches :: ' + '	pushed: ' + JSON.stringify(matchArchive[matchArchive.length - 1]))
+			//console.log('findMatches :: ' + isOk)
 		}
 
-		// console.log('_findMatch :: ' + 'Match Archive: ' + JSON.stringify(matchArchive))
+		//console.log('findMatches :: ' + 'Match Archive: ' + JSON.stringify(matchArchive))
 		if (this.instructions.length > 1) {
 			commonMatches = this._findCommonMatches(matchArchive)
 			this.matches = commonMatches
@@ -109,35 +113,35 @@ class RuleFql {
 	 */
 	_findCommonMatches(matchArchive) {
 		let listOfMatches = []
-		// console.log(' _findCommonMatches ---> ' + JSON.stringify(matchArchive))
+		//console.log(' _findCommonMatches ---> ' + JSON.stringify(matchArchive))
 		for (let i = 0; i < matchArchive.length; i++) {
-			if (!(matchArchive[i].negative))
+			if (matchArchive[i].matches.length > 0)
 				listOfMatches.push(matchArchive[i].matches)
-			else if (matchArchive[i].matches.length > 0)
+			else
 				return []
 		}
 
 		listOfMatches.sort((a, b) => {
 			return a.length < b.length
 		})
-		// console.log(' _findCommonMatches ---> ' + '--')
-		// console.log(' _findCommonMatches ---> ' + JSON.stringify(listOfMatches))
-		// console.log(' _findCommonMatches ---> ' + '--')
+		//console.log(' _findCommonMatches ---> ' + '--')
+		//console.log(' _findCommonMatches ---> ' + JSON.stringify(listOfMatches))
+		//console.log(' _findCommonMatches ---> ' + '--')
 		if (listOfMatches.length === 0)
 			return []
 
 		let common = []
-		// console.log(' _findCommonMatches ---> ' + '-<> number of lists: ' + listOfMatches.length)
+		//console.log(' _findCommonMatches ---> ' + '-<> number of lists: ' + listOfMatches.length)
 		if (listOfMatches.length > 1) {
 			for (let i = 0; i < listOfMatches.length - 1; i++) {
-				// console.log(' _findCommonMatches ---> ' + '=> match list 1: ' + listOfMatches[i])
+				//console.log(' _findCommonMatches ---> ' + '=> match list 1: ' + listOfMatches[i])
 				for (let j = 0; j < listOfMatches[i].length; j++) {
 					let newValue = listOfMatches[i][j],
 						numOfIns = 0
-					// console.log(' _findCommonMatches ---> ' + '=> ' + j + ' matching value: ' + newValue)
+					//console.log(' _findCommonMatches ---> ' + '=> ' + j + ' matching value: ' + newValue)
 					for (let k = i + 1; k < listOfMatches.length; k++) {
-						// console.log(' _findCommonMatches -----> ' + '=> match list 2: ' + JSON.stringify(listOfMatches[k]))
-						if (listOfMatches[k].indexOf(newValue) !== -1 || (listOfMatches[k].length === 0 && matchArchive[k].negative))
+						//console.log(' _findCommonMatches -----> ' + '=> match list 2: ' + JSON.stringify(listOfMatches[k]))
+						if (listOfMatches[k].indexOf(newValue) !== -1 || (listOfMatches[k].length === 0))
 							numOfIns++
 					}
 					if (numOfIns + 1 === listOfMatches.length)
@@ -146,36 +150,47 @@ class RuleFql {
 			}
 		}
 		else if (listOfMatches.length === 1) {
-			// console.log(' _findCommonMatches ---> ' + 'single list matches all')
+			//console.log(' _findCommonMatches ---> ' + 'single list matches all')
 			common = listOfMatches[0]
 		}
-		// console.log(' _findCommonMatches ---> ' + 'Return: ' +  JSON.stringify(common))
+		//console.log(' _findCommonMatches ---> ' + 'Return: ' +  JSON.stringify(common))
 		return common
 	}
 
 	checkFirstRule(hardStart) {
 		if (hardStart === true && this.pos === 0) {
-			// console.log('checkFirstRule :: ' + JSON.stringify(this))
+			//console.log('checkFirstRule :: ' + JSON.stringify(this))
 			let first = this.matches[0]
 			if (first !== 0 || this.matches.length < this.lowNumMatches || this.matches.length > this.highNumMatches)
 				this.isOk = false
 		}
-		// console.log('checkFirstRule :: ' + JSON.stringify(this))
+		else {
+			//console.log('checkFirstRule :: Skipping')
+		}
+		//console.log('checkFirstRule :: ' + JSON.stringify(this))
 		return this.isOk
 	}
 
-	checkNumMatches() {
-		// console.log('checkNumMatches :: ' + JSON.stringify(this))
+	checkNumMatches(checkHigh = true) {
+		//console.log('checkNumMatches :: ' + JSON.stringify(this))
 		for (let i = 0; i < this.numOfIns; i++) {
-			// console.log('checkNumMatches :: ' + ' Instruction ' + i )
+			//console.log('checkNumMatches :: ' + ' Instruction ' + i)
+			//console.log('checkNumMatches :: this.matches.length < this.lowNumMatches[i] ')
+			//console.log(this.matches.length < this.lowNumMatches[i])
+			//console.log('checkNumMatches :: this.instructions[0].indexOf(".*") === -1 | this.matches.length > this.highNumMatches[i] | onlyLow ')
+			//console.log( this.instructions[0].indexOf('.*') === -1 + ' ' + this.matches.length > this.highNumMatches[i] + ' ' + checkHigh)
+			//console.log('checkNumMatches :: this.isOk === false ' + this.isOk === false)
 			if (this.lowNumMatches[i] !== 0 && this.highNumMatches !== 0) {
-				if (this.matches.length < this.lowNumMatches[i] || (this.instructions[0].indexOf('.*') === -1 && this.matches.length > this.highNumMatches[i]) || this.isOk === false) {
-					// console.log('checkNumMatches :: ' + '	wrong number of matches - BREAKING ')
+				if (this.matches.length < this.lowNumMatches[i] || (this.instructions[0].indexOf('.*') === -1 && this.matches.length > this.highNumMatches[i] && checkHigh) || this.isOk === false) {
+					//console.log('checkNumMatches :: ' + '	wrong number of matches - BREAKING ')
 					this.isOk = false
-					// console.log('checkNumMatches :: ' + JSON.stringify(this))
+					//console.log('checkNumMatches :: ' + JSON.stringify(this))
+				}
+				else {
+					//console.log('wtf')
 				}
 			}
-			// console.log('checkNumMatches :: ' + 'Deciding - ' + this.isOk)
+			//console.log('checkNumMatches :: ' + 'Deciding - ' + this.isOk)
 		}
 		return this.isOk
 	}

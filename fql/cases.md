@@ -528,6 +528,42 @@ New tests:
 
 #### Scope of search.
 
+```javascript
+[
+    {
+        pos: [
+            {
+                resource: 'fql',
+                feature: '^'
+            },
+            {
+                resource: 'das',
+                feature: 'TM',
+                count: '{1}'
+            },
+            {
+                resource: '.*',
+                feature: '.*',
+                count: '{2}'
+            },
+            {
+                resource: 'das',
+                feature: 'TM',
+                count: '{1}'
+            }
+        ],
+        Npos: [
+            {
+                resource: 'pfam28',
+                feature: '.*',
+                count: '{0,}'
+            }
+        ]
+    }
+]
+```
+Npos to ensure that pfam28 domains are counted
+
 #### Overlapping features.
 
 ## Tests TODO
