@@ -13,6 +13,9 @@ const publicIp = require('public-ip'),
 // Local
 const normalizeConfig = require('../db/normalize-config')
 
+// Constants
+const kAdvisoryLockKey = 1000
+
 /**
  * Encapsulates common logic necessary to boot a database-enabled application leveraging the
  * sequelizejs library from a database configuration.
@@ -32,6 +35,7 @@ class BootService {
 	 * @param {Object} dbConfig
 	 * @param {Object} [options = {}]
 	 * @param {Object} [options.logger] - bunyan logger options
+	 * @param {number} [options.advisoryLockKey = 1000] - key to use for advisory lock
 	 */
 	constructor(dbConfig, options = {}) {
 		if (!dbConfig)
@@ -40,6 +44,7 @@ class BootService {
 		this.dbConfig_ = normalizeConfig(dbConfig)
 		this.logger_ = this.createLogger_(options.logger)
 		this.bootLogger_ = this.logger_.child({module: 'BootService'})
+		this.advisoryLockKey_ = options.advisoryLockKey || kAdvisoryLockKey
 
 		this.sequelize_ = null
 		this.migrator_ = null
@@ -53,8 +58,11 @@ class BootService {
 	 * 2) Creates the migrator
 	 * 3) Loads the models
 	 * 4) Checks the database connection
-	 * 5) Sets up any defined schema
-	 * 6) Runs any pending migrations
+	 * 5) Obtains an advisory lock to ensure that only one instance at a time is
+	 *    attempting to create schema / run migrations
+	 * 6) Sets up any defined schema
+	 * 7) Runs any pending migrations
+	 * 8) Release the advisory lock
 	 *
 	 * @returns {Promise}
 	 */
@@ -74,8 +82,16 @@ class BootService {
 		}
 
 		return this.checkDatabaseConnection()
+		.then(() => this.advisoryLock_(this.advisoryLockKey_))
 		.then(this.setupSchema.bind(this))
 		.then(this.runPendingMigrations.bind(this))
+		.then(() => this.advisoryUnLock_(this.advisoryLockKey_))
+		.catch((error) => {
+			return this.advisoryUnLock_(this.advisoryLockKey_)
+			.finally(() => {
+				throw error
+			})
+		})
 		.catch(this.sequelize_.DatabaseError, (databaseError) => {
 			this.bootLogger_.fatal({sql: databaseError.sql}, databaseError.message)
 			throw databaseError
@@ -231,6 +247,22 @@ class BootService {
 			throw new Error('Stream property is not an allowed logger option. Please convert to use the streams array property. See: https://github.com/trentm/node-bunyan#streams')
 
 		return bunyan.createLogger(loggerOptions)
+	}
+
+	/**
+	 * @param {number} key
+	 * @returns {Promise}
+	 */
+	advisoryLock_(key) {
+		return this.sequelize_.query(`select pg_advisory_lock(${key})`, {raw: true})
+	}
+
+	/**
+	 * @param {number} key
+	 * @returns {Promise}
+	 */
+	advisoryUnLock_(key) {
+		return this.sequelize_.query(`select pg_advisory_unlock(${key})`, {raw: true})
 	}
 }
 

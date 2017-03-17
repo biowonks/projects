@@ -18,7 +18,8 @@ const LocationPoint = require('./LocationPoint'),
 	BoundedLocationPoint = require('./BoundedLocationPoint'),
 	Location = require('./Location'),
 	ComplementLocation = require('./ComplementLocation'),
-	JoinLocation = require('./JoinLocation')
+	JoinLocation = require('./JoinLocation'),
+	ArrayLocation = require('./ArrayLocation')
 
 // --------------------------------------------------------
 // --------------------------------------------------------
@@ -88,17 +89,28 @@ class ComplementNode extends Node {
 class JoinNode extends Node {
 	location() {
 		assert(this.hasChildren(), 'join nodes must have at least one child')
-		let locations = []
-		this.children().forEach((childNode) => {
-			locations.push(childNode.location())
-		})
+		let locations = this.children().map((childNode) => childNode.location())
 		return new JoinLocation(locations)
 	}
 }
 
 class OrderNode extends Node {
 	location() {
-		throw new Error('not yet implemented')
+		assert(this.hasChildren(), 'order nodes must have at least one child')
+		let locations = this.children().map((childNode) => childNode.location())
+		return new JoinLocation(locations)
+		//         ^^^^^^^^^^^^ Not technically correct, but there is virtually no documentation
+		// discussing how to deal properly with order() operators in the feature table. For
+		// example, take the following annotation:
+		//
+		//      gene            order(147423..148106,148108..149580)
+		//                      /locus_tag="BN112_0149"
+		//                      /old_locus_tag="BB253_0149"
+		//                      /pseudo
+		//                      /db_xref="GeneID:13977207"
+		//
+		// From inspecting the sequence at GenBank, it appears like they treat it just like a
+		// join. For those reasons, we use a JoinLocation here.
 	}
 }
 
@@ -150,7 +162,7 @@ class LocationStringParser {
 		else if (/^order\(/.test(locationString)) {
 			let node = new OrderNode()
 			parentNode.push(node)
-			this.recursivelyParse_(locationString.substr('join('.length), node)
+			this.recursivelyParse_(locationString.substr('order('.length), node)
 		}
 		else if (locationString[0] === ',') {
 			this.recursivelyParse_(locationString.substr(1), parentNode)

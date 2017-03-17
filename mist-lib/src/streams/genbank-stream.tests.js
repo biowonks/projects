@@ -328,11 +328,14 @@ describe('streams', function() {
 				':',
 				'BioProject',
 				'BioProject:',
+				'BioProject:,',
 				':12345',
 				':12345,23435',
 				'BioProject :12345',
 				'BioProject:12345 ,',
-				'BioProject:12345,'
+				'BioProject:12345,',
+				'BioProject: 12 34',
+				'BioProject: 12, 3 4'
 			]
 			invalidDbLinks.forEach((invalidDbLink) => {
 				it(`emits error with invalid dblink value: ${invalidDbLink}`, function() {
@@ -369,6 +372,38 @@ describe('streams', function() {
 						BioProject: [
 							12345,
 							'AB12345'
+						]
+					})
+				})
+			})
+
+			it('single resource and multiple identifiers with spacing', function() {
+				return parseSingle(closeInput('DBLINK      Sequence Read Archive: DRR003296, DRR003297 '))
+				.then((result) => {
+					expect(result.dbLink).deep.equal({
+						'Sequence Read Archive': [
+							'DRR003296',
+							'DRR003297'
+						]
+					})
+				})
+			})
+
+			it('multiple resources and multiple identifiers with spacing', function() {
+				return parseSingle(closeInput('DBLINK      BioProject: PRJNA224116\n' +
+					'            Sequence Read Archive: DRR003296, DRR003297\n' +
+					'            Assembly: GCF_000615945.1'))
+				.then((result) => {
+					expect(result.dbLink).deep.equal({
+						BioProject: [
+							'PRJNA224116'
+						],
+						'Sequence Read Archive': [
+							'DRR003296',
+							'DRR003297'
+						],
+						Assembly: [
+							'GCF_000615945.1'
 						]
 					})
 				})
@@ -651,6 +686,22 @@ describe('streams', function() {
 							'Campylobacterales',
 							'Helicobacteraceae',
 							'Helicobacter'
+						]
+					})
+				})
+			})
+
+			it('single line for the taxonomy', function() {
+				let input = 'SOURCE      halophilic archaeon DL31\n' +
+					'  ORGANISM  halophilic archaeon DL31\n' +
+					'            Archaea.'
+				return parseSingle(closeInput(input))
+				.then((result) => {
+					expect(result.source).deep.equal({
+						commonName: 'halophilic archaeon DL31',
+						formalName: 'halophilic archaeon DL31',
+						taxonomicRanks: [
+							'Archaea'
 						]
 					})
 				})
@@ -1000,7 +1051,7 @@ describe('streams', function() {
 				])
 			})
 
-			it('location spans multiple lines', function() {
+			it('location may span multiple lines', function() {
 				let input = featureWrapper(
 					'     source          1..\n' +
 					'                     204\n' +
@@ -1032,41 +1083,89 @@ describe('streams', function() {
 			it('empty free-form text is preserved as empty string', function() {
 				let input = featureWrapper(
 					'     source          1..204\n' +
-					'                     /name=""'
+					'                     /plasmid=""\n' +
+					'                     /mol_type="genomic DNA"'
 				)
 				return parseAndExpect(input, [
 					{
 						key: 'source',
 						location: '1..204',
-						name: ['']
+						plasmid: [''],
+						mol_type: ['genomic DNA']
 					}
 				])
 			})
 
-			it('empty free-form text is preserved as empty string', function() {
+			// quotes
+			it('throws error if even number of double quotes at beginning', function() {
 				let input = featureWrapper(
 					'     source          1..204\n' +
-					'                     /name=""'
+					'                     /name=""here is a quote"'
 				)
-				return parseAndExpect(input, [
-					{
-						key: 'source',
-						location: '1..204',
-						name: ['']
-					}
-				])
+				return parseThrowsError(input)
 			})
 
-			it('free-form double quotes are converted to single quotes', function() {
+			it('throws error if even number of double quotes at end', function() {
 				let input = featureWrapper(
 					'     source          1..204\n' +
-					'                     /name="here is a ""quote""'
+					'                     /name="here is a quote""'
+				)
+				return parseThrowsError(input)
+			})
+
+			it('free-form double quotes at end are converted to single quotes', function() {
+				let input = featureWrapper(
+					'     source          1..204\n' +
+					'                     /name="here is a ""quote"""'
 				)
 				return parseAndExpect(input, [
 					{
 						key: 'source',
 						location: '1..204',
 						name: ['here is a "quote"']
+					}
+				])
+			})
+
+			it('free-form double quotes at beginning are converted to single quotes', function() {
+				let input = featureWrapper(
+					'     source          1..204\n' +
+					'                     /name="""here"" is a quote"'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'source',
+						location: '1..204',
+						name: ['"here" is a quote']
+					}
+				])
+			})
+
+			it('free-form double quotes in middle are converted to single quotes', function() {
+				let input = featureWrapper(
+					'     source          1..204\n' +
+					'                     /name="here ""is"" a quote"'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'source',
+						location: '1..204',
+						name: ['here "is" a quote']
+					}
+				])
+			})
+
+			it('double quotes at end of line followed by a continuation line', function() {
+				let input = featureWrapper(
+					'     source          1..204\n' +
+					'                     /name="here is a ""quote""\n' +
+					'                     that continues here."'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'source',
+						location: '1..204',
+						name: ['here is a "quote" that continues here.']
 					}
 				])
 			})
@@ -1112,6 +1211,146 @@ describe('streams', function() {
 					}
 				])
 			})
+			// end quotes
+
+			describe('generic qualifier tests', function() {
+				let examples = [
+					[
+						'no spaces if continuation line begins with /',
+						'                     /description="signal\n' +
+						'                     /transduction"',
+						'signal/transduction'
+					],
+					[
+						'adds space after line if space after opening qualifier',
+						'                     /description="signal\n' +
+						'                     / transduction"',
+						'signal / transduction'
+					],
+					[
+						'trims terminal space on each line',
+						'                     /description="signal \n' +
+						'                     / transduction"',
+						'signal / transduction'
+					],
+					// Quote stuff
+					[
+						'open qualifier with even-numbered quotes',
+						'                     /description="signal""\n' +
+						'                     / transduction"',
+						'signal" / transduction'
+					],
+					[
+						'open qualifier terminated with odd number of quotes',
+						'                     /description="signal\n' +
+						'                     / transduction"""',
+						'signal / transduction"'
+					],
+					[
+						'intermediate line with even number of quotes at beginning and end',
+						'                     /description="signal\n' +
+						'                     ""transduction""\n' +
+						'                     transducer"',
+						'signal "transduction" transducer'
+					],
+					// Other
+					[
+						'unquoted value that spans multiple lines',
+						'                     /description=signal\n' +
+						'                     transduction\n' +
+						'                     transducer',
+						'signal transduction transducer'
+					]
+				]
+
+				examples.forEach((example) => {
+					let testName = example[0],
+						inputDescription = example[1],
+						expectedDescription = example[2]
+					it(testName, function() {
+						let input = featureWrapper('     gene            1..204\n' + inputDescription)
+						return parseAndExpect(input, [
+							{
+								key: 'gene',
+								location: '1..204',
+								description: [expectedDescription]
+							}
+						])
+					})
+				})
+
+				it('throws error if mixes quoted value with unquoted value on same line', function() {
+					let input = featureWrapper(
+						'     gene            1..204\n' +
+						'                     /description="first line" more text\n'
+					)
+					return parseThrowsError(input)
+				})
+
+				it('throws error if mixes quoted value with unquoted value on different lines', function() {
+					let input = featureWrapper(
+						'     gene            1..204\n' +
+						'                     /description="first line"\n' +
+						'                     more text\n'
+					)
+					return parseThrowsError(input)
+				})
+
+				it('throws error if multiple quoted values on the same line', function() {
+					let input = featureWrapper(
+						'     gene            1..204\n' +
+						'                     /description="first line" "more text"'
+					)
+					return parseThrowsError(input)
+				})
+
+				it('throws error if multiple quoted values on different lines', function() {
+					let input = featureWrapper(
+						'     gene            1..204\n' +
+						'                     /description="first line"\n' +
+						'                     "more text"'
+					)
+					return parseThrowsError(input)
+				})
+			})
+
+			it('leading and/or trailing space on continuation lines is trimmed', function() {
+				let input = featureWrapper(
+					'     gene            1..204\n' +
+					'                     /description="first line\n' +
+					'                      second line\n' +
+					'                     third line \n' +
+					'                      fourth line \n' +
+					'                     fifth."'
+				)
+				return parseAndExpect(input, [
+					{
+						key: 'gene',
+						location: '1..204',
+						description: ['first line second line third line fourth line fifth.']
+					}
+				])
+			})
+
+			it('empty continuation line throws error', function() {
+				let input = featureWrapper(
+					'     gene            1..204\n' +
+					'                     /description="first line\n' +
+					'                     '
+				)
+				return parseThrowsError(input)
+			})
+
+			it('continuation line with merely whitespace throws error', function() {
+				let input = featureWrapper(
+					'     gene            1..204\n' +
+					'                     /description="first line\n' +
+					'                          \n' +
+					'                     more stuff"'
+				)
+				return parseThrowsError(input)
+			})
+
 
 			let numbers = [0, 1, 2., 2.3, 0., 0.59]
 			numbers.forEach((number) => {

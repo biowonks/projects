@@ -42,6 +42,18 @@ let config = {
 			binPath: path.resolve(vendorPath, 'hmmer3', '3.1b2', 'bin')
 		},
 
+		// Proprietary
+		tmhmm2: {
+			// TMHMM2 is a proprietary tool without a public distribution. Therefore, to enable
+			// this tool, provide a value for the secureUrl variable which is accessible to you.
+			// Do not set this value here, but rather define it in the "local" directory beneath
+			// this directory (that is not committed to the repository).
+			secureUrl: null,
+			basePath: path.resolve(vendorPath, 'tmhmm2'),
+			libPath: path.resolve(vendorPath, 'tmhmm2', 'lib'),
+			binPath: path.resolve(vendorPath, 'tmhmm2', 'bin')
+		},
+
 		// Databases
 		agfam: {
 			version: '2.0',
@@ -67,6 +79,9 @@ let config = {
 		agfam2: {
 			databasePath: path.resolve(vendorPath, 'agfam', '2.0', 'agfam.hmm'),
 			ticksPerProgressEvent: 1000
+		},
+		tmhmm2: {
+			ticksPerProgressEvent: 250
 		}
 	},
 
@@ -87,6 +102,9 @@ let config = {
 		]
 	}
 }
+
+if (config.vendor.tmhmm2.secureUrl)
+	throw new Error('TMHMM2 is a proprietary tool; please set this value in local configuration that is not part of the source repository!')
 
 loadConfig(__dirname, config)
 

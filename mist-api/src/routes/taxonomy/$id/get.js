@@ -9,3 +9,8 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		helper.findHandler('id')
 	]
 }
+
+module.exports.docs = {
+	name: 'Fetch Taxonomy Node',
+	description: 'Returns the NCBI taxonomic record'
+}

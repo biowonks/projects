@@ -47,14 +47,22 @@ for PROJECT in "$@"; do
 			# --copy-dirlinks: copy any symlinked directories
 			# --delete: remove files in destination that are not in the source directories
 			# --delete-excluded: remove those that are excluded if present in the destination
-			rsync -rLptgv --copy-dirlinks --delete --delete-excluded --filter='P .git' --exclude /node_modules --exclude .vscode $PROJECT/ $HEROKU_REPO_DIR
+			rsync -rLptgv --copy-dirlinks --delete --delete-excluded --filter='P .git' --exclude /node_modules --exclude .vscode --exclude /src/docs --exclude /testing --exclude /test-results.xml --exclude /docs --exclude '*.tests.js' $PROJECT/ $HEROKU_REPO_DIR
+
+			echo "====> Building documentation"
+			docker run -e CI=true -v $ROOT:/app -w /app/$PROJECT biowonks/node-bootstrap npm run build-docs
+
+			echo "====> Syncing documentation with Heroku repo (rsync)"
+			mkdir -p $HEROKU_REPO_DIR/src/docs
+			rsync -rLptgv --delete --delete-excluded $PROJECT/src/docs/build $HEROKU_REPO_DIR/src/docs
 
 			echo "====> Committing changes and pushing to Heroku repository"
 			LAST_GIT_COMMENT=$(git log -1 --pretty=%B)
 			cd $HEROKU_REPO_DIR
 
-			# Stub the merge-deps command (to avoid running this on Heroku)
+			# Stub the merge-deps and setup-docs commands (to avoid running this on Heroku)
 			sed -i 's/npm run merge-deps/true/g' package.json
+			sed -i 's/npm run setup-docs/true/g' package.json
 
 			git add -A
 			git commit -m "Automated CircleCI commit (build: $CIRCLE_BUILD_NUM, $CIRCLE_BUILD_URL)" -m "$LAST_GIT_COMMENT"

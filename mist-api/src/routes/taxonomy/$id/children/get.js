@@ -5,10 +5,20 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 
 	return [
 		(req, res, next) => {
-			taxonomyService.fetchGenomicChildren(req.params.id)
+			console.log('====>', req.query)
+			let options = {}
+			options.isImmediate = req.query.immediate
+			options.isLeafOnly = req.query.leafOnly
+
+			taxonomyService.fetchChildren(req.params.id, options)
 			.then((result) => {
 				res.json(result)
 			})
 		}
 	]
+}
+
+module.exports.docs = {
+	name: 'Fetch Child Taxonomy',
+	description: 'Returns an array of child taxonomic nodes'
 }

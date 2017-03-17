@@ -26,8 +26,10 @@ const bodyParser = require('body-parser'),
 // Local
 const config = require('../config'),
 	errorHandler = require('lib/error-handler'),
+	coreHeaderNames = require('core-lib/header-names'),
 	loadServices = require('./services'),
 	errors = require('lib/errors'),
+	latestDocs = require('./routes/docs/use'),
 	MistBootService = require('mist-lib/services/MistBootService'),
 	RouteHelper = require('lib/RouteHelper')
 
@@ -38,7 +40,8 @@ const kMsPerSecond = 1000,
 
 // Maintain reference to server variable because the handleUncaughtErrors middleware references it.
 let server = null,
-	bootService = new MistBootService(config.database, {
+	bootService = new MistBootService({
+		applicationName: 'mist-api',
 		logger: {
 			name: 'mist-api',
 			streams: [
@@ -118,6 +121,8 @@ bootService.setup()
 	else
 		app.use(router)
 
+	app.use('/', latestDocs())
+
 	app.use(errorHandler(app))
 
 	if (shutdownRequestReceived)
@@ -194,9 +199,11 @@ function throwErrorIfNotSSL(req, res, next) {
 }
 
 function cors() {
+	const coreHeaders = Object.keys(coreHeaderNames).map((key) => coreHeaderNames[key])
+
 	return corser.create({
 		methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'DELETE'],
 		requestHeaders: [...corser.simpleRequestHeaders, config.headerNames.apiToken],
-		responseHeaders: [...corser.simpleResponseHeaders, config.headerNames.version]
+		responseHeaders: [...corser.simpleResponseHeaders, config.headerNames.version, ...coreHeaders]
 	})
 }

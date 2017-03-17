@@ -1,0 +1,38 @@
+{
+  "name": "node-slate",
+  "version": "1.0.0",
+  "description": "Node port of tripit/slate",
+  "main": "index.js",
+  "scripts": {
+    "start": "gulp serve",
+    "build": "NODE_PATH=../../node_modules gulp",
+    "deploy": "./deploy.sh"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sdelements/node-slate.git"
+  },
+  "author": "SD Elements",
+  "license": "Apache-2.0",
+  "bugs": {
+    "url": "https://github.com/sdelements/node-slate/issues"
+  },
+  "homepage": "https://github.com/sdelements/node-slate#readme",
+  "dependencies": {
+    "del": "^2.2.2",
+    "gulp": "^3.9.1",
+    "gulp-clean-css": "^2.0.13",
+    "gulp-cli": "^1.2.2",
+    "gulp-concat": "^2.6.0",
+    "gulp-if": "^2.0.1",
+    "gulp-rename": "^1.2.2",
+    "gulp-sass": "^2.3.2",
+    "gulp-uglify": "^2.0.0",
+    "highlight.js": "^9.7.0",
+    "httpsnippet": "^1.16.5",
+    "lodash.clonedeep": "^4.5.0",
+    "lodash.merge": "^4.6.0",
+    "path-routify": "https://github.com/lukeulrich/path-routify.git",
+    "pug": "^2.0.0-beta6"
+  }
+}

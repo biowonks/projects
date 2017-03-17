@@ -42,7 +42,7 @@ exports.moduleHelp = function(ModuleClass) {
 		help += ':<sub module>[+...]\n'
 		if (description)
 			help += kHelpIndent2 + description + '\n'
-		help += kHelpIndent2 + 'sub-modules:\n\n'
+		help += '\n'
 		for (let subModuleName of subModuleMap.keys()) {
 			let subDescription = subModuleMap.get(subModuleName)
 			help += kHelpIndent2 + `* ${subModuleName}` + (subDescription ? ` - ${subDescription}` : '') + '\n'

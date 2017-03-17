@@ -14,7 +14,7 @@ module.exports = {
 		name: 'mist_dev',
 		user: 'mist_dev',
 		password: '$&hxsALC!7_c',
-		host: 'mist-local-db'
+		host: 'mist-pg-db'
 	},
 
 	server: {

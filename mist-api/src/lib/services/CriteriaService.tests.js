@@ -175,8 +175,8 @@ describe('services', function() {
 				expect(x).eql({
 					where: null,
 					attributes: null,
-					include: null,
-					limit: service.defaultPerPage(),
+					include: [],
+					limit: 1,
 					offset: null,
 					order: null
 				})
@@ -187,11 +187,18 @@ describe('services', function() {
 				expect(x).eql({
 					where: null,
 					attributes: ['id', 'name', 'num_logins'],
-					include: null,
-					limit: service.defaultPerPage(),
+					include: [],
+					limit: 1,
 					offset: null,
 					order: null
 				})
+			})
+
+			it('order is ignored', function() {
+				let x = service.createFromQueryObject(User, {
+					order: 'name'
+				})
+				expect(x.order).null
 			})
 
 			describe('fields parameter', function() {
@@ -254,9 +261,6 @@ describe('services', function() {
 				})
 
 				function modelsToNames(criteria) {
-					if (!criteria.include)
-						return criteria
-
 					criteria.include.forEach((include) => {
 						if (include.model)
 							include.model = include.model.name
@@ -273,7 +277,8 @@ describe('services', function() {
 					expect(x.attributes).eql(['id', 'name', 'num_logins'])
 					expect(x.include).eql([
 						{
-							model: 'Profile'
+							model: 'Profile',
+							include: []
 						}
 					])
 				})
@@ -285,11 +290,13 @@ describe('services', function() {
 					expect(x.attributes).eql(['id', 'name', 'num_logins'])
 					expect(x.include).eql([
 						{
-							model: 'Profile'
+							model: 'Profile',
+							include: []
 						},
 						{
 							model: 'Post',
-							attributes: ['title']
+							attributes: ['title'],
+							include: []
 						}
 					])
 				})
@@ -303,10 +310,12 @@ describe('services', function() {
 					expect(x.include).eql([
 						{
 							model: 'Profile',
-							attributes: []
+							attributes: [],
+							include: []
 						},
 						{
-							model: 'Post'
+							model: 'Post',
+							include: []
 						}
 					])
 				})
@@ -331,17 +340,46 @@ describe('services', function() {
 				service = null
 			})
 
-			it('order is specified', function() {
+			it('defaults values as expected', function() {
 				let x = service.createFromQueryObjectForMany(Profile)
 				expect(x).eql({
 					where: null,
 					attributes: null,
-					include: null,
+					include: [],
 					limit: service.defaultPerPage(),
 					offset: null,
 					order: [
 						['id']
 					]
+				})
+			})
+
+			describe('order parameter', function() {
+				it('User.name ascending: order=name', function() {
+					queryObject.order = 'name'
+					let x = service.createFromQueryObjectForMany(User, queryObject)
+					expect(x.order).eql([['name']])
+				})
+
+				it('User.name descending: order=-name', function() {
+					queryObject.order = '-name'
+					let x = service.createFromQueryObjectForMany(User, queryObject)
+					expect(x.order).eql([['name', 'desc']])
+				})
+
+				it('User.name and User.num_logins: order=-name,num_logins', function() {
+					queryObject.order = '-name,num_logins'
+					let x = service.createFromQueryObjectForMany(User, queryObject)
+					expect(x.order).eql([
+						['name', 'desc'],
+						['num_logins']
+					])
+				})
+
+				it('User.invalid_field does not throw error: order=invalid_field', function() {
+					queryObject.order = 'invalid_field'
+					let x = service.createFromQueryObjectForMany(User, queryObject)
+					expect(x.order).eql([['invalid_field']])
 				})
 			})
 
@@ -380,6 +418,40 @@ describe('services', function() {
 						let x = service.createFromQueryObjectForMany(User, queryObject)
 						expect(x.limit).equal(expectedLimit)
 					})
+				})
+
+				it('override defaultPerPage via options', function() {
+					let x = service.createFromQueryObjectForMany(User, {}, {defaultPerPage: defaultPerPage + 5})
+					expect(x.limit).equal(defaultPerPage + 5)
+				})
+
+				it('override defaultPerPage; query per_page is capped to override default', function() {
+					queryObject.per_page = defaultPerPage + 10
+					let x = service.createFromQueryObjectForMany(User, {}, {defaultPerPage: defaultPerPage + 5})
+					expect(x.limit).equal(defaultPerPage + 5)
+				})
+
+				it('override defaultPerPage and maxPerPage', function() {
+					let x = service.createFromQueryObjectForMany(User, {}, {
+						defaultPerPage: defaultPerPage + 5,
+						maxPerPage: 1
+					})
+					expect(x.limit).equal(1)
+
+					x = service.createFromQueryObjectForMany(User, {}, {
+						defaultPerPage: defaultPerPage + 5,
+						maxPerPage: 0
+					})
+					expect(x.limit).equal(0)
+				})
+
+				it('override defaultPerPage and maxPerPage with null', function() {
+					queryObject.per_page = maxPerPage + 1
+					let x = service.createFromQueryObjectForMany(User, queryObject, {
+						defaultPerPage: null,
+						maxPerPage: null
+					})
+					expect(x.limit).equal(maxPerPage)
 				})
 			})
 
@@ -429,6 +501,18 @@ describe('services', function() {
 					queryObject.page = maxPage + 1
 					let x = service.createFromQueryObjectForMany(User, queryObject)
 					expect(x.offset).equal((maxPage * defaultPerPage) - defaultPerPage)
+				})
+
+				it('override maxPage', function() {
+					queryObject.page = maxPage + 2
+					let x = service.createFromQueryObjectForMany(User, queryObject, {maxPage: maxPage + 1})
+					expect(x.offset).equal(((maxPage + 1) * defaultPerPage) - defaultPerPage)
+				})
+
+				it('override maxPage to null', function() {
+					queryObject.page = maxPage + 1
+					let x = service.createFromQueryObjectForMany(User, queryObject, {maxPage: null})
+					expect(x.offset).equal((queryObject.page * defaultPerPage) - defaultPerPage)
 				})
 			})
 		})
@@ -517,6 +601,31 @@ describe('services', function() {
 			})
 		})
 
+		describe('orderFrom', function() {
+			let x = new CriteriaService()
+			it('empty orderString returns primary key attributes', function() {
+				expect(x.orderFrom(User)).eql([['id']])
+			})
+
+			it('empty string returns primary key attributes', function() {
+				expect(x.orderFrom(User, '')).eql([['id']])
+				expect(x.orderFrom(User, ',')).eql([['id']])
+				expect(x.orderFrom(User, ' , , ,,')).eql([['id']])
+			})
+
+			it('single order field', function() {
+				expect(x.orderFrom(User, 'id')).eql([['id']])
+			})
+
+			it('single order in desc order', function() {
+				expect(x.orderFrom(User, '-name')).eql([['name', 'desc']])
+			})
+
+			it('multiple fields', function() {
+				expect(x.orderFrom(User, '-name,id')).eql([['name', 'desc'], ['id']])
+			})
+		})
+
 		describe('offsetFromPage', function() {
 			it('returns the offset for a given 1-based page and per-page value', function() {
 				let x = new CriteriaService()
@@ -574,6 +683,17 @@ describe('services', function() {
 				expect(x).null
 			})
 
+			it('valid criteria with included model', function() {
+				queryObject.fields = 'id,name'
+				queryObject['fields.Post'] = 'title'
+				let criteria = service.createFromQueryObject(User, queryObject),
+					errors = service.findErrors(criteria, User, {
+						accessibleModels: [Post]
+					})
+
+				expect(errors).null
+			})
+
 			it('check for invalid attributes, excluded attributes, and inaccessible models', function() {
 				queryObject.fields = 'id,num_logins,bad_field,secret,another_bad_field'
 				queryObject['fields.Profile'] = 'false'
@@ -617,7 +737,9 @@ describe('services', function() {
 			it('check for invalid attributes in related model', function() {
 				queryObject['fields.Profile'] = 'missing-field'
 				let criteria = service.createFromQueryObject(User, queryObject),
-					errors = service.findErrors(criteria, User, [Profile])
+					errors = service.findErrors(criteria, User, {
+						accessibleModels: [Profile]
+					})
 
 				expect(errors).instanceof(Array)
 				expect(errors.length).equal(1)
@@ -629,6 +751,59 @@ describe('services', function() {
 					],
 					model: 'Profile'
 				})
+			})
+
+			it('finds invalid attributes in order field', function() {
+				queryObject.order = 'invalid_field'
+				let criteria = service.createFromQueryObjectForMany(User, queryObject),
+					errors = service.findErrors(criteria, User)
+
+				expect(errors.length).equal(1)
+				expect(errors[0].type).equal('InvalidFieldError')
+			})
+
+			it('finds not permitted, but valid attributes in order field', function() {
+				queryObject.order = 'name,num_logins'
+				let criteria = service.createFromQueryObjectForMany(User, queryObject),
+					errors = service.findErrors(criteria, User, {
+						permittedOrderFields: ['id', 'name']
+					})
+
+				expect(errors.length).equal(1)
+				expect(errors[0].type).equal('SortFieldError')
+				expect(errors[0].fields).eql(['num_logins'])
+			})
+
+			it('order field, * permitted, valid field', function() {
+				queryObject.order = 'name'
+				let criteria = service.createFromQueryObjectForMany(User, queryObject),
+					errors = service.findErrors(criteria, User, {
+						permittedOrderFields: '*'
+					})
+
+				expect(errors).null
+			})
+
+			it('order field, null permitted fields, order by id works', function() {
+				queryObject.order = 'id'
+				let criteria = service.createFromQueryObjectForMany(User, queryObject),
+					errors = service.findErrors(criteria, User, {
+						permittedOrderFields: null
+					})
+
+				expect(errors).null
+			})
+
+			it('order field, empty array for permitted fields, order by id returns error', function() {
+				queryObject.order = 'id'
+				let criteria = service.createFromQueryObjectForMany(User, queryObject),
+					errors = service.findErrors(criteria, User, {
+						permittedOrderFields: []
+					})
+
+				expect(errors.length).equal(1)
+				expect(errors[0].type).equal('SortFieldError')
+				expect(errors[0].fields).eql(['id'])
 			})
 		})
 	})

@@ -12,7 +12,7 @@ module.exports = {
 	dialect: 'postgres',
 	user: 'mist_dev',
 	password: '$&hxsALC!7_c',
-	host: 'mist-local-db', // docker-specific
+	host: 'mist-pg-db', // docker-specific
 	port: 5432,
 	name: 'mist_dev',
 	ssl: true,

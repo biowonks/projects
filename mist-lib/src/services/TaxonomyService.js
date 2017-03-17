@@ -194,14 +194,27 @@ class TaxonomyService {
 	 * @param {Number} taxonomyId - NCBI taxonomy id
 	 * @returns {List} genomic children of given taxonomy id
 	 */
-	fetchGenomicChildren(taxonomyId) {
+	fetchChildren(taxonomyId, options) {
 		let taxonomyTableName = this.taxonomyModel_.getTableName(),
+			sql = ''
+		if (options.isImmediate) {
+			if (options.isLeafOnly)
+				sql = `select a.* from ${taxonomyTableName} a join genomes b ON (a.id = b.taxonomy_id) where parent_taxonomy_id = ?`
+			else
+				sql = `select * from ${taxonomyTableName} where parent_taxonomy_id = ?`
+		}
+		else {
 			sql = `with recursive tree_nodes as (
 	select * from ${taxonomyTableName} where id = ?
 	union all
 	select a.* from ${taxonomyTableName} a, tree_nodes where tree_nodes.id = a.parent_taxonomy_id
-)
-select a.* from tree_nodes a join genomes b ON (a.id = b.taxonomy_id)`
+)`
+			if (options.isLeafOnly)
+				sql += 'select a.* from tree_nodes a join genomes b ON (a.id = b.taxonomy_id)'
+			else
+				sql += 'select * from tree_nodes'
+		}
+
 		return this.taxonomyModel_.sequelize.query(sql, {
 			replacements: [taxonomyId],
 			type: this.taxonomyModel_.sequelize.QueryTypes.SELECT

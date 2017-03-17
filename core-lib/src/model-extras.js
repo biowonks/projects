@@ -1,6 +1,17 @@
 'use strict'
 
 module.exports = function(Sequelize) {
+	function accessionVersion() {
+		return {
+			type: Sequelize.TEXT,
+			allowNull: true,
+			validate: {
+				notEmpty: true,
+				is: /^\w+.*\.\d+$/
+			}
+		}
+	}
+
 	function accessionWithoutVersion(notMsg = 'accession not permitted to include version suffix') {
 		return {
 			type: Sequelize.TEXT,
@@ -44,6 +55,12 @@ module.exports = function(Sequelize) {
 
 	function requiredAccessionWithoutVersion(notMsg) {
 		let result = accessionWithoutVersion(notMsg)
+		result.allowNull = false
+		return result
+	}
+
+	function requiredAccessionVersion() {
+		let result = accessionVersion()
 		result.allowNull = false
 		return result
 	}
@@ -97,8 +114,38 @@ module.exports = function(Sequelize) {
 		}
 	}
 
+	function aseqId() {
+		let result = seqId()
+
+		result.description = 'source agnostic, universal identifier derived from the amino acid sequence; foreign identifier to the associated Aseq'
+		result.example = 'eALFsiVPvD8jtNe_9Qifig'
+
+		return result
+	}
+
+	function dseqId() {
+		let result = seqId()
+
+		result.description = 'source agnostic, universal identifier derived from the DNA sequence; foreign identifier to the associated Dseq'
+		result.example = 'YyhYrg42MICY95Yv4msKNA'
+
+		return result
+	}
+
 	function requiredSeqId() {
 		let result = seqId()
+		result.allowNull = false
+		return result
+	}
+
+	function requiredAseqId() {
+		let result = aseqId()
+		result.allowNull = false
+		return result
+	}
+
+	function requiredDseqId() {
+		let result = dseqId()
 		result.allowNull = false
 		return result
 	}
@@ -138,16 +185,22 @@ module.exports = function(Sequelize) {
 	}
 
 	return {
+		accessionVersion,
 		accessionWithoutVersion,
 		dnaStrand,
 		requiredDnaStrand,
 		requiredAccessionWithoutVersion,
 		positiveInteger,
 		seqId,
+		aseqId,
+		dseqId,
+		requiredAccessionVersion,
 		requiredPercentage,
 		requiredPositiveInteger,
 		requiredSequence,
 		requiredSeqId,
+		requiredAseqId,
+		requiredDseqId,
 		requiredText,
 
 		validate

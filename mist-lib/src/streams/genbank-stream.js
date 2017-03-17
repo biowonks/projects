@@ -158,6 +158,7 @@ class GenbankStream extends stream.Transform {
 		this.currentFeature_ = null
 		this.currentQualifierName_ = null
 		this.currentQualifierValue_ = null
+		this.finishedCurrentFeatureLocation_ = false
 	}
 
 	// ----------------------------------------------------
@@ -198,7 +199,7 @@ class GenbankStream extends stream.Transform {
 			// --------------------------------------------
 			if (this.isKeywordContinuationLine_(line)) {
 				if (!this.currentKeywordNode_)
-					throw new Error('Keyword continuation line found without associated keyword')
+					throw new Error('keyword continuation line found without associated keyword')
 
 				// Special handling of different
 				let keywordInfoOffset = null
@@ -231,7 +232,7 @@ class GenbankStream extends stream.Transform {
 				return
 			}
 
-			throw new Error(`Internal error; unhandled line: ${line}`)
+			throw new Error(`internal error; unhandled line: ${line}`)
 		}
 		catch (error) {
 			done(error)
@@ -240,7 +241,7 @@ class GenbankStream extends stream.Transform {
 
 	_flush(done) {
 		if (this.entry_)
-			done(new Error('Last record missing record terminator: //'))
+			done(new Error('last record missing record terminator: //'))
 		else
 			done()
 	}
@@ -287,7 +288,7 @@ class GenbankStream extends stream.Transform {
 
 			// Special case: REFERENCE may occur multiple times
 			if (keyword !== 'REFERENCE' && this.observedRootKeywords_.has(keyword))
-				throw new Error(`Record contains multiple ${keyword} lines`)
+				throw new Error(`record contains multiple ${keyword} lines`)
 			this.observedRootKeywords_.add(keyword)
 
 			this.rootKeywordNode_ =	this.currentKeywordNode_ = keywordNode
@@ -472,9 +473,10 @@ class GenbankStream extends stream.Transform {
 	 * for each resource is encapsulated in an array.
 	 *
 	 * As of April 2013, the supported DBLINK cross-reference types are "Project" (predecessor of
-	 * BioProject), "BioProject", "BioSample", "Trace Assembly Archive", Sequence Read Archive",
-	 * and "Assembly". But rather than just support this set, generically parses all resources
-	 * that adhere to the format '<resource name>:<csv list of identifiers>'.
+	 * BioProject), "BioProject", "BioSample", "Trace Assembly Archive", "Sequence Read Archive",
+	 * and "Assembly". But rather than just support this set, generically parse all resources
+	 * that adhere to the format '<resource name>:<csv list of identifiers>'. Whitespace may appear
+	 * between entries in the CSV list.
 	 *
 	 * @param {GenbankKeywordNode} dbLinkNode associated keywordInfo lines
 	 * @returns {object} map of the associated resource and their associated identifiers
@@ -496,7 +498,7 @@ class GenbankStream extends stream.Transform {
 		lines.forEach((line) => {
 			let resourceMatches = this.parseDbLinkResource_(line)
 			if (resourceMatches) {
-				result[currentResource] = currentIdString.split(',')
+				result[currentResource] = currentIdString.split(/\s*,\s*/)
 				currentResource = resourceMatches[1]
 				currentIdString = resourceMatches[2]
 			}
@@ -517,14 +519,14 @@ class GenbankStream extends stream.Transform {
 			}
 		})
 
-		result[currentResource] = currentIdString.split(',')
+		result[currentResource] = currentIdString.split(/\s*,\s*/)
 
 		// Check that there are no invalid identifiers
 		for (let resource in result) {
 			result[resource].forEach((identifier, i) => {
 				let isInvalidIdentifier = !identifier || /\s/.test(identifier)
 				if (isInvalidIdentifier)
-					throw new Error(`DBLINK identifier cannot contain whitespace or be empty; associated resource: ${resource}`)
+					throw new Error(`DBLINK identifier cannot contain whitespace or be empty; associated resource: ${resource}; bad value: ${identifier}`)
 
 				if (/^\d+$/.test(identifier))
 					result[resource][i] = Number(identifier)
@@ -612,7 +614,15 @@ class GenbankStream extends stream.Transform {
 			if (ontoTaxonomy) {
 				taxonomy += ` ${line}`
 			}
-			else if (line.indexOf(';') >= 0) {
+			else if (line.indexOf(';') >= 0 || /^\w+\.$/.test(line)) {
+				/** Special case                ^^^^^^^^^^^^^^^^^^^^
+				 * In the event that there is a single taxonomic rank without any semicolons but a
+				 * terminal period. For example:
+				 *
+				 * SOURCE      halophilic archaeon DL31
+				 *   ORGANISM  halophilic archaeon DL31
+				 *             Archaea.
+				 */
 				ontoTaxonomy = true
 				taxonomy = line
 			}
@@ -724,14 +734,14 @@ class GenbankStream extends stream.Transform {
 	/**
 	 * Handles the parsing of all lines contained within the feature table section. There are
 	 * two cases that must be considered:
-	 * 1) The line begins a new feature
-	 * 2) The line is a continuation line of an existing feature
+	 * 1) The line is a continuation line of an existing feature
+	 * 2) The line begins a new feature
 	 *
 	 * @param {string} line input line belonging to feature table
 	 * @returns {undefined}
 	 */
 	handleFeatureLine_(line) {
-		// Case 2: continuation line
+		// Case 1: continuation line
 		// Continuation line logic before new feature lines because there will be more continuation
 		// lines than new feature lines
 		if (this.isFeatureContinuationLine_(line)) {
@@ -739,7 +749,7 @@ class GenbankStream extends stream.Transform {
 			return
 		}
 
-		// Case 1: a new feature is beginning
+		// Case 2: a new feature is beginning
 		let feature = this.featureFromLine_(line)
 		if (feature) {
 			if (!feature.location)
@@ -751,53 +761,109 @@ class GenbankStream extends stream.Transform {
 			}
 
 			this.currentFeature_ = feature
+			this.finishedCurrentFeatureLocation_ = false
 			return
 		}
 
-		throw new Error('Internal error: unexpected feature table line: ' + line)
+		throw new Error('internal error: unexpected feature table line: ' + line)
 	}
 
 	handleFeatureContinuationLine_(line) {
 		if (!this.currentFeature_)
-			throw new Error('Feature continuation line found without associated feature key')
+			throw new Error('feature continuation line found without associated feature key')
+
+		let featureInfo = this.extractFeatureInfo_(line)
+		if (!featureInfo)
+			throw new Error('blank feature lines are not allowed')
 
 		// Three cases:
 		// 1) Continuation of the feature location
 		// 2) Beginning of a qualifier
 		// 3) Continuation of an existing qualifier
 
-		let featureInfo = this.extractFeatureInfo_(line),
-			isQualifier = featureInfo.startsWith('/')
-
-		if (!featureInfo)
-			throw new Error('Blank feature lines are not allowed')
-
-		// Case 2: start of another qualifier
-		if (isQualifier) {
-			let qualifier = this.parseQualifier_(featureInfo)
-			if (qualifier.name === 'key' || qualifier.name === 'location')
-				throw new Error('qualifier name must not be "key" or "location"')
-
-			this.handleCurrentQualifier_()
-
-			this.currentQualifierName_ = qualifier.name
-			this.currentQualifierValue_ = qualifier.value
-			return
-		}
-
 		// Case 1: location spans multiple lines
-		let isLocationContinuation = !isQualifier && !this.currentQualifierName_
+		let isLocationContinuation = !this.currentQualifierName_ && !featureInfo.startsWith('/')
 		if (isLocationContinuation) {
+			if (this.finishedCurrentFeatureLocation_)
+				throw new Error(`missing qualifier key: ${featureInfo}`)
+
 			this.currentFeature_.location += featureInfo
 			return
 		}
 
-		// Case 3: qualifier continuation line
-		assert(this.currentQualifierName_, 'Feature qualifier continuation line is not associated qualifier name')
-		if (!this.currentQualifierValue_)
-			throw new Error('Feature qualifier continuation line is missing initial value')
+		// This flag helps catch invalid values not associated with a qualifier. For example,
+		// /product="transducer"
+		// "orphan value"
+		//
+		// With this flag, "orphan value" would be added to the feature's location
+		this.finishedCurrentFeatureLocation_ = true
 
-		this.currentQualifierValue_ += ` ${featureInfo}`
+		// Case 2: start of a new qualifier
+		if (!this.currentQualifierName_) {
+			this.createNewQualifier_(featureInfo)
+			return
+		}
+
+		assert(this.currentQualifierValue_)
+		assert(typeof this.currentQualifierValue_ === 'string')
+
+		if (this.currentQualifierValue_.startsWith('"')) {
+			/**
+			 * Special handling of slashes within quoted strings. Add a space before the value of
+			 * ${featureInfo} if it does not begin with / or it begins with '/ '.
+			 *
+			 * This is to handle such cases like the following:
+			 * /product="crotonobetainyl-CoA--carnitine CoA-transferase
+			 * /alpha-methylacyl-CoA racemase 1"
+			 *
+			 * /product="electron-transferring-flavoprotein dehydrogenase
+			 * / geranylgeranyl hydrogenase-like protein"
+			 *
+			 * where the desired result is (respectively):
+			 *
+			 * product="crotonobetainyl-CoA--carnitine CoA-transferase/alpha-methylacyl-CoA racemase 1"
+			 * product="electron-transferring-flavoprotein dehydrogenase / geranylgeranyl hydrogenase-like protein"
+			 */
+			if (!featureInfo.startsWith('/') || featureInfo.startsWith('/ '))
+				this.currentQualifierValue_ += ' '
+			this.currentQualifierValue_ += featureInfo
+
+			// If this qualifier value is completely self-contained on a single line, got ahead
+			// and process it.
+			if (this.hasClosingQuotes_(this.currentQualifierValue_))
+				this.handleCurrentQualifier_()
+
+			return
+		}
+
+		// Dealing with unquoted continuation lines
+		if (!featureInfo.startsWith('/')) {
+			this.currentQualifierValue_ += ` ${featureInfo}`
+			return
+		}
+
+		// A new qualifier has been found
+		this.handleCurrentQualifier_()
+		this.createNewQualifier_(featureInfo)
+	}
+
+	createNewQualifier_(featureInfo) {
+		assert(featureInfo.startsWith('/'))
+
+		let qualifier = this.parseQualifier_(featureInfo)
+		if (qualifier.name === 'key' || qualifier.name === 'location')
+			throw new Error('qualifier name must not be "key" or "location"')
+
+		this.currentQualifierName_ = qualifier.name
+		this.currentQualifierValue_ = qualifier.value
+
+		// eslint-disable-next-line curly
+		if (qualifier.value === true || // e.g. /pseudo
+			qualifier.value === '""' || // e.g. /plasmid=""
+				(qualifier.value.startsWith('"') && this.hasClosingQuotes_(qualifier.value))
+			) {
+			this.handleCurrentQualifier_()
+		}
 	}
 
 	featureFromLine_(line) {
@@ -812,8 +878,27 @@ class GenbankStream extends stream.Transform {
 		return null
 	}
 
+	/**
+	 * Technically, this should also test for a non-whitespace character in the 22nd position;
+	 * however, some GenBank records have continuation lines with leading spaces. To mitigate this
+	 * becoming a problem, only the requisite whitespace and then at least one non-whitespace
+	 * character is inspected here. An example of an annotation with leading whitespace on an
+	 * annotation is:
+	 *
+	 * NC_003047
+	 * GCF_000006965.1
+	 * Sinorhizobium meliloti 1021 chromosome, complete genome
+	 *
+	 *      rep_origin      1..477
+	 *                      /note="oriC OR SMc04880;
+	 *                       ORIGIN OF REPLICATION;
+	 *                      predicted by Homology"
+	 *
+	 * @param {String} line
+	 * @returns {Boolean}
+	 */
 	isFeatureContinuationLine_(line) {
-		return /^ {21}\S/.test(line)
+		return /^ {21}.*?\S/.test(line)
 	}
 
 	extractFeatureInfo_(line) {
@@ -830,7 +915,7 @@ class GenbankStream extends stream.Transform {
 	parseQualifier_(featureInfo) {
 		let matches = /^\/([\w_\-'*]{1,20})(?:=(.+))?/.exec(featureInfo)
 		if (!matches)
-			throw new Error('Invalid feature qualifier line')
+			throw new Error(`invalid feature qualifier line: ${featureInfo}`)
 
 		return {
 			name: matches[1],
@@ -847,12 +932,22 @@ class GenbankStream extends stream.Transform {
 
 		let value = this.currentQualifierValue_
 		if (typeof value === 'string') {
+			if (value !== '""') { // Special case
+				if (this.hasInvalidLeadingQuotes_(value))
+					throw new Error(`qualifier has invalid leading quotes (must be 0 or odd number): ${value}`)
+				if (this.hasInvalidTrailingQuotes_(value))
+					throw new Error(`qualifier has invalid trailing quotes (must be 0 or odd number): ${value}`)
+				if (this.hasUnescapedInternalQuotes_(value))
+					throw new Error(`qualifier has unescaped internal quotes: ${value}`)
+			}
+
 			let startsWithQuote = value.startsWith('"'),
 				endsWithQuote = value.endsWith('"'),
 				freeFormText = startsWithQuote || endsWithQuote
 			if (startsWithQuote && !endsWithQuote || !startsWithQuote && endsWithQuote)
-				throw new Error(`Invalid qualifier free-form text for qualifier, ${this.currentQualifierName_}: missing beginning / end quotes`)
-			else if (freeFormText)
+				throw new Error(`invalid qualifier free-form text for qualifier, ${this.currentQualifierName_}: missing beginning / end quotes (invalid value: ${value})`)
+
+			if (freeFormText)
 				// Remove the leading and trailing quotes, and decode double quotes
 				value = value.slice(1, -1).replace(/""/g, '"')
 			else if (/^-?\d+(\.\d*)?$/.test(value))
@@ -878,13 +973,73 @@ class GenbankStream extends stream.Transform {
 				this.currentFeature_[this.currentQualifierName_].push(value)
 		}
 		else {
-			// e.g. /pseudo
+			// e.g. /pseudo OR /plasmid=""
 			this.currentFeature_[this.currentQualifierName_] = value
 		}
 
 		this.currentQualifierName_ = null
 		this.currentQualifierValue_ = null
 	}
+
+	countLeadingQuotes_(value) {
+		if (!value)
+			return 0
+
+		let i = 0
+		while (value[i] === '"')
+			i++
+		return i
+	}
+
+	hasInvalidLeadingQuotes_(value) {
+		let numLeadingQuotes = this.countLeadingQuotes_(value)
+		return numLeadingQuotes > 0 && numLeadingQuotes % 2 === 0 // eslint-disable-line no-magic-numbers
+	}
+
+	countTrailingQuotes_(value) {
+		if (!value)
+			return 0
+		let i = value.length - 1,
+			n = 0
+		while (i >= 0 && value[i] === '"') {
+			n++
+			i--
+		}
+		return n
+	}
+
+	hasInvalidTrailingQuotes_(value) {
+		let numTrailingQuotes = this.countTrailingQuotes_(value)
+		return numTrailingQuotes > 0 && isEven(numTrailingQuotes)
+	}
+
+	hasClosingQuotes_(value) {
+		return isOdd(this.countTrailingQuotes_(value))
+	}
+
+	hasUnescapedInternalQuotes_(value) {
+		let n = 0
+		for (let i = 1, z = value.length - 2; i <= z; i++) { // eslint-disable-line no-magic-numbers
+			let isQuote = value[i] === '"'
+			if (!isQuote) {
+				if (n > 0 && isOdd(n))
+					return true
+				n = 0
+				continue
+			}
+			n++
+		}
+
+		return isOdd(n)
+	}
+}
+
+function isEven(value) {
+	return value % 2 === 0 // eslint-disable-line no-magic-numbers
+}
+
+function isOdd(value) {
+	return !isEven(value)
 }
 
 module.exports = function(options) {

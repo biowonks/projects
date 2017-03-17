@@ -11,6 +11,11 @@ const Promise = require('bluebird'),
 // Local
 const mutil = require('mist-lib/mutil')
 
+/**
+ * Helper for downloading genomic data from NCBI. Uses rsync to download files per the NCBI
+ * recommendations (https://www.ncbi.nlm.nih.gov/genome/doc/ftpfaq/) and for its ability to
+ * perform remote glob matches.
+ */
 module.exports =
 class NCBIDataHelper {
 	constructor(fileMapper, logger) {
@@ -60,11 +65,11 @@ class NCBIDataHelper {
 	downloadAndVerify_(sourceType) {
 		assert(!!this.checksums_, 'Expected checksums to be defined')
 
-		let url = this.fileMapper_.ncbiUrlFor(sourceType),
+		let url = this.fileMapper_.ncbiRsyncUrlFor(sourceType),
 			destFile = this.fileMapper_.pathFor(sourceType)
 
 		this.logger_.info({sourceType, url, file: destFile}, `Downloading ${sourceType}`)
-		return mutil.download(url, destFile)
+		return this.rsyncFile_(url, destFile)
 		.then(() => this.verify_(sourceType))
 		.then((isComplete) => {
 			if (!isComplete) {
@@ -83,7 +88,7 @@ class NCBIDataHelper {
 			if (!fileExists)
 				return false
 
-			let fileName = this.fileMapper_.fileNameFor(sourceType),
+			let fileName = this.fileMapper_.localFileNameFor(sourceType),
 				checksum = this.checksums_[fileName]
 			if (checksum) {
 				this.logger_.info({fileName}, `Verifying ${sourceType} file contents`)
@@ -132,11 +137,11 @@ class NCBIDataHelper {
 	}
 
 	downloadChecksums_() {
-		let url = this.fileMapper_.ncbiUrlFor('checksums'),
+		let url = this.fileMapper_.ncbiRsyncUrlFor('checksums'),
 			destFile = this.fileMapper_.pathFor('checksums')
 
 		this.logger_.info({url, destFile}, 'Downloading checksums')
-		return mutil.download(url, destFile)
+		return this.rsyncFile_(url, destFile)
 		.then(this.loadChecksums_.bind(this))
 	}
 
@@ -183,5 +188,9 @@ class NCBIDataHelper {
 		let md5 = matches[1],
 			fileName = matches[2]
 		return [md5, fileName]
+	}
+
+	rsyncFile_(url, localFile) {
+		return mutil.shellCommand(`rsync -q --times "${url}" ${localFile}`)
 	}
 }

@@ -5,3 +5,4 @@ testing/coverage
 data
 .eslintrc.js
 vendor
+config/local

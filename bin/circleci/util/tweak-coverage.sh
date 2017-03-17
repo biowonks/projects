@@ -22,14 +22,14 @@ echo "====> Creating temporary directories: tmp/s3 and tmp/coverage"
 mkdir -p $TMPDIR/s3 $TMPDIR/coverage
 echo ""
 
-echo "====> Downloading previous coverage files from s3"
-aws s3 cp "s3://biowonks/circleci/$BRANCH/coverage.tar.gz" $TMPDIR/s3/coverage.tar.gz 2>/dev/null || true
-if [[ -s $TMPDIR/s3/coverage.tar.gz ]]; then
-	tar -C $TMPDIR/s3 -xf $TMPDIR/s3/coverage.tar.gz
-else
-	echo "      None found"
-fi
-echo ""
+# echo "====> Downloading previous coverage files from s3"
+# aws s3 cp "s3://biowonks/circleci/$BRANCH/coverage.tar.gz" $TMPDIR/s3/coverage.tar.gz 2>/dev/null || true
+# if [[ -s $TMPDIR/s3/coverage.tar.gz ]]; then
+# 	tar -C $TMPDIR/s3 -xf $TMPDIR/s3/coverage.tar.gz
+# else
+# 	echo "      None found"
+# fi
+# echo ""
 
 echo "====> Collecting coverage reports for each build target"
 for PROJECT in "$@"; do
@@ -46,10 +46,10 @@ done
 echo ""
 
 # Create the new tarball coverage
-echo "====> Saving results into new tarball"
-tar -C $TMPDIR -czf $TMPDIR/coverage.tar.gz coverage
-aws s3 cp --storage-class=REDUCED_REDUNDANCY $TMPDIR/coverage.tar.gz "s3://biowonks/circleci/$BRANCH/coverage.tar.gz"
-echo ""
+# echo "====> Saving results into new tarball"
+# tar -C $TMPDIR -czf $TMPDIR/coverage.tar.gz coverage
+# aws s3 cp --storage-class=REDUCED_REDUNDANCY $TMPDIR/coverage.tar.gz "s3://biowonks/circleci/$BRANCH/coverage.tar.gz"
+# echo ""
 
 # Create the final combined report
 echo "====> Combining code coverage reports"

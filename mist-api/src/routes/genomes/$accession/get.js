@@ -5,10 +5,29 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		helper = app.get('lib').RouteHelper.for(models.Genome)
 
 	return [
-		middlewares.parseCriteria(models.Genome, [
-			models.WorkerModule,
-			models.Component
-		]),
-		helper.findHandler('accession')
+		middlewares.parseCriteria(models.Genome, {
+			accessibleModels: [
+				models.WorkerModule,
+				models.Component
+			]
+		}),
+		helper.findHandler('accession', 'version')
 	]
+}
+
+module.exports.docs = function(modelExamples) {
+	return {
+		name: 'Fetch Genome',
+		description: 'Returns a single genome',
+		example: {
+			request: {
+				parameters: {
+					accession: modelExamples.Genome.version
+				}
+			},
+			response: {
+				body: modelExamples.Genome
+			}
+		}
+	}
 }

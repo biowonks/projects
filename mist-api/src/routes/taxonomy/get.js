@@ -9,3 +9,17 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		helper.findManyHandler()
 	]
 }
+
+module.exports.docs = function(modelExamples) {
+	return {
+		name: 'Fetch Many Taxonomies',
+		description: 'Returns an array of taxonomic nodes',
+		example: {
+			response: {
+				body: [
+					modelExamples.Taxonomy
+				]
+			}
+		}
+	}
+}
