@@ -93,6 +93,8 @@ let aseqs = [
 
 let aseqReq = '\n' + aseqs.join('\n')
 
+let maxAseqs = 1000
+
 let fs = require('fs'),
 	http = require('http'),
 	qs = require('querystring'),
@@ -106,16 +108,10 @@ let readStream = fs.createReadStream('./test-data/just12kAseqs.txt'), // , {high
 let myJson = [],
 	buf = '\n'
 
-readStream.on('data', (chunk) => {
-	console.log('buffering')
-})
+let enoughAseq = function(data) {
+	return (data.match(/\n/g) || []).length > maxAseqs + 1
+}
 
-
-readStream.on('end', () => {
-	console.log('done here')
-})
-
-console.log('this')
 let options = {
 	host: 'seqdepot.net',
 	path: '/api/v1/aseqs?type=aseq_id',
@@ -124,27 +120,58 @@ let options = {
 		'Content-Type': 'application/x-www-form-urlencoded'
 	}
 }
-
 let mySeqData = 0
-
-let req = http.request(options, (res) => {
-	res.on('data', (chunk) => {
-		let data = chunk.toString()
-		console.log(chunk.toString())
-		mySeqData += (data.match(/\n/g) || []).length
-	})
-	res.on('error', (err) => {
-		console.log(err)
-	})
-	res.on('end', () => {
-		console.log(mySeqData)
-		console.log((buf.match(/\n/g) || []).length)
-	})
+let allData = []
+let httpBuf = ''
+readStream.on('data', (chunk) => {
+	console.log('buffering')
+	buf += decoder.write(chunk)
+	if (enoughAseq(buf)) {
+		readStream.pause()
+		let req = http.request(options, (res) => {
+			res.on('data', (blob) => {
+				httpBuf += blob
+				let htB = httpBuf.split('\n')
+				let thisTurn = htB.slice(0, htB.length - 1)
+				console.log('Old   ' + httpBuf)
+				httpBuf = htB.slice(htB.length - 1)
+				console.log('Rest   ' + httpBuf)
+				console.log(' ')
+				let data = thisTurn.toString().split('\n')
+				data.forEach((item) => {
+					//console.log('-->   ' + item.split('\t'))
+					if (item !== '')
+						allData.push(JSON.parse(item.split('\t')[3]))
+				})
+				// console.log(data)
+				// (data.match(/\n/g) || []).length
+				// console.log(allData.length)
+			})
+			res.on('error', (err) => {
+				console.log(err)
+			})
+			res.on('end', () => {
+				// console.log(mySeqData)
+				// console.log((buf.match(/\n/g) || []).length)
+				readStream.resume()
+			})
+		})
+		let bufaseqs = buf.split('\n', maxAseqs + 1).join('\n')
+		buf = buf.slice(aseqs.length, buf.length)
+		console.log('sending a request with ' + buf.split('\n', maxAseqs + 1).length + ' aseqs.')
+		req.write(bufaseqs)
+		req.end()
+	}
 })
 
-//req.write(buf)
+readStream.on('end', () => {
+	console.log('done here')
+})
+
+
+
+console.log('this')
+
+
 
 readStream
-	.pipe(req)
-
-// req.end()
