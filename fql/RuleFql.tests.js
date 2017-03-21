@@ -134,9 +134,6 @@ describe('Class RuleFql ::', function() {
 		})
 	})
 	describe.skip('RuleFql methods', () => {
-		beforeEach(function() {
-			let arrayInfo = []
-		})
 		describe('check behaviour of findMatches ::', () => {
 			it('')
 		})

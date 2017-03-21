@@ -22,7 +22,7 @@ class Fql {
 	 * The keys of the object that will be interpreted are two: Npos and pos. Everything else will be ignored.
 	 * Example of rule:
 	 * Find if certain rule will match the expression. (NEED TEST)
-	 * @param {Array{Objects}} - Raw set of rules object
+	 * @param {Array.Objects} - Raw set of rules object
 	 * @return {Boolean} - True if no problems occur.
 	 */
 
@@ -91,111 +91,111 @@ class Fql {
 		let indexLastMatch = NaN,
 			isOk = true
 
-		//console.log('_testPos :: ' + '-------------------------------------------------------------------------------------------------')
-		//console.log('_testPos :: ' + ' This is the data: ' + JSON.stringify(arrayInfo))
-		//console.log('_testPos :: ' + JSON.stringify(parsedRules))
+		// console.log('_testPos :: ' + '-------------------------------------------------------------------------------------------------')
+		// console.log('_testPos :: ' + ' This is the data: ' + JSON.stringify(arrayInfo))
+		// console.log('_testPos :: ' + JSON.stringify(parsedRules))
 
 		for (let i = 0; i < parsedRules.rules.length; i++) { // check each rule
 			let currRule = new RuleFql({instructions: parsedRules.rules[i], pos: i}),
 				nextRule = new RuleFql({instructions: parsedRules.rules[i + 1], pos: i + 1}),
 				classifiedMatches = {hard: [], soft: [], next: []}
 
-			//console.log('_testPos :: ' + 'Rule -> ' + JSON.stringify(currRule))
+			// console.log('_testPos :: ' + 'Rule -> ' + JSON.stringify(currRule))
 
 
 			currRule.findMatches(arrayInfo, indexLastMatch)
 			isOk = currRule.isOk
 
-			//console.log('_testPos :: ' + 'Common matches - ' + JSON.stringify(currRule.matches))
-			//console.log('_testPos :: ' + 'lastmatch: ' + indexLastMatch)
-			//console.log('_testPos :: ' + 'not consecutive match: ' + (currRule.matches[0] - 1 !== indexLastMatch))
+			// console.log('_testPos :: ' + 'Common matches - ' + JSON.stringify(currRule.matches))
+			// console.log('_testPos :: ' + 'lastmatch: ' + indexLastMatch)
+			// console.log('_testPos :: ' + 'not consecutive match: ' + (currRule.matches[0] - 1 !== indexLastMatch))
 
 			if (indexLastMatch && (currRule.matches[0] - 1 !== indexLastMatch))
 				isOk = false
 
 			if (nextRule.instructions && currRule.matches.length !== 0) {
-				//console.log('_testPos :: ' + ' ----- NEXT RULE -----')
+				// console.log('_testPos :: ' + ' ----- NEXT RULE -----')
 				if (isNaN(indexLastMatch))
 					nextRule.findMatches(arrayInfo, 0)
 				else
 					nextRule.findMatches(arrayInfo, indexLastMatch + 1)
-				//console.log('_testPos :: ' + 'Next Rule - Common matches - ' + JSON.stringify(nextRule.matches))
-				//console.log('_testPos :: ' + 'Next Rule - not consecutive match: ' + (nextRule.matches[0] - 1 !== currRule.matches[currRule.matches.length - 1]))
+				// console.log('_testPos :: ' + 'Next Rule - Common matches - ' + JSON.stringify(nextRule.matches))
+				// console.log('_testPos :: ' + 'Next Rule - not consecutive match: ' + (nextRule.matches[0] - 1 !== currRule.matches[currRule.matches.length - 1]))
 
 				classifiedMatches = this._classifyMatches(currRule, nextRule)
 
-				//console.log('_testPos :: ' + ' Classifying matches: ' + JSON.stringify(classifiedMatches))
+				// console.log('_testPos :: ' + ' Classifying matches: ' + JSON.stringify(classifiedMatches))
 
 				let foundMatch = false
 
 				for (let j = 0; j < classifiedMatches.soft.length + 1; j++) {
 					currRule.isOk = true
-					//console.log('_testPos :: matches to curr rule : ' + JSON.stringify(classifiedMatches.hard.concat(classifiedMatches.soft.slice(0, j))))
-					//console.log('_testPos :: matches to next rule : ' + JSON.stringify(classifiedMatches.soft.slice(j, classifiedMatches.soft.length).concat(classifiedMatches.next)))
+					// console.log('_testPos :: matches to curr rule : ' + JSON.stringify(classifiedMatches.hard.concat(classifiedMatches.soft.slice(0, j))))
+					// console.log('_testPos :: matches to next rule : ' + JSON.stringify(classifiedMatches.soft.slice(j, classifiedMatches.soft.length).concat(classifiedMatches.next)))
 					currRule.matches = classifiedMatches.hard.concat(classifiedMatches.soft.slice(0, j))
 					nextRule.matches = classifiedMatches.soft.slice(j, classifiedMatches.soft.length).concat(classifiedMatches.next)
 
-					//console.log('_testPos :: ' + 'Current rule -> ' + JSON.stringify(currRule))
-					//console.log('_testPos :: ' + 'Next Rule -> ' + JSON.stringify(nextRule))
+					// console.log('_testPos :: ' + 'Current rule -> ' + JSON.stringify(currRule))
+					// console.log('_testPos :: ' + 'Next Rule -> ' + JSON.stringify(nextRule))
 
 					if (currRule.pos === 0) {
-						//console.log('_testPos :: ' + 'Testing first rule')
+						// console.log('_testPos :: ' + 'Testing first rule')
 						currRule.checkFirstRule(parsedRules.hardStart)
-						//nextRule.checkFirstRule(parsedRules.hardStart)
+						// nextRule.checkFirstRule(parsedRules.hardStart)
 					}
 					else {
-						//console.log('_testPos :: ' + 'Testing the other rules')
+						// console.log('_testPos :: ' + 'Testing the other rules')
 						currRule.checkNumMatches()
 						nextRule.checkNumMatches(false)
 					}
-					//console.log('_testPos :: ' + 'Current rule -> ' + JSON.stringify(currRule))
-					//console.log('_testPos :: ' + 'Next Rule -> ' + JSON.stringify(nextRule))
+					// console.log('_testPos :: ' + 'Current rule -> ' + JSON.stringify(currRule))
+					// console.log('_testPos :: ' + 'Next Rule -> ' + JSON.stringify(nextRule))
 					if (currRule.isOk && nextRule.isOk) {
 						// indexLastMatch = currRule.matches[currRule.matches.length - 1]
-						// ////console.log('_testPos :: ' + 'lastmatch: ' + indexLastMatch)
+						// //// console.log('_testPos :: ' + 'lastmatch: ' + indexLastMatch)
 						foundMatch = true
 						break
 					}
 				}
 				if (foundMatch)
 					isOk = true
-				//console.log('_testPos :: ' + ' ----- END of NEXT RULE -----')
+				// console.log('_testPos :: ' + ' ----- END of NEXT RULE -----')
 			}
 
-			//console.log('_testPos :: ' + 'New common matches after next rule: ' + JSON.stringify(currRule.matches))
+			// console.log('_testPos :: ' + 'New common matches after next rule: ' + JSON.stringify(currRule.matches))
 
-			//console.log('_testPos :: ' + ' Now, let\'s make the test about the number of matches of the special first rule')
-			//console.log('_testPos :: ' + 'Rule -> ' + JSON.stringify(currRule))
+			// console.log('_testPos :: ' + ' Now, let\'s make the test about the number of matches of the special first rule')
+			// console.log('_testPos :: ' + 'Rule -> ' + JSON.stringify(currRule))
 			if (!(currRule.checkFirstRule(parsedRules.hardStart))) {
 				isOk = currRule.isOk
 				break
 			}
 
-			//console.log('_testPos :: ' + ' And check if the number of matches are within the interval')
+			// console.log('_testPos :: ' + ' And check if the number of matches are within the interval')
 			if (!(currRule.checkNumMatches())) {
 				isOk = currRule.isOk
 				break
 			}
 
 			if (currRule.matches.length === 0) {
-				//console.log('_testPos :: ' + ' False by having no matches')
+				// console.log('_testPos :: ' + ' False by having no matches')
 				isOk = false
 				break
 			}
 
 			if (!(isNaN(indexLastMatch))) {
-				//console.log('_testPos :: ' + ' is still ok? : ' + isOk)
-				//console.log('_testPos :: ' + ' final match : ' + currRule.matches[0])
-				//console.log('_testPos :: ' + ' last index : ' + indexLastMatch)
+				// console.log('_testPos :: ' + ' is still ok? : ' + isOk)
+				// console.log('_testPos :: ' + ' final match : ' + currRule.matches[0])
+				// console.log('_testPos :: ' + ' last index : ' + indexLastMatch)
 				if (isOk === false || currRule.matches === [] || currRule.matches[0] - 1 !== indexLastMatch) {
-					//console.log('_testPos :: ' + ' False by having no consecutive match')
+					// console.log('_testPos :: ' + ' False by having no consecutive match')
 					isOk = false
 					break
 				}
 			}
-			//console.log('_testPos :: ' + 'List of matches: ' + JSON.stringify(currRule.matches))
+			// console.log('_testPos :: ' + 'List of matches: ' + JSON.stringify(currRule.matches))
 			indexLastMatch = currRule.matches[currRule.matches.length - 1]
-			//console.log('_testPos :: ' + 'New last match: ' + indexLastMatch)
+			// console.log('_testPos :: ' + 'New last match: ' + indexLastMatch)
 			if (parsedRules.hardStop === true && i === parsedRules.rules.length - 1) {
 				if (indexLastMatch !== arrayInfo.length - 1)
 					isOk = false
@@ -204,7 +204,7 @@ class Fql {
 			if (isOk === false)
 				break
 		}
-		//console.log('_testPos :: ' + 'FINAL = ' + isOk)
+		// console.log('_testPos :: ' + 'FINAL = ' + isOk)
 		return isOk
 	}
 
@@ -434,11 +434,11 @@ class Fql {
 		features.sort((a, b) => {
 			return a.pos - b.pos
 		})
-		let expression = []
+		let expressions = []
 		features.forEach((feature) => {
-			expression.push(feature.ft + '@' + feature.rc)
+			expressions.push(feature.ft + '@' + feature.rc)
 		})
-		return expression
+		return expressions
 	}
 	/**
 	* Get configuration to search each tool.
@@ -465,7 +465,7 @@ class Fql {
 	 * Validates rules passed by user
 	 * @param {Object} rule - Pass the object with Npos and pos rules
 	 * @throws {Error} If rule is missing feature, resource or both
-	 * @return
+	 * @returns {Null}
 	 */
 
 	_isValidRule(rule) {
