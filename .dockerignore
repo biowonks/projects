@@ -1,2 +1,1 @@
-*
-!docker.node-bootstrap.entrypoint.sh
+.dockerignore.node-bootstrap

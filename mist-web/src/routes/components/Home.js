@@ -1,9 +1,11 @@
 const mistLogoSrc = require('../../assets/images/mist-logo.png')
 
 import React from 'react'
-import { genomesCount } from '../../modules/genomes/actions/genomes-count'
+import { Link } from 'react-router'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
+
+import { genomesCount } from '../../modules/genomes/genomes.reducer'
 
 const logoStyle = {
 	maxWidth: '50%'
@@ -24,7 +26,7 @@ class Home extends React.Component {
 		return (
 			<div>
 				<img className="center-block" style={logoStyle} src={mistLogoSrc} />
-				<h3 className="text-center">{amount} genomes</h3>
+				<h3 className="text-center"><Link to="/genomes">{amount} genomes</Link></h3>
 			</div>
 		)
 	}
