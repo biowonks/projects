@@ -476,6 +476,20 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Wrong wild card. Change "*" to ".*" in:\n{"resource":"pfam28","feature":"*","count":"{2}"}')
 			})
+			it('Wrong wild card "*" instead of ".*" in non-positional rules', function() {
+				let setOfRules = [
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: '*',
+								count: '{2}'
+							}
+						]
+					}
+				]
+				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Wrong wild card. Change "*" to ".*" in:\n{"resource":"pfam28","feature":"*","count":"{2}"}')
+			})
 		})
 		describe('Loading rules more than once', () => {
 			it('Loading second rule should reset .rules, .resources, .parsedRules', () => {
@@ -566,7 +580,7 @@ describe('Feature Query Language - FQL', function() {
 	})
 	describe('Non positional rules :: ', () => {
 		describe('Single Rule - If broken, fix this first', () => {
-			it('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single domain from pfam29', function() {
+			it('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single CheW domain from pfam29', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
@@ -606,9 +620,9 @@ describe('Feature Query Language - FQL', function() {
 					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
 					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(expected).eql(fql.match)
+				expect(fql.match).eql(expected)
 			})
-			it('Filter proteins sequences with 1 match, anywhere in the sequence, to a single domain from pfam29', function() {
+			it('Filter proteins sequences with 1 match, anywhere in the sequence, to a single CheW domain from pfam29', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
@@ -649,9 +663,9 @@ describe('Feature Query Language - FQL', function() {
 					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
 					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(expected).eql(fql.match)
+				expect(fql.match).eql(expected)
 			})
-			it('Filter proteins sequences with 1 or 2 matches, anywhere in the sequence, to a single domain from pfam29', function() {
+			it('Filter proteins sequences with 1 or 2 matches, anywhere in the sequence, to a single CheW domain from pfam29', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
@@ -692,9 +706,9 @@ describe('Feature Query Language - FQL', function() {
 					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
 					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(expected).eql(fql.match)
+				expect(fql.match).eql(expected)
 			})
-			it('Filter proteins sequences with 2 or 3 matches, anywhere in the sequence, to a single domain from pfam29', function() {
+			it('Filter proteins sequences with 2 or 3 matches, anywhere in the sequence, to a single CheW domain from pfam29', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{
@@ -735,7 +749,7 @@ describe('Feature Query Language - FQL', function() {
 					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
 					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(expected).eql(fql.match)
+				expect(fql.match).eql(expected)
 			})
 			it('Filter proteins sequences with 3 or more transmembrane regions, anywhere in the sequence', function() {
 				let fql = new Fql()
@@ -778,7 +792,7 @@ describe('Feature Query Language - FQL', function() {
 					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
 					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(expected).eql(fql.match)
+				expect(fql.match).eql(expected)
 			})
 			it('Filter proteins sequences without transmembrane regions', function() {
 				let fql = new Fql()
@@ -821,7 +835,50 @@ describe('Feature Query Language - FQL', function() {
 					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
 					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(expected).eql(fql.match)
+				expect(fql.match).eql(expected)
+			})
+			it('Filter proteins with 1 domain from pfam28', function() {
+				let fql = new Fql()
+				let setOfRules = [
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: '.*',
+								count: '{1}'
+							}
+						]
+					}
+				]
+				fql.loadRules(setOfRules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					false, // CheW | CheW
+					false, // CheW | Response_reg
+					true, // CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					false, // CheW | CheW | CheW
+					false, // Response_reg | NMT1_2 | CheW
+					false, // CheW | CheR
+					false, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					false, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					true, // TM | TM | MCPsignal
+					false, // TM | MCPsignal | Rhodanese
+					true, // TM | TM | TM | TM | MCPsignal
+					true, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(fql.match).eql(expected)
 			})
 		})
 		describe('Multiple Rules - AND mode', () => {
@@ -871,7 +928,7 @@ describe('Feature Query Language - FQL', function() {
 					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
 					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(expected).eql(fql.match)
+				expect(fql.match).eql(expected)
 			})
 			it('Filter proteins sequences with at least 1 match to CheW domain in pfam28 AND only 1 match to HATPase_c domain in pfam28', function() {
 				let fql = new Fql()
@@ -924,7 +981,7 @@ describe('Feature Query Language - FQL', function() {
 					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
 					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(expected).eql(fql.match)
+				expect(fql.match).eql(expected)
 			})
 		})
 		describe('Multiple Rules - OR mode', () => {
@@ -978,7 +1035,7 @@ describe('Feature Query Language - FQL', function() {
 					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
 					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(expected).eql(fql.match)
+				expect(fql.match).eql(expected)
 			})
 			it('Filter proteins sequences with at least 2 match to CheW domain in pfam28 OR only 1 match to HATPase_c domain in pfam28 OR only 1 matches to Response_reg in pfam28', function() {
 				let fql = new Fql()
@@ -1039,7 +1096,7 @@ describe('Feature Query Language - FQL', function() {
 					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
 					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(expected).eql(fql.match)
+				expect(fql.match).eql(expected)
 			})
 		})
 	})

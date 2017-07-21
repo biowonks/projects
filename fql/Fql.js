@@ -290,6 +290,8 @@ class Fql {
 			let expr = ''
 			let count = ''
 			rules.forEach((rule) => {
+				if (rule.feature === '.*')
+					rule.feature = ''
 				expr = rule.feature + '@' + rule.resource
 				if ('count' in rule)
 					count = rule.count
@@ -504,6 +506,12 @@ class Fql {
 			rule.Npos.forEach((nposRule) => {
 				let noResource = true,
 					noFeature = true
+
+				let values = Object.keys(nposRule).map((key) => nposRule[key])
+				values.forEach((value) => {
+					if (value === '*')
+						throw new Error('Wrong wild card. Change "*" to ".*" in:\n' + JSON.stringify(nposRule))
+				})
 
 				if ('resource' in nposRule)
 					noResource = false

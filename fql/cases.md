@@ -205,7 +205,7 @@ If you want to select all sequences with at least 1 match to CheW domain in pfam
 ]
 ```
 
-Finally, you can use `count` to define a domain that should **NOT** be there. A negative. For that you just need to pass the value `{0}`. For example:
+You can also use `count` to define a domain that should **NOT** be there. A negative. For that you just need to pass the value `{0}`. For example:
 
 Filter proteins without TM region:
 
@@ -217,6 +217,24 @@ Filter proteins without TM region:
                 resource: 'das',
                 feature: 'TM',
                 count: '{0}'
+            }
+        ]
+    }
+]
+```
+
+Finally, FQL allows the use of the wild card `.*`. **Don't mistake `.*` for `*`** in the `resource` field. For example:
+
+Filter proteins with 1 domain from pfam28:
+
+```javascript
+[
+    {
+        Npos: [
+            {
+                resource: 'pfam28',
+                feature: '.*',
+                count: '{1}'
             }
         ]
     }
@@ -364,7 +382,7 @@ Also it is worth notice that the `count` value is very limitant. for example:
 
 will filter domain architecture such as CheW-CheW but not CheW-CheW-CheW. To pick the last one also, you must change the value `count` to `{2,3}`. If you omit `count`, then any sequence that have starts with CheW, independently of the next domain, will be filtered.
 
-FQL also includes the wild card `.*` to allow any feature of a certain resource:
+Wild card `.*` can also be used in positional rules for features:
 
 For example if I want to search for any chemoreceptor (ending with MCPsignal) with any number more than 1 of any domains from pfam28 between two TM regions we use:
 
@@ -409,8 +427,6 @@ For example if I want to search for any chemoreceptor (ending with MCPsignal) wi
     }
 ]
 ```
-
-Wild cards can be used for resources as well. For example,
 
 To filter sequences that start with TM and end with MCPsignal.
 
@@ -494,6 +510,7 @@ Filter proteins that starts with a TM region, and in between the two TM regions 
                     feature: '.*',
                     count: '{1}'
                 }
+            ],
             {
                 resource: 'das',
                 feature: 'TM',
