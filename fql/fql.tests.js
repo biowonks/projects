@@ -454,6 +454,28 @@ describe('Feature Query Language - FQL', function() {
 				]
 				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each Npos rule must explicitly define a resource and feature')
 			})
+			it('Wrong wild card "*" instead of ".*" in positional rules', function() {
+				let setOfRules = [
+					{
+						pos: [
+							{
+								resource: 'fql',
+								feature: '^'
+							},
+							{
+								resource: 'pfam28',
+								feature: '*',
+								count: '{2}'
+							},
+							{
+								resource: 'fql',
+								feature: '$'
+							}
+						]
+					}
+				]
+				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Wrong wild card. Change "*" to ".*" in:\n{"resource":"pfam28","feature":"*","count":"{2}"}')
+			})
 		})
 		describe('Loading rules more than once', () => {
 			it('Loading second rule should reset .rules, .resources, .parsedRules', () => {
@@ -1862,7 +1884,58 @@ describe('Feature Query Language - FQL', function() {
 			})
 		})
 		describe('Testing the behaviour of wildcard for positional rules', () => {
-			it('Filter protein sequences with 1 or more domains between 2 TM regions in the begigging of the sequence and with MCPsignal at the end', function() {
+			it('Filter protein sequences with any 2 pfam28 domains', function() {
+				let fql = new Fql()
+				let setOfRules = [
+					{
+						pos: [
+							{
+								resource: 'fql',
+								feature: '^'
+							},
+							{
+								resource: 'pfam28',
+								feature: '.*',
+								count: '{2}'
+							},
+							{
+								resource: 'fql',
+								feature: '$'
+							}
+						]
+					}
+				]
+				fql.loadRules(setOfRules)
+				fql.applyFilter(sampleData)
+				let expected = [
+					true, // CheW | CheW
+					true, // CheW | Response_reg
+					false, // CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					false, // CheW | CheW | CheW
+					false, // Response_reg | NMT1_2 | CheW
+					true, // CheW | CheR
+					true, // Response_reg | CheW
+					false, // TM | Cache_1 | TM | HAMP | MCPsignal
+					true, // HAMP | MCPsignal
+					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					false, // **
+					false, // **
+					false,  // TM | TM | MCPsignal
+					true,  // TM | TM | MCPsignal | Rhodanese
+					false, // TM | TM | TM | TM | MCPsignal
+					false, // TM | TM | TM | TM | TM | TM | MCPsignal
+					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				expect(fql.match).eql(expected)
+			})
+			it('Filter protein sequences with 1 or more domains between 2 TM regions in the beginning of the sequence and with MCPsignal at the end', function() {
 				let fql = new Fql()
 				let setOfRules = [
 					{

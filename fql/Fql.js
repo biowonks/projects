@@ -479,6 +479,13 @@ class Fql {
 					let noResource = true,
 						noFeature = true
 
+					let values = Object.keys(posRule).map((key) => posRule[key])
+					values.forEach((value) => {
+						if (value === '*')
+							throw new Error('Wrong wild card. Change "*" to ".*" in:\n' + JSON.stringify(posRule))
+					})
+
+
 					if ('resource' in posRule)
 						noResource = false
 					if ('feature' in posRule)
