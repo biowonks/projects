@@ -20,6 +20,15 @@ export function fetchGenomes() {
 	}
 }
 
+export function searchGenomes(query) {
+	// const payload = axios.get(`https://api.mistdb.com/v1/genomes?query=${query}`)
+	const payload = axios.get(`http://localhost:5000/v1/genomes?query=${query}`)
+	return {
+		type: 'GENOMES-SEARCH',
+		payload
+	}
+}
+
 // Default
 const defaultState = fromJS({
 	count: null,
@@ -36,6 +45,7 @@ export function genomesReducer(state = defaultState, action) {
 			return state.set('count', Number(action.payload.headers['x-total-count']));
 
 		case 'GENOMES-FETCH':
+		case 'GENOMES-SEARCH':
 			return state.set('genomes', fromJS(action.payload.data))
 
 		default:
