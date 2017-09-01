@@ -21,11 +21,13 @@ This structuring of our projects has made development signficantly easier withou
 To effectively leverage and use the BioWonks projects, it is necessary to have the following tools:
 
 * [git](https://git-scm.com/)
-* [Node.js](https://nodejs.org) - we recommend using [NVM](https://github.com/creationix/nvm) to install version 6.x
+* [Node.js](https://nodejs.org) - we recommend using [NVM](https://github.com/creationix/nvm) to install version 8.x
 * [Docker](https://www.docker.com/)
+* [Docker Compose](https://docs.docker.com/compose/)
 
 Node is used for various scripting tasks as well as other tooling helpers (e.g. [eslint](http://eslint.org/) javascript linting). The Docker software provides a reproducible and consistent environment for each project to cleanly express its own infrastructure. Thus, given the above tools, each project simply provides a Docker image or Dockerfile to configure the environment needed to run that project.
 
+| After installing Docker, we recommend configuring docker to start up on boot.
 
 ## Setup
 Clone the repository:
@@ -82,3 +84,24 @@ To stop the API service:
 ```
 (biowonks @ docker) /app/mist-api $ yarn stop
 ```
+
+## Local PostgreSQL database access
+
+From within the docker environment, run the following command:
+
+```bash
+(biowonks @ docker) /app $ psql -h mist-pg-db -U mist_dev mist_dev
+```
+
+When prompted for a password, use the password defined in `mist-lib/src/db/config.js`.
+
+The postgresql database image is also accessible from the host environment (expose the postgresql image ports to the host environment):
+
+```bash
+$ psql -h localhost -U mist_dev mist_dev
+```
+
+| Tip: Rather than have to input the password everytime, you may also store your login credentials in a `.pgpass` [file](https://www.postgresql.org/docs/9.6/static/libpq-pgpass.html). This looks like the following (for the host environment): `localhost:5432:mist_dev:mist_dev:DATABASE_PASSWORD`. Be sure to set the permissions properly for this file too.
+
+| Tip: Add an alias for the above psql command to your .bashrc: `alias psql-mist-dev="psql -h localhost -U mist_dev mist_dev`
+
