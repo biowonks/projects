@@ -5,16 +5,16 @@ let RuleFql = require('./RuleFql.js')
 module.exports =
 /**
  * Class of Feature Query Language
+ *
+ * Service to process a given domain
+ * architecture and verify its matches
+ * against N rules
+ *
  * */
-class Fql {
-	constructor(initialAseqs = []) {
-		this.input = {}
-		this.sqlQuery = ''
-		this.selection = initialAseqs
-		this.rules = []
-		this.match = []
-		this.resources = []
-		this.parsedRules = []
+class FQLService {
+	constructor(setsOfRules = false) {
+		this.setsOfRules = setsOfRules
+		this.parsedSetsOfRules = []
 	}
 
 	/**
@@ -25,37 +25,48 @@ class Fql {
 	 * @param {Array.Objects} - Raw set of rules object
 	 * @return {Boolean} - True if no problems occur.
 	 */
-
-	loadRules(setOfRules) {
-		this.rules = setOfRules
-		this.resources = []
-		this.parsedRules = []
-		setOfRules.forEach((rules) => {
-			this._isValidRule(rules)
-			this.parsedRules.push(this._parseRules(rules))
+	initRules() {
+		return new Promise((resolve, reject) => {
+			if (this.setsOfRules) {
+				this.resources = [...Array(this.setsOfRules.length).keys()].map((i) => [])
+				this.setsOfRules.forEach((setOfRules, ruleIndex) => {
+					let parsedRules = []
+					setOfRules.forEach((rules) => {
+						this._isValidRule(rules)
+						parsedRules.push(this._parseRules(rules, ruleIndex))
+					})
+					this.parsedSetsOfRules.push(parsedRules)
+				})
+				resolve()
+			}
+			else {
+				reject(new Error('No rules have been passed in the constructor'))
+			}
 		})
-		return null
 	}
 
-	applyFilter(data) {
-		let matchList = []
-		data.forEach((info) => {
-			let arrayInfo = this._seqDepotInfoToArray(info),
-				stringInfo = arrayInfo.join('')
-			let isMatch = false,
-				newMatch = true
-			this.parsedRules.forEach((parsedRule) => {
-				newMatch = true
-				if (parsedRule.pos !== null)
-					newMatch = this._testPos(arrayInfo, parsedRule.pos)
-				if ('Npos' in parsedRule)
-					newMatch = newMatch && this._testNpos(stringInfo, parsedRule.Npos)
-				isMatch = isMatch || newMatch
+	findMatches(item) {
+		return new Promise((resolve, reject) => {
+			let matchList = []
+			this.parsedSetsOfRules.forEach((parsedRules, ruleIndex) => {
+				let DAarrayInfo = this._seqDepotInfoToArray(item, ruleIndex),
+					DAstringInfo = DAarrayInfo.join('')
+				let isMatch = false,
+					newMatch = true
+				parsedRules.forEach((parsedRule) => {
+					newMatch = true
+					if (parsedRule.pos !== null)
+						newMatch = this._testPos(DAarrayInfo, parsedRule.pos)
+					if ('Npos' in parsedRule)
+						newMatch = newMatch && this._testNpos(DAstringInfo, parsedRule.Npos)
+					isMatch = isMatch || newMatch
+				})
+				if (isMatch)
+					matchList.push(ruleIndex)
 			})
-			matchList.push(isMatch)
+			item.FQLMatches = matchList
+			resolve(item)
 		})
-		this.match = matchList
-		return matchList
 	}
 
 	_testNpos(stringInfo, rules) {
@@ -256,9 +267,9 @@ class Fql {
 	 * @param {string} resource - identifier of the resource
 	 * @returns {null}
 	 */
-	_addResources(resource) {
-		if (this.resources.indexOf(resource) === -1)
-			this.resources.push(resource)
+	_addResources(resource, ruleIndex) {
+		if (this.resources[ruleIndex].indexOf(resource) === -1)
+			this.resources[ruleIndex].push(resource)
 		return null
 	}
 
@@ -271,10 +282,10 @@ class Fql {
 	 * @param {Object} rules - Raw rules object passed to FQL
 	 * @returns {Object} parsed - Same object but with the rules parsed
 	 */
-	_parseRules(rules) {
+	_parseRules(rules, ruleIndex) {
 		let parsed = {
-			pos: this._parsePosRules(rules.pos),
-			Npos: this._parseNPosRules(rules.Npos)
+			pos: this._parsePosRules(rules.pos, ruleIndex),
+			Npos: this._parseNPosRules(rules.Npos, ruleIndex)
 		}
 		return parsed
 	}
@@ -284,7 +295,7 @@ class Fql {
 	 * @param {Object} rules - Rule of Npos type object
 	 * @returns {Array.<Array>} regex - Array of [ String to match the domain architecture of sequences, string of interval of how many times it should appear ].
 	 */
-	_parseNPosRules(rules) {
+	_parseNPosRules(rules, ruleIndex) {
 		let parsedNposRule = []
 		if (rules) {
 			let expr = ''
@@ -296,7 +307,7 @@ class Fql {
 				if ('count' in rule)
 					count = rule.count
 				parsedNposRule.push([expr, count])
-				this._addResources(rule.resource)
+				this._addResources(rule.resource, ruleIndex)
 			})
 		}
 		else {
@@ -313,7 +324,7 @@ class Fql {
 	 * rules {Object} - Array with rules
 	 * hardStop {Boolean} - true if matters that the last rule match last info.
 	 */
-	_parsePosRules(rules) {
+	_parsePosRules(rules, ruleIndex) {
 		let parsedRule = {
 			hardStart: false,
 			rules: [],
@@ -330,7 +341,7 @@ class Fql {
 					instructions = rule
 				let parsed = []
 				instructions.forEach((instr) => {
-					expr = this._parseThePosInstruction(instr, i, rules.length)
+					expr = this._parseThePosInstruction(instr, i, rules.length, ruleIndex)
 					if (expr === 'hardStart')
 						parsedRule.hardStart = true
 					else if (expr === 'hardStop')
@@ -363,7 +374,7 @@ class Fql {
 	 * @param {number} L - number of rules.
 	 * @returns {Object.Array|string} Parsed rule or
  	 */
-	_parseThePosInstruction(rule, i, L) {
+	_parseThePosInstruction(rule, i, L, ruleIndex) {
 		let interval = [1, NaN],
 			expr = ''
 		if (rule.resource === 'fql') {
@@ -373,7 +384,7 @@ class Fql {
 				expr = 'hardStop'
 		}
 		else {
-			this._addResources(rule.resource)
+			this._addResources(rule.resource, ruleIndex)
 			if ('count' in rule)
 				interval = this._parseCount(rule.count)
 			expr = [rule.feature + '@' + rule.resource, interval]
@@ -416,10 +427,10 @@ class Fql {
 	 * @param {string} info - SeqDepot-formated feature information
 	 * @returns {Object} Returns an array with features information formated as: feature@resource
 	 */
-	_seqDepotInfoToArray(info) {
+	_seqDepotInfoToArray(info, ruleIndex) {
 		let features = []
 		let config = {}
-		this.resources.forEach((resource) => {
+		this.resources[ruleIndex].forEach((resource) => {
 			config = this._getConfig(resource)
 			if ('t' in info.result) {
 				if (resource in info.result.t) {

@@ -9,17 +9,10 @@ let fs = require('fs'),
 
 let setOfRules = [
 	{
-		Npos: [
-			{
-				resource: 'das',
-				feature: 'TM',
-				count: '{4}'
-			}
-		],
 		pos: [
 			{
 				resource: 'pfam28',
-				feature: 'MCPsignal'
+				feature: 'PAAR_motif'
 			},
 			{
 				resource: 'fql',
@@ -33,7 +26,7 @@ let pk = new PackInChunks(maxAseqs),
 	sd = new RequestSeqDepot(),
 	fqlSt = new FqlStream(setOfRules, maxAseqs)
 
-let readStream = fs.createReadStream('./test-data/GammaPb.chemotaxis.aseqs', {highWaterMark: 5}),
+let readStream = fs.createReadStream('./test-data/just10Aseqs.txt', {highWaterMark: 5}),
 	writeStream = fs.createWriteStream('./test-data/seqDepotInfo.filtered.json')
 
 readStream
