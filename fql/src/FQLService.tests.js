@@ -8,7 +8,7 @@ chai.use(chaiAsPromised)
 let expect = require('chai').expect
 
 let FQLService = require('./FQLService.js')
-let sampleData = require('./test-data/FQL-sample-input.json')
+let sampleData = require('../test-data/FQL-sample-input.json')
 
 describe('Feature Query Language - FQL', function() {
 	describe('Sanity checks', function() {
@@ -182,7 +182,6 @@ describe('Feature Query Language - FQL', function() {
 				done(err)
 			})
 		})
-		it.skip('check behaviour _getConfig')
 		describe('check behaviour of _parseRules', function() {
 			it('with missing pos', function(done) {
 				let setOfRules = [
