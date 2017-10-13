@@ -19,6 +19,105 @@ FQL is a flexible feature querying language for proteins that is based in a filt
 * multi-domain proteins
 * pitfalls
 
+### Simple use of FQL
+
+FQL was built to be used as a `Transform` stream. The constructor takes a set of matching rules that should describe the protein family of interest. For example, if the protein family of interest are the chemotaxis scaffold CheW, a possible rule would be `match all sequences that has only one CheW domain, as defined by Pfam 30 database`. In reality, the `FQLStream` can process multiple protein families definitions at once and therefore, the constructor takes an array of set of matching rules, each set for protein family. The output is the same information as the input plus a field `FQLMatches` with the indexes of the set of rules that this particular protein matches.
+
+The readable stream pushing objects like these:
+
+It reads objects and adds the field
+```json
+{
+    "t": {
+        "resource1": [
+            ["feature",start, stop],
+            ["feature2",start, stop],
+        ],
+        "resource2": [
+            ["feature",start, stop],
+        ],
+    }
+}
+```
+
+A real example of an input with domain architecture information about pfam28, smart and transmembrane predictions by das and TMHMM is:
+
+```json
+ {
+    "t": {
+        "das": [
+            ["TM",14,31,21,4.055,0.0003693],
+            ["TM",60,76,66,3.958,0.0005206]
+        ],
+        "pfam28": [
+            ["MCPsignal",192,381,"..",26.8,4,207,".]",186,381,"..",195.8,3.5e-61,3.9e-58,0.96]
+        ],
+        "smart": [
+            ["SM00283",135,382,1.3e-81]
+        ],
+        "tmhmm": [
+            ["TM",16,38],["TM",60,82]
+        ]
+    }
+ }
+```
+Notice that we name the feature `TM` in the transmembrane predictions, so we can use to make rules about this feature later. We will talk about how to setup these rules later.
+
+
+Before we actually give an example of how to use `FQLStream`, we will give a quick example on how to use the `FQLService` which is the heart and soul of the FQL system.
+
+#### Using FQLService (not recommended):
+
+Suppose the input items are stored in an array named `sampleData`. The following code process each object and adds to them the information about matches to the rule and prints the final object in the screen. The rule in this case is any protein that starts with a CheW domain as defined by the pfam28 database
+
+```javascript
+'use strict'
+
+let FQLService = require('./FQLService.js'),
+	sampleData = require('./FQL-sample-input.json')
+
+let setsOfRules = [
+	[
+		{
+			pos: [
+				{
+					resource: 'fql',
+					feature: '^'
+				},
+				{
+					resource: 'pfam28',
+					feature: 'CheW'
+				}
+			]
+		}
+	]
+]
+
+let fqlService = new FQLService(setsOfRules)
+
+fqlService.initRules().then(function() {
+	let promises = []
+	sampleData.forEach(function(item) {
+		promises.push(fqlService.findMatches(item))
+	})
+	Promise.all(promises).then(function(items) {
+		items.forEach(function(item, i) {
+			console.log(JSON.stringify(item))
+		})
+	}).catch((err) => {
+		console.log(err)
+	})
+}).catch((err) => {
+	console.log(err)
+})
+```
+
+> Obviously, the path to the `FQLService.js` and the sample data must be adapted
+
+#### Using FQLStream:
+
+
+
 
 
 ### Rules in FQL

@@ -8,7 +8,7 @@ chai.use(chaiAsPromised)
 let expect = require('chai').expect
 
 let FQLService = require('./FQLService.js')
-let sampleData = require('./test-data/sample-input-fql.json')
+let sampleData = require('./test-data/FQL-sample-input.json')
 
 describe('Feature Query Language - FQL', function() {
 	describe('Sanity checks', function() {
@@ -74,7 +74,7 @@ describe('Feature Query Language - FQL', function() {
 				done(err)
 			})
 		})
-		it('check behaviour _seqDepotInfoToArray', function(done) {
+		it('check behaviour _processFeaturesInfo', function(done) {
 			let setOfRules = [
 				{
 					pos: [
@@ -98,21 +98,75 @@ describe('Feature Query Language - FQL', function() {
 			let	fqlService = new FQLService([setOfRules])
 			fqlService.initRules().then(function() {
 				let info = {
-					result: {
-						t: {
-							das: [
-								[8, 27, 18, 5.903, 8.666e-7],
-								[288, 315, 302, 5.835, 1.099e-6]
-							],
-							pfam28: [
-								['MCPsignal', 460, 658, '..', 34.5, 12, 203, '..', 435, 669, '..', 143.6, 1.3e-44, 3.8e-42, 0.89],
-								['Cache_1', 157, 230, '..', 0.3, 2, 74, '..', 156, 234, '..', 68.3, 2.2e-22, 2.0e-19, 0.95],
-								['HAMP', 295, 360, '..', 0, 2, 66, '..', 294, 363, '..', 61.3, 2.9e-19, 4.4e-17, 0.95]
-							]
-						}
+					t: {
+						das: [
+							["TM", 8, 27, 18, 5.903, 8.666e-7],
+							["TM", 288, 315, 302, 5.835, 1.099e-6]
+						],
+						pfam28: [
+							['MCPsignal', 460, 658, '..', 34.5, 12, 203, '..', 435, 669, '..', 143.6, 1.3e-44, 3.8e-42, 0.89],
+							['Cache_1', 157, 230, '..', 0.3, 2, 74, '..', 156, 234, '..', 68.3, 2.2e-22, 2.0e-19, 0.95],
+							['HAMP', 295, 360, '..', 0, 2, 66, '..', 294, 363, '..', 61.3, 2.9e-19, 4.4e-17, 0.95]
+						]
 					}
 				}
-				let expression = fqlService._seqDepotInfoToArray(info, 0)
+				let expression = fqlService._processFeaturesInfo(info, 0)
+				expect(expression).eql(
+					[
+						'TM@das',
+						'Cache_1@pfam28',
+						'TM@das',
+						'HAMP@pfam28',
+						'MCPsignal@pfam28'
+					]
+				)
+				done()
+			})
+			.catch(function(err) {
+				done(err)
+			})
+		})
+		it('check behaviour _processFeaturesInfo with different resources', function(done) {
+			let setOfRules = [
+				{
+					pos: [
+						{
+							resource: 'pfam28',
+							feature: 'CheW'
+						},
+						{
+							resource: 'pfam28',
+							feature: 'Response_reg'
+						}
+					],
+					Npos: [
+						{
+							resource: 'das',
+							feature: 'TM'
+						},
+						{
+							resource: 'smart',
+							feature: 'SM1049'
+						}
+					]
+				}
+			]
+			let	fqlService = new FQLService([setOfRules])
+			fqlService.initRules().then(function() {
+				let info = {
+					t: {
+						das: [
+							["TM", 8, 27, 18, 5.903, 8.666e-7],
+							["TM", 288, 315, 302, 5.835, 1.099e-6]
+						],
+						pfam28: [
+							['MCPsignal', 460, 658, '..', 34.5, 12, 203, '..', 435, 669, '..', 143.6, 1.3e-44, 3.8e-42, 0.89],
+							['Cache_1', 157, 230, '..', 0.3, 2, 74, '..', 156, 234, '..', 68.3, 2.2e-22, 2.0e-19, 0.95],
+							['HAMP', 295, 360, '..', 0, 2, 66, '..', 294, 363, '..', 61.3, 2.9e-19, 4.4e-17, 0.95]
+						]
+					}
+				}
+				let expression = fqlService._processFeaturesInfo(info, 0)
 				expect(expression).eql(
 					[
 						'TM@das',
@@ -3579,6 +3633,146 @@ describe('Feature Query Language - FQL', function() {
 				[1], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
 				[1], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
 				[1] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+			]
+			let fqlService = new FQLService(setsOfRules)
+
+			fqlService.initRules().then(function() {
+				let promises = []
+				sampleData.forEach(function(item) {
+					promises.push(fqlService.findMatches(item))
+				})
+				Promise.all(promises).then(function(items) {
+					items.forEach(function(item, i) {
+						expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+					})
+					done()
+				})
+				.catch(function(err) {
+					done(err)
+				})
+			})
+			.catch(function(error) {
+				done(error)
+			})
+		})
+	})
+	describe('Using multiple resources', function() {
+		it(':: testing pfam28 and smart in the same set', function(done) {
+			let setsOfRules = [
+				[
+					{
+						Npos: [
+							{
+								resource: 'smart',
+								feature: 'SM00260'
+							}
+						]
+					},
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW'
+							}
+						]
+					}
+				]
+			]
+			let expected = [
+				[0], // CheW | CheW
+				[0], // CheW | Response_reg
+				[0], // CheW
+				[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+				[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+				[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+				[0], // CheW | CheW | CheW
+				[0], // Response_reg | NMT1_2 | CheW
+				[0], // CheW | CheR
+				[0], // Response_reg | CheW
+				[], // TM | Cache_1 | TM | HAMP | MCPsignal
+				[], // HAMP | MCPsignal
+				[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+				[], // **
+				[], // **
+				[], // TM | TM | MCPsignal
+				[], // TM | MCPsignal | Rhodanese
+				[], // TM | TM | TM | TM | MCPsignal
+				[], // TM | TM | TM | TM | TM | TM | MCPsignal
+				[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+				[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+				[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+				[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+			]
+			let fqlService = new FQLService(setsOfRules)
+
+			fqlService.initRules().then(function() {
+				let promises = []
+				sampleData.forEach(function(item) {
+					promises.push(fqlService.findMatches(item))
+				})
+				Promise.all(promises).then(function(items) {
+					items.forEach(function(item, i) {
+						expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+					})
+					done()
+				})
+				.catch(function(err) {
+					done(err)
+				})
+			})
+			.catch(function(error) {
+				done(error)
+			})
+		})
+		it(':: testing pfam28 and smart in different sets', function(done) {
+			let setsOfRules = [
+				[
+					{
+						Npos: [
+							{
+								resource: 'smart',
+								feature: 'SM00260'
+							}
+						]
+					}
+				],
+				[
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW'
+							}
+						]
+					}
+				]
+			]
+			let expected = [
+				[0, 1], // CheW | CheW
+				[0, 1], // CheW | Response_reg
+				[0, 1], // CheW
+				[0, 1], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+				[0, 1], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+				[0, 1], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+				[0, 1], // CheW | CheW | CheW
+				[0, 1], // Response_reg | NMT1_2 | CheW
+				[0, 1], // CheW | CheR
+				[0, 1], // Response_reg | CheW
+				[], // TM | Cache_1 | TM | HAMP | MCPsignal
+				[], // HAMP | MCPsignal
+				[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+				[], // **
+				[], // **
+				[], // TM | TM | MCPsignal
+				[], // TM | MCPsignal | Rhodanese
+				[], // TM | TM | TM | TM | MCPsignal
+				[], // TM | TM | TM | TM | TM | TM | MCPsignal
+				[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+				[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+				[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+				[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 			]
 			let fqlService = new FQLService(setsOfRules)
 

@@ -49,7 +49,7 @@ class FQLService {
 		return new Promise((resolve, reject) => {
 			let matchList = []
 			this.parsedSetsOfRules.forEach((parsedRules, ruleIndex) => {
-				let DAarrayInfo = this._seqDepotInfoToArray(item, ruleIndex),
+				let DAarrayInfo = this._processFeaturesInfo(item, ruleIndex),
 					DAstringInfo = DAarrayInfo.join('')
 				let isMatch = false,
 					newMatch = true
@@ -427,18 +427,16 @@ class FQLService {
 	 * @param {string} info - SeqDepot-formated feature information
 	 * @returns {Object} Returns an array with features information formated as: feature@resource
 	 */
-	_seqDepotInfoToArray(info, ruleIndex) {
+	_processFeaturesInfo(info, ruleIndex) {
 		let features = []
-		let config = {}
 		this.resources[ruleIndex].forEach((resource) => {
-			config = this._getConfig(resource)
-			if ('t' in info.result) {
-				if (resource in info.result.t) {
-					info.result.t[resource].forEach((hit) => {
+			if ('t' in info) {
+				if (resource in info.t) {
+					info.t[resource].forEach((hit) => {
 						let feature = {}
 						feature.rc = resource
-						feature.ft = hit[config.ft] ? hit[config.ft] : config.ft
-						feature.pos = hit[config.pos]
+						feature.ft = hit[0]
+						feature.pos = hit[1]
 						features.push(feature)
 					})
 				}
@@ -452,26 +450,6 @@ class FQLService {
 			expressions.push(feature.ft + '@' + feature.rc)
 		})
 		return expressions
-	}
-	/**
-	* Get configuration to search each tool.
-	* Better is to link this to SeqDepot via API - so changes there, change this too.
-	* @param {string} rc - Name of the resource
-	* @returns {Object} Object with attribute pos and ft with the indexes where to find this info in the array from each tool
-	*/
-	_getConfig(rc) {
-		let config = {}
-		if (rc) {
-			if (rc.indexOf('pfam') !== -1) {
-				config.pos = 1
-				config.ft = 0
-			}
-			if (rc === 'das') {
-				config.pos = 0
-				config.ft = 'TM'
-			}
-		}
-		return config
 	}
 
 	/**
