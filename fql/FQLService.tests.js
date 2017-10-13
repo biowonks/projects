@@ -1,11 +1,14 @@
 /* eslint-disable no-magic-numbers, no-undefined */
 'use strict'
-let expect = require('chai').expect,
-	assert = require('chai').assert
+let chai = require('chai')
+let chaiAsPromised = require('chai-as-promised')
+
+chai.use(chaiAsPromised)
+
+let expect = require('chai').expect
 
 let FQLService = require('./FQLService.js')
 let sampleData = require('./test-data/sample-input-fql.json')
-
 
 describe('Feature Query Language - FQL', function() {
 	describe('Sanity checks', function() {
@@ -478,7 +481,7 @@ describe('Feature Query Language - FQL', function() {
 			})
 		})
 		describe('Checking the integrity of rules - should throw informative Errors', function() {
-			it.skip('Missing mandatory field in pos type rule resource should throw Error', function() {
+			it('Missing mandatory field in pos type rule resource should throw Error', function() {
 				let setOfRules = [
 					{
 						pos: [
@@ -496,9 +499,13 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each pos rule must explicitly define a resource')
+				let fqlService = new FQLService([setOfRules])
+				return expect(fqlService.initRules()).to.be.rejected
+					.then(function(err) {
+						expect(err).to.have.property('message', 'Each pos rule must explicitly define a resource: \n{"feature":"Response_reg"}')
+					})
 			})
-			it.skip('Missing mandatory field in pos type rule feature should throw Error', function() {
+			it('Missing mandatory field in pos type rule feature should throw Error', function() {
 				let setOfRules = [
 					{
 						pos: [
@@ -516,9 +523,13 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each pos rule must explicitly define a feature')
+				let fqlService = new FQLService([setOfRules])
+				return expect(fqlService.initRules()).to.be.rejected
+					.then(function(err) {
+						expect(err).to.have.property('message', 'Each pos rule must explicitly define a feature: \n{"resource":"pfam29"}')
+					})
 			})
-			it.skip('Missing both mandatory fields in pos type rule resource and feature should throw Error', function() {
+			it('Missing both mandatory fields in pos type rule resource and feature should throw Error', function() {
 				let setOfRules = [
 					{
 						pos: [
@@ -535,9 +546,13 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each pos rule must explicitly define a resource and feature')
+				let fqlService = new FQLService([setOfRules])
+				return expect(fqlService.initRules()).to.be.rejected
+					.then(function(err) {
+						expect(err).to.have.property('message', 'Each pos rule must explicitly define a resource and feature: \n{}')
+					})
 			})
-			it.skip('Missing mandatory field in Npos type rule resource should throw Error', function() {
+			it('Missing mandatory field in Npos type rule resource should throw Error', function() {
 				let setOfRules = [
 					{
 						Npos: [
@@ -555,9 +570,13 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each Npos rule must explicitly define a resource')
+				let fqlService = new FQLService([setOfRules])
+				return expect(fqlService.initRules()).to.be.rejected
+					.then(function(err) {
+						expect(err).to.have.property('message', 'Each Npos rule must explicitly define a resource: \n{"feature":"Response_reg"}')
+					})
 			})
-			it.skip('Missing mandatory field in Npos type rule feature should throw Error', function() {
+			it('Missing mandatory field in Npos type rule feature should throw Error', function() {
 				let setOfRules = [
 					{
 						Npos: [
@@ -575,9 +594,13 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each Npos rule must explicitly define a feature')
+				let fqlService = new FQLService([setOfRules])
+				return expect(fqlService.initRules()).to.be.rejected
+					.then(function(err) {
+						expect(err).to.have.property('message', 'Each Npos rule must explicitly define a feature: \n{"resource":"pfam29"}')
+					})
 			})
-			it.skip('Missing both mandatory fields in Npos type rule resource and feature should throw Error', function() {
+			it('Missing both mandatory fields in Npos type rule resource and feature should throw Error', function() {
 				let setOfRules = [
 					{
 						Npos: [
@@ -594,9 +617,13 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Each Npos rule must explicitly define a resource and feature')
+				let fqlService = new FQLService([setOfRules])
+				return expect(fqlService.initRules()).to.be.rejected
+					.then(function(err) {
+						expect(err).to.have.property('message', 'Each Npos rule must explicitly define a resource and feature: \n{}')
+					})
 			})
-			it.skip('Wrong wild card "*" instead of ".*" in positional rules', function() {
+			it('Wrong wild card "*" instead of ".*" in positional rules', function() {
 				let setOfRules = [
 					{
 						pos: [
@@ -616,9 +643,13 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Wrong wild card. Change "*" to ".*" in:\n{"resource":"pfam28","feature":"*","count":"{2}"}')
+				let fqlService = new FQLService([setOfRules])
+				return expect(fqlService.initRules()).to.be.rejected
+					.then(function(err) {
+						expect(err).to.have.property('message', 'Wrong wild card. Change "*" to ".*" in:\n{"resource":"pfam28","feature":"*","count":"{2}"}')
+					})
 			})
-			it.skip('Wrong wild card "*" instead of ".*" in non-positional rules', function() {
+			it('Wrong wild card "*" instead of ".*" in non-positional rules', function() {
 				let setOfRules = [
 					{
 						Npos: [
@@ -630,13 +661,17 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				expect(fql.loadRules.bind(fql, setOfRules)).to.throw('Wrong wild card. Change "*" to ".*" in:\n{"resource":"pfam28","feature":"*","count":"{2}"}')
+				let fqlService = new FQLService([setOfRules])
+				return expect(fqlService.initRules()).to.be.rejected
+					.then(function(err) {
+						expect(err).to.have.property('message', 'Wrong wild card. Change "*" to ".*" in:\n{"resource":"pfam28","feature":"*","count":"{2}"}')
+					})
 			})
 		})
 	})
 	describe('Non positional rules :: ', function() {
 		describe('Single Rule - If broken, fix this first', function() {
-			it.only('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single CheW domain from pfam29', function(done) {
+			it('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single CheW domain from pfam29', function(done) {
 				let setOfRules = [
 					{
 						Npos: [
@@ -655,6 +690,65 @@ describe('Feature Query Language - FQL', function() {
 					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
 					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
 					[0], // CheW | CheW | CheW
+					[0], // Response_reg | NMT1_2 | CheW
+					[0], // CheW | CheR
+					[0], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
+			})
+			it('Filter proteins sequences with 1 or 2 matches, anywhere in the sequence, to a single CheW domain from pfam29', function(done) {
+				let setOfRules = [
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW',
+								count: '{1,2}'
+							}
+						]
+					}
+				]
+				let expected = [
+					[0], // CheW | CheW
+					[0], // CheW | Response_reg
+					[0], // CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
 					[0], // Response_reg | NMT1_2 | CheW
 					[0], // CheW | CheR
 					[0], // Response_reg | CheW
@@ -694,94 +788,7 @@ describe('Feature Query Language - FQL', function() {
 					done(error)
 				})
 			})
-			it('Filter proteins sequences with 1 match, anywhere in the sequence, to a single CheW domain from pfam29', function() {
-				let fql = new Fql()
-				let setOfRules = [
-					{
-						Npos: [
-							{
-								resource: 'pfam28',
-								feature: 'CheW',
-								count: '{1}'
-							}
-						]
-					}
-				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
-				let expected = [
-					false, // CheW | CheW
-					true, // CheW | Response_reg
-					true, // CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					true, // Response_reg | NMT1_2 | CheW
-					true, // CheW | CheR
-					true, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-				]
-				expect(fql.match).eql(expected)
-			})
-			it('Filter proteins sequences with 1 or 2 matches, anywhere in the sequence, to a single CheW domain from pfam29', function() {
-				let fql = new Fql()
-				let setOfRules = [
-					{
-						Npos: [
-							{
-								resource: 'pfam28',
-								feature: 'CheW',
-								count: '{1,2}'
-							}
-						]
-					}
-				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
-				let expected = [
-					true, // CheW | CheW
-					true, // CheW | Response_reg
-					true, // CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					true, // Response_reg | NMT1_2 | CheW
-					true, // CheW | CheR
-					true, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-				]
-				expect(fql.match).eql(expected)
-			})
-			it('Filter proteins sequences with 2 or 3 matches, anywhere in the sequence, to a single CheW domain from pfam29', function() {
-				let fql = new Fql()
+			it('Filter proteins sequences with 2 or 3 matches, anywhere in the sequence, to a single CheW domain from pfam29', function(done) {
 				let setOfRules = [
 					{
 						Npos: [
@@ -793,38 +800,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					true, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					true, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[0], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+				let results = []
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter proteins sequences with 3 or more transmembrane regions, anywhere in the sequence', function() {
-				let fql = new Fql()
+			it('Filter proteins sequences with 3 or more transmembrane regions, anywhere in the sequence', function(done) {
 				let setOfRules = [
 					{
 						Npos: [
@@ -836,38 +859,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					true, // TM | TM | TM | TM | MCPsignal
-					true, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[0], // TM | TM | TM | TM | MCPsignal
+					[0], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+				let results = []
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter proteins sequences without transmembrane regions', function() {
-				let fql = new Fql()
+			it('Filter proteins sequences without transmembrane regions', function(done) {
 				let setOfRules = [
 					{
 						Npos: [
@@ -879,38 +918,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					true, // CheW | CheW
-					true, // CheW | Response_reg
-					true, // CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					true, // CheW | CheW | CheW
-					true, // Response_reg | NMT1_2 | CheW
-					true, // CheW | CheR
-					true, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					true, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					true, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // CheW | CheW
+					[0], // CheW | Response_reg
+					[0], // CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[0], // CheW | CheW | CheW
+					[0], // Response_reg | NMT1_2 | CheW
+					[0], // CheW | CheR
+					[0], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[0], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[0], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+				let results = []
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter proteins with 1 domain from pfam28', function() {
-				let fql = new Fql()
+			it('Filter proteins with 1 domain from pfam28', function(done) {
 				let setOfRules = [
 					{
 						Npos: [
@@ -922,40 +977,56 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					true, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					true, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					true, // TM | TM | TM | TM | MCPsignal
-					true, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[0], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[0], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[0], // TM | TM | TM | TM | MCPsignal
+					[0], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+				let results = []
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
 		})
 		describe('Multiple Rules - AND mode', function() {
-			it('Filter proteins sequences with at least 1 match to CheW domain in pfam28 AND only 1 match to HATPase_c domain in pfam28', function() {
-				let fql = new Fql()
+			it('Filter proteins sequences with at least 1 match to CheW domain in pfam28 AND only 1 match to HATPase_c domain in pfam28', function(done) {
 				let setOfRules = [
 					{
 						Npos: [
@@ -972,38 +1043,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+				let results = []
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter proteins sequences with at least 1 match to CheW domain in pfam28 AND only 1 match to HATPase_c domain in pfam28', function() {
-				let fql = new Fql()
+			it('Filter proteins sequences with at least 1 match to CheW domain in pfam28 AND only 1 match to HATPase_c domain in pfam28', function(done) {
 				let setOfRules = [
 					{
 						Npos: [
@@ -1025,40 +1112,56 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+				let results = []
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
 		})
 		describe('Multiple Rules - OR mode', function() {
-			it('Filter proteins sequences with at least 2 matches to CheW domain in pfam28 OR only 1 match to HATPase_c domain in pfam28', function() {
-				let fql = new Fql()
+			it('Filter proteins sequences with at least 2 matches to CheW domain in pfam28 OR only 1 match to HATPase_c domain in pfam28', function(done) {
 				let setOfRules = [
 					{
 						Npos: [
@@ -1079,38 +1182,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					true, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					true, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[0], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+				let results = []
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter proteins sequences with at least 2 match to CheW domain in pfam28 OR only 1 match to HATPase_c domain in pfam28 OR only 1 matches to Response_reg in pfam28', function() {
-				let fql = new Fql()
+			it('Filter proteins sequences with at least 2 match to CheW domain in pfam28 OR only 1 match to HATPase_c domain in pfam28 OR only 1 matches to Response_reg in pfam28', function(done) {
 				let setOfRules = [
 					{
 						Npos: [
@@ -1140,42 +1259,58 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					true, // CheW | CheW
-					true, // CheW | Response_reg
-					false, // CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					true, // CheW | CheW | CheW
-					true, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					true, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // CheW | CheW
+					[0], // CheW | Response_reg
+					[], // CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[0], // CheW | CheW | CheW
+					[0], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[0], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+				let results = []
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
 		})
 	})
 	describe('Positional rules :: ', function() {
 		describe('Simple matches :: ', function() {
-			it('Filter protein sequences starting with 1 match to a CheW domain from Pfam28', function() {
-				let fql = new Fql()
+			it('Filter protein sequences starting with 1 match to a CheW domain from Pfam28', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -1190,38 +1325,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					true, // CheW | CheW
-					true, // CheW | Response_reg
-					true, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					true, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					true, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // CheW | CheW
+					[0], // CheW | Response_reg
+					[0], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[0], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[0], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+				let results = []
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter protein sequences starting with 2 CheW domains from Pfam28', function() {
-				let fql = new Fql()
+			it('Filter protein sequences starting with 2 CheW domains from Pfam28', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -1237,38 +1388,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					true, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+				let results = []
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter protein sequences starting with 2 or more CheW domains from Pfam28', function() {
-				let fql = new Fql()
+			it('Filter protein sequences starting with 2 or more CheW domains from Pfam28', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -1284,38 +1451,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					true, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					true, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[0], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+				let results = []
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter protein sequences starting with 1 TM followed by 1 Cache_2 domain from Pfam28', function() {
-				let fql = new Fql()
+			it('Filter protein sequences starting with 1 TM followed by 1 Cache_2 domain from Pfam28', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -1336,38 +1519,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					true, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+				let results = []
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter protein sequences starting with 1 TM follow by any 2 feature and another TM', function() {
-				let fql = new Fql()
+			it('Filter protein sequences starting with 1 TM follow by any 2 feature and another TM', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -1400,38 +1599,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					true, // TM | TM | TM | TM | MCPsignal
-					true, // TM | TM | TM | TM | TM | TM | MCPsignal
-					true,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					true, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					true, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					true, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[0], // TM | TM | TM | TM | MCPsignal
+					[0], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[0],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+				let results = []
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single domain from pfam28', function() {
-				let fql = new Fql()
+			it('Filter proteins sequences with any number of matches, anywhere in the sequence, to a single domain from pfam28', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -1442,39 +1657,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					true, // CheW | CheW
-					true, // CheW | Response_reg
-					true, // CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					true, // CheW | CheW | CheW
-					true, // Response_reg | NMT1_2 | CheW
-					true, // CheW | CheR
-					true, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // CheW | CheW
+					[0], // CheW | Response_reg
+					[0], // CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[0], // CheW | CheW | CheW
+					[0], // Response_reg | NMT1_2 | CheW
+					[0], // CheW | CheR
+					[0], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Non-positional and positional rules can have the same output', function() {
-				let fqlP = new Fql()
-				let fqlNP = new Fql()
+			it('Non-positional and positional rules can have the same output', function(done) {
 				let setOfRulesPos = [
 					{
 						pos: [
@@ -1495,14 +1725,136 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fqlP.initRules(setOfRulesPos)
-				fqlP.applyFilter(sampleData)
-				fqlNP.initRules(setOfRulesNonPos)
-				fqlNP.applyFilter(sampleData)
-				expect(fqlP.match).eql(fqlNP.match)
+				let setsOfRules = [setOfRulesPos, setOfRulesNonPos]
+				let expected = [
+					[0, 1], // CheW | CheW
+					[0, 1], // CheW | Response_reg
+					[0, 1], // CheW
+					[0, 1], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[0, 1], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[0, 1], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[0, 1], // CheW | CheW | CheW
+					[0, 1], // Response_reg | NMT1_2 | CheW
+					[0, 1], // CheW | CheR
+					[0, 1], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				]
+				let fqlService = new FQLService(setsOfRules)
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter protein sequences with 1 match to a CheW domain from Pfam28', function() {
-				let fql = new Fql()
+			it.skip('Don\'t know why doesn\'t work - Two different rules should not give the same output', function(done) {
+				let setOfRulesPos = [
+					{
+						pos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW'
+							}
+						]
+					}
+				]
+				let setOfRulesNonPos = [
+					{
+						Npos: [
+							{
+								resource: 'pfam28',
+								feature: 'MCPSignal'
+							}
+						]
+					}
+				]
+				let fqlServiceP = new FQLService([setOfRulesPos]),
+					fqlServiceNP = new FQLService([setOfRulesNonPos])
+
+				let fqlPromiseP = new Promise(function(res, rej) {
+					fqlServiceP.initRules().then(function() {
+						console.log('Pos Rules')
+						console.log(JSON.stringify(fqlServiceP.parsedSetsOfRules))
+						let promises = []
+						sampleData.slice(0, 1).forEach(function(item) {
+							console.log('PosMatch-Promise')
+							console.log(fqlServiceP.findMatches(item))
+							promises.push(fqlServiceP.findMatches(item))
+						})
+						Promise.all(promises).then(function(items) {
+							console.log('PosMatch')
+							console.log(items)
+							res(items)
+						})
+						.catch(function(err) {
+							rej(err)
+						})
+					})
+					.catch(function(error) {
+						rej(error)
+					})
+				})
+
+				let fqlPromiseNP = new Promise(function(res, rej) {
+					fqlServiceNP.initRules().then(function() {
+						console.log('NonPos Rules')
+						console.log(JSON.stringify(fqlServiceNP.parsedSetsOfRules))
+						let promises = []
+						sampleData.slice(0, 1).forEach(function(item) {
+							console.log('NonPosMatch-Promise')
+							console.log(fqlServiceNP.findMatches(item))
+							promises.push(fqlServiceNP.findMatches(item))
+						})
+						Promise.all(promises).then(function(items) {
+							console.log('PosMatch')
+							console.log(items)
+							res(items)
+						})
+						.catch(function(err) {
+							rej(err)
+						})
+					})
+					.catch(function(error) {
+						rej(error)
+					})
+				})
+
+				Promise.all([fqlPromiseNP, fqlPromiseP]).then(function(results) {
+					console.log(JSON.stringify(results))
+					expect(results[0]).not.eql(results[1])
+					done()
+				})
+				.catch(function(err) {
+					done(err)
+				})
+			})
+			it('Filter protein sequences with 1 match to a CheW domain from Pfam28', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -1521,38 +1873,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					true, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[0], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter sequences with starts with TM-Cache_1 and end in MCPsignal', function() {
-				let fql = new Fql()
+			it('Filter sequences with starts with TM-Cache_1 and end in MCPsignal', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -1587,38 +1955,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					true, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					true, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					true, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[0], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter sequences with starts with TM-Cache_1 followed by anything BUT another Cache_1 and end in MCPsignal', function() {
-				let fql = new Fql()
+			it('Filter sequences with starts with TM-Cache_1 followed by anything BUT another Cache_1 and end in MCPsignal', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -1660,38 +2044,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					true, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					true, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[0], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter sequences with starts with TM-Cache_2 and end in MCPsignal', function() {
-				let fql = new Fql()
+			it('Filter sequences with starts with TM-Cache_2 and end in MCPsignal', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -1726,40 +2126,56 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					true,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					true, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					true // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[0],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[0] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
 		})
 		describe('Testing the behaviour of "count" for positional rules :: ', function() {
-			it('Request protein sequences with 2 matches and nothing else to a single domain from pfam28', function() {
-				let fql = new Fql()
+			it('Request protein sequences with 2 matches and nothing else to a single domain from pfam28', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -1779,38 +2195,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					true, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Request protein sequences with 3 matches and nothing else to a single domain from pfam28', function() {
-				let fql = new Fql()
+			it('Request protein sequences with 3 matches and nothing else to a single domain from pfam28', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -1830,38 +2262,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					true, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[0], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter protein sequences with 2 or 3 matches and nothing else to a single domain from pfam28', function() {
-				let fql = new Fql()
+			it('Filter protein sequences with 2 or 3 matches and nothing else to a single domain from pfam28', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -1881,38 +2329,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					true, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					true, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[0], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Request protein sequences with 2 or 3 matches at the end of the sequence to a single domain from pfam28', function() {
-				let fql = new Fql()
+			it('Request protein sequences with 2 or 3 matches at the end of the sequence to a single domain from pfam28', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -1928,38 +2392,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					true, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					true, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					true, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[0], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Request protein sequences with 2 TM regions anywhere in the sequence with MCPsignal at the end', function() {
-				let fql = new Fql()
+			it('Request protein sequences with 2 TM regions anywhere in the sequence with MCPsignal at the end', function(done) {
 				let setOfRules = [
 					{
 						Npos: [
@@ -1981,40 +2461,56 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					true, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					true, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					true, // **
-					true,  // TM | TM | MCPsignal
-					false,  // TM | TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					true,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					true, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					true, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					true, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					true // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[0], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[0], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[0], // **
+					[0],  // TM | TM | MCPsignal
+					[],  // TM | TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[0],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[0] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
 		})
 		describe('Testing the behaviour of wildcard for positional rules', function() {
-			it('Filter protein sequences with any 2 pfam28 domains', function() {
-				let fql = new Fql()
+			it('Filter protein sequences with any 2 pfam28 domains', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -2034,38 +2530,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					true, // CheW | CheW
-					true, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					true, // CheW | CheR
-					true, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					true, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false,  // TM | TM | MCPsignal
-					true,  // TM | TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // CheW | CheW
+					[0], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[0], // CheW | CheR
+					[0], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[0], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[],  // TM | TM | MCPsignal
+					[0],  // TM | TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter protein sequences with 1 or more domains between 2 TM regions in the beginning of the sequence and with MCPsignal at the end', function() {
-				let fql = new Fql()
+			it('Filter protein sequences with 1 or more domains between 2 TM regions in the beginning of the sequence and with MCPsignal at the end', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -2105,38 +2617,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					true, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false,  // TM | TM | MCPsignal
-					false,  // TM | TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					true,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					true, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					true, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					true, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					true // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[0], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[],  // TM | TM | MCPsignal
+					[],  // TM | TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[0],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[0] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter protein sequences starting with no Cache_1 between two TM and ending a MCPsignal', function() {
-				let fql = new Fql()
+			it('Filter protein sequences starting with no Cache_1 between two TM and ending a MCPsignal', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -2183,38 +2711,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false,  // TM | TM | MCPsignal
-					false,  // TM | TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					true,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					true // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[],  // TM | TM | MCPsignal
+					[],  // TM | TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[0],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[0] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter protein sequences starting with TM followed by any two domains from pfam28 but no Cache_1 followed by another TM and ending a MCPsignal', function() {
-				let fql = new Fql()
+			it('Filter protein sequences starting with TM followed by any two domains from pfam28 but no Cache_1 followed by another TM and ending a MCPsignal', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -2273,38 +2817,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false,  // TM | TM | MCPsignal
-					false,  // TM | TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					true,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[],  // TM | TM | MCPsignal
+					[],  // TM | TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[0],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter protein sequences starting with TM followed by any two domains from pfam28 but Cache_1 not in the first of the two followed by another TM and ending a MCPsignal', function() {
-				let fql = new Fql()
+			it('Filter protein sequences starting with TM followed by any two domains from pfam28 but Cache_1 not in the first of the two followed by another TM and ending a MCPsignal', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -2356,38 +2916,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false,  // TM | TM | MCPsignal
-					false,  // TM | TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					true,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					true, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[],  // TM | TM | MCPsignal
+					[],  // TM | TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[0],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter sequences that start with TM and end with MCPsignal.', function() {
-				let fql = new Fql()
+			it('Filter sequences that start with TM and end with MCPsignal.', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -2416,38 +2992,54 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					true, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					true,  // TM | TM | MCPsignal
-					false,  // TM | TM | MCPsignal | Rhodanese
-					true, // TM | TM | TM | TM | MCPsignal
-					true, // TM | TM | TM | TM | TM | TM | MCPsignal
-					true,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					true, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					true, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					true, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					true // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[0], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[0],  // TM | TM | MCPsignal
+					[],  // TM | TM | MCPsignal | Rhodanese
+					[0], // TM | TM | TM | TM | MCPsignal
+					[0], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[0],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[0] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
-			it('Filter protein sequences that starts with at least 3 domains of the PAS family using wildcards "PAS.*"', function() {
-				let fql = new Fql()
+			it('Filter protein sequences that starts with at least 3 domains of the PAS family using wildcards "PAS.*"', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -2463,42 +3055,58 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					false, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					true, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					true, // **
-					true, // **
-					false,  // TM | TM | MCPsignal
-					false,  // TM | TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[0], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[0], // **
+					[0], // **
+					[],  // TM | TM | MCPsignal
+					[],  // TM | TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
 		})
 	})
 	describe('Complex queries', function() {
 		describe('Same position specified in two rules should mean OR', function() {
-			it('Filter sequences with starts with TM-Cache_1 or TM-Cache_2 and end in MCPsignal', function() {
-				let fql = new Fql()
+			it('Filter sequences with starts with TM-Cache_1 or TM-Cache_2 and end in MCPsignal', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -2565,40 +3173,56 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					true, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					true,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					true, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					true, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					true, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					true // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[0], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[0],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[0] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
 			})
 		})
 		describe('Combining Npos and pos rules', function() {
-			it('Filter protein sequences that starts with TM-Cache1 and ends with MCPsignal but does not have Cache_2 anywhere', function() {
-				let fql = new Fql()
+			it('Filter protein sequences that starts with TM-Cache1 and ends with MCPsignal but does not have Cache_2 anywhere', function(done) {
 				let setOfRules = [
 					{
 						pos: [
@@ -2640,35 +3264,341 @@ describe('Feature Query Language - FQL', function() {
 						]
 					}
 				]
-				fql.initRules(setOfRules)
-				fql.applyFilter(sampleData)
 				let expected = [
-					false, // CheW | CheW
-					false, // CheW | Response_reg
-					false, // CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
-					false, // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
-					false, // CheW | CheW | CheW
-					false, // Response_reg | NMT1_2 | CheW
-					false, // CheW | CheR
-					false, // Response_reg | CheW
-					true, // TM | Cache_1 | TM | HAMP | MCPsignal
-					false, // HAMP | MCPsignal
-					false, // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
-					false, // **
-					false, // **
-					false, // TM | TM | MCPsignal
-					false, // TM | MCPsignal | Rhodanese
-					false, // TM | TM | TM | TM | MCPsignal
-					false, // TM | TM | TM | TM | TM | TM | MCPsignal
-					false,  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
-					false, // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
-					false, // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
-					true, // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
-					false // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // CheW | CheW
+					[], // CheW | Response_reg
+					[], // CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+					[], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+					[], // CheW | CheW | CheW
+					[], // Response_reg | NMT1_2 | CheW
+					[], // CheW | CheR
+					[], // Response_reg | CheW
+					[0], // TM | Cache_1 | TM | HAMP | MCPsignal
+					[], // HAMP | MCPsignal
+					[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+					[], // **
+					[], // **
+					[], // TM | TM | MCPsignal
+					[], // TM | MCPsignal | Rhodanese
+					[], // TM | TM | TM | TM | MCPsignal
+					[], // TM | TM | TM | TM | TM | TM | MCPsignal
+					[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+					[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+					[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+					[0], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+					[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
 				]
-				expect(fql.match).eql(expected)
+				let fqlService = new FQLService([setOfRules])
+
+				fqlService.initRules().then(function() {
+					let promises = []
+					sampleData.forEach(function(item) {
+						promises.push(fqlService.findMatches(item))
+					})
+					Promise.all(promises).then(function(items) {
+						items.forEach(function(item, i) {
+							expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+						})
+						done()
+					})
+					.catch(function(err) {
+						done(err)
+					})
+				})
+				.catch(function(error) {
+					done(error)
+				})
+			})
+		})
+	})
+	describe('Sets of rules should also work', function() {
+		it('two equal rules must match same entries', function(done) {
+			let setsOfRules = [
+				[
+					{
+						pos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW'
+							}
+						]
+					}
+				],
+				[
+					{
+						pos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW'
+							}
+						]
+					}
+				]
+			]
+			let expected = [
+				[0, 1], // CheW | CheW
+				[0, 1], // CheW | Response_reg
+				[0, 1], // CheW
+				[0, 1], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+				[0, 1], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+				[0, 1], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+				[0, 1], // CheW | CheW | CheW
+				[0, 1], // Response_reg | NMT1_2 | CheW
+				[0, 1], // CheW | CheR
+				[0, 1], // Response_reg | CheW
+				[], // TM | Cache_1 | TM | HAMP | MCPsignal
+				[], // HAMP | MCPsignal
+				[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+				[], // **
+				[], // **
+				[], // TM | TM | MCPsignal
+				[], // TM | MCPsignal | Rhodanese
+				[], // TM | TM | TM | TM | MCPsignal
+				[], // TM | TM | TM | TM | TM | TM | MCPsignal
+				[],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				[], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+				[], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+				[], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+				[] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+			]
+			let fqlService = new FQLService(setsOfRules)
+
+			fqlService.initRules().then(function() {
+				let promises = []
+				sampleData.forEach(function(item) {
+					promises.push(fqlService.findMatches(item))
+				})
+				Promise.all(promises).then(function(items) {
+					items.forEach(function(item, i) {
+						expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+					})
+					done()
+				})
+				.catch(function(err) {
+					done(err)
+				})
+			})
+			.catch(function(error) {
+				done(error)
+			})
+		})
+		it('Two different rules matching different entries', function(done) {
+			let setsOfRules = [
+				[
+					{
+						pos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW'
+							}
+						]
+					}
+				],
+				[
+					{
+						pos: [
+							{
+								resource: 'fql',
+								feature: '^'
+							},
+							{
+								resource: 'das',
+								feature: 'TM',
+								count: '{1}'
+							},
+							{
+								resource: 'pfam28',
+								feature: '.*',
+								count: '{1,}'
+							},
+							{
+								resource: 'das',
+								feature: 'TM',
+								count: '{1}'
+							},
+							{
+								resource: 'pfam28',
+								feature: '.*',
+								count: '{1,}'
+							},
+							{
+								resource: 'pfam28',
+								feature: 'MCPsignal',
+								count: '{1}'
+							},
+							{
+								resource: 'fql',
+								feature: '$'
+							}
+						]
+					}
+				]
+			]
+			let expected = [
+				[0], // CheW | CheW
+				[0], // CheW | Response_reg
+				[0], // CheW
+				[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+				[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+				[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+				[0], // CheW | CheW | CheW
+				[0], // Response_reg | NMT1_2 | CheW
+				[0], // CheW | CheR
+				[0], // Response_reg | CheW
+				[1], // TM | Cache_1 | TM | HAMP | MCPsignal
+				[], // HAMP | MCPsignal
+				[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+				[], // **
+				[], // **
+				[], // TM | TM | MCPsignal
+				[], // TM | MCPsignal | Rhodanese
+				[], // TM | TM | TM | TM | MCPsignal
+				[], // TM | TM | TM | TM | TM | TM | MCPsignal
+				[1],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				[1], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+				[1], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+				[1], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+				[1] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+			]
+			let fqlService = new FQLService(setsOfRules)
+
+			fqlService.initRules().then(function() {
+				let promises = []
+				sampleData.forEach(function(item) {
+					promises.push(fqlService.findMatches(item))
+				})
+				Promise.all(promises).then(function(items) {
+					items.forEach(function(item, i) {
+						expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+					})
+					done()
+				})
+				.catch(function(err) {
+					done(err)
+				})
+			})
+			.catch(function(error) {
+				done(error)
+			})
+		})
+		it('Overlapping rules matching different entries', function(done) {
+			let setsOfRules = [
+				[
+					{
+						pos: [
+							{
+								resource: 'pfam28',
+								feature: 'CheW'
+							}
+						]
+					}
+				],
+				[
+					{
+						pos: [
+							{
+								resource: 'fql',
+								feature: '^'
+							},
+							{
+								resource: 'das',
+								feature: 'TM',
+								count: '{1}'
+							},
+							{
+								resource: 'pfam28',
+								feature: '.*',
+								count: '{1,}'
+							},
+							{
+								resource: 'das',
+								feature: 'TM',
+								count: '{1}'
+							},
+							{
+								resource: 'pfam28',
+								feature: '.*',
+								count: '{1,}'
+							},
+							{
+								resource: 'pfam28',
+								feature: 'MCPsignal',
+								count: '{1}'
+							},
+							{
+								resource: 'fql',
+								feature: '$'
+							}
+						]
+					}
+				],
+				[
+					{
+						pos: [
+							{
+								resource: 'fql',
+								feature: '^'
+							},
+							{
+								resource: 'pfam28',
+								feature: '.*',
+								count: '{2}'
+							},
+							{
+								resource: 'fql',
+								feature: '$'
+							}
+						]
+					}
+				]
+			]
+			let expected = [
+				[0, 2], // CheW | CheW
+				[0, 2], // CheW | Response_reg
+				[0], // CheW
+				[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW
+				[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | CheW
+				[0], // Hpt | P2 | H-kinase_dim | HATPase_c | CheW | Response_reg
+				[0], // CheW | CheW | CheW
+				[0], // Response_reg | NMT1_2 | CheW
+				[0, 2], // CheW | CheR
+				[0, 2], // Response_reg | CheW
+				[1], // TM | Cache_1 | TM | HAMP | MCPsignal
+				[2], // HAMP | MCPsignal
+				[], // PAS_9 | PAS | PAS_4 | PAS_3 | TM | TM | MCPsignal
+				[], // **
+				[], // **
+				[], // TM | TM | MCPsignal
+				[2], // TM | MCPsignal | Rhodanese
+				[], // TM | TM | TM | TM | MCPsignal
+				[], // TM | TM | TM | TM | TM | TM | MCPsignal
+				[1],  // TM | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+				[1], // TM | Cache_2 | Cache_1 | TM | HAMP | MCPsignal
+				[1], // TM | Cache_1 | Cache_2 | TM | HAMP | MCPsignal
+				[1], // TM | Cache_1 | Cache_1 | TM | HAMP | MCPsignal
+				[1] // TM | Cache_2 | Cache_2 | Cache_2 | TM | HAMP | MCPsignal
+			]
+			let fqlService = new FQLService(setsOfRules)
+
+			fqlService.initRules().then(function() {
+				let promises = []
+				sampleData.forEach(function(item) {
+					promises.push(fqlService.findMatches(item))
+				})
+				Promise.all(promises).then(function(items) {
+					items.forEach(function(item, i) {
+						expect(expected[i], 'Error index ' + i).eql(item.FQLMatches)
+					})
+					done()
+				})
+				.catch(function(err) {
+					done(err)
+				})
+			})
+			.catch(function(error) {
+				done(error)
 			})
 		})
 	})
