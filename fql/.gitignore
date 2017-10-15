@@ -1,2 +1,3 @@
 *.tmp
-test-data/donotup
+coverage
+.nyc_output

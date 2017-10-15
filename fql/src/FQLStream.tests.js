@@ -64,6 +64,7 @@ describe('FQLStream test suit ::', function() {
 		let listOfData = []
 
 		let fqlStream = new FQLStream(setOfRules)
+		fqlStream.progressReportNumber = 1
 		readable.pipe(fqlStream)
 			.on('data', function(item) {
 				listOfData.push(item.FQLMatches)

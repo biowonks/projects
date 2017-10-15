@@ -21,10 +21,8 @@ class RuleFql {
 		this.highNumMatches = []
 		this.isOk = true
 
-		if (this.instructions)
-			this.numOfIns = this.instructions.length
-		else
-			this.numOfIns = 0
+
+		this.numOfIns = this.instructions.length
 	}
 
 	/**
@@ -114,12 +112,8 @@ class RuleFql {
 	_findCommonMatches(matchArchive) {
 		let listOfMatches = []
 		// console.log(' _findCommonMatches ---> ' + JSON.stringify(matchArchive))
-		for (let i = 0; i < matchArchive.length; i++) {
-			if (matchArchive[i].matches.length > 0)
-				listOfMatches.push(matchArchive[i].matches)
-			else
-				return []
-		}
+		for (let i = 0; i < matchArchive.length; i++)
+			listOfMatches.push(matchArchive[i].matches)
 
 		listOfMatches.sort((a, b) => {
 			return a.length < b.length

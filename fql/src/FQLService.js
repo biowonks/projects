@@ -183,12 +183,6 @@ class FQLService {
 				break
 			}
 
-			if (currRule.matches.length === 0) {
-				// console.log('_testPos :: ' + ' False by having no matches')
-				isOk = false
-				break
-			}
-
 			if (!(isNaN(indexLastMatch))) {
 				// console.log('_testPos :: ' + ' is still ok? : ' + isOk)
 				// console.log('_testPos :: ' + ' final match : ' + currRule.matches[0])
@@ -265,10 +259,6 @@ class FQLService {
 	_addResources(resource, ruleIndex) {
 		if (this.resources[ruleIndex].indexOf(resource) === -1)
 			this.resources[ruleIndex].push(resource)
-		return null
-	}
-
-	_getFeatures(rules) {
 		return null
 	}
 
