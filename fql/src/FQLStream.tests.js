@@ -9,7 +9,7 @@ let fs = require('fs'),
 let sampleData = require('../test-data/FQL-sample-input.json') // , {highWaterMark: 3 * 64 }),
 
 describe('FQLStream test suit ::', function() {
-	it('has to work using stream', function(done) {
+	it('has to work using stream', function() {
 		let readable = new Stream.Readable({objectMode: true})
 		sampleData.forEach((item) => {
 			readable.push(item)
@@ -64,8 +64,7 @@ describe('FQLStream test suit ::', function() {
 		let listOfData = []
 
 		let fqlStream = new FQLStream(setOfRules)
-		fqlStream.initStream().then(function() {
-			readable.pipe(fqlStream)
+		readable.pipe(fqlStream)
 			.on('data', function(item) {
 				listOfData.push(item.FQLMatches)
 			})
@@ -73,9 +72,5 @@ describe('FQLStream test suit ::', function() {
 				expect(listOfData).eql(expected)
 				done()
 			})
-		})
-		.catch(function(err) {
-			done(err)
-		})
 	})
 })

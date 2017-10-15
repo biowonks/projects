@@ -26,47 +26,42 @@ class FQLService {
 	 * @return {Boolean} - True if no problems occur.
 	 */
 	initRules() {
-		return new Promise((resolve, reject) => {
-			if (this.setsOfRules) {
-				this.resources = [...Array(this.setsOfRules.length).keys()].map((i) => [])
-				this.setsOfRules.forEach((setOfRules, ruleIndex) => {
-					let parsedRules = []
-					setOfRules.forEach((rules) => {
-						this._isValidRule(rules)
-						parsedRules.push(this._parseRules(rules, ruleIndex))
-					})
-					this.parsedSetsOfRules.push(parsedRules)
+		if (this.setsOfRules) {
+			this.resources = [...Array(this.setsOfRules.length).keys()].map((i) => [])
+			this.setsOfRules.forEach((setOfRules, ruleIndex) => {
+				let parsedRules = []
+				setOfRules.forEach((rules) => {
+					this._isValidRule(rules)
+					parsedRules.push(this._parseRules(rules, ruleIndex))
 				})
-				resolve()
-			}
-			else {
-				reject(new Error('No rules have been passed in the constructor'))
-			}
-		})
+				this.parsedSetsOfRules.push(parsedRules)
+			})
+		}
+		else {
+			throw new Error('No rules have been passed in the constructor')
+		}
 	}
 
 	findMatches(item) {
-		return new Promise((resolve, reject) => {
-			let matchList = []
-			this.parsedSetsOfRules.forEach((parsedRules, ruleIndex) => {
-				let DAarrayInfo = this._processFeaturesInfo(item, ruleIndex),
-					DAstringInfo = DAarrayInfo.join('')
-				let isMatch = false,
-					newMatch = true
-				parsedRules.forEach((parsedRule) => {
-					newMatch = true
-					if (parsedRule.pos !== null)
-						newMatch = this._testPos(DAarrayInfo, parsedRule.pos)
-					if ('Npos' in parsedRule)
-						newMatch = newMatch && this._testNpos(DAstringInfo, parsedRule.Npos)
-					isMatch = isMatch || newMatch
-				})
-				if (isMatch)
-					matchList.push(ruleIndex)
+		let matchList = []
+		this.parsedSetsOfRules.forEach((parsedRules, ruleIndex) => {
+			let DAarrayInfo = this._processFeaturesInfo(item, ruleIndex),
+				DAstringInfo = DAarrayInfo.join('')
+			let isMatch = false,
+				newMatch = true
+			parsedRules.forEach((parsedRule) => {
+				newMatch = true
+				if (parsedRule.pos !== null)
+					newMatch = this._testPos(DAarrayInfo, parsedRule.pos)
+				if ('Npos' in parsedRule)
+					newMatch = newMatch && this._testNpos(DAstringInfo, parsedRule.Npos)
+				isMatch = isMatch || newMatch
 			})
-			item.FQLMatches = matchList
-			resolve(item)
+			if (isMatch)
+				matchList.push(ruleIndex)
 		})
+		item.FQLMatches = matchList
+		return item
 	}
 
 	_testNpos(stringInfo, rules) {

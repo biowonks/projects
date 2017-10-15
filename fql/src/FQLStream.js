@@ -18,28 +18,14 @@ class FQLStream extends Transform {
 		this.log.info('start')
 		this.numItems = 0
 		this.progressReportNumber = progressReportNumber
-	}
-
-	initStream() {
-		return new Promise((res, rej) => {
-			this.fqlService = new FQLService(this.setsOfRules)
-			this.fqlService.initRules().then(() => {
-				this.log.info('rules are loaded')
-				res()
-			})
-			.catch((err) => {
-				rej(err)
-			})
-		})
+		this.fqlService = new FQLService(this.setsOfRules)
+		this.fqlService.initRules()
 	}
 
 	_transform(chunk, enc, next) {
-		this.fqlService.findMatches(chunk).then((item) => {
-			this.numItems++
-			if (this.numItems % this.progressReportNumber === 0)
-				this.log.info(this.numItems + ' have been processed')
-			this.push(item)
-			next()
-		})
+		this.numItems++
+		if (this.numItems % this.progressReportNumber === 0)
+			this.log.info(this.numItems + ' have been processed')
+		this.push(this.fqlService.findMatches(chunk))
 	}
 }
