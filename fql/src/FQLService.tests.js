@@ -1493,7 +1493,7 @@ describe('Feature Query Language - FQL', function() {
 				})
 				expect(results).eql(expected)
 			})
-			it.skip('Don\'t know why doesn\'t work - Two different rules should not give the same output', function() {
+			it('Don\'t know why doesn\'t work - Two different rules should not give the same output', function() {
 				let setOfRulesPos = [
 					{
 						pos: [
@@ -1517,62 +1517,24 @@ describe('Feature Query Language - FQL', function() {
 				let fqlServiceP = new FQLService([setOfRulesPos]),
 					fqlServiceNP = new FQLService([setOfRulesNonPos])
 
-				let fqlPromiseP = new Promise(function(res, rej) {
-					fqlServiceP.initRules().then(function() {
-						console.log('Pos Rules')
-						console.log(JSON.stringify(fqlServiceP.parsedSetsOfRules))
-						let promises = []
-						sampleData.slice(0, 1).forEach(function(item) {
-							console.log('PosMatch-Promise')
-							console.log(fqlServiceP.findMatches(item))
-							promises.push(fqlServiceP.findMatches(item))
-						})
-						Promise.all(promises).then(function(items) {
-							console.log('PosMatch')
-							console.log(items)
-							res(items)
-						})
-						.catch(function(err) {
-							rej(err)
-						})
-					})
-					.catch(function(error) {
-						rej(error)
-					})
+
+				fqlServiceP.initRules()
+				let resultsP = []
+				sampleData.slice(0, 1).forEach(function(item) {
+					resultsP.push(fqlServiceP.findMatches(item))
+				})
+				console.log(resultsP)
+				fqlServiceNP.initRules()
+
+				let resultsNP = []
+				console.log(sampleData.slice(0, 1))
+				sampleData.slice(0, 1).forEach(function(item) {
+					resultsNP.push(fqlServiceNP.findMatches(item))
 				})
 
-				let fqlPromiseNP = new Promise(function(res, rej) {
-					fqlServiceNP.initRules().then(function() {
-						console.log('NonPos Rules')
-						console.log(JSON.stringify(fqlServiceNP.parsedSetsOfRules))
-						let promises = []
-						sampleData.slice(0, 1).forEach(function(item) {
-							console.log('NonPosMatch-Promise')
-							console.log(fqlServiceNP.findMatches(item))
-							promises.push(fqlServiceNP.findMatches(item))
-						})
-						Promise.all(promises).then(function(items) {
-							console.log('PosMatch')
-							console.log(items)
-							res(items)
-						})
-						.catch(function(err) {
-							rej(err)
-						})
-					})
-					.catch(function(error) {
-						rej(error)
-					})
-				})
-
-				Promise.all([fqlPromiseNP, fqlPromiseP]).then(function(results) {
-					console.log(JSON.stringify(results))
-					expect(results[0]).not.eql(results[1])
-					done()
-				})
-				.catch(function(err) {
-					done(err)
-				})
+				console.log(resultsP)
+				console.log(resultsNP)
+				expect(resultsP).not.eql(resultsNP)
 			})
 			it('Filter protein sequences with 1 match to a CheW domain from Pfam28', function() {
 				let setOfRules = [

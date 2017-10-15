@@ -61,7 +61,7 @@ class FQLService {
 				matchList.push(ruleIndex)
 		})
 		item.FQLMatches = matchList
-		return item
+		return JSON.parse(JSON.stringify(item))
 	}
 
 	_testNpos(stringInfo, rules) {
