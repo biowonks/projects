@@ -90,15 +90,15 @@ class RouteHelper {
 			}
 
 			this.model_.findOne(criteria)
-			.then((entity) => {
-				if (!entity) {
-					next(errors.notFoundError)
-					return
-				}
+				.then((entity) => {
+					if (!entity) {
+						next(errors.notFoundError)
+						return
+					}
 
-				res.json(entity)
-			})
-			.catch(next)
+					res.json(entity)
+				})
+				.catch(next)
 		}
 	}
 
