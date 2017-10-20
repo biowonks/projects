@@ -1,0 +1,6 @@
+id,domain_name,superfamily,description,function,two_components,sig_trans_specific,source,pmid
+1,PAS,PAS_Fold,PAS small molecule binding domain,Sensor,input,YES,pfam30,"9301332,9382818"
+2,PAS_2,PAS_Fold,PAS small molecule binding domain,Sensor,input,YES,pfam30,"9301332,9382818"
+3,BTAD,TPR,"TPR-containing regulatory domain, protein-protein interactions",sensor or enhancer,,YES,pfam30,"12625841"
+4,HisKA,His_Kinase_A,histidine kinase dimerization domain,transmitter,,YES,pfam30,""
+5,HTH_10,HTH,"DNA-binding, helix-turn-helix domain",transcriptional regulator,output,YES,pfam30,""
