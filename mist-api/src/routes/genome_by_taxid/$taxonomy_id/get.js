@@ -22,7 +22,7 @@ module.exports.docs = function(modelExamples) {
 		example: {
 			request: {
 				parameters: {
-					accession: modelExamples.Genome.version
+					accession: modelExamples.Genome.taxonomy_id
 				}
 			},
 			response: {
