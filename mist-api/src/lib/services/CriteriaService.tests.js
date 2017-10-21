@@ -320,6 +320,80 @@ describe('services', function() {
 					])
 				})
 			})
+
+			describe('where parameter', () => {
+				it('null if no where clause provided', () => {
+					let x = service.createFromQueryObject(User, queryObject)
+					expect(x.where).null
+				})
+
+				it('ignores where.', () => {
+					queryObject['where.'] = 'ulrich'
+					let x = service.createFromQueryObject(User, queryObject)
+					expect(x.where).null
+				})
+
+				it('ignores "where. "', () => {
+					queryObject['where. '] = 'ulrich'
+					let x = service.createFromQueryObject(User, queryObject)
+					expect(x.where).null
+				})
+
+				it('ignores empty value', () => {
+					queryObject['where.name'] = ''
+					let x = service.createFromQueryObject(User, queryObject)
+					expect(x.where).null
+				})
+
+				it('ignores undefined value', () => {
+					queryObject['where.name'] = undefined
+					let x = service.createFromQueryObject(User, queryObject)
+					expect(x.where).null
+				})
+
+				it('ignores null value', () => {
+					queryObject['where.name'] = null
+					let x = service.createFromQueryObject(User, queryObject)
+					expect(x.where).null
+				})
+
+				it('single string value', () => {
+					queryObject['where.name'] = 'ulrich'
+					let x = service.createFromQueryObject(User, queryObject)
+					expect(x.where).eql({name: 'ulrich'})
+				})
+
+				it('handles non-string values', () => {
+					queryObject['where.num_logins'] = 5
+					let x = service.createFromQueryObject(User, queryObject)
+					expect(x.where).eql({num_logins: '5'})
+				})
+
+				it('trims whitespace from single value', () => {
+					queryObject['where.name'] = ' ulrich '
+					let x = service.createFromQueryObject(User, queryObject)
+					expect(x.where).eql({name: 'ulrich'})
+				})
+
+				it('multiple values', () => {
+					queryObject['where.name'] = 'ulrich,davi'
+					let x = service.createFromQueryObject(User, queryObject)
+					expect(x.where).eql({name: ['ulrich', 'davi']})
+				})
+
+				it('trims whitespace from multiple values', () => {
+					queryObject['where.name'] = ' ulrich ,  davi  '
+					let x = service.createFromQueryObject(User, queryObject)
+					expect(x.where).eql({name: ['ulrich', 'davi']})
+				})
+
+				it('multiple search terms', () => {
+					queryObject['where.name'] = ' ulrich ,  davi  '
+					queryObject['where.num_logins'] = 5
+					let x = service.createFromQueryObject(User, queryObject)
+					expect(x.where).eql({name: ['ulrich', 'davi'], num_logins: '5'})
+				})
+			})
 		})
 
 		describe('createFromQueryObjectForMany', function() {
@@ -751,6 +825,61 @@ describe('services', function() {
 					],
 					model: 'Profile'
 				})
+			})
+
+			it('finds single invalid attribute in where field', function() {
+				queryObject['where.invalid_field'] = 'some value'
+				const criteria = service.createFromQueryObjectForMany(User, queryObject)
+				const errors = service.findErrors(criteria, User)
+
+				expect(errors.length).equal(1)
+				expect(errors[0].type).equal('InvalidFieldError')
+				expect(errors[0].fields).eql(['invalid_field'])
+			})
+
+			it('finds multiple invalid attribute in where field', function() {
+				queryObject['where.invalid_field'] = 'some value'
+				queryObject['where.blargh'] = 'some value'
+				const criteria = service.createFromQueryObjectForMany(User, queryObject)
+				const errors = service.findErrors(criteria, User)
+
+				expect(errors.length).equal(1)
+				expect(errors[0].type).equal('InvalidFieldError')
+				expect(errors[0].fields).eql(['invalid_field', 'blargh'])
+			})
+
+			it('where disallows querying all valid fields by default', () => {
+				queryObject['where.name'] = 'ulrich'
+				queryObject['where.num_logins'] = 5
+				const criteria = service.createFromQueryObjectForMany(User, queryObject)
+				const errors = service.findErrors(criteria, User)
+
+				expect(errors.length).equal(1)
+				expect(errors[0].type).equal('WhereFieldError')
+				expect(errors[0].fields).eql(['name', 'num_logins'])
+			})
+
+			it('where does not find error for permitted fields', () => {
+				queryObject['where.name'] = 'ulrich'
+				queryObject['where.num_logins'] = 5
+				const criteria = service.createFromQueryObjectForMany(User, queryObject)
+				const errors = service.findErrors(criteria, User, {permittedWhereFields: ['name', 'num_logins']})
+
+				expect(errors).null
+			})
+
+			it('where error for query including invalid, permitted, and disallowed fields', () => {
+				queryObject['where.name'] = 'ulrich'
+				queryObject['where.num_logins'] = 5
+				queryObject['where.invalid'] = 'value'
+				const criteria = service.createFromQueryObjectForMany(User, queryObject)
+				const errors = service.findErrors(criteria, User, {permittedWhereFields: ['name']})
+
+				expect(errors.length).equal(2)
+				expect(errors[0].type).equal('InvalidFieldError')
+				expect(errors[0].fields).eql(['invalid'])
+				expect(errors[1].type).equal('WhereFieldError')
+				expect(errors[1].fields).eql(['num_logins'])
 			})
 
 			it('finds invalid attributes in order field', function() {

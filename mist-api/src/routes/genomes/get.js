@@ -11,7 +11,10 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 				models.Component
 			],
 			maxPage: null,
-			permittedOrderFields: '*'
+			permittedOrderFields: '*',
+			permittedWhereFields: [
+				'taxonomy_id',
+			],
 		}),
 		helper.findManyHandler()
 	]
