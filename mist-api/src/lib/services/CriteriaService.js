@@ -2,6 +2,7 @@
 
 // Local
 const CriteriaError = require('lib/errors/CriteriaError')
+const arrayUtil = require('core-lib/array-util')
 
 // Constants
 const kDefaults = {
@@ -137,8 +138,34 @@ class CriteriaService {
 			rootModelNode = this.createModelTree_(queryObject)
 
 		this.mapFieldsToCriteria_(rootModelNode, criteria, primaryModel)
+		this.mapWhereToCriteria_(queryObject, criteria, primaryModel)
 
 		return criteria
+	}
+
+	mapWhereToCriteria_(queryObject, criteria, model) {
+		const where = {}
+		let addedFilter = false
+		for (let key in queryObject) {
+			const matches = /^where\.(\S+)/.exec(key)
+			if (!matches)
+				continue
+
+			const attributeName = matches[1]
+			let value = queryObject[key]
+			if (value === undefined || value === null)
+				continue
+			value = value + '' // Convert to string for handling non-string types
+			const values = value.split(',').map((x) => x.trim()).filter((x) => !!x)
+			if (!values.length)
+				continue
+
+			where[attributeName] = values.length > 1 ? values : values[0]
+			addedFilter = true
+		}
+
+		if (addedFilter)
+			criteria.where = where
 	}
 
 	/**
@@ -270,10 +297,11 @@ class CriteriaService {
 	 * @returns {Array.<Object>}
 	 */
 	findErrors(criteria, primaryModel, criteriaOptions = {}) {
-		let permittedOrderFields = criteriaOptions.permittedOrderFields || primaryModel.primaryKeyAttributes,
-			attributeErrors = this.findAttributeErrors_(criteria, primaryModel, criteriaOptions.accessibleModels),
-			orderErrors = this.findOrderErrors_(criteria.order, primaryModel, permittedOrderFields),
-			errors = [...attributeErrors, ...orderErrors]
+		const permittedOrderFields = criteriaOptions.permittedOrderFields || primaryModel.primaryKeyAttributes
+		const attributeErrors = this.findAttributeErrors_(criteria, primaryModel, criteriaOptions.accessibleModels)
+		const whereErrors = this.findWhereErrors_(criteria, primaryModel, criteriaOptions.permittedWhereFields)
+		const	orderErrors = this.findOrderErrors_(criteria.order, primaryModel, permittedOrderFields)
+		const errors = [...attributeErrors, ...whereErrors, ...orderErrors]
 
 		return errors.length ? errors : null
 	}
@@ -334,6 +362,54 @@ class CriteriaService {
 
 				if (errors && errors.length)
 					return errors
+			}
+		}
+
+		return errors
+	}
+
+	findWhereErrors_(target, model, permittedWhereFields) {
+		const errors = []
+		if (!target.where)
+			return errors
+
+		let whereAttributes = Object.keys(target.where)
+		const invalidAttributes = this.invalidAttributes_(whereAttributes, model)
+		if (invalidAttributes) {
+			errors.push({
+				// Technically, this is an invalid attribute; however, from the user's
+				// perspective, it is a "field"
+				type: 'InvalidFieldError',
+				fields: invalidAttributes,
+				model: model.name,
+				message: `${model.name} does not contain the following fields: ${invalidAttributes.join(', ')}`
+			})
+
+			// Skip checking invalid fields for permission
+			whereAttributes = arrayUtil.difference(whereAttributes, invalidAttributes)
+		}
+
+		let unauthorizedWhereAttributes = []
+		if (whereAttributes.length) {
+			if (!permittedWhereFields || !permittedWhereFields instanceof Array) {
+				unauthorizedWhereAttributes = whereAttributes
+			}
+			else {
+				whereAttributes.forEach((whereAttribute) => {
+					const isValidField = Reflect.has(model.attributes, whereAttribute)
+					const isPermitted = permittedWhereFields.includes(whereAttribute)
+					if (isValidField && !isPermitted)
+						unauthorizedWhereAttributes.push(whereAttribute)
+				})
+			}
+
+			if (unauthorizedWhereAttributes.length) {
+				errors.push({
+					type: 'WhereFieldError',
+					fields: unauthorizedWhereAttributes,
+					model: model.name,
+					message: `${model.name} may not be queried with the following fields: ${unauthorizedWhereAttributes.join(', ')}`
+				})
 			}
 		}
 
