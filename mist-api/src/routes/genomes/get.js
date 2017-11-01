@@ -1,5 +1,11 @@
 'use strict'
 
+// Vendor
+const _ = require('lodash')
+
+// Local
+const util = require('core-lib/util')
+
 module.exports = function(app, middlewares, routeMiddlewares) {
 	let models = app.get('models'),
 		helper = app.get('lib').RouteHelper.for(models.Genome)
@@ -16,6 +22,16 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 				'taxonomy_id',
 			],
 		}),
+		// Provide for searching against name
+		(req, res, next) => {
+			if (Reflect.has(req.query, 'search')) {
+				const searchTerms = util.splitIntoTerms(req.query.search)
+					.map((term) => `%${term}%`)
+				if (searchTerms.length > 0)
+					_.set(res.locals, 'criteria.where.name.$iLike.$any', searchTerms)
+			}
+			next()
+		},
 		helper.findManyHandler()
 	]
 }
