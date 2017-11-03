@@ -6,7 +6,7 @@ const path = require('path')
 const tableFilePath = path.resolve(__dirname, 'test-data/mist3-sig-trans-2017.test.csv')
 const stpUtils = require('./stp-utils.js')
 
-describe.only('Signal Transduction Service', function() {
+describe('Signal Transduction Service', function() {
 	it('parseCSVTable', function() {
 		let expectedPfql = [
 			{
