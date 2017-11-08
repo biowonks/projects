@@ -2,9 +2,17 @@
 
 const csv = require('csvtojson')
 
-exports.parseCSVTable = (tableFilePath) => {
+/**
+ * @module readPFQLRulesFromCSVFile
+ *
+ * Read CVS file with protein family definitions and build equivalent PFQL compatible rules
+ *
+ * @param {string} [tableFilePath] Path to the CSV table
+ * @return {Promise}
+ */
+exports.readPFQLRulesFromCSVFile = (tableFilePath) => {
 	return new Promise((resolve, reject) => {
-		let pfqlRules = []
+		const pfqlRules = []
 		csv().fromFile(tableFilePath)
 			.on('json', (item) => {
 				pfqlRules.push(makeSimpleNPosPFQLRule(item.domain_name, item.source, item))
@@ -18,8 +26,17 @@ exports.parseCSVTable = (tableFilePath) => {
 	})
 }
 
-function makeSimpleNPosPFQLRule(feature, resource, meta) {
-	let PFQLRule = {
+
+/**
+ * Make non-positional PFQL rule out of definitions of single feature with single resource
+ *
+ * @param {String} [feature='']
+ * @param {String} [resource='']
+ * @param {Object} [meta={}]
+ * @returns {Object} PFQLRule
+ */
+function makeSimpleNPosPFQLRule(feature = '', resource = '', meta = {}) {
+	const PFQLRule = {
 		meta,
 		rules: [
 			{
