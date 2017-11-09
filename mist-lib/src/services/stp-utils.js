@@ -30,12 +30,12 @@ exports.readPFQLRulesFromCSVFile = (tableFilePath) => {
 /**
  * Make non-positional PFQL rule out of definitions of single feature with single resource
  *
- * @param {String} [feature='']
- * @param {String} [resource='']
- * @param {Object} [meta={}]
+ * @param {String} [feature]
+ * @param {String} [resource]
+ * @param {Object} [meta]
  * @returns {Object} PFQLRule
  */
-function makeSimpleNPosPFQLRule(feature = '', resource = '', meta = {}) {
+function makeSimpleNPosPFQLRule(feature, resource, meta) {
 	const PFQLRule = {
 		meta,
 		rules: [
