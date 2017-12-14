@@ -30,6 +30,21 @@ describe('models', function() {
 			})
 		})
 
+		describe('validate', function() {
+			it('should return null if invalid aseqId', function() {
+				const invalidAseqId = 'luke'
+				expect(Aseq.isValidId(invalidAseqId)).false
+			})
+			it('empty should return null as invalid aseqId', function() {
+				const invalidAseqId = ''
+				expect(Aseq.isValidId(invalidAseqId)).false
+			})
+			it('valid AseqId should not return null', function() {
+				const invalidAseqId = 'eALFsiVPvD8jtNe_9Qifig'
+				expect(Aseq.isValidId(invalidAseqId)).true
+			})
+		})
+
 		describe('fromSeq', function() {
 			it('creates an Aseq instance from seq', function() {
 				let seq = new Seq('MLTY'),

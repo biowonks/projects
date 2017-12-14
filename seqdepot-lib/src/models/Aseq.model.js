@@ -61,6 +61,14 @@ module.exports = function(Sequelize, models, extras) {
 				sequence: normalizedSequence
 			}
 		},
+		/**
+		 * @param {aseqId} aseqId
+		 * @returns {Boolean}
+		 */
+		isValidId: function(aseqId) {
+			const idPattern = /^[A-Za-z0-9_\-]{22}$/
+			return idPattern.test(aseqId)
+		},
 
 		/**
 		 * @param {Seq} seq
