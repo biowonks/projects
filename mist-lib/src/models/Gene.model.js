@@ -1,5 +1,8 @@
 'use strict'
 
+// Local
+const coreUtil = require('core-lib/util')
+
 module.exports = function(Sequelize, models, extras) {
 	let fields = {
 		stable_id: {
@@ -135,11 +138,38 @@ module.exports = function(Sequelize, models, extras) {
 		accessionVersion: extras.validate.bothNullOrBothNotEmpty('accession', 'version')
 	}
 
+	const instanceMethods = {
+		/**
+		 * @param {Object?} [options = {}]
+		 * @param {number?} [options.amount] default number of indices to include in both directions relative to ${index}
+		 * @param {number?} [options.amountBefore = options.amount] number of indices to include that occur before ${index}
+		 * @param {number?} [options.amountAfter = options.amount] number of indices to include that occur after ${index}
+		 * @returns {Promise} array of id ranges; these are the primary gene identifier values - not alternate, public-facing identifiers
+		 */
+		findNeighborIds: function(options) {
+			if (!this.component_id)
+				return []
+
+			return Promise.all([
+				this.getComponent({
+					attributes: ['is_circular'],
+				}),
+				models.Component.geneIdRange(this.component_id),
+			])
+			.then(([component, geneIdRange]) => {
+				// If for some reason, component is not found, assume non-circular
+				const isCircular = !!component && component.is_circular
+				return coreUtil.findNeighoringIndices(this.id, geneIdRange[0], geneIdRange[1], isCircular, options)
+			})
+		}
+	}
+
 	return {
 		fields,
 		params: {
+			instanceMethods,
+			timestamps: false,
 			validate,
-			timestamps: false
 		}
 	}
 }

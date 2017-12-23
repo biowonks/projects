@@ -72,6 +72,7 @@
     "split": "^1.0.0",
     "through2": "^2.0.1",
     "universal-analytics": "^0.4.2",
+    "validator": "^9.2.0",
     "xml2js": "^0.4.17"
   },
   "devDependencies": {
@@ -85,7 +86,7 @@
     "node-mocks-http": "^1.5.4",
     "pm2": "^2.6.1",
     "pre-commit": "^1.1.3",
-    "sinon": "^1.17.5",
+    "sinon": "^4.1.3",
     "supertest": "^2.0.0",
     "supertest-as-promised": "2.x",
     "temp": "^0.8.3"

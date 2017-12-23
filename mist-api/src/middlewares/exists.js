@@ -9,14 +9,15 @@
  * @returns {Function}
  */
 module.exports = function(app, middlewares) {
-	let errors = app.get('errors')
+	const errors = app.get('errors')
 
 	/**
 	 * @param {Model} model
 	 * @param {Object} options
-	 * @param {String} options.attribute - attribute of ${model} to query
-	 * @param {String} options.paramName - name of query parameter to use to get the search value to search for
-	 * @param {String} options.targetName - name to assign resulting entity to in the res.locals Object
+	 * @param {Array.<String>} attributes field to fetch when searching for the entity
+	 * @param {String} options.queryAttribute attribute of ${model} to query
+	 * @param {String} options.paramName name of query parameter to use to get the search value to search for
+	 * @param {String} options.targetName name to assign resulting entity to in the res.locals Object
 	 * @returns {Function}
 	 */
 	return (model, options) => {

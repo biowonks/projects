@@ -25,9 +25,9 @@ exports.findNeighoringIndices = (index, rangeStart, rangeStop, isCircular, optio
   assert(index <= rangeStop, 'index must be less than or equal to rangeStop')
 
   options = options || {}
-  const amount = Reflect.has(options, 'amount') ? options.amount : kDefaultNeighborAmount
-  let amountBefore = Reflect.has(options, 'amountBefore') ? options.amountBefore : amount
-  let amountAfter = Reflect.has(options, 'amountAfter') ? options.amountAfter : amount
+  const amount = options.amount !== undefined ? options.amount : kDefaultNeighborAmount
+  let amountBefore = options.amountBefore !== undefined ? options.amountBefore : amount
+  let amountAfter = options.amountAfter !== undefined ? options.amountAfter : amount
   assert(amountBefore >= 0, 'options.amountBefore must be greater than or equal to 0')
   assert(amountAfter >= 0, 'options.amountAfter must be greater than or equal to 0')
 

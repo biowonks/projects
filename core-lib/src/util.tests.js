@@ -55,6 +55,18 @@ describe('util', () => {
         expect: [[1, 1], [3, 3]],
       },
       {
+        index: 2,
+        rangeStart: 1,
+        rangeStop: 3,
+        isCircular: false,
+        options: {
+          amount: undefined,
+          amountBefore: undefined,
+          amountAfter: undefined,
+        },
+        expect: [[1, 1], [3, 3]],
+      },
+      {
         index: 200,
         rangeStart: 150,
         rangeStop: 201,
