@@ -28,7 +28,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 				const searchTerms = util.splitIntoTerms(req.query.search)
 					.map((term) => `%${term}%`)
 				if (searchTerms.length > 0)
-					_.set(res.locals, 'criteria.where.namet.$iLike.$any', searchTerms)
+					_.set(res.locals, 'criteria.where.name.$iLike.$any', searchTerms)
 			}
 			if (Reflect.has(req.query, 'superkingdom')) {
 				const superkTerms = util.splitIntoTerms(req.query.superkingdom)
@@ -66,8 +66,8 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 				if (genusTerms.length > 0)
 					_.set(res.locals, 'criteria.where.genus.$iLike.$any', genusTerms)
 			}
-			if (Reflect.has(req.query, 'assembly')) {
-				const assemblyTerms = util.splitIntoTerms(req.query.assembly)
+			if (Reflect.has(req.query, 'assembly_level')) {
+				const assemblyTerms = util.splitIntoTerms(req.query.assembly_level)
 					.map((term) => `%${term}%`)
 				if (assemblyTerms.length > 0)
 					_.set(res.locals, 'criteria.where.assembly_level.$iLike.$any', assemblyTerms)
