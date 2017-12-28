@@ -15,7 +15,7 @@ const kDefaultNeighborAmount = 5
  * @param {number?} [options.amount = 5] default number of indices to include in both directions relative to ${index}
  * @param {number?} [options.amountBefore = options.amount] number of indices to include that occur before ${index}
  * @param {number?} [options.amountAfter = options.amount] number of indices to include that occur after ${index}
- * @returns {Array.<Array.<number,number>...>} array of 2-tuple 1-based ranges that are neighbors of ${index} and within ${rangeStart}..${rangeStop}; ordered by first value of each tuple
+ * @returns {Array.<Array.<number,number>...>} array of 2-tuple 1-based ranges that are neighbors of ${index} and within ${rangeStart}..${rangeStop}; ordered relative to indices before ${index} (taking into account circular indices)
  */
 exports.findNeighoringIndices = (index, rangeStart, rangeStop, isCircular, options) => {
   assert(index > 0, 'index must be positive')
@@ -50,7 +50,7 @@ exports.findNeighoringIndices = (index, rangeStart, rangeStop, isCircular, optio
     if (isCircular && amountBefore > 0) {
       const before = Math.max(index + 1, rangeStop - amountBefore + 1)
       if (before <= rangeStop) {
-        result.push([before, rangeStop])
+        result.unshift([before, rangeStop])
         effectiveRangeStop = before - 1
       }
     }

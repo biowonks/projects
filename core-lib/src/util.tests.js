@@ -90,7 +90,7 @@ describe('util', () => {
         rangeStop: 3,
         isCircular: true,
         options: {amountBefore: 2, amountAfter: 0},
-        expect: [[1, 1], [3, 3]],
+        expect: [[3, 3], [1, 1]],
       },
       {
         index: 2,
@@ -107,6 +107,14 @@ describe('util', () => {
         isCircular: true,
         options: {amount: 5},
         expect: [[195, 199], [201, 201], [150, 154]],
+      },
+      {
+        index: 2,
+        rangeStart: 1,
+        rangeStop: 10,
+        isCircular: true,
+        options: {amount: 3},
+        expect: [[9, 10], [1, 1], [3, 5]],
       },
     ]
 
