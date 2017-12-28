@@ -1,14 +1,15 @@
 'use strict'
 
+// Vendor
+const _ = require('lodash')
+const validator = require('validator')
+
 // Local
 const arrayUtil = require('core-lib/array-util')
 
-// Vendor
-const validator = require('validator')
-
 // Constants
 const kDefaultNeighborAmount = 5
-const kMaxNeighborAmount = 10
+const kMaxNeighborAmount = 15
 
 module.exports = function(app, middlewares, routeMiddlewares) {
   const models = app.get('models')
@@ -84,7 +85,13 @@ module.exports = function(app, middlewares, routeMiddlewares) {
       }
       criteria.limit = kMaxNeighborAmount * 2
       Gene.findAll(criteria)
-      .then((entities) => res.json(entities))
+      .then((entities) => {
+        // Re-order entities to be "centered" around target gene
+        const idLists = neighborGeneIdRanges.map((geneIdRange) => _.range(geneIdRange[0], geneIdRange[1] + 1))
+        const sortedIds = arrayUtil.flatten(idLists)
+        const sortedEntities = arrayUtil.sortBy(entities, sortedIds, 'id')
+        res.json(sortedEntities)
+      })
       .catch(next)
     },
 	]
