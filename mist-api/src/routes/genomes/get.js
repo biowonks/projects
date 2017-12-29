@@ -8,7 +8,8 @@ const util = require('core-lib/util')
 
 module.exports = function(app, middlewares, routeMiddlewares) {
 	let models = app.get('models'),
-		helper = app.get('lib').RouteHelper.for(models.Genome)
+		helper = app.get('lib').RouteHelper.for(models.Genome),
+		sequelize = app.get('sequelize')
 
 	return [
 		middlewares.parseCriteriaForMany(models.Genome, {
@@ -26,9 +27,9 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		(req, res, next) => {
 			if (Reflect.has(req.query, 'search')) {
 				const searchTerms = util.splitIntoTerms(req.query.search)
-					.map((term) => `%${term}%`)
+					.map((term) => `'(${term}:*)'`)
 				if (searchTerms.length > 0)
-					_.set(res.locals, 'criteria.where.name.$iLike.$any', searchTerms)
+					_.set(res.locals, 'criteria.where.search', searchTerms)
 			}
 			if (Reflect.has(req.query, 'superkingdom')) {
 				const superkTerms = util.splitIntoTerms(req.query.superkingdom)
@@ -74,7 +75,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 			}
 			next()
 		},
-		helper.findManyHandler()
+		helper.findManyHandler(sequelize)
 	]
 }
 

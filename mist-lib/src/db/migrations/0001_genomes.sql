@@ -77,6 +77,7 @@ comment on column genomes.assembly_name is 'not necessarily different between ge
 comment on column genomes.orderr is 'intentional typo because order is a reserved word';
 
 create index on genomes(taxonomy_id);
+create index genomesFull on genomes using GIN (to_tsvector('english', coalesce(phylum,'') || ' ' || coalesce(class,'') || ' ' || coalesce(orderr,'') || ' ' || coalesce(family,'') || ' ' || name));
 
 create table workers_modules (
 	id serial primary key,

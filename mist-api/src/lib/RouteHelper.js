@@ -10,6 +10,24 @@ const errors = require('./errors'),
 // Other
 let routeHelperMap = new Map()
 
+// Full text search elements
+const fullTextTerm = "to_tsvector('english', coalesce(phylum, '') || ' ' || coalesce(class, '') || ' ' || coalesce(orderr, '') || ' ' || coalesce(family, '') || ' ' || name) @@ to_tsquery('english', %fullTextQuery%)";
+const query = "SELECT %fields% FROM %table% WHERE %fullTextCond% %otherCondition%";
+const limtOffset = '%limit% %offset%';
+const pgLimit = 'LIMIT ';
+const pgOffset = 'OFFSET ';
+const qlimit = '%limit%';
+const qoffset = '%offset%'
+const fullTextCond = '%fullTextCond%';
+const fullTextQuery = '%fullTextQuery%';
+const fields = '%fields%';
+const table = '%table%';
+const otherCondition = '%otherCondition%';
+const ilike = " ILIKE ANY (ARRAY[";
+const ilikeClose = "])";
+const _and = " AND ";
+
+
 module.exports =
 class RouteHelper {
 	/**
@@ -48,16 +66,26 @@ class RouteHelper {
 	 *
 	 * @returns {Function} - express compatible handler function
 	 */
-	findManyHandler() {
+	findManyHandler(sequelize=null) {
 		return (req, res, next) => {
 			let countRows = Reflect.has(req.query, 'count')
-			this.findAll_(res, countRows)
-			.then((entities) => {
-				res.append('Link', this.linkHeaders(req, res.locals.criteria.offset, res.locals.criteria.limit, res.locals.totalCount))
+			if (Reflect.has(req.query, 'search')) {
+				this.findByRawQuery_(sequelize, res, countRows)
+				.then((entities) => {
+					res.append('Link', this.linkHeaders(req, res.locals.criteria.offset, res.locals.criteria.limit, res.locals.totalCount))
 
-				res.json(entities)
-			})
-			.catch(next)
+					res.json(entities)
+				})
+				.catch(next)
+			} else {
+				this.findAll_(res, countRows)
+				.then((entities) => {
+					res.append('Link', this.linkHeaders(req, res.locals.criteria.offset, res.locals.criteria.limit, res.locals.totalCount))
+
+					res.json(entities)
+				})
+				.catch(next)
+			}
 		}
 	}
 
@@ -200,6 +228,64 @@ class RouteHelper {
 			res.append(headerNames.XTotalCount, result.count)
 			return result.rows
 		})
+	}
+
+	findByRawQuery_(sequelize, res, countRows = false) {
+		let criteria = res.locals.criteria;
+		let totalCount;
+		//Probably need to take care of plural form more robust way if will be used for other tables
+		let fullTextSearch = query.replace(table, this.model_.name+'s');
+		let limitOffsetReady = '';
+
+		if (criteria.where) {
+			let qwhere = '';
+			let fullTextTermReady;
+			let firstTerm = true;
+			for (var queryTerm in criteria.where) {
+				if (criteria.where.hasOwnProperty(queryTerm)) {
+					if (queryTerm === 'search') {
+						fullTextTermReady = firstTerm
+							? fullTextTerm.replace(fullTextQuery, criteria.where[queryTerm])
+							: _and + fullTextTerm.replace(fullTextQuery, criteria.where[queryTerm]);
+					} else {
+						//It's possible to make this more general if other queries will be made using full-text search
+						qwhere = firstTerm
+							? qwhere + queryTerm + ilike + `'${criteria.where[queryTerm].$iLike.$any}'` + ilikeClose
+							: qwhere + _and + queryTerm + ilike + `'${criteria.where[queryTerm].$iLike.$any}'` + ilikeClose;
+					}
+					firstTerm = false;
+				}
+			}
+			fullTextSearch = fullTextSearch.replace(otherCondition, qwhere.trim()).replace(fullTextCond,  fullTextTermReady);
+		}
+
+		limitOffsetReady = criteria.limit
+			? limitOffsetReady + limtOffset.replace(qlimit, pgLimit + criteria.limit)
+			: limtOffset.replace(qlimit, '');
+		limitOffsetReady = criteria.offset
+			? limitOffsetReady.replace(qoffset, pgOffset + criteria.offset)
+			: limitOffsetReady.replace(qoffset, '');
+
+		if (countRows) {
+			return sequelize.query(fullTextSearch.replace(fields, 'count(*)'), { type: sequelize.QueryTypes.SELECT})
+			.then((result) => {
+				totalCount = result[0].count;
+				res.locals.totalCount = totalCount;
+				res.append(headerNames.XTotalCount, totalCount);
+				fullTextSearch = this.fillInAttrAndLimit_(fullTextSearch, criteria.attributes, limitOffsetReady);
+				return sequelize.query(fullTextSearch, { model: this.model_ });
+			});
+		}
+		fullTextSearch = this.fillInAttrAndLimit_(fullTextSearch, criteria.attributes, limitOffsetReady);
+		return sequelize.query(fullTextSearch, { model: this.model_ });
+	}
+
+	fillInAttrAndLimit_(searchQuery, attributes, limitOffsetReady) {
+		//taking care of reserved by postgresql 'order' word issue
+		if (attributes.includes('order'))
+			attributes[attributes.indexOf('order')] = 'orderr as order'
+		let fullTextSearch = attributes ? searchQuery.replace(fields, attributes) : searchQuery.replace(fields, '*');
+		return fullTextSearch.concat(' ' + limitOffsetReady);
 	}
 
 	isPositiveInteger_(value) {
