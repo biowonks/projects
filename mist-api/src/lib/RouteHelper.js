@@ -282,7 +282,7 @@ class RouteHelper {
 
 	fillInAttrAndLimit_(searchQuery, attributes, limitOffsetReady) {
 		//taking care of reserved by postgresql 'order' word issue
-		if (attributes.includes('order'))
+		if (attributes && attributes.includes('order'))
 			attributes[attributes.indexOf('order')] = 'orderr as order'
 		let fullTextSearch = attributes ? searchQuery.replace(fields, attributes) : searchQuery.replace(fields, '*');
 		return fullTextSearch.concat(' ' + limitOffsetReady);
