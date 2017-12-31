@@ -121,6 +121,10 @@ bootService.setup()
 	else
 		app.use(router)
 
+	// For the time being, ignore all favicon requests
+	app.get('/favicon.ico', (req, res) => {
+		res.status(204)
+	})
 	app.use('/', latestDocs())
 
 	app.use(errorHandler(app))
