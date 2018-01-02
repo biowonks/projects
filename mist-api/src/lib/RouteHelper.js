@@ -23,9 +23,8 @@ const fullTextQuery = '%fullTextQuery%';
 const fields = '%fields%';
 const table = '%table%';
 const otherCondition = '%otherCondition%';
-const ilike = " ILIKE ANY (ARRAY[";
-const ilikeClose = "])";
 const _and = " AND ";
+const modelForRawQuery = "Genome"
 
 
 module.exports =
@@ -69,7 +68,7 @@ class RouteHelper {
 	findManyHandler(sequelize=null) {
 		return (req, res, next) => {
 			let countRows = Reflect.has(req.query, 'count')
-			if (Reflect.has(req.query, 'search')) {
+			if (Reflect.has(req.query, 'search') && this.model_.name === modelForRawQuery) {
 				this.findByRawQuery_(sequelize, res, countRows)
 				.then((entities) => {
 					res.append('Link', this.linkHeaders(req, res.locals.criteria.offset, res.locals.criteria.limit, res.locals.totalCount))
@@ -232,7 +231,6 @@ class RouteHelper {
 
 	findByRawQuery_(sequelize, res, countRows = false) {
 		let criteria = res.locals.criteria;
-		let totalCount;
 		//Probably need to take care of plural form more robust way if will be used for other tables
 		let fullTextSearch = query.replace(table, this.model_.name+'s');
 		let limitOffsetReady = '';
@@ -250,8 +248,8 @@ class RouteHelper {
 					} else {
 						//It's possible to make this more general if other queries will be made using full-text search
 						qwhere = firstTerm
-							? qwhere + queryTerm + ilike + `'${criteria.where[queryTerm].$iLike.$any}'` + ilikeClose
-							: qwhere + _and + queryTerm + ilike + `'${criteria.where[queryTerm].$iLike.$any}'` + ilikeClose;
+							? qwhere + queryTerm + '=' + criteria.where[queryTerm]
+							: qwhere + _and + queryTerm + '=' + criteria.where[queryTerm];
 					}
 					firstTerm = false;
 				}
@@ -269,9 +267,8 @@ class RouteHelper {
 		if (countRows) {
 			return sequelize.query(fullTextSearch.replace(fields, 'count(*)'), { type: sequelize.QueryTypes.SELECT})
 			.then((result) => {
-				totalCount = result[0].count;
-				res.locals.totalCount = totalCount;
-				res.append(headerNames.XTotalCount, totalCount);
+				res.locals.totalCount = result[0].count;
+				res.append(headerNames.XTotalCount, result[0].count);
 				fullTextSearch = this.fillInAttrAndLimit_(fullTextSearch, criteria.attributes, limitOffsetReady);
 				return sequelize.query(fullTextSearch, { model: this.model_ });
 			});
