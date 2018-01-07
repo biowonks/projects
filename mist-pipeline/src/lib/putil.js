@@ -33,10 +33,10 @@ exports.modulesHelp = function(ModuleClasses) {
  * @returns {String} - help text for using this module
  */
 exports.moduleHelp = function(ModuleClass) {
-	let description = ModuleClass.description(),
-		subModuleMap = ModuleClass.subModuleMap(),
-		moreInfo = ModuleClass.moreInfo(),
-		help = kHelpIndent1 + ModuleClass.name
+	const description = ModuleClass.description()
+	const subModuleMap = ModuleClass.subModuleMap()
+	const moreInfo = ModuleClass.moreInfo()
+	let help = kHelpIndent1 + ModuleClass.name
 
 	if (subModuleMap.size) {
 		help += ':<sub module>[+...]\n'
@@ -44,7 +44,10 @@ exports.moduleHelp = function(ModuleClass) {
 			help += kHelpIndent2 + description + '\n'
 		help += '\n'
 		for (let subModuleName of subModuleMap.keys()) {
-			let subDescription = subModuleMap.get(subModuleName)
+			const subModuleInfo = subModuleMap.get(subModuleName)
+			if (!subModuleInfo)
+				throw new Error(`Invalid submodule map for ${subModuleName}: value must be an object`)
+			const subDescription = subModuleInfo.description
 			help += kHelpIndent2 + `* ${subModuleName}` + (subDescription ? ` - ${subDescription}` : '') + '\n'
 		}
 	}
@@ -187,12 +190,18 @@ exports.unnestedDependencyArray = function(ModuleClasses) {
 	let result = []
 
 	ModuleClasses.forEach((ModuleClass) => {
-		let subModuleNames = Array.from(ModuleClass.subModuleMap().keys())
+		const subModuleMap = ModuleClass.subModuleMap()
+		let subModuleNames = Array.from(subModuleMap.keys())
 		if (subModuleNames.length) {
 			subModuleNames.forEach((subModuleName) => {
+				const subModuleInfo = subModuleMap.get(subModuleName)
+				let dependencies = ModuleClass.dependencies()
+				if (!!subModuleInfo && Array.isArray(subModuleInfo.dependencies))
+					dependencies = [...dependencies, ...subModuleInfo.dependencies]
+
 				result.push({
 					name: `${ModuleClass.name}:${subModuleName}`,
-					dependencies: ModuleClass.dependencies()
+					dependencies,
 				})
 			})
 		}

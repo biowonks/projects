@@ -4,14 +4,20 @@
 const assert = require('assert')
 
 // Local
-const PerGenomePipelineModule = require('lib/PerGenomePipelineModule'),
-	AseqsComputeService = require('lib/services/AseqsComputeService'),
-	AseqModelFn = require('seqdepot-lib/models/Aseq.model')
+const PerGenomePipelineModule = require('lib/PerGenomePipelineModule')
+const AseqsComputeService = require('lib/services/AseqsComputeService')
+const AseqModelFn = require('seqdepot-lib/models/Aseq.model')
 
 // Other
-const kAseqModelToolIdSet = new Set(AseqModelFn.kToolIdFieldNames),
-	kSupportedTools = AseqsComputeService.tools().filter((x) => kAseqModelToolIdSet.has(x.id)),
-	kSupportedSubModuleMap = new Map(kSupportedTools.map((x) => [x.id, x.description]))
+const kAseqModelToolIdSet = new Set(AseqModelFn.kToolIdFieldNames)
+const kSupportedTools = AseqsComputeService.tools().filter((x) => kAseqModelToolIdSet.has(x.id))
+const kSupportedSubModuleMap = new Map(kSupportedTools.map((x) => [
+		x.id,
+		{
+			dependencies: x.dependencies,
+			description: x.description,
+		},
+	]))
 
 module.exports =
 class AseqCompute extends PerGenomePipelineModule {

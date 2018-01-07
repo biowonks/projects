@@ -4,7 +4,7 @@
 const PerGenomePipelineModule = require('../../PerGenomePipelineModule')
 
 module.exports =
-class PerGenomeOneModule extends PerGenomePipelineModule {
+class PerGenomeFourModule extends PerGenomePipelineModule {
 	static dependencies() {
 		return ['OnceTwoModule']
 	}
@@ -15,14 +15,18 @@ class PerGenomeOneModule extends PerGenomePipelineModule {
 				'subModule1',
 				{
 					description: 'subModule 1 description',
-					dependencies: [],
+					dependencies: [
+            'PerGenomeTwoModule',
+          ],
 				},
 			],
 			[
 				'subModule2',
 				{
 					description: 'subModule 2 description',
-					dependencies: [],
+					dependencies: [
+            'PerGenomeOneModule:subModule1',
+          ],
 				},
 			],
 		])
