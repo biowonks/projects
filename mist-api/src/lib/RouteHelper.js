@@ -248,8 +248,8 @@ class RouteHelper {
 					} else {
 						//It's possible to make this more general if other queries will be made using full-text search
 						qwhere = firstTerm
-							? qwhere + queryTerm + '=' + criteria.where[queryTerm]
-							: qwhere + _and + queryTerm + '=' + criteria.where[queryTerm];
+							? qwhere + queryTerm + '=' + `'${criteria.where[queryTerm]}'`
+							: qwhere + _and + queryTerm + '=' + `'${criteria.where[queryTerm]}'`;
 					}
 					firstTerm = false;
 				}
