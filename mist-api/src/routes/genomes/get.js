@@ -24,7 +24,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 			],
 		}),
 		// Provide for searching against name, taxonomy levels and assembly_level
-		//In a query all the terms except 'search' are expected to be one word terms, nevetherless as a precaution
+		//In a query all the terms except 'search' and 'assembly_level' are expected to be one word terms, nevetherless as a precaution
 		//all the terms are being taken and concatenated.
 		(req, res, next) => {
 			if (Reflect.has(req.query, 'search')) {

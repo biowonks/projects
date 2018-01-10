@@ -235,7 +235,8 @@ class RouteHelper {
 		let fullTextSearch = query.replace(table, this.model_.name+'s');
 		let limitOffsetReady = '';
 
-		if (criteria.where) {
+		//avoid excessive queries with an empty string
+		if (Object.keys(criteria.where).length > 0) {
 			let qwhere = '';
 			let fullTextTermReady;
 			let firstTerm = true;
@@ -264,6 +265,7 @@ class RouteHelper {
 			? limitOffsetReady.replace(qoffset, pgOffset + criteria.offset)
 			: limitOffsetReady.replace(qoffset, '');
 
+
 		if (countRows) {
 			return sequelize.query(fullTextSearch.replace(fields, 'count(*)'), { type: sequelize.QueryTypes.SELECT})
 			.then((result) => {
@@ -278,11 +280,14 @@ class RouteHelper {
 	}
 
 	fillInAttrAndLimit_(searchQuery, attributes, limitOffsetReady) {
+		let readyAttributes = []
+		if (attributes)
+			readyAttributes = attributes;
+		else
+			readyAttributes = Object.keys(this.model_.attributes);
 		//taking care of reserved by postgresql 'order' word issue
-		if (attributes && attributes.includes('order'))
-			attributes[attributes.indexOf('order')] = 'orderr as order'
-		let fullTextSearch = attributes ? searchQuery.replace(fields, attributes) : searchQuery.replace(fields, '*');
-		return fullTextSearch.concat(' ' + limitOffsetReady);
+		readyAttributes[readyAttributes.indexOf('order')] = 'orderr as order'
+		return searchQuery.replace(fields, readyAttributes).concat(' ' + limitOffsetReady);
 	}
 
 	isPositiveInteger_(value) {
