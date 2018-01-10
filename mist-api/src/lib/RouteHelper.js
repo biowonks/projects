@@ -68,7 +68,7 @@ class RouteHelper {
 	findManyHandler(sequelize=null) {
 		return (req, res, next) => {
 			let countRows = Reflect.has(req.query, 'count')
-			if (Reflect.has(req.query, 'search') && this.model_.name === modelForRawQuery) {
+			if (res.locals.criteria.where && Reflect.has(res.locals.criteria.where, 'search') && this.model_.name === modelForRawQuery) {
 				this.findByRawQuery_(sequelize, res, countRows)
 				.then((entities) => {
 					res.append('Link', this.linkHeaders(req, res.locals.criteria.offset, res.locals.criteria.limit, res.locals.totalCount))
@@ -234,29 +234,26 @@ class RouteHelper {
 		//Probably need to take care of plural form more robust way if will be used for other tables
 		let fullTextSearch = query.replace(table, this.model_.name+'s');
 		let limitOffsetReady = '';
+		let qwhere = '';
+		let fullTextTermReady;
+		let firstTerm = true;
 
-		//avoid excessive queries with an empty string
-		if (Object.keys(criteria.where).length > 0) {
-			let qwhere = '';
-			let fullTextTermReady;
-			let firstTerm = true;
-			for (var queryTerm in criteria.where) {
-				if (criteria.where.hasOwnProperty(queryTerm)) {
-					if (queryTerm === 'search') {
-						fullTextTermReady = firstTerm
-							? fullTextTerm.replace(fullTextQuery, criteria.where[queryTerm])
-							: _and + fullTextTerm.replace(fullTextQuery, criteria.where[queryTerm]);
-					} else {
-						//It's possible to make this more general if other queries will be made using full-text search
-						qwhere = firstTerm
-							? qwhere + queryTerm + '=' + `'${criteria.where[queryTerm]}'`
-							: qwhere + _and + queryTerm + '=' + `'${criteria.where[queryTerm]}'`;
-					}
-					firstTerm = false;
+		for (var queryTerm in criteria.where) {
+			if (criteria.where.hasOwnProperty(queryTerm)) {
+				if (queryTerm === 'search') {
+					fullTextTermReady = firstTerm
+						? fullTextTerm.replace(fullTextQuery, criteria.where[queryTerm])
+						: _and + fullTextTerm.replace(fullTextQuery, criteria.where[queryTerm]);
+				} else {
+					//It's possible to make this more general if other queries will be made using full-text search
+					qwhere = firstTerm
+						? qwhere + queryTerm + '=' + `'${criteria.where[queryTerm]}'`
+						: qwhere + _and + queryTerm + '=' + `'${criteria.where[queryTerm]}'`;
 				}
+				firstTerm = false;
 			}
-			fullTextSearch = fullTextSearch.replace(otherCondition, qwhere.trim()).replace(fullTextCond,  fullTextTermReady);
 		}
+		fullTextSearch = fullTextSearch.replace(otherCondition, qwhere.trim()).replace(fullTextCond,  fullTextTermReady);
 
 		limitOffsetReady = criteria.limit
 			? limitOffsetReady + limtOffset.replace(qlimit, pgLimit + criteria.limit)
@@ -265,9 +262,8 @@ class RouteHelper {
 			? limitOffsetReady.replace(qoffset, pgOffset + criteria.offset)
 			: limitOffsetReady.replace(qoffset, '');
 
-
 		if (countRows) {
-			return sequelize.query(fullTextSearch.replace(fields, 'count(*)'), { type: sequelize.QueryTypes.SELECT})
+			return sequelize.query(fullTextSearch.replace(fields, 'count(*)'), { type: sequelize.QueryTypes.SELECT })
 			.then((result) => {
 				res.locals.totalCount = result[0].count;
 				res.append(headerNames.XTotalCount, result[0].count);
