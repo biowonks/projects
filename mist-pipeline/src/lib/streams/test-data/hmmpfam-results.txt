@@ -1,0 +1,246 @@
+hmmpfam - search one or more sequences against HMM database
+HMMER 2.4i (December 2006)
+Copyright (C) 1992-2006 HHMI Janelia Farm
+Freely distributed under the GNU General Public License (GPL)
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+HMM file:                 vendor/ecf/1.0/ecfs.bin
+Sequence file:            coli.faa
+- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+Query sequence: 1383873
+Accession:      [none]
+Description:    [none]
+
+Scores for sequence family classification (score includes all domains):
+Model    Description                                    Score    E-value  N
+-------- -----------                                    -----    ------- ---
+	[no hits above thresholds]
+
+Parsed for domains:
+Model    Domain  seq-f seq-t    hmm-f hmm-t      score  E-value
+-------- ------- ----- -----    ----- -----      -----  -------
+	[no hits above thresholds]
+
+Alignments of top-scoring domains:
+	[no hits above thresholds]
+//
+
+Query sequence: 1384778
+Accession:      [none]
+Description:    [none]
+
+Scores for sequence family classification (score includes all domains):
+Model    Description                                    Score    E-value  N
+-------- -----------                                    -----    ------- ---
+ECF_999                                                   3.9        2.8   1
+
+Parsed for domains:
+Model    Domain  seq-f seq-t    hmm-f hmm-t      score  E-value
+-------- ------- ----- -----    ----- -----      -----  -------
+ECF_999    1/1      91   206 ..     1   140 []     3.9      2.8
+
+Alignments of top-scoring domains:
+ECF_999: domain 1 of 1, from 91 to 206: score 3.9, E = 2.8
+                   *->yrprlyryarrllgdrgeaeklkrkalldradAEDlvQetflrawra
+                      ++ ++   + r   +               ++  D   e +l+a+
+     1384778    91    HEEDVVTALKRGADG---------------YLLKDMEPEDLLKALHQ 122
+
+                   ldrglslgrfrgdlegessfraWLyriarNlaidhl..........Lp..
+                                ++ ++ + + +++ +  + +++ ++  +++  +L+++
+     1384778   123 -------------AAAGEMVLSEALTPVLAASLRANratterdvnqLTpr 159
+
+                   ..vllLryveglsyeEIAeelggsgsdeergaisegtVksrlhRArkkLr
+                   ++ +l    +gl+ + IA++l+          i+e+tVk+++ + +kk++
+     1384778   160 erDILKLIAQGLPNKMIARRLD----------ITESTVKVHVKHMLKKMK 199
+
+                   elleeeg<-*
+                      + e
+     1384778   200 LKSRVEA    206
+
+//
+
+Query sequence: 1385505
+Accession:      [none]
+Description:    [none]
+
+Scores for sequence family classification (score includes all domains):
+Model      Description                                  Score    E-value  N
+--------   -----------                                  -----    ------- ---
+Sigma70_r3 Sigma-70 region 3                             86.6    3.7e-25   1
+ECF_999                                                  38.0    1.6e-10   1
+
+Parsed for domains:
+Model      Domain  seq-f seq-t    hmm-f hmm-t      score  E-value
+--------   ------- ----- -----    ----- -----      -----  -------
+ECF_999      1/1      20   239 .]     1   140 []    38.0  1.6e-10
+Sigma70_r3   1/1      90   172 ..     1    83 []    86.6  3.7e-25
+
+Alignments of top-scoring domains:
+ECF_999: domain 1 of 1, from 20 to 239: score 38.0, E = 1.6e-10
+                   *->yrprlyryarrllgdrgeaeklkrkalldradAEDlvQetflrawra
+                      y p++++ a+rl           +++l    + +Dl+Q   + ++ a
+     1385505    20    YVPLVRHEALRL-----------QVRLPASVELDDLLQAGGIGLLNA 55
+
+                   ldrglslgrfrgdlegessfraWLyriarNlaidhl..............
+                    +r        +d+ +++ f +++ +  r + +d l+ ++  ++  ++ +
+     1385505    56 VER--------YDALQGTAFTTYAVQRIRGAMLDELrsrdwvprsvrrna 97
+
+                   ..................................................
+                   ++ +++  + +++  + + + + +++   + ++ ++   +    +    +
+     1385505    98 revaqaigqleqelgrnatetevaerlgidiadyrqmlldtnnsqlfsyd 147
+
+                   .........................................Lp.....vl
+                   + ++++ +  +   ++++++ + ++  +   +++  ++ + Lp++++ vl
+     1385505   148 ewreehgdsielvtddhqrenplqqlldsnlrqrvmeaietLPereklVL 197
+
+                   lLryveglsyeEIAeelggsgsdeergaisegtVksrlhRArkkLrelle
+                   +L+y e+l ++EI ++l           + e+ V ++ + A+k+Lr+ l+
+     1385505   198 TLYYQEELNLKEIGAVLE----------VGESRVSQLHSQAIKRLRTKLG 237
+
+Sigma70_r3: domain 1 of 1, from 90 to 172: score 86.6, E = 3.7e-25
+                   *->PvHvvEllnkikrAqreLsQeLGRePtpeEiAeeLgiseekVrevle
+                      P++v+++ +++++A+ +L+QeLGR++t+ E+Ae+Lgi+++++r++l+
+     1385505    90    PRSVRRNAREVAQAIGQLEQELGRNATETEVAERLGIDIADYRQMLL 136
+
+                   aarepvSLdlpvgeeeDselgdlleDdeaespedav<-*
+                   ++++++ ++ +++ ee++++ +l++Dd++  +  +
+     1385505   137 DTNNSQLFSYDEWREEHGDSIELVTDDHQRENPLQQ    172
+
+//
+
+Query sequence: 1386174
+Accession:      [none]
+Description:    [none]
+
+Scores for sequence family classification (score includes all domains):
+Model    Description                                    Score    E-value  N
+-------- -----------                                    -----    ------- ---
+ECF_2                                                   463.3   1.5e-138   1
+ECF_1                                                   202.2    5.9e-60   1
+ECF_999                                                 137.5    1.8e-40   1
+ECF_20                                                  128.2    1.2e-37   1
+ECF_30                                                  119.1    6.4e-35   1
+ECF_10                                                   47.6      2e-13   1
+
+Parsed for domains:
+Model    Domain  seq-f seq-t    hmm-f hmm-t      score  E-value
+-------- ------- ----- -----    ----- -----      -----  -------
+ECF_2      1/1       6   191 .]     1   188 []   463.3 1.5e-138
+ECF_1      1/1       7   190 ..     1   204 []   202.2  5.9e-60
+ECF_20     1/1       7   191 .]     1   191 []   128.2  1.2e-37
+ECF_10     1/1      10   188 ..     1   189 []    47.6    2e-13
+ECF_30     1/1      13   187 ..     1   170 []   119.1  6.4e-35
+ECF_999    1/1      29   189 ..     1   140 []   137.5  1.8e-40
+
+Alignments of top-scoring domains:
+ECF_2: domain 1 of 1, from 6 to 191: score 463.3, E = 1.5e-138
+                   *->tDqqLVeRvqkGDkrAFdlLVlKYQrKvarLisRyVrdsaeveDVaQ
+                      tDq+LVeRvqkGD++AF+lLV++YQ+Kva+L+sRyV   ++v+DV+Q
+     1386174     6    TDQVLVERVQKGDQKAFNLLVVRYQHKVASLVSRYVPS-GDVPDVVQ 51
+
+                   EaFIKAYRALpnFRGdSAFYTWLYRIAVNTAKNyLvaqgRrppssDvdae
+                   EaFIKAYRAL++FRGdSAFYTWLYRIAVNTAKNyLvaqgRrppssDvda
+     1386174    52 EAFIKAYRALDSFRGDSAFYTWLYRIAVNTAKNYLVAQGRRPPSSDVDAI 101
+
+                   daEtyeggdaLrdidtPEnlllsdelekvVneaieeLPEeLRtAitLREl
+                   +aE++e+g aL++i++PEnl+ls+el+++V+++ie+LPE+LR+AitLREl
+     1386174   102 EAENFESGGALKEISNPENLMLSEELRQIVFRTIESLPEDLRMAITLREL 151
+
+                   EGLSYEEIAevMdCPiGTVRSRIFRAREaIdkklrPLLets<-*
+                   +GLSYEEIA++MdCP+GTVRSRIFRAREaId+k++PL+ +
+     1386174   152 DGLSYEEIAAIMDCPVGTVRSRIFRAREAIDNKVQPLIRR-    191
+
+ECF_1: domain 1 of 1, from 7 to 190: score 202.2, E = 5.9e-60
+                   *->deeLierakkVraraGDqeAFeeLvrrYqkrvYnlayRmlgneedAe
+                      d+ L+er++k     GDq+AF++Lv rYq +v +l  R++ + +
+     1386174     7    DQVLVERVQK-----GDQKAFNLLVVRYQHKVASLVSRYVPSGDVP- 47
+
+                   DltQEvFlkafrnldsFdggessFsTWLyRIavNlciDrLRkrkrrpsvd
+                   D++QE+F+ka+r ldsF+ g+s F+TWLyRIavN++ ++L    rrp ++
+     1386174    48 DVVQEAFIKAYRALDSFR-GDSAFYTWLYRIAVNTAKNYLVAQGRRPPSS 96
+
+                   ledeeeeeeeggggeegegeleelladddpsPeealerrElrealqraia
+                   + d  e e      +e++g l+e       +Pe  ++++Elr+ + r i+
+     1386174    97 DVDAIEAEN-----FESGGALKE-----ISNPENLMLSEELRQIVFRTIE 136
+
+                   kLpeeyReVlvLRyieglsyeEIAeiLgipeGTVKsrLhRAReaLrelLe
+                    Lpe+ R++++LR++ glsyeEIA+i+++p+GTV+sr++RARea   + +
+     1386174   137 SLPEDLRMAITLRELDGLSYEEIAAIMDCPVGTVRSRIFRAREAIDNKVQ 186
+
+                   elegeeg<-*
+                       + +
+     1386174   187 ---PLIR    190
+
+ECF_20: domain 1 of 1, from 7 to 191: score 128.2, E = 1.2e-37
+                   *->DeeLlaraaaGDraAfreLvaRhlprvlalArRmlGDdaaeAeDVaQ
+                      D+ L++r++ GD+ Af +Lv R+++ v  l+ R +  +  +  DV+Q
+     1386174     7    DQVLVERVQKGDQKAFNLLVVRYQHKVASLVSRYVP-SG-DVPDVVQ 51
+
+                   EaFlrlWkaaprwRpgeArFsTWLyRVvlNlCrDRlRrr.rrrrfvdldd
+                   EaF+++ +a++++R g+++F TWLyR+++N +   l   +rr ++ d+d+
+     1386174    52 EAFIKAYRALDSFR-GDSAFYTWLYRIAVNTAKNYLVAQgRRPPSSDVDA 100
+
+                   apeEAdevaDvdedapgpeaalearerlrrleaALaaLPerQReAlvLrh
+                   ++ E +e   +  + + pe  + ++e +  + + + +LPe +R A++Lr
+     1386174   101 IEAENFESGGALKEISNPENLMLSEELRQIVFRTIESLPEDLRMAITLRE 150
+
+                   ieglSnaEAAeiLgiSvkAVESLLaRARraLralLagrreelgyd<-*
+                    +glS  E+A+i++++v++V S++ RAR a     +     l+++
+     1386174   151 LDGLSYEEIAAIMDCPVGTVRSRIFRAREAIDNKVQ----PLIRR    191
+
+ECF_10: domain 1 of 1, from 10 to 188: score 47.6, E = 2e-13
+                   *->llsllnggdekaFeqlYdrYykkLcnfaykyvkdeedAEDIVQDvFi
+                      l ++ ++gd+kaF+ l  rY +k+ + +++yv +  d+ D+VQ++Fi
+     1386174    10    LVERVQKGDQKAFNLLVVRYQHKVASLVSRYVPS-GDVPDVVQEAFI 55
+
+                   kLWenRekleie.slkasYLftivkNksLNylrhekveekyeesvleeee
+                   k +   +++   +s ++ +L++i+ N++ Nyl  +  +    +   +e e
+     1386174    56 KAYRALDSFR-GdSAFYTWLYRIAVNTAKNYLVAQGRRPPSSDVDAIEAE 104
+
+                   eeld.seissledpeeeleakeElelliekaiekLPercReiFlLsRfeg
+                   +++++  +++  +pe+ ++++e l++++ ++ie+LPe  R++ +L+  +g
+     1386174   105 NFESgGALKEISNPENLMLSEE-LRQIVFRTIESLPEDLRMAITLRELDG 153
+
+                   lsykEIAEeLgISvkTVenhiskALKfLRkeLkeylpllllflf<-*
+                   lsy+EIA  ++  v TV  +i +A    R+++++         +
+     1386174   154 LSYEEIAAIMDCPVGTVRSRIFRA----REAIDNKV-----QPL    188
+
+ECF_30: domain 1 of 1, from 13 to 187: score 119.1, E = 6.4e-35
+                   *->kakkgkeeafeeLideykeklYRlAysYvkNeeDAeDavQEtilKAY
+                      + +kg+ +af  L+  y++k+  l+  Yv    D  D+vQE+++KAY
+     1386174    13    RVQKGDQKAFNLLVVRYQHKVASLVSRYVP-SGDVPDVVQEAFIKAY 58
+
+                   esidtLkgpsyFKTWltRIlINeCkdiLrknkkrvvledekieeele...
+                   + +d+++g+s+F+TWl+RI++N++k++L  + +r +  d + +e +  ++
+     1386174    59 RALDSFRGDSAFYTWLYRIAVNTAKNYLVAQGRRPPSSDVDAIEAENfes 108
+
+                   .........eeeviekdeedldLleAlmsLpekyRevIvLrYYeDlsikE
+                   ++  ++ ++ e  +  +e+++ +++ ++sLpe++R +I+Lr   +ls++E
+     1386174   109 ggalkeisnPENLMLSEELRQIVFRTIESLPEDLRMAITLRELDGLSYEE 158
+
+                   IAeiLnipeGTVKSRLyRArkkLkkrleeeeeeee<-*
+                   IA i+++p+GTV+SR++RAr+   ++
+     1386174   159 IAAIMDCPVGTVRSRIFRAREAIDNKV------QP    187
+
+ECF_999: domain 1 of 1, from 29 to 189: score 137.5, E = 1.8e-40
+                   *->yrprlyryarrllgdrgeaeklkrkalldradAEDlvQetflrawra
+                      y++++ +++ r++++                d+ D+vQe+f++a+ra
+     1386174    29    YQHKVASLVSRYVPS---------------GDVPDVVQEAFIKAYRA 60
+
+                   ldrglslgrfrgdlegessfraWLyriarNlaidhl..............
+                   ld+          ++g+s f +WLyria+N+a ++l ++ ++++  + ++
+     1386174    61 LDS----------FRGDSAFYTWLYRIAVNTAKNYLvaqgrrppssdvda 100
+
+                   .....................................Lp.....vllLry
+                    +++  +   +  +   ++     ++ ++   +  + Lp++ + +++Lr+
+     1386174   101 ieaenfesggalkeisnpenlmlseelrqivfrtiesLPedlrmAITLRE 150
+
+                   veglsyeEIAeelggsgsdeergaisegtVksrlhRArkkLrelleeeg<
+                   ++glsyeEIA++++          +++gtV+sr++RAr+++ + ++
+     1386174   151 LDGLSYEEIAAIMD----------CPVGTVRSRIFRAREAIDNKVQPLI  189
+
+                   -*
+
+     1386174     -    -
+
+//

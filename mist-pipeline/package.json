@@ -13,7 +13,9 @@
     "eslint": "node_modules/.bin/eslint --ignore-pattern src/node_modules 'src/**/*.js'",
     "install-vendor-tools": "bin/install-vendor-tools.sh",
     "install-hmmer3": "bin/install-hmmer3.sh $(bin/get-config.js vendor.hmmer3.version vendor.hmmer3.basePath)",
+    "install-hmmer2": "bin/install-hmmer2.sh $(bin/get-config.js vendor.hmmer2.version vendor.hmmer2.basePath)",
     "install-tmhmm2": "bin/install-tmhmm2.sh $(bin/get-config.js vendor.tmhmm2.basePath vendor.tmhmm2.secureUrl)",
+    "install-ecf": "npm run install-hmmer2 && bin/install-ecf.sh $(bin/get-config.js vendor.ecf.version vendor.ecf.basePath vendor.hmmer2.binPath)",
     "install-agfam": "npm run install-hmmer3 && bin/install-agfam.sh $(bin/get-config.js vendor.agfam.version vendor.agfam.basePath vendor.hmmer3.binPath)",
     "install-pfam": "npm run install-hmmer3 && bin/install-pfam.sh $(bin/get-config.js vendor.pfam.version vendor.pfam.basePath vendor.hmmer3.binPath)"
   },

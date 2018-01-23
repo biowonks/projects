@@ -4,16 +4,16 @@
 const path = require('path')
 
 // Vendor
-const loadConfig = require('node-config-loader'),
-	moment = require('moment')
+const loadConfig = require('node-config-loader')
+const moment = require('moment')
 
 // Local
 const database = require('../src/node_modules/mist-lib/db/config')
 
 // --------------------------------------------------------
-let vendorPath = path.resolve(__dirname, '..', 'vendor')
+const vendorPath = path.resolve(__dirname, '..', 'vendor')
 
-let config = {
+const config = {
 	paths: {
 		vendor: vendorPath
 	},
@@ -42,6 +42,12 @@ let config = {
 			binPath: path.resolve(vendorPath, 'hmmer3', '3.1b2', 'bin')
 		},
 
+		hmmer2: {
+			version: '2.4i',
+			basePath: path.resolve(vendorPath, 'hmmer2', '2.4i'),
+			binPath: path.resolve(vendorPath, 'hmmer2', '2.4i', 'bin')
+		},
+
 		// Proprietary
 		tmhmm2: {
 			// TMHMM2 is a proprietary tool without a public distribution. Therefore, to enable
@@ -58,6 +64,10 @@ let config = {
 		agfam: {
 			version: '2.0',
 			basePath: path.resolve(vendorPath, 'agfam', '2.0')
+		},
+		ecf: {
+			version: '1.0',
+			basePath: path.resolve(vendorPath, 'ecf', '1.0')
 		},
 		pfam: {
 			version: '30.0',
@@ -81,6 +91,10 @@ let config = {
 			ticksPerProgressEvent: 1000
 		},
 		tmhmm2: {
+			ticksPerProgressEvent: 250
+		},
+		ecf1: {
+			databasePath: path.resolve(vendorPath, 'ecf', '1.0', 'ecfs.bin'),
 			ticksPerProgressEvent: 250
 		}
 	},
