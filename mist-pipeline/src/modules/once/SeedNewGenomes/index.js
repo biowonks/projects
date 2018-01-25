@@ -104,6 +104,13 @@ class SeedNewGenomes extends OncePipelineModule {
 		return 'seed the database with genomes sourced from NCBI'
 	}
 
+	static moreInfo() {
+		return 'Use the query parameter to only seed those genomes whose name\n' +
+		  'matches a regular expression. For example:\n' +
+			'  -q "coli" will only match those genomes with "coli" in its name\n' +
+			'  -q "^Escher" will only match those genomes whose name begins with "Escher"'
+	}
+
 	constructor(app) {
 		super(app)
 
@@ -111,6 +118,7 @@ class SeedNewGenomes extends OncePipelineModule {
 		this.numGenomesSeeded_ = 0
 		this.dataDir_ = __dirname
 		this.QueryGenerator_ = this.models_.Genome.QueryGenerator
+		this.queryRegex_ = this.query_ ? new RegExp(this.query_) : null
 	}
 
 	optimize() {
@@ -207,9 +215,8 @@ class SeedNewGenomes extends OncePipelineModule {
 			let pipeline = pumpify.obj(readStream, split(), skipLineStream, parser)
 			streamEach(pipeline, (row, next) => {
 				this.shutdownCheck_()
-				let genomeData = this.genomeDataFromRow_(row)
-				if (genomeData.refseq_category === 'representative genome' ||
-					genomeData.refseq_category === 'reference genome')
+				const genomeData = this.genomeDataFromRow_(row)
+				if (this.acceptGenome_(genomeData))
 					genomeSummaries.push(genomeData)
 				next()
 			}, (error) => {
@@ -229,30 +236,30 @@ class SeedNewGenomes extends OncePipelineModule {
 	}
 
 	genomeDataFromRow_(row) {
-		let refseqAccessionParts = mutil.parseAccessionVersion(row['# assembly_accession']),
-			genbankAccessionParts = mutil.parseAccessionVersion(row.gbrs_paired_asm),
-			genomeData = {
-				accession: refseqAccessionParts[0],
-				version: row['# assembly_accession'],
-				version_number: refseqAccessionParts[1],
-				genbank_accession: genbankAccessionParts[0],
-				genbank_version: row.gbrs_paired_asm,
-				taxonomy_id: Number(row.taxid),
-				name: row.organism_name,
-				refseq_category: row.refseq_category,
-				bioproject: row.bioproject,
-				biosample: row.biosample,
-				wgs_master: row.wgs_master,
-				strain: this.extractStrain_(row.infraspecific_name),
-				isolate: row.isolate,
-				version_status: row.version_status,
-				assembly_level: row.assembly_level,
-				release_type: row.release_type,
-				release_date: row.seq_rel_date,
-				assembly_name: row.asm_name,
-				submitter: row.submitter,
-				ftp_path: row.ftp_path
-			}
+		const refseqAccessionParts = mutil.parseAccessionVersion(row['# assembly_accession'])
+		const genbankAccessionParts = mutil.parseAccessionVersion(row.gbrs_paired_asm)
+		const genomeData = {
+			accession: refseqAccessionParts[0],
+			version: row['# assembly_accession'],
+			version_number: refseqAccessionParts[1],
+			genbank_accession: genbankAccessionParts[0],
+			genbank_version: row.gbrs_paired_asm,
+			taxonomy_id: Number(row.taxid),
+			name: row.organism_name,
+			refseq_category: row.refseq_category,
+			bioproject: row.bioproject,
+			biosample: row.biosample,
+			wgs_master: row.wgs_master,
+			strain: this.extractStrain_(row.infraspecific_name),
+			isolate: row.isolate,
+			version_status: row.version_status,
+			assembly_level: row.assembly_level,
+			release_type: row.release_type,
+			release_date: row.seq_rel_date,
+			assembly_name: row.asm_name,
+			submitter: row.submitter,
+			ftp_path: row.ftp_path
+		}
 
 		for (let key in genomeData) {
 			if (!genomeData[key])
@@ -265,6 +272,19 @@ class SeedNewGenomes extends OncePipelineModule {
 	extractStrain_(infraSpecificName) {
 		let matches = /strain=(\S+)/.exec(infraSpecificName)
 		return matches ? matches[1] : null
+	}
+
+	acceptGenome_(genomeData) {
+		if (!genomeData)
+			return false
+
+		const { refseq_category } = genomeData
+		const isRepRefGenome = refseq_category === 'representative genome' || refseq_category === 'reference genome'
+		return isRepRefGenome && this.matchesQuery_(genomeData.name)
+	}
+
+	matchesQuery_(name) {
+		return !this.queryRegex_ || this.queryRegex_.test(name)
 	}
 
 	createTemporaryTable_() {

@@ -8,6 +8,7 @@ class AbstractPipelineModule {
 	constructor(app) {
 		this.config_ = app.config
 		this.logger_ = app.logger
+		this.query_ = (app.query || '').trim()
 		this.models_ = app.models
 		this.sequelize_ = app.sequelize
 		this.worker_ = app.worker
