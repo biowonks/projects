@@ -6,16 +6,17 @@
 const path = require('path')
 
 // Local
-const putil = require('./putil'),
-	ModuleId = require('./ModuleId'),
+const putil = require('./putil')
+const ModuleId = require('./ModuleId')
 
-	OnceOneModule = require('./test-data/module-dir1/OnceOneModule'),
-	OnceTwoModule = require('./test-data/module-dir1/OnceTwoModule'),
-	PerGenomeOneModule = require('./test-data/module-dir1/PerGenomeOneModule'),
+const OnceOneModule = require('./test-data/module-dir1/OnceOneModule')
+const OnceTwoModule = require('./test-data/module-dir1/OnceTwoModule')
+const PerGenomeOneModule = require('./test-data/module-dir1/PerGenomeOneModule')
 
-	OnceThreeModule = require('./test-data/module-dir2/OnceThreeModule'),
-	PerGenomeTwoModule = require('./test-data/module-dir2/PerGenomeTwoModule'),
-	PerGenomeThreeModule = require('./test-data/module-dir2/PerGenomeThreeModule')
+const OnceThreeModule = require('./test-data/module-dir2/OnceThreeModule')
+const PerGenomeTwoModule = require('./test-data/module-dir2/PerGenomeTwoModule')
+const PerGenomeThreeModule = require('./test-data/module-dir2/PerGenomeThreeModule')
+const PerGenomeFourModule = require('./test-data/module-dir2/PerGenomeFourModule')
 
 describe('pipeline', function() {
 	describe('putil', function() {
@@ -33,8 +34,13 @@ describe('pipeline', function() {
 
 			expect(x).property('perGenome')
 			expect(x.perGenome).a('array')
-			expect(x.perGenome.length).equal(3)
-			expect(x.perGenome).members([PerGenomeOneModule, PerGenomeTwoModule, PerGenomeThreeModule])
+			expect(x.perGenome.length).equal(4)
+			expect(x.perGenome).members([
+				PerGenomeOneModule,
+				PerGenomeTwoModule,
+				PerGenomeThreeModule,
+				PerGenomeFourModule,
+			])
 
 			expect(x).property('all')
 			expect(x.all).eql([...x.once, ...x.perGenome])
@@ -87,33 +93,48 @@ describe('pipeline', function() {
 		})
 
 		it('unnestedDependencyArray', function() {
-			let x = putil.unnestedDependencyArray([
+			const x = putil.unnestedDependencyArray([
 				OnceOneModule,
 				OnceTwoModule,
 				PerGenomeOneModule,
-				PerGenomeTwoModule
+				PerGenomeTwoModule,
+				PerGenomeFourModule,
 			])
 			expect(x).eql([
 				{
 					name: 'OnceOneModule',
-					dependencies: []
+					dependencies: [],
 				},
 				{
 					name: 'OnceTwoModule',
-					dependencies: []
+					dependencies: [],
 				},
 				{
 					name: 'PerGenomeOneModule:subModule1',
-					dependencies: ['OnceTwoModule']
+					dependencies: ['OnceTwoModule'],
 				},
 				{
 					name: 'PerGenomeOneModule:subModule2',
-					dependencies: ['OnceTwoModule']
+					dependencies: ['OnceTwoModule'],
 				},
 				{
 					name: 'PerGenomeTwoModule',
-					dependencies: []
-				}
+					dependencies: [],
+				},
+				{
+					name: 'PerGenomeFourModule:subModule1',
+					dependencies: [
+						'OnceTwoModule',
+						'PerGenomeTwoModule',
+					],
+				},
+				{
+					name: 'PerGenomeFourModule:subModule2',
+					dependencies: [
+						'OnceTwoModule',
+						'PerGenomeOneModule:subModule1',
+					],
+				},
 			])
 		})
 

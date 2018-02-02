@@ -43,7 +43,20 @@ class AbstractPipelineModule {
 	}
 
 	/**
-	 * @returns {Map.<String,String>} - a map with submodule names as keys, and descriptions as values
+	 * Example return value:
+	 * {
+	 *   stp: {
+	 *     description: 'predict signal transduction proteins',
+	 *     dependencies: [
+	 *       'AseqCompute:pfam',
+	 *       'AseqCompute:agfam',
+	 *       ...
+	 *     ]
+	 *   },
+	 *   ...
+	 * }
+	 *
+	 * @returns {Map.<String,Object>} - a map with submodule names as keys that maps to an object with a description and dependencies keys
 	 */
 	static subModuleMap() {
 		return new Map()

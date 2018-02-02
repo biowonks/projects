@@ -1,6 +1,7 @@
 'use strict'
 
 // Local
+let arrayUtil = require('core-lib/array-util')
 let ModuleId = require('./ModuleId')
 
 module.exports =
@@ -195,6 +196,29 @@ class ModuleDepGraph {
 
 	reverseOrderByDepth(moduleIds) {
 		return this.orderByDepth(moduleIds, true)
+	}
+
+	/**
+	 * @param {Array.<ModuleId>} moduleIds array of unnested module ids
+	 * @returns {Array.<ModuleId>} array of nested module ids sorted by depth and then nested at each depth level
+	 */
+	orderAndNestByDepth(moduleIds) {
+		// Nest nodes with the same name at the same depth
+		const nodesByDepth = {}
+		this.toNodes(moduleIds)
+			.forEach((node) => {
+				const depth = node.depth()
+				if (!nodesByDepth[depth])
+					nodesByDepth[depth] = []
+				const moduleId = ModuleId.fromString(node.name())
+				nodesByDepth[depth].push(moduleId)
+			})
+
+		const nestedAtDepth = Object.keys(nodesByDepth)
+			.sort((a, b) => a - b)
+			.map((depth) => ModuleId.nest(nodesByDepth[depth]))
+
+		return arrayUtil.flatten(nestedAtDepth)
 	}
 
 	/**

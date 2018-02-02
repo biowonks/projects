@@ -410,9 +410,21 @@ function runPerGenomeModules(app, undoModuleIds, moduleIds) {
 }
 
 function createDepGraph(ModuleClasses) {
-	let	unnestedDeps = putil.unnestedDependencyArray(ModuleClasses),
-		rootDepNode = ModuleDepNode.createFromDepList(unnestedDeps)
+	const unnestedDeps = putil.unnestedDependencyArray(ModuleClasses)
+	throwErrorIfInvalidDependency(unnestedDeps)
+	const rootDepNode = ModuleDepNode.createFromDepList(unnestedDeps)
 	return new ModuleDepGraph(rootDepNode, logger)
+}
+
+function throwErrorIfInvalidDependency(unnestedDeps) {
+	const validModuleNames = new Set()
+	unnestedDeps.forEach((dep) => validModuleNames.add(dep.name))
+	unnestedDeps.forEach((dep) => {
+		dep.dependencies.forEach((name) => {
+			if (!validModuleNames.has(name))
+				throw new Error(`Invalid dependency in ${dep.name}: ${name} is not a valid module`)
+		})
+	})
 }
 
 /**
@@ -547,19 +559,13 @@ function undoModules(app, genome, unnestedUndoModuleIds, depGraph, moduleClassMa
 
 function runModules(app, genome, unnestedModuleIds, depGraph, moduleClassMap) {
 	let incompleteModuleIds = depGraph.incompleteModuleIds(unnestedModuleIds)
-	incompleteModuleIds = depGraph.orderByDepth(incompleteModuleIds)
-	incompleteModuleIds = ModuleId.nest(incompleteModuleIds)
+	incompleteModuleIds = depGraph.orderAndNestByDepth(incompleteModuleIds)
 
 	return Promise.coroutine(function *() {
 		for (let moduleId of incompleteModuleIds) {
 			shutdownCheck()
 
-			// Unlike undo'ing which must check every unnested module id for downstream dependencies
-			// running a module (and any submodules) only needs to check the first flat module /
-			// submodule. This is because a given module has the same dependencies for all
-			// submodules.
-			let repModuleId = moduleId.unnest()[0],
-				missingDependencies = depGraph.missingDependencies(repModuleId)
+			const missingDependencies = findMissingDependencies(depGraph, moduleId)
 			if (missingDependencies.length) {
 				logger.info({missingDependencies}, `Unable to run: ${moduleId}. The following dependencies are not satisfied: ${missingDependencies.join(', ')}`)
 				continue
@@ -580,6 +586,17 @@ function runModules(app, genome, unnestedModuleIds, depGraph, moduleClassMap) {
 			logger.info(`Module finished normally: ${moduleId}`)
 		}
 	})()
+}
+
+function findMissingDependencies(depGraph, moduleId) {
+	const unnestedModuleIds = moduleId.unnest()
+	for (let i = 0, z = unnestedModuleIds.length; i < z; i++) {
+		const missingDependencies = depGraph.missingDependencies(unnestedModuleIds[i])
+		if (missingDependencies.length)
+			return missingDependencies
+	}
+
+	return []
 }
 
 function unlockGenome(genome) {

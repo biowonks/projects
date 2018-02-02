@@ -140,5 +140,6 @@ class AbstractToolRunner extends EventEmitter {
  */
 module.exports.meta = {
 	id: null,			// Unique string identifying this tool
-	description: null
+	dependencies: [],
+	description: null,
 }
