@@ -1,34 +1,35 @@
 'use strict'
 
 // Core
-const fs = require('fs'),
-	path = require('path')
+const fs = require('fs')
+const path = require('path')
 
 // Local
-const hmmscanStream = require('./hmmscan-stream')
+const hmmpfamStream = require('./hmmpfam-stream')
 
 describe('streams', function() {
-	describe('hmmscan', function() {
+	describe('hmmpfam', function() {
 		// eslint-disable-next-line no-mixed-requires
-		const hmmDatabaseFile = path.resolve(__dirname, 'test-data', 'test.hmm')
-		const fastaFile = path.resolve(__dirname, 'test-data', 'hmmscan-seqs.faa')
-		const numHmmsInPfam29 = 16295
-		const expectedResults = require('./test-data/hmmscan-results') // eslint-disable-line global-require
+		const hmmDatabaseFile = path.resolve(__dirname, 'test-data', 'hmmer2-ecfs.hmm')
+		const fastaFile = path.resolve(__dirname, 'test-data', 'hmmpfam-seqs.faa')
+    const numHmmsInECFs = 45
+    const numCpus = 0
+		const expectedResults = require('./test-data/hmmpfam-results') // eslint-disable-line global-require
 
 		it('(streaming input) throws error if hmm database does not exist', function() {
 			expect(function() {
-				hmmscanStream('/path/to/invalid/hmmer3/database')
+				hmmpfamStream('/path/to/invalid/hmmer2/database')
 			}).throw(Error)
 		})
 
 		it('(streaming input) predicts domains', function(done) {
 			const inStream = fs.createReadStream(fastaFile)
-			const hmmscan = hmmscanStream(hmmDatabaseFile, numHmmsInPfam29)
+			const hmmpfam = hmmpfamStream(hmmDatabaseFile, numHmmsInECFs, numCpus)
 			const results = []
 
 			inStream
 			.on('error', done)
-			.pipe(hmmscan)
+			.pipe(hmmpfam)
 			.on('error', done)
 			.on('data', (result) => {
 				results.push(result)
@@ -41,16 +42,16 @@ describe('streams', function() {
 
 		it('(file) throws error if hmm database does not exist', function() {
 			expect(function() {
-				hmmscanStream.file('/path/to/invalid/hmmer2/database', fastaFile, numHmmsInPfam29)
+				hmmpfamStream.file('/path/to/invalid/hmmer2/database', fastaFile)
 			}).throw(Error)
 		})
 
 		it('(file) predicts domains', function(done) {
-			const hmmscan = hmmscanStream.file(hmmDatabaseFile, fastaFile, numHmmsInPfam29)
+			const hmmpfam = hmmpfamStream.file(hmmDatabaseFile, fastaFile, numHmmsInECFs, numCpus)
 			const results = []
 
-			hmmscan.on('error', done)
-			hmmscan
+			hmmpfam.on('error', done)
+			hmmpfam
 			.on('data', (result) => {
 				results.push(result)
 			})

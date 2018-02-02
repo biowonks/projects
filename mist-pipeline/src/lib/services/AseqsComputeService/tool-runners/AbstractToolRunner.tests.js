@@ -12,7 +12,7 @@ class MockToolRunner extends AbstractToolRunner {
 
 	onRun_(aseqs) {
 		return new Promise((resolve, reject) => {
-			let delayMillis = aseqs.length * 5
+			const delayMillis = aseqs.length * 5
 			setTimeout(() => {
 				for (let i = 0; i < aseqs.length; i++)
 					this.tick_()
@@ -29,29 +29,19 @@ MockToolRunner.meta = {
 describe('services', function() {
 	describe('AseqsService', function() {
 		describe('AbstractToolRunner', function() {
-			let progressEvents = []
-			beforeEach(() => {
-				progressEvents.length = 0
-			})
-
-			function createMockToolRunner(ticksPerProgressEvent) {
-				let x = new MockToolRunner(ticksPerProgressEvent)
-				x.on('progress', (e) => progressEvents.push(e))
-				return x
-			}
-
 			it('empty array resolves to empty result array', function() {
-				let x = new MockToolRunner(),
-					input = []
-				return x.run(input)
+				const x = new MockToolRunner()
+				return x.run([])
 				.then((result) => {
-					expect(result).equal(input)
+					expect(result).eql([])
 				})
 			})
 
 			it('does not emit final progress event for empty array if ticksPerProgressEvent is non-zero', function() {
-				let x = createMockToolRunner(),
-					input = []
+				const x = new MockToolRunner()
+				const input = []
+				const progressEvents = []
+				x.on('progress', (e) => progressEvents.push(e))
 
 				return x.run(input)
 				.then(() => {
@@ -60,8 +50,10 @@ describe('services', function() {
 			})
 
 			it('1 aseq, ticksPerProgressEvent: 1, only emits final progress event', function() {
-				let x = createMockToolRunner(1),
-					input = ['aseq']
+				const x = new MockToolRunner(1)
+				const input = ['aseq']
+				const progressEvents = []
+				x.on('progress', (e) => progressEvents.push(e))
 
 				return x.run(input)
 				.then(() => {
@@ -76,8 +68,10 @@ describe('services', function() {
 			})
 
 			it('1 aseq, ticksPerProgressEvent: 2, only emits final progress event', function() {
-				let x = createMockToolRunner(2),
-					input = ['aseq']
+				const x = new MockToolRunner(2)
+				const input = ['aseq']
+				const progressEvents = []
+				x.on('progress', (e) => progressEvents.push(e))
 
 				return x.run(input)
 				.then(() => {
@@ -92,8 +86,10 @@ describe('services', function() {
 			})
 
 			it('2 aseqs, ticksPerProgressEvent: 1, emits 2 progress events', function() {
-				let x = createMockToolRunner(1),
-					input = ['aseq', 'aseq']
+				const x = new MockToolRunner(1)
+				const input = ['aseq', 'aseq']
+				const progressEvents = []
+				x.on('progress', (e) => progressEvents.push(e))
 
 				return x.run(input)
 				.then(() => {

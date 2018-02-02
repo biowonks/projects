@@ -141,5 +141,26 @@ module.exports = [
 				acc: 0.98
 			}
 		]
-	}
+	},
+
+	// 3
+	{
+		coreData: {
+			id: 'j4CpN55SAjIhp88GJS60zA',
+			sequence: 'MSNQEPATILLIDDHPMLRTGVKQLISMAPDITVVGEASNGEQGIELAESLDPDLILLDLNMPGMNGLETLDKLREKSLSGRIVVFSVSNHEEDVVTALKRGADGYLLKDMEPEDLLKALHQAAAGEMVLSEALTPVLAASLRANRATTERDVNQLTPRERDILKLIAQGLPNKMIARRLDITESTVKVHVKHMLKKMKLKSRVEAAVWVHQERIF'
+		},
+		ecf1: [
+			{
+				name: 'ECF_999',
+				ali_from: 91,
+				ali_to: 206,
+				ali_cov: '..',
+				hmm_from: 1,
+				hmm_to: 140,
+				hmm_cov: '[]',
+				score: 3.9,
+				evalue: 2.8,
+			},
+		]
+	},
 ]

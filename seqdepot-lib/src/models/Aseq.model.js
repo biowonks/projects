@@ -7,7 +7,7 @@ const assert = require('assert')
 const seqUtil = require('core-lib/bio/seq-util')
 
 // Constants
-const kToolIdFieldNames = ['pfam30', 'agfam2', 'segs', 'coils', 'tmhmm2']
+const kToolIdFieldNames = ['pfam30', 'agfam2', 'segs', 'coils', 'tmhmm2', 'ecf1']
 
 module.exports = function(Sequelize, models, extras) {
 	let fields = {
@@ -35,7 +35,10 @@ module.exports = function(Sequelize, models, extras) {
 		tmhmm2: {
 			type: Sequelize.JSONB,
 			description: 'object containing two items: topology - array of arrays classifying all regions of the sequence, and tms - array of ranges denoting regions predicted to have transmembrane regions'
-		}
+		},
+		ecf1: Object.assign(hmmer2(Sequelize, 'ecf1'), {
+			description: 'array of extra cytoplasmic factor predictions',
+		}),
 	}
 
 	// Ensure that the fields and tool id fields are in sync
@@ -44,17 +47,17 @@ module.exports = function(Sequelize, models, extras) {
 	})
 
 	// Model validations
-	let validate = {
+	const validate = {
 		sequenceLength: extras.validate.referencedLength('length', 'sequence')
 	}
 
-	let classMethods = {
+	const classMethods = {
 		/**
 		 * @param {Seq} seq
 		 * @returns {Object}
 		 */
 		dataFromSeq: function(seq) {
-			let normalizedSequence = seq.normalizedSequence()
+			const normalizedSequence = seq.normalizedSequence()
 			return {
 				id: seq.seqId(),
 				length: normalizedSequence.length,
@@ -86,7 +89,7 @@ module.exports = function(Sequelize, models, extras) {
 		}
 	}
 
-	let instanceMethods = {
+	const instanceMethods = {
 		toFasta: function() {
 			return seqUtil.fasta(this.id, this.sequence)
 		}
@@ -108,7 +111,7 @@ function hmmer3(Sequelize, fieldName) {
 	return {
 		type: Sequelize.JSONB,
 		get: function() {
-			let domains = this.getDataValue(fieldName)
+			const domains = this.getDataValue(fieldName)
 			if (!domains)
 				return domains
 
@@ -138,7 +141,7 @@ function hmmer3(Sequelize, fieldName) {
 				return
 			}
 
-			let arrayifiedDomains = domains.map((domain) => [
+			const arrayifiedDomains = domains.map((domain) => [
 				domain.name,
 				domain.score,
 				domain.bias,
@@ -154,6 +157,50 @@ function hmmer3(Sequelize, fieldName) {
 				domain.env_to,
 				domain.env_cov,
 				domain.acc
+			])
+			this.setDataValue(fieldName, arrayifiedDomains)
+		}
+	}
+}
+
+function hmmer2(Sequelize, fieldName) {
+	return {
+		type: Sequelize.JSONB,
+		get: function() {
+			const domains = this.getDataValue(fieldName)
+			if (!domains)
+				return domains
+
+			return domains.map((x) => {
+				return {
+					name: x[0],
+					score: x[1],
+					evalue: x[2],
+					hmm_from: x[3],
+					hmm_to: x[4],
+					hmm_cov: x[5],
+					ali_from: x[6],
+					ali_to: x[7],
+					ali_cov: x[8],
+				}
+			})
+		},
+		set: function(domains) {
+			if (!domains) {
+				this.setDataValue(fieldName, null)
+				return
+			}
+
+			const arrayifiedDomains = domains.map((domain) => [
+				domain.name,
+				domain.score,
+				domain.evalue,
+				domain.hmm_from,
+				domain.hmm_to,
+				domain.hmm_cov,
+				domain.ali_from,
+				domain.ali_to,
+				domain.ali_cov,
 			])
 			this.setDataValue(fieldName, arrayifiedDomains)
 		}

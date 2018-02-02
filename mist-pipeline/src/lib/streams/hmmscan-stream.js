@@ -1,17 +1,18 @@
 'use strict'
 
 // Core
-const path = require('path'),
-	child_process = require('child_process') // eslint-disable-line camelcase
+const fs = require('fs')
+const path = require('path')
+const child_process = require('child_process') // eslint-disable-line camelcase
 
 // Vendor
-const pumpify = require('pumpify'),
-	duplexChildProcess = require('duplex-child-process')
+const pumpify = require('pumpify')
+const duplexChildProcess = require('duplex-child-process')
 
 // Local
-let config = require('../../../config'),
-	hmmscanResultStream = require('./hmmscan-result-stream'),
-	streamMixins = require('mist-lib/streams/stream-mixins')
+const config = require('../../../config')
+const hmmscanResultStream = require('./hmmscan-result-stream')
+const streamMixins = require('mist-lib/streams/stream-mixins')
 
 // Constants
 const kHmmscanPath = path.resolve(config.vendor.hmmer3.binPath, 'hmmscan')
@@ -23,9 +24,12 @@ const kHmmscanPath = path.resolve(config.vendor.hmmer3.binPath, 'hmmscan')
  * @returns {DuplexStream} - expects FASTA input to be stream as input
  */
 module.exports = function(hmmDatabaseFile, z = null, cpus = null) {
-	let hmmscanTool = duplexChildProcess.spawn(kHmmscanPath, hmmscanArgs(hmmDatabaseFile, '-', z, cpus)),
-		parser = hmmscanResultStream(),
-		pipeline = pumpify.obj(hmmscanTool, parser)
+  if (!fs.existsSync(hmmDatabaseFile))
+    throw new Error(`FATAL: hmmscan target database, ${hmmDatabaseFile}, does not exist`)
+
+	const hmmscanTool = duplexChildProcess.spawn(kHmmscanPath, hmmscanArgs(hmmDatabaseFile, '-', z, cpus))
+	const parser = hmmscanResultStream()
+	const pipeline = pumpify.obj(hmmscanTool, parser)
 
 	streamMixins.all(pipeline)
 
@@ -39,10 +43,13 @@ module.exports = function(hmmDatabaseFile, z = null, cpus = null) {
  * @returns {Stream}
  */
 module.exports.file = function(hmmDatabaseFile, fastaFile, z = null) {
+  if (!fs.existsSync(hmmDatabaseFile))
+    throw new Error(`FATAL: hmmscan target database, ${hmmDatabaseFile}, does not exist`)
+
 	if (typeof fastaFile !== 'string')
 		throw new Error('fastaFile argument must be a string')
 
-	let hmmscanTool = child_process.spawn(kHmmscanPath, hmmscanArgs(hmmDatabaseFile, fastaFile, z))
+	const hmmscanTool = child_process.spawn(kHmmscanPath, hmmscanArgs(hmmDatabaseFile, fastaFile, z))
 	return pumpify.obj(hmmscanTool.stdout, hmmscanResultStream())
 }
 
@@ -54,7 +61,7 @@ module.exports.file = function(hmmDatabaseFile, fastaFile, z = null) {
  * @returns {Array.<String>} - arguments to pass to hmmscan
  */
 function hmmscanArgs(hmmDatabaseFile, fastaFile = '-', z = null, cpus = null) {
-	let args = ['--noali', '--cut_ga']
+	const args = ['--noali', '--cut_ga']
 	if (z) {
 		args.push('-Z')
 		args.push(z)
