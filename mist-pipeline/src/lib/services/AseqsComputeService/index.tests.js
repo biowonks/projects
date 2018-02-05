@@ -21,11 +21,11 @@
 const bunyan = require('bunyan')
 
 // Local
-const AseqsComputeService = require('./index'),
-	MistBootService = require('mist-lib/services/MistBootService'),
-	Seq = require('core-lib/bio/Seq'),
-	config = require('../../../../config'),
-	testData = require('./tool-runners/test-data')
+const AseqsComputeService = require('./index')
+const MistBootService = require('mist-lib/services/MistBootService')
+const Seq = require('core-lib/bio/Seq')
+const config = require('../../../../config')
+const testData = require('./tool-runners/test-data')
 
 // Other
 const logger = bunyan.createLogger({name: 'AseqsComputeService-tests'})
@@ -55,6 +55,61 @@ describe('services', function() {
 						expect(tool).deep.equal(CoilsToolRunner.meta)
 					}
 				}
+			})
+		})
+
+		describe('targetAseqFields', function() {
+			let oldToolRunnerIdMapFn
+			before(() => {
+				oldToolRunnerIdMapFn = AseqsComputeService.toolRunnerIdMap
+				AseqsComputeService.toolRunnerIdMap = () => new Map([
+					[
+						'pfam30',
+						{
+							id: 'pfam30',
+							description: 'pfam domains',
+							requiredAseqFields: undefined,
+						},
+					],
+					[
+						'segs',
+						{
+							id: 'segs',
+							description: 'low-complexity',
+						},
+					],
+					[
+						'stp',
+						{
+							id: 'stp',
+							description: 'signal transduction prediction',
+							requiredAseqFields: ['pfam30', 'agfam1', 'ecf1'],
+						},
+					],
+					[
+						'stp2',
+						{
+							id: 'stp2',
+							description: 'stp version 2',
+							requiredAseqFields: ['pfam30', 'agfam2'],
+						},
+					],
+				])
+			})
+
+			after(() => {
+				AseqsComputeService.toolRunnerIdMap = oldToolRunnerIdMapFn
+			})
+
+			it('returns the unique set of required aseq fields present in the tool runner map', function() {
+				const toolIds = ['stp', 'pfam30', 'stp', 'stp2']
+				const x = new AseqsComputeService(Aseq, config, logger)
+				expect(x.targetAseqFields(toolIds)).members(['pfam30', 'agfam1', 'agfam2', 'ecf1'])
+			})
+
+			it('ignores unrecognized tool ids', function() {
+				const x = new AseqsComputeService(Aseq, config, logger)
+				expect(x.targetAseqFields(['invalid', 'stp2'])).members(['pfam30', 'agfam2'])
 			})
 		})
 
