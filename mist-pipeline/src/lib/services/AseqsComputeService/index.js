@@ -11,8 +11,8 @@ const Promise = require('bluebird')
 const AseqsService = require('mist-lib/services/AseqsService')
 
 // Other
-const kToolRunners = discoverToolRunners(),
-	kToolRunnerIdMap = new Map(kToolRunners.map((x) => [x.id, x]))
+const kToolRunners = discoverToolRunners()
+const kToolRunnerIdMap = new Map(kToolRunners.map((x) => [x.id, x]))
 
 module.exports =
 class AseqsComputeService extends AseqsService {
@@ -20,10 +20,30 @@ class AseqsComputeService extends AseqsService {
 		return kToolRunners
 	}
 
+	static toolRunnerIdMap() {
+		return kToolRunnerIdMap
+	}
+
 	constructor(model, config, logger) {
 		super(model, logger)
 
 		this.config_ = config
+	}
+
+	targetAseqFields(toolIds) {
+		const aseqFields = new Set()
+
+		toolIds
+			.map((toolId) => AseqsComputeService.toolRunnerIdMap().get(toolId))
+			.filter((meta) => !!meta)
+			.map((meta) => meta.requiredAseqFields || [])
+			.forEach((toolAseqFields) => {
+				toolAseqFields.forEach((toolAseqField) => {
+					aseqFields.add(toolAseqField)
+				})
+			})
+
+		return Array.from(aseqFields)
 	}
 
 	/**

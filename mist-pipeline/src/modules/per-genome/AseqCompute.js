@@ -100,12 +100,13 @@ class AseqCompute extends PerGenomePipelineModule {
 	aseqsMissingData_(toolIds, optTransaction) {
 		assert(toolIds && Array.isArray(toolIds) && toolIds.length > 0)
 
-		let {Component, Gene, Aseq} = this.models_,
-			toolSelectFields = toolIds.map((x) => `case when ${x} is not null then 1 else null end`)
-				.join(', '),
-			anyToolNullClause = toolIds.map((x) => x + ' is null').join(' OR '),
-			sql = `
-SELECT c.id, c.sequence, ${toolSelectFields}
+		const {Component, Gene, Aseq} = this.models_
+		const targetAseqFields = this.aseqsService_.targetAseqFields(toolIds)
+		const otherAseqFields = targetAseqFields.length ? ', ' + targetAseqFields.join(', ') : ''
+		const toolSelectFields = toolIds.map((x) => `case when ${x} is not null then 1 else null end`).join(', ')
+		const anyToolNullClause = toolIds.map((x) => x + ' is null').join(' OR ')
+		const sql = `
+SELECT c.id, c.sequence, ${toolSelectFields} ${otherAseqFields}
 FROM ${Component.getTableName()} a JOIN ${Gene.getTableName()} b ON (a.id = b.component_id)
 	JOIN ${Aseq.getTableName()} c ON (b.aseq_id = c.id)
 WHERE a.genome_id = ? AND b.aseq_id is not null and (${anyToolNullClause})

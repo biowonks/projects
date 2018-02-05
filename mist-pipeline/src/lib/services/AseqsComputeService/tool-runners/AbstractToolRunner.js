@@ -139,7 +139,8 @@ class AbstractToolRunner extends EventEmitter {
  * Template metadata to follow when describing this tool runner.
  */
 module.exports.meta = {
-	id: null,			// Unique string identifying this tool
-	dependencies: [],
+	id: null,						// Unique string identifying this tool
+	dependencies: [],		// Flat module id
 	description: null,
+	requiredAseqFields: [],	// Extra fields that should be fetched when retrieving Aseqs
 }
