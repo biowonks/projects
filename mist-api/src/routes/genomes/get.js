@@ -8,8 +8,45 @@ const util = require('core-lib/util')
 
 module.exports = function(app, middlewares, routeMiddlewares) {
 	let models = app.get('models'),
-		helper = app.get('lib').RouteHelper.for(models.Genome),
-		sequelize = app.get('sequelize')
+		helper = app.get('lib').RouteHelper.for(models.Genome)
+
+	const taxonomyTextFieldNames = [
+		'superkingdom',
+		'phylum',
+		'class',
+		'order',
+		'family',
+		'genus',
+		'assembly_level',
+	]
+
+	const checkAndGetTerms = (queryValue, target, modelFieldName) => {
+		if (!queryValue)
+			return
+
+		if (!target || !modelFieldName)
+			throw new Error('processWhereTextCondition must have a defined target and modelFieldName')
+
+		return util.splitIntoTerms(queryValue).map((term) => `%${term}%`)
+	}
+
+	const processSearch = (queryValue, target, modelFieldName) => {
+		const terms = checkAndGetTerms(queryValue, target, modelFieldName)
+		if (terms.length > 0) {
+			_.set(target, `criteria.where.$or.${modelFieldName}.$ilike.$any`, terms)
+			taxonomyTextFieldNames
+			.forEach((fieldName) => {
+				_.set(target, `criteria.where.$or.${fieldName}.$ilike.$any`, terms)
+			})
+		}
+	}
+
+	const processWhereTextCondition = (queryValue, target, modelFieldName) => {
+		const terms = checkAndGetTerms(queryValue, target, modelFieldName)
+		if (terms.length > 0) {
+			_.set(target, `criteria.where.${modelFieldName}.$ilike.$any`, terms)
+		}
+	}
 
 	return [
 		middlewares.parseCriteriaForMany(models.Genome, {
@@ -21,56 +58,24 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 			permittedOrderFields: '*',
 			permittedWhereFields: [
 				'taxonomy_id',
+				...taxonomyTextFieldNames,
 			],
 		}),
-		// Provide for searching against name, taxonomy levels and assembly_level
-		//In a query all the terms except 'search' and 'assembly_level' are expected to be one word terms, nevetherless as a precaution
-		//all the terms are being taken and concatenated.
 		(req, res, next) => {
-			if (Reflect.has(req.query, 'search')) {
-				const searchTerm = util.splitIntoTerms(req.query.search)
-					.map((term) => `'(${term}:*)'`).join(" & ").replace(/' & '/g, ' & ')
-				if (searchTerm.length > 0)
-					_.set(res.locals, 'criteria.where.search', searchTerm)
-			}
-			if (Reflect.has(req.query, 'superkingdom')) {
-				const superkTerm = util.splitIntoTerms(req.query.superkingdom).join(" ")
-				if (superkTerm.length > 0)
-					_.set(res.locals, 'criteria.where.superkingdom', `${superkTerm}`)
-			}
-			if (Reflect.has(req.query, 'phylum')) {
-				const phylumTerm = util.splitIntoTerms(req.query.phylum).join(" ")
-				if (phylumTerm.length > 0)
-					_.set(res.locals, 'criteria.where.phylum', `${phylumTerm}`)
-			}
-			if (Reflect.has(req.query, 'class')) {
-				const classTerm = util.splitIntoTerms(req.query.class).join(" ")
-				if (classTerm.length > 0)
-					_.set(res.locals, 'criteria.where.class', `${classTerm}`)
-			}
-			if (Reflect.has(req.query, 'orderr')) {
-				const orderTerm = util.splitIntoTerms(req.query.orderr).join(" ")
-				if (orderTerm.length > 0)
-					_.set(res.locals, 'criteria.where.orderr', `${orderTerm}`)
-			}
-			if (Reflect.has(req.query, 'family')) {
-				const familyTerm = util.splitIntoTerms(req.query.family).join(" ")
-				if (familyTerm.length > 0)
-					_.set(res.locals, 'criteria.where.family', `${familyTerm}`)
-			}
-			if (Reflect.has(req.query, 'genus')) {
-				const genusTerm = util.splitIntoTerms(req.query.genus).join(" ")
-				if (genusTerm.length > 0)
-					_.set(res.locals, 'criteria.where.genus', `${genusTerm}`)
-			}
-			if (Reflect.has(req.query, 'assembly_level')) {
-				const assemblyTerm = util.splitIntoTerms(req.query.assembly_level).join(" ")
-				if (assemblyTerm.length > 0)
-					_.set(res.locals, 'criteria.where.assembly_level', `${assemblyTerm}`)
-			}
+			// Provide for searching against name
+			if (Reflect.has(req.query, 'search'))
+				processSearch(req.query.search, res.locals, 'name')
+			// Handle searching taxonomy
+			taxonomyTextFieldNames
+			.forEach((fieldName) => {
+				const queryValue = _.get(res.locals, `criteria.where.${fieldName}`)
+				if (queryValue)
+					processWhereTextCondition(queryValue, res.locals, fieldName)
+			})
+
 			next()
 		},
-		helper.findManyHandler(sequelize)
+		helper.findManyHandler()
 	]
 }
 
