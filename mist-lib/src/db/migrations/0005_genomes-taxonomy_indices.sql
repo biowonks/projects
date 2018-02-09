@@ -1,0 +1,8 @@
+CREATE INDEX trgm_idx_genomes_name ON genomes USING gin (name gin_trgm_ops);
+CREATE INDEX trgm_idx_genomes_superkingdom ON genomes USING gin (superkingdom gin_trgm_ops);
+CREATE INDEX trgm_idx_genomes_phylum ON genomes USING gin (phylum gin_trgm_ops);
+CREATE INDEX trgm_idx_genomes_class ON genomes USING gin (class gin_trgm_ops);
+CREATE INDEX trgm_idx_genomes_orderr ON genomes USING gin (orderr gin_trgm_ops);
+CREATE INDEX trgm_idx_genomes_family ON genomes USING gin (family gin_trgm_ops);
+CREATE INDEX trgm_idx_genomes_genus ON genomes USING gin (genus gin_trgm_ops);
+CREATE INDEX trgm_idx_genomes_assemblylevel ON genomes USING gin (assembly_level gin_trgm_ops);

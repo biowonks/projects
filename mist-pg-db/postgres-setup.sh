@@ -51,6 +51,8 @@ ALTER SCHEMA public OWNER TO $DB_USER;
 
 -- Enable statement tracking
 CREATE EXTENSION pg_stat_statements;
+-- Enable trigrams
+CREATE EXTENSION pg_trgm;
 
 EOSQL
 
