@@ -6,3 +6,13 @@ CREATE INDEX trgm_idx_genomes_orderr ON genomes USING gin (orderr gin_trgm_ops);
 CREATE INDEX trgm_idx_genomes_family ON genomes USING gin (family gin_trgm_ops);
 CREATE INDEX trgm_idx_genomes_genus ON genomes USING gin (genus gin_trgm_ops);
 CREATE INDEX trgm_idx_genomes_assemblylevel ON genomes USING gin (assembly_level gin_trgm_ops);
+
+-- MIGRATION DOWN SQL
+DROP INDEX trgm_idx_genomes_name;
+DROP INDEX trgm_idx_genomes_superkingdom;
+DROP INDEX trgm_idx_genomes_phylum;
+DROP INDEX trgm_idx_genomes_class;
+DROP INDEX trgm_idx_genomes_orderr;
+DROP INDEX trgm_idx_genomes_family;
+DROP INDEX trgm_idx_genomes_genus;
+DROP INDEX trgm_idx_genomes_assemblylevel;
