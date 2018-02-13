@@ -1,6 +1,12 @@
 #!/bin/bash
+#
+# This script is run as the postgres user and no longer as root. Thus
+# affects which directories may be written to.
 
 set -e
+
+# Do all work in /tmp
+cd /tmp
 
 # ---------------------------------------------------------
 # Setup default environment variables
@@ -51,6 +57,7 @@ ALTER SCHEMA public OWNER TO $DB_USER;
 
 -- Enable statement tracking
 CREATE EXTENSION pg_stat_statements;
+CREATE EXTENSION pg_trgm;
 
 EOSQL
 

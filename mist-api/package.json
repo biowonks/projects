@@ -3,9 +3,6 @@
   "version": "3.0.2",
   "description": "RESTful API to the MiST database",
   "main": "index.js",
-  "engines": {
-    "node": "6.4"
-  },
   "scripts": {
     "setup-docs": "cd src/docs; yarn && yarn run build",
     "build-docs": "cd src/docs; yarn run build",
@@ -39,7 +36,7 @@
       "name": "Amit Upadhyay"
     }
   ],
-  "license": "",
+  "license": "MIT",
   "dependencies": {
     "bluebird": "^3.4.5",
     "body-parser": "1.x",

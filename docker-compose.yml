@@ -1,4 +1,4 @@
-version: '2'
+version: '3.5'
 
 services:
   # -------------------------------------------------------
@@ -12,8 +12,6 @@ services:
     depends_on:
       - mist-pg-db
       - node-bootstrap
-    links:
-      - mist-pg-db
     ports:
       - 5000:5000 # MiST-API port
       - 5858:5858 # Node debugging port
@@ -71,8 +69,6 @@ services:
       - mist-lib.base
     build:
       context: mist-pipeline
-    links:
-      - mist-pg-db
     command: bash
 
 
@@ -83,12 +79,11 @@ services:
       - mist-lib.base
     build:
       context: mist-api
-    links:
-      - mist-pg-db
     ports:
       - 5000:5000 # Port API is listening on
       - 5858:5858 # Node debugging port
       - 5859:5859 # Node debugging port
+    restart: on-failure
     command: [npm, start]
 
 
@@ -98,9 +93,10 @@ services:
       context: mist-pg-db
     image: biowonks/mist-pg-db
     volumes:
-      - db-9.6.0:/var/lib/postgresql/data
+      - db-10.2.0:/var/lib/postgresql/data
     ports:
       - 5432:5432
+    restart: on-failure
     environment:
       # The POSTGRES_* variables are passed to the postgresql image
       - POSTGRES_USER
@@ -118,4 +114,4 @@ services:
 
 # -------------------------------------------------------
 volumes:
-  db-9.6.0:
+  db-10.2.0:

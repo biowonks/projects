@@ -2,9 +2,6 @@
   "name": "mist-pipeline",
   "version": "3.0.2",
   "description": "Computational pipeline for populating the MiST database",
-  "engines": {
-    "node": "6.4"
-  },
   "scripts": {
     "preinstall": "node ../bin/merge-deps.js -i ../core-lib/package.json ../seqdepot-lib/src/models/package.json ../mist-lib/package.json ./package.json",
     "postinstall": "bin/setup.sh",
