@@ -2,6 +2,7 @@
 
 // Local
 const HttpStatusCodes = require('./http-status-codes')
+const NotFoundError = require('./errors/NotFoundError')
 
 // Constants
 const kIsProduction = process.env.NODE_ENV === 'production'
@@ -43,12 +44,18 @@ const kIsProduction = process.env.NODE_ENV === 'production'
  *     ConnectionTimedOutError
  */
 module.exports = function(app) {
-	let config = app.get('config'),
-		logger = app.get('logger'),
-		sequelize = app.get('sequelize')
+	const config = app.get('config')
+	const logger = app.get('logger')
+	const sequelize = app.get('sequelize')
 
-	let errorHandler = function(error, req, res, next) {
-		let result = {
+	const errorHandler = (error, req, res, next) => {
+		// Translate missing files into NotFoundErrors. For example, this may occur
+		// when a static handler does not map to an actual file on the filesystem.
+		if (error.code === 'ENOENT') {
+			error = new NotFoundError()
+		}
+
+		const result = {
 			name: error.name,
 			code: error.code || HttpStatusCodes.InternalServerError,
 			message: error.message || 'Unspecified error'
