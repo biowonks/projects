@@ -4,3 +4,4 @@ npm-debug.log
 coverage
 test-results.xml
 tmp/
+**/yarn.lock

@@ -1,6 +1,6 @@
-FROM mhart/alpine-node:8.4
+FROM mhart/alpine-node:8.9.4
 
-MAINTAINER BioWonks <biowonks@users.noreply.github.com>
+LABEL BioWonks <biowonks@users.noreply.github.com>
 
 # The following is to facilitate volume sharing with the right permissions when locally developing.
 # Use docker build --build-arg LOCAL_USER_ID=#### to configure the biowonks user with
@@ -12,7 +12,6 @@ RUN addgroup -g ${LOCAL_USER_ID:=1000} biowonks && \
 	echo PS1=\"\(\\u@docker\) \\w $ \" >> /home/biowonks/.bashrc && \
 	echo http://nl.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
 	apk --update --no-cache add git bash su-exec build-base openssl python wget postgresql-client rsync && \
-	npm install -g yarn && \
 	mkdir /app && \
 	chown biowonks:biowonks /app
 
