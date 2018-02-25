@@ -39,6 +39,28 @@ module.exports = function(Sequelize, models, extras) {
 		ecf1: Object.assign(hmmer2(Sequelize, 'ecf1'), {
 			description: 'array of extra cytoplasmic factor predictions',
 		}),
+		st1: {
+			/**
+			 * {
+			 *  rank: ['2cp', 'rr'],
+			 *  inputs: {
+			 *    // <signal_domain_id>: [<family id>, ...]
+			 *    PAS: [PAS_2, PAS_3],
+			 *    ...
+			 *  },
+			 *  outputs: {
+			 *    HTH_1: [HTH_1]
+			 *  },
+			 *  domain_counts: {
+			 *    PAS: 2,
+			 *    HTH_1: 1,
+			 *    ...
+			 *  }
+			 * }
+			 */
+			type: Sequelize.JSONB,
+			description: 'MiST2 signal transduction predictions',
+		},
 	}
 
 	// Ensure that the fields and tool id fields are in sync
