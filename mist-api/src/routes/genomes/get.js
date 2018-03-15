@@ -62,7 +62,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 			],
 		}),
 		(req, res, next) => {
-			// Provide for searching against name
+			// Provide for searching against name, taxonomic levels and assembly level
 			if (Reflect.has(req.query, 'search'))
 				processSearch(req.query.search, res.locals, 'name')
 			// Handle searching taxonomy
