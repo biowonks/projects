@@ -59,7 +59,7 @@ class ModuleId {
 	 * (${moduleIdString}) into a ModuleId instance. For example,
 	 *
 	 * fromString('SeedNewGenomes') -> ModuleId('SeedNewGenomes')
-	 * fromString('AseqCompute:pfam30+segs') -> ModuleId('AseqCompute', ['pfam30', 'segs'])
+	 * fromString('AseqCompute:pfam31+segs') -> ModuleId('AseqCompute', ['pfam31', 'segs'])
 	 *
 	 * @param {String} moduleIdString
 	 * @returns {ModuleId}
