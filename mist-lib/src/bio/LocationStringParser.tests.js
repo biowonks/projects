@@ -22,7 +22,11 @@ describe('LocationStringParser', function() {
 				'complement()',
 				'complement(1..',
 				'complement(1..2,5..6)',
-				':1..2'
+				':1..2',
+				'10.20a',
+				'10^11a',
+				'<10^11',
+				'1..',
 			]
 
 			examples.forEach((example) => {
@@ -47,6 +51,8 @@ describe('LocationStringParser', function() {
 				{locationString: 'join(1,3..4)', sequence: 'ACG'},
 				{locationString: 'join(1..3,8..10)', sequence: 'ATCGAT'},
 				{locationString: 'join(1..3,1..3)', sequence: 'ATCATC'},
+				{locationString: 'join(<10,1..3)', sequence: 'TATC'},
+				{locationString: 'join(8..10,>1)', sequence: 'GATA'},
 
 				{locationString: 'complement(3)', sequence: 'G'},
 				{locationString: 'complement(3..4)', sequence: 'CG'},
@@ -54,7 +60,9 @@ describe('LocationStringParser', function() {
 
 				{locationString: 'join(1..2,complement(4..6),9)', sequence: 'ATATCA'},
 				{locationString: 'join(complement(join(3..4,6..7)),1..2)', sequence: 'GACGAT'},
-				{locationString: 'join(complement(2..4),complement(10..3))', sequence: 'CGAGATA'}
+				{locationString: 'join(complement(2..4),complement(10..3))', sequence: 'CGAGATA'},
+				{locationString: 'complement(join(<10,1..3))', sequence: 'GATA'},
+				{locationString: 'complement(join(8..10,>1))', sequence: 'TATC'},
 			]
 
 			examples.forEach(function(example) {
