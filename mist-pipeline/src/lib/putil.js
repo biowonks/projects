@@ -159,7 +159,7 @@ exports.matchingModuleIds = function(moduleIds, ModuleClasses) {
  * Core.dependencies() -> []
  * Core.subModuleNames() -> []
  * AseqCompute.dependencies() -> ['Core']
- * AseqCompute.subModuleNames() -> ['pfam30', 'segs', 'coils']
+ * AseqCompute.subModuleNames() -> ['pfam31', 'segs', 'coils']
  *
  * flatDependencyArray([Core, AseqCompute]) returns:
  * [
@@ -168,7 +168,7 @@ exports.matchingModuleIds = function(moduleIds, ModuleClasses) {
  *     dependencies: []
  *   },
  *   {
- *     name: 'AseqCompute:pfam30',
+ *     name: 'AseqCompute:pfam31',
  *     dependencies: ['Core']
  *   },
  *   {

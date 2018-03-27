@@ -12,7 +12,7 @@ const testData = require('./test-data')
 describe('services', function() {
 	describe('AseqsService', function() {
 		describe('Ecf1ToolRunner', function() {
-			it('computes and updates aseqs pfam30 field', function() {
+			it('computes and updates aseqs ecf1 field', function() {
         const bootService = new MistBootService()
         const Aseq = bootService.setupModels().Aseq
         const ecfConfig = {

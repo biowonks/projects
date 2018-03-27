@@ -10,7 +10,7 @@
 			"args": [
 				"-g",
 				"1",
-				"AseqCompute:pfam30"
+				"AseqCompute:pfam31"
 			],
 			"cwd": "${workspaceRoot}",
 			"preLaunchTask": null,
