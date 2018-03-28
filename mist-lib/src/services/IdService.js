@@ -28,7 +28,7 @@ class IdService {
 	 */
 	assignIds(records, model) {
 		if (!records.length)
-			return new Map()
+			return Promise.resolve(new Map())
 
 		return this.reserve(model.$idSequence(), records.length)
 		.then((idRange) => {

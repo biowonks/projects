@@ -88,8 +88,9 @@ class NCBIDataHelper {
 			if (!fileExists)
 				return false
 
-			let fileName = this.fileMapper_.localFileNameFor(sourceType),
-				checksum = this.checksums_[fileName]
+			const fileName = this.fileMapper_.localFileNameFor(sourceType)
+			const ncbiFileName = this.fileMapper_.ncbiFileNameFor(sourceType)
+			const checksum = this.checksums_[ncbiFileName]
 			if (checksum) {
 				this.logger_.info({fileName}, `Verifying ${sourceType} file contents`)
 				return mutil.checkFileMD5(destFile, checksum)
