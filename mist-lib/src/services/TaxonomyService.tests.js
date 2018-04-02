@@ -3,28 +3,29 @@
 'use strict'
 
 // Core
-const path = require('path'),
-	url = require('url')
+const path = require('path')
+const url = require('url')
 
 // Vendor
+const Promise = require('bluebird')
 const nock = require('nock')
 
 // Local
-const TaxonomyService = require('./TaxonomyService'),
-	MistBootService = require('./MistBootService'),
-	testResults = require('./test-data/taxonomyService.test.results'),
-	mutil = require('../mutil')
+const TaxonomyService = require('./TaxonomyService')
+const MistBootService = require('./MistBootService')
+const testResults = require('./test-data/taxonomyService.test.results')
+const mutil = require('../mutil')
 
 // Constants
-const kSampleXMLFileSpecies = path.resolve(__dirname, 'test-data', '476210_species.test.xml'),
-	kSampleXMLFileIntermediate = path.resolve(__dirname, 'test-data', '41253_intermediate.test.xml')
+const kSampleXMLFileSpecies = path.resolve(__dirname, 'test-data', '476210_species.test.xml')
+const kSampleXMLFileIntermediate = path.resolve(__dirname, 'test-data', '41253_intermediate.test.xml')
 
 describe('Services', function() {
 	describe('TaxonomyService', function() {
-		let models = null,
-			taxonomyService = null,
-			speciesXML = null,
-			intermediateXML = null
+		let models = null
+		let taxonomyService = null
+		let speciesXML = null
+		let intermediateXML = null
 
 		before(() => {
 			let bootService = new MistBootService()
@@ -39,6 +40,10 @@ describe('Services', function() {
 			.then((xml) => {
 				intermediateXML = xml
 			})
+		})
+
+		afterEach(() => {
+			nock.cleanAll()
 		})
 
 		describe('eutilUrl', function() {
@@ -74,10 +79,27 @@ describe('Services', function() {
 					})
 				})
 			})
-		})
 
-		describe('updateTaxonomy', function() {
+			it('should retry if request returns error', function() {
+				// Mock the delay function
+				Promise.delay = () => Promise.resolve()
 
+				const taxonomyId = 41253
+				const nockUrl = taxonomyService.eutilUrl(taxonomyId)
+				const parsedUrl = url.parse(nockUrl)
+				let tries = 0
+				const ncbiTaxonomyNock = nock(parsedUrl.protocol + '//' + parsedUrl.host)
+					.get(parsedUrl.path, () => {
+						tries++;
+					})
+					.reply(502, 'fake proxy server failure')
+
+				return taxonomyService.fetchFromNCBI(taxonomyId)
+				.then(() => expect.fail())
+				.catch(() => {
+					expect(tries).above(1)
+				})
+			})
 		})
 
 		describe('reshapeNCBITaxonomy', function() {
