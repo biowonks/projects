@@ -1,4 +1,4 @@
-FROM postgres:10.2
+FROM postgres:10.3
 
 LABEL BioWonks <biowonks@users.noreply.github.com>
 

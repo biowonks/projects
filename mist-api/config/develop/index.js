@@ -12,7 +12,7 @@ module.exports = {
 	// The following parameters are for the dockerized postgresql database
 	database: {
 		name: 'mist_dev',
-		user: 'mist_dev',
+		user: 'mist_dev_admin',
 		password: '$&hxsALC!7_c',
 		host: 'mist-pg-db'
 	},

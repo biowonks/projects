@@ -37,6 +37,7 @@ services:
       dockerfile: Dockerfile.node-bootstrap
       args:
         LOCAL_USER_ID: $LOCAL_USER_ID
+        LOCAL_GROUP_ID: $LOCAL_GROUP_ID
     command: /bin/true
 
 
@@ -93,7 +94,7 @@ services:
       context: mist-pg-db
     image: biowonks/mist-pg-db
     volumes:
-      - db-10.2.0:/var/lib/postgresql/data
+      - db-10.3:/var/lib/postgresql/data
     ports:
       - 5432:5432
     restart: on-failure
@@ -105,8 +106,10 @@ services:
       # These are used by postgres-setup.sh (which uses defaults if not specified)
       - CERT_SUBJ
       - DB_NAME
-      - DB_USER
-      - DB_PASSWORD
+      - DB_ADMIN_USER
+      - DB_ADMIN_PASSWORD
+      - DB_API_USER
+      - DB_API_PASSWORD
 
       # To customize the postgresql configuration, pass any settings via the PG_CONF variable
       - PG_CONF
@@ -114,4 +117,4 @@ services:
 
 # -------------------------------------------------------
 volumes:
-  db-10.2.0:
+  db-10.3:

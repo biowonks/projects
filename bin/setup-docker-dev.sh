@@ -7,6 +7,7 @@ DIR="$( cd -P "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 cd $DIR/..
 
 export LOCAL_USER_ID=$(id -u)
+export LOCAL_GROUP_ID=$(id -g)
 docker-compose build biowonks-dev
 docker-compose up -d biowonks-dev
 
