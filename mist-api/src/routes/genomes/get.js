@@ -10,6 +10,42 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 	let models = app.get('models'),
 		helper = app.get('lib').RouteHelper.for(models.Genome)
 
+	const taxonomyTextFieldNames = [
+		'version',
+		'superkingdom',
+		'phylum',
+		'class',
+		'order',
+		'family',
+		'genus',
+		'assembly_level',
+	]
+
+	const checkAndGetTerms = (queryValue, target, modelFieldName) => {
+		if (!queryValue)
+			return
+		if (!target || !modelFieldName)
+			throw new Error('processSearch|processWhereTextCondition must have a defined target and modelFieldName')
+		return util.splitIntoTerms(queryValue).map((term) => `%${term}%`)
+	}
+
+	const processSearch = (queryValue, target, modelFieldName) => {
+		const terms = checkAndGetTerms(queryValue, target, modelFieldName)
+		if (terms.length > 0) {
+			_.set(target, `criteria.where.$or.${modelFieldName}.$ilike.$any`, terms)
+			taxonomyTextFieldNames
+			.forEach((fieldName) => {
+				_.set(target, `criteria.where.$or.${fieldName}.$ilike.$any`, terms)
+			})
+		}
+	}
+
+	const processWhereTextCondition = (queryValue, target, modelFieldName) => {
+		const terms = checkAndGetTerms(queryValue, target, modelFieldName)
+		if (terms.length > 0)
+			_.set(target, `criteria.where.${modelFieldName}.$ilike.$any`, terms)
+	}
+
 	return [
 		middlewares.parseCriteriaForMany(models.Genome, {
 			accessibleModels: [
@@ -20,16 +56,23 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 			permittedOrderFields: '*',
 			permittedWhereFields: [
 				'taxonomy_id',
+				'id',
+				...taxonomyTextFieldNames,
 			],
 		}),
-		// Provide for searching against name
 		(req, res, next) => {
-			if (Reflect.has(req.query, 'search')) {
-				const searchTerms = util.splitIntoTerms(req.query.search)
-					.map((term) => `%${term}%`)
-				if (searchTerms.length > 0)
-					_.set(res.locals, 'criteria.where.name.$iLike.$any', searchTerms)
-			}
+			// Provide for searching against name
+			if (Reflect.has(req.query, 'search'))
+				processSearch(req.query.search, res.locals, 'name')
+
+			// Handle searching taxonomy and assembly_level
+			taxonomyTextFieldNames
+			.forEach((fieldName) => {
+				const queryValue = _.get(res.locals, `criteria.where.${fieldName}`)
+				if (queryValue)
+					processWhereTextCondition(queryValue, res.locals, fieldName)
+			})
+
 			next()
 		},
 		helper.findManyHandler()
