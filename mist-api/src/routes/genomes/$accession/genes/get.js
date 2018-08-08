@@ -1,8 +1,36 @@
 'use strict'
 
+// Vendor
+const _ = require('lodash')
+
+// Local
+const util = require('core-lib/util')
+
 module.exports = function(app, middlewares, routeMiddlewares) {
 	let models = app.get('models'),
 		helper = app.get('lib').RouteHelper.for(models.Gene)
+
+	const textFieldNames = [
+		'version',
+		'locus',
+		'old_locus',
+		'stable_id',
+		'product'
+	]
+
+	const processSearch = (queryValue, target) => {
+		if (!queryValue)
+			return
+		if (!target)
+			throw new Error('processSearch must have a defined target')
+		const terms = util.splitIntoTerms(queryValue).map((term) => `%${term}%`)
+		if (terms.length > 0) {
+			textFieldNames
+			.forEach((fieldName) => {
+				_.set(target, `criteria.where.$or.${fieldName}.$ilike.$any`, terms)
+			})
+		}
+	}
 
 	// eslint-disable-next-line
 	/**
@@ -28,7 +56,10 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 				models.Dseq
 			],
 			maxPage: null,
-			permittedOrderFields: '*'
+			permittedOrderFields: '*',
+			permittedWhereFields: [
+				...textFieldNames
+			],
 		}),
 
 		// 3. Now the tricky part. Our goal is to limit all genes to those associated with the
@@ -41,6 +72,9 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		//    If the Component model is also an accessibleModel (middleware #2), it would be
 		//    necessary to upsert that include rather than simply pushing as is done below.
 		(req, res, next) => {
+			if (Reflect.has(req.query, 'search'))
+				processSearch(req.query.search, res.locals)
+
 			res.locals.criteria.include.push({
 				model: models.Component,
 				attributes: [],
