@@ -72,12 +72,15 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		//    If the Component model is also an accessibleModel (middleware #2), it would be
 		//    necessary to upsert that include rather than simply pushing as is done below.
 		(req, res, next) => {
-			if (Reflect.has(req.query, 'search'))
+			let fields = []
+			if (Reflect.has(req.query, 'search')) {
 				processSearch(req.query.search, res.locals)
+				fields = ["version", "definition"]
+			}
 
 			res.locals.criteria.include.push({
 				model: models.Component,
-				attributes: [],
+				attributes: fields,
 				where: {
 					genome_id: res.locals.genome.id
 				},
