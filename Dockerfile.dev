@@ -1,0 +1,27 @@
+FROM mhart/alpine-node:8.11.2
+
+ARG GIT_HASH
+
+LABEL BioWonks <biowonks@users.noreply.github.com>
+LABEL GIT_HASH=$GIT_HASH
+
+# The following is to facilitate volume sharing with the right permissions when locally developing.
+# Use docker build --build-arg LOCAL_USER_ID=#### to configure the biowonks user with
+# a different id value
+ARG LOCAL_USER_ID=1000
+ARG LOCAL_GROUP_ID=1000
+
+RUN addgroup -g ${LOCAL_GROUP_ID:=1000} biowonks && \
+	adduser -S -G biowonks -s /bin/false -u ${LOCAL_USER_ID:=1000} biowonks && \
+	echo PS1=\"\(\\u@docker\) \\w $ \" >> /home/biowonks/.bashrc && \
+	echo http://nl.alpinelinux.org/alpine/edge/testing >> /etc/apk/repositories && \
+	apk --update --no-cache add git bash build-base openssl postgresql-client python rsync wget su-exec && \
+	mkdir /app && \
+	chown biowonks:biowonks /app
+
+ENV HOME=/app
+
+COPY docker.dev.entrypoint.sh /usr/local/bin
+WORKDIR /app
+ENTRYPOINT ["/usr/local/bin/docker.dev.entrypoint.sh"]
+CMD bash

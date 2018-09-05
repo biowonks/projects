@@ -2,22 +2,32 @@ version: '3.5'
 
 services:
   # -------------------------------------------------------
-  api:
-    image: biowonks/mist-api:5252539
+  # -------------------------------------------------------
+  # Master docker image for performing local development work
+  biowonks-dev:
+    tty: true
+    stdin_open: true
+    image: biowonks/dev
+    container_name: biowonks-dev
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
     depends_on:
-      - pg_db
+      - pg-db
     ports:
-      - 4000:4000
+      - 5000:5000
+    volumes:
+      - .:/app
+      - /app/mist-lib/node_modules
+      - /app/mist-api/node_modules
+      - /app/mist-api/src/docs/node_modules
+      - /app/mist-api/config/local
+      - /app/mist-pipeline/node_modules
+      - /app/mist-pipeline/vendor
+    working_dir: /app
     environment:
+      - BIOWONKS_VOLUMES=/app/mist-lib/node_modules /app/mist-api/node_modules /app/mist-api/src/docs/node_modules /app/mist-api/config/local /app/mist-pipeline/node_modules /app/mist-pipeline/vendor
       - DATABASE_URL=postgres://mist-admin:mist-admin-password@pg-db:5432/mist
-    deploy:
-      replicas: 1
-      resources:
-        limits:
-          memory: 512M
-      restart_policy:
-        condition: on-failure
-
 
   # -------------------------------------------------------
   pg-db:
@@ -39,8 +49,6 @@ services:
 
       # To customize the postgresql configuration, pass any settings via the PG_CONF variable
       - PG_CONF
-    deploy:
-      replicas: 1
 
 
 # -------------------------------------------------------
