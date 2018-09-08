@@ -145,11 +145,11 @@ module.exports = function(Sequelize, models, extras) {
 	}
 
 	return {
+		classMethods,
 		fields,
+		instanceMethods,
 		params: {
-			instanceMethods,
-			classMethods,
 			validate,
-		}
+		},
 	}
 }

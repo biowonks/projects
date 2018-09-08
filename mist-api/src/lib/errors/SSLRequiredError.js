@@ -1,8 +1,8 @@
 'use strict'
 
 // Local
-const ApiError = require('./ApiError'),
-	HttpStatusCodes = require('../http-status-codes')
+const ApiError = require('./ApiError')
+const HttpStatusCodes = require('../http-status-codes')
 
 module.exports =
 class SSLRequiredError extends ApiError {

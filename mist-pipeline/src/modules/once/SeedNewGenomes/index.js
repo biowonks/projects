@@ -336,7 +336,7 @@ ${limit ? 'LIMIT ' + limit : ''}
 RETURNING *`
 
 		return this.sequelize_.query(sql, {transaction, raw: true})
-		.then((result) => {
+		.spread((result) => {
 			if (!result.length)
 				return
 

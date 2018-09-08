@@ -1,7 +1,7 @@
 'use strict'
 
 module.exports = function(Sequelize, models, extras) {
-	let fields = {
+	const fields = {
 		parent_taxonomy_id: extras.requiredPositiveInteger(),
 		name: extras.requiredText(),
 		rank: {

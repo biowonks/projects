@@ -7,10 +7,10 @@ const path = require('path')
 const express = require('express')
 
 // Constants
-const kDocsPath = path.resolve(__dirname, '..', '..', 'docs', 'build'),
-	staticHandler = express.static(kDocsPath, {
-		fallthrough: false
-	})
+const kDocsPath = path.resolve(__dirname, '..', '..', 'docs', 'build')
+const staticHandler = express.static(kDocsPath, {
+	fallthrough: false
+})
 
 module.exports = function() {
 	return staticHandler

@@ -14,7 +14,6 @@ const kMaxNeighborAmount = 15
 module.exports = function(app, middlewares, routeMiddlewares) {
   const models = app.get('models')
   const Gene = models.Gene
-	const helper = app.get('lib').RouteHelper.for(Gene)
 
 	return [
     middlewares.parseQueryParams(

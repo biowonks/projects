@@ -7,29 +7,29 @@ const seqUtil = require('core-lib/bio/seq-util')
 const kFloatPrecision = 6
 
 module.exports = function(Sequelize, models, extras) {
-	let fields = {
+	const fields = {
 		length: extras.requiredPositiveInteger(),
 		gc_percent: extras.requiredPercentage(),
 		sequence: extras.requiredSequence()
 	}
 
 	// Model validations
-	let validate = {
+	const validate = {
 		sequenceLength: extras.validate.referencedLength('length', 'sequence'),
 		accurateGC: () => {
-			let gcPercent = seqUtil.gcPercent(this.sequence)
+			const gcPercent = seqUtil.gcPercent(this.sequence)
 			if (gcPercent.toFixed(kFloatPrecision) !== this.gcPercent.toFixed(kFloatPrecision))
 				throw new Error('GC percent does not reflect GC composition in sequence')
 		}
 	}
 
-	let classMethods = {
+	const classMethods = {
 		/**
 		 * @param {Seq} seq
 		 * @returns {Object}
 		 */
 		dataFromSeq: function(seq) {
-			let normalizedSequence = seq.normalizedSequence()
+			const normalizedSequence = seq.normalizedSequence()
 			return {
 				id: seq.seqId(),
 				length: normalizedSequence.length,
@@ -47,24 +47,24 @@ module.exports = function(Sequelize, models, extras) {
 		}
 	}
 
-	let instanceMethods = {
+	const instanceMethods = {
 		toFasta: function() {
 			return seqUtil.fasta(this.id, this.sequence)
 		},
 		toJSON: function() {
-			let values = this.get()
+			const values = this.get()
 			values.gc_percent = Number(values.gc_percent.toFixed(kFloatPrecision))
 			return values
 		}
 	}
 
 	return {
+		classMethods,
 		fields,
+		instanceMethods,
 		params: {
-			classMethods,
-			instanceMethods,
+			timestamps: false,
 			validate,
-			timestamps: false
-		}
+		},
 	}
 }

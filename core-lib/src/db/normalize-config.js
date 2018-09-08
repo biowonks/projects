@@ -52,9 +52,5 @@ module.exports = function(dbConfig) {
 	sequelizeOptions.dialectOptions.ssl = dbConfig.ssl
 	sequelizeOptions.logging = dbConfig.logging
 
-	let define = sequelizeOptions.define
-	if (!define.classMethods)
-		define.classMethods = {}
-
 	return dbConfig
 }

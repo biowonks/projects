@@ -16,8 +16,8 @@ module.exports = function(app, middlewares) {
 
 	return (primaryModel, criteriaOptions = {}) => {
 		return function parseCriteriaForMany(req, res, next) {
-			let criteria = criteriaService.createFromQueryObjectForMany(primaryModel, req.query, criteriaOptions),
-				errors = criteriaService.findErrors(criteria, primaryModel, criteriaOptions)
+			const criteria = criteriaService.createFromQueryObjectForMany(primaryModel, req.query, criteriaOptions)
+			const errors = criteriaService.findErrors(criteria, primaryModel, criteriaOptions)
 			if (!errors) {
 				res.locals.criteria = criteria
 				next()

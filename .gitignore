@@ -9,3 +9,4 @@ tmp/
 .cache
 yarn-error.log
 .yarnrc
+.yarnclean
