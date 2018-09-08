@@ -7,8 +7,8 @@ const _ = require('lodash')
 const util = require('core-lib/util')
 
 module.exports = function(app, middlewares, routeMiddlewares) {
-	let models = app.get('models'),
-		helper = app.get('lib').RouteHelper.for(models.Genome)
+	const models = app.get('models')
+	const helper = app.get('lib').RouteHelper.for(models.Genome)
 
 	return [
 		middlewares.parseCriteriaForMany(models.Genome, {

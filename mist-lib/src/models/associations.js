@@ -4,7 +4,7 @@ module.exports = function(models, optLogger) {
 	if (optLogger)
 		optLogger.info('Setting up model associations')
 
-	let {
+	const {
 		Worker,
 		Genome,
 		WorkerModule,

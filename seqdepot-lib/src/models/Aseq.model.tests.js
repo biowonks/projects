@@ -1,14 +1,13 @@
 /* eslint-disable no-mixed-requires, no-unused-expressions, no-magic-numbers */
-
 'use strict'
 
 // Vendor
-const BootService = require('core-lib/services/BootService'),
-	Seq = require('core-lib/bio/Seq')
+const BootService = require('core-lib/services/BootService')
+const Seq = require('core-lib/bio/Seq')
 
 // Local
-const loadModels = require('./index'),
-	AseqModelFn = require('./Aseq.model')
+const loadModels = require('./index')
+const AseqModelFn = require('./Aseq.model')
 
 describe('models', function() {
 	describe('Aseq', function() {
@@ -50,7 +49,7 @@ describe('models', function() {
 				let seq = new Seq('MLTY'),
 					x = Aseq.fromSeq(seq)
 
-				expect(x instanceof Aseq.sequelize.Instance).true
+				expect(x instanceof Aseq).true
 				expect(x.id).equal(seq.seqId())
 				expect(x.sequence).equal(seq.normalizedSequence())
 				expect(x.length).equal(seq.length())

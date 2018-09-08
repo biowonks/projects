@@ -4,11 +4,11 @@
 const url = require('url')
 
 // Local
-const errors = require('./errors'),
-	headerNames = require('core-lib/header-names')
+const errors = require('./errors')
+const headerNames = require('core-lib/header-names')
 
 // Other
-let routeHelperMap = new Map()
+const routeHelperMap = new Map()
 
 module.exports =
 class RouteHelper {
@@ -50,7 +50,7 @@ class RouteHelper {
 	 */
 	findManyHandler() {
 		return (req, res, next) => {
-			let countRows = Reflect.has(req.query, 'count')
+			const countRows = Reflect.has(req.query, 'count')
 			this.findAll_(res, countRows)
 			.then((entities) => {
 				res.append('Link', this.linkHeaders(req, res.locals.criteria.offset, res.locals.criteria.limit, res.locals.totalCount))
@@ -131,24 +131,24 @@ class RouteHelper {
 		if (offset === null)
 			offset = 0 // eslint-disable-line no-param-reassign
 
-		let result = []
+		const result = []
 
-		let urlObject = url.parse(req.originalUrl, true)
+		const urlObject = url.parse(req.originalUrl, true)
 		urlObject.search = null
 		urlObject.protocol = req.protocol
 		urlObject.host = req.get('host')
 		Reflect.deleteProperty(urlObject.query, 'page')
 
-		let firstLink = url.format(urlObject)
+		const firstLink = url.format(urlObject)
 		result.push(`<${firstLink}>; rel="first"`)
 
-		let isValidOffset = typeof offset === 'number' && /^\d+$/.test(offset),
-			isValidLimit = this.isPositiveInteger_(limit)
+		const isValidOffset = typeof offset === 'number' && /^\d+$/.test(offset)
+		const isValidLimit = this.isPositiveInteger_(limit)
 
 		if (isValidOffset && isValidLimit) {
-			let page = Math.floor(offset / limit) + 1,
-				lastRow = offset + limit,
-				isValidTotalCount = this.isPositiveInteger_(totalCount)
+			const page = Math.floor(offset / limit) + 1
+			let lastRow = offset + limit
+			const isValidTotalCount = this.isPositiveInteger_(totalCount)
 
 			if (isValidTotalCount)
 				lastRow = Math.min(lastRow, totalCount)
@@ -156,16 +156,16 @@ class RouteHelper {
 			if (isValidTotalCount) {
 				if (lastRow < totalCount) {
 					urlObject.query.page = page + 1
-					let nextLink = url.format(urlObject)
+					const nextLink = url.format(urlObject)
 					result.push(`<${nextLink}>; rel="next"`)
 				}
 
-				let lastPage = Math.ceil(totalCount / limit)
+				const lastPage = Math.ceil(totalCount / limit)
 				if (lastPage > 1)
 					urlObject.query.page = lastPage
 				else
 					Reflect.deleteProperty(urlObject.query, 'page')
-				let lastLink = url.format(urlObject)
+				const lastLink = url.format(urlObject)
 				result.push(`<${lastLink}>; rel="last"`)
 			}
 
@@ -174,7 +174,7 @@ class RouteHelper {
 					urlObject.query.page = page - 1
 				else
 					Reflect.deleteProperty(urlObject.query, 'page')
-				let prevLink = url.format(urlObject)
+				const prevLink = url.format(urlObject)
 				result.push(`<${prevLink}>; rel="prev"`)
 			}
 		}
@@ -185,7 +185,7 @@ class RouteHelper {
 	// ----------------------------------------------------
 	// Private methods
 	findAll_(res, countRows = false) {
-		let criteria = res.locals.criteria
+		const criteria = res.locals.criteria
 		if (!countRows)
 			return this.model_.findAll(criteria)
 

@@ -96,13 +96,13 @@ module.exports = function(Sequelize, models, extras) {
 	}
 
 	return {
+		classMethods,
 		fields,
+		instanceMethods,
 		params: {
-			classMethods,
-			instanceMethods,
+			timestamps: false,
 			validate,
-			timestamps: false
-		}
+		},
 	}
 }
 module.exports.kToolIdFieldNames = kToolIdFieldNames

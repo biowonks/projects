@@ -4,7 +4,7 @@
 const coreUtil = require('core-lib/util')
 
 module.exports = function(Sequelize, models, extras) {
-	let fields = {
+	const fields = {
 		stable_id: {
 			type: Sequelize.TEXT,
 			description: 'permanent, universal gene identifier composed of the genome version and locus separated by a dash character',
@@ -134,7 +134,7 @@ module.exports = function(Sequelize, models, extras) {
 		}
 	}
 
-	let validate = {
+	const validate = {
 		accessionVersion: extras.validate.bothNullOrBothNotEmpty('accession', 'version')
 	}
 
@@ -166,10 +166,10 @@ module.exports = function(Sequelize, models, extras) {
 
 	return {
 		fields,
+		instanceMethods,
 		params: {
-			instanceMethods,
 			timestamps: false,
 			validate,
-		}
+		},
 	}
 }

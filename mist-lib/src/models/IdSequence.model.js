@@ -1,7 +1,7 @@
 'use strict'
 
 module.exports = function(Sequelize, models, extras) {
-	let fields = {
+	const fields = {
 		name: Object.assign(extras.requiredText(), {
 			description: 'unique name that also identifies this sequence',
 			example: 'components'

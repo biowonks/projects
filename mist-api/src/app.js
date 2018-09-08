@@ -14,46 +14,46 @@ if (process.env.NEW_RELIC_LICENSE_KEY) {
 const http = require('http')
 
 // Vendor
-const bodyParser = require('body-parser'),
-	compression = require('compression'), // Gzip support
-	corser = require('corser'), // CORS
-	express = require('express'),
-	helmet = require('helmet'), // Security practices
-	httpShutdown = require('http-shutdown'),
-	pathRoutify = require('path-routify'),
-	responseTime = require('response-time')
+const bodyParser = require('body-parser')
+const compression = require('compression') // Gzip support
+const corser = require('corser') // CORS
+const express = require('express')
+const helmet = require('helmet') // Security practices
+const httpShutdown = require('http-shutdown')
+const pathRoutify = require('path-routify')
+const responseTime = require('response-time')
 
 // Local
-const config = require('../config'),
-	errorHandler = require('lib/error-handler'),
-	coreHeaderNames = require('core-lib/header-names'),
-	loadServices = require('./services'),
-	errors = require('lib/errors'),
-	latestDocs = require('./routes/docs/use'),
-	MistBootService = require('mist-lib/services/MistBootService'),
-	RouteHelper = require('lib/RouteHelper')
+const config = require('../config')
+const errorHandler = require('lib/error-handler')
+const coreHeaderNames = require('core-lib/header-names')
+const loadServices = require('./services')
+const errors = require('lib/errors')
+const latestDocs = require('./routes/docs/use')
+const MistBootService = require('mist-lib/services/MistBootService')
+const RouteHelper = require('lib/RouteHelper')
 
 // Constants
-const kMsPerSecond = 1000,
-	kJsonPrettyPrintSpaces = 2,
-	kErrorExitCode = 1
+const kMsPerSecond = 1000
+const kJsonPrettyPrintSpaces = 2
+const kErrorExitCode = 1
 
 // Maintain reference to server variable because the handleUncaughtErrors middleware references it.
-let server = null,
-	bootService = new MistBootService({
-		applicationName: 'mist-api',
-		logger: {
-			name: 'mist-api',
-			streams: [
-				{
-					level: 'info',
-					stream: process.stdout
-				}
-			]
-		}
-	}),
-	logger = bootService.logger(),
-	shutdownRequestReceived = false
+let server = null
+const bootService = new MistBootService({
+	applicationName: 'mist-api',
+	logger: {
+		name: 'mist-api',
+		streams: [
+			{
+				level: 'info',
+				stream: process.stdout
+			}
+		]
+	}
+})
+const logger = bootService.logger()
+let shutdownRequestReceived = false
 
 process.on('SIGINT', shutdown) // React to user interruptions (e.g. Ctrl-C)
 process.on('SIGTERM', shutdown) // React to termination requests (e.g. Heroku)
@@ -164,7 +164,7 @@ function shutdown() {
 		exit()
 	})
 
-	let failSafeTimer = setTimeout(() => {
+	const failSafeTimer = setTimeout(() => {
 		logger.fatal('Timed out waiting for open connections to close normally, forcefully exiting')
 		exit(kErrorExitCode)
 	}, config.server.killTimeoutMs)
