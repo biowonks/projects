@@ -4,14 +4,14 @@
 const path = require('path')
 
 // Local
-const AnalyticsService = require('mist-lib/services/AnalyticsService'),
-	CriteriaService = require('lib/services/CriteriaService'),
-	TaxonomyService = require('mist-lib/services/TaxonomyService')
+const AnalyticsService = require('mist-lib/services/AnalyticsService')
+const CriteriaService = require('lib/services/CriteriaService')
+const TaxonomyService = require('mist-lib/services/TaxonomyService')
 
 module.exports = function(app) {
-	let logger = app.get('logger'),
-		config = app.get('config'),
-		models = app.get('models')
+	const logger = app.get('logger')
+	const config = app.get('config')
+	const models = app.get('models')
 
 	return {
 		analytics: new AnalyticsService(config.analytics.gaTrackingId, {

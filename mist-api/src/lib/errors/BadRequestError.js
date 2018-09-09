@@ -1,8 +1,8 @@
 'use strict'
 
 // Local
-const ApiError = require('./ApiError'),
-	HttpStatusCodes = require('../http-status-codes')
+const ApiError = require('./ApiError')
+const HttpStatusCodes = require('../http-status-codes')
 
 class BadRequestError extends ApiError {
 	constructor(message = null, data = null) {
@@ -22,9 +22,9 @@ class BadRequestError extends ApiError {
 	}
 
 	static validationError(optType, optPath, optMessage) {
-		let error = new BadRequestError('Validation error')
+		const error = new BadRequestError('Validation error')
 		if (optType || optPath || optMessage) {
-			let detail = {}
+			const detail = {}
 			if (optType)
 				detail.type = optType
 			if (optPath)
@@ -37,9 +37,9 @@ class BadRequestError extends ApiError {
 	}
 
 	static foreignKeyError(targetEntity, optPath, optMessage) {
-		let type = 'foreignKey violation',
-			message = optMessage || ('Referenced ' + targetEntity + ' does not exist'),
-			path = optPath || (targetEntity + '_id')
+		const type = 'foreignKey violation'
+		const message = optMessage || ('Referenced ' + targetEntity + ' does not exist')
+		const path = optPath || (targetEntity + '_id')
 		return BadRequestError.validationError(type, path, message)
 	}
 }

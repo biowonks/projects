@@ -14,6 +14,10 @@ class Region {
     assert(start <= stop, 'start must be less than or equal to stop')
   }
 
+  static createFromDomain(domain) {
+    return new Region(domain.start, domain.stop, domain)
+  }
+
   get data() {
     return this.data_
   }

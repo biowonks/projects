@@ -64,9 +64,9 @@ describe('services', function() {
 				oldToolRunnerIdMapFn = AseqsComputeService.toolRunnerIdMap
 				AseqsComputeService.toolRunnerIdMap = () => new Map([
 					[
-						'pfam30',
+						'pfam31',
 						{
-							id: 'pfam30',
+							id: 'pfam31',
 							description: 'pfam domains',
 							requiredAseqFields: undefined,
 						},
@@ -83,7 +83,7 @@ describe('services', function() {
 						{
 							id: 'stp',
 							description: 'signal transduction prediction',
-							requiredAseqFields: ['pfam30', 'agfam1', 'ecf1'],
+							requiredAseqFields: ['pfam31', 'agfam1', 'ecf1'],
 						},
 					],
 					[
@@ -91,7 +91,7 @@ describe('services', function() {
 						{
 							id: 'stp2',
 							description: 'stp version 2',
-							requiredAseqFields: ['pfam30', 'agfam2'],
+							requiredAseqFields: ['pfam31', 'agfam2'],
 						},
 					],
 				])
@@ -102,14 +102,14 @@ describe('services', function() {
 			})
 
 			it('returns the unique set of required aseq fields present in the tool runner map', function() {
-				const toolIds = ['stp', 'pfam30', 'stp', 'stp2']
+				const toolIds = ['stp', 'pfam31', 'stp', 'stp2']
 				const x = new AseqsComputeService(Aseq, config, logger)
-				expect(x.targetAseqFields(toolIds)).members(['pfam30', 'agfam1', 'agfam2', 'ecf1'])
+				expect(x.targetAseqFields(toolIds)).members(['pfam31', 'agfam1', 'agfam2', 'ecf1'])
 			})
 
 			it('ignores unrecognized tool ids', function() {
 				const x = new AseqsComputeService(Aseq, config, logger)
-				expect(x.targetAseqFields(['invalid', 'stp2'])).members(['pfam30', 'agfam2'])
+				expect(x.targetAseqFields(['invalid', 'stp2'])).members(['pfam31', 'agfam2'])
 			})
 		})
 

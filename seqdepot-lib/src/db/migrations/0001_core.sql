@@ -14,7 +14,7 @@ create table aseqs (
 	sequence text not null,
 
 	-- tool results
-	pfam30 jsonb,
+	pfam31 jsonb,
 	segs jsonb,
 	coils jsonb
 );

@@ -7,7 +7,7 @@ const assert = require('assert')
 const seqUtil = require('core-lib/bio/seq-util')
 
 // Constants
-const kToolIdFieldNames = ['pfam30', 'agfam2', 'segs', 'coils', 'tmhmm2', 'ecf1']
+const kToolIdFieldNames = ['pfam31', 'agfam2', 'segs', 'coils', 'tmhmm2', 'ecf1']
 
 module.exports = function(Sequelize, models, extras) {
 	let fields = {
@@ -18,8 +18,8 @@ module.exports = function(Sequelize, models, extras) {
 		sequence: Object.assign(extras.requiredSequence(), {
 			description: 'normalized, amino acid sequence'
 		}),
-		pfam30: Object.assign(hmmer3(Sequelize, 'pfam30'), {
-			description: 'array of pfam30 predictions'
+		pfam31: Object.assign(hmmer3(Sequelize, 'pfam31'), {
+			description: 'array of pfam31 predictions'
 		}),
 		agfam2: Object.assign(hmmer3(Sequelize, 'agfam2'), {
 			description: 'array of agfam2 predictions'
@@ -118,13 +118,13 @@ module.exports = function(Sequelize, models, extras) {
 	}
 
 	return {
+		classMethods,
 		fields,
+		instanceMethods,
 		params: {
-			classMethods,
-			instanceMethods,
+			timestamps: false,
 			validate,
-			timestamps: false
-		}
+		},
 	}
 }
 module.exports.kToolIdFieldNames = kToolIdFieldNames

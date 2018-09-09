@@ -1,17 +1,19 @@
 'use strict'
 
 // Vendor
-const Promise = require('bluebird'),
-	requestPromise = require('request-promise')
+const Promise = require('bluebird')
+const requestPromise = require('request-promise')
 
 // Local
 const mutil = require('../mutil')
 
 // Constants
-const kNCBIPartialTaxonomyUrl = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?tool=mistdb&email=biowonks@gmail.com&db=taxonomy&retmode=text&rettype=xml&id=',
-	kNCBIRootTaxonomyId = 1, // Absolute root taxonomic node defined by NCBI
-	kNumberOfWordsInSpecies = 2,
-	kDelayTimeBetweenEutilRequest = 334 // No more than three requests per second allowed
+const kNCBIPartialTaxonomyUrl = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?tool=mistdb&email=biowonks@gmail.com&db=taxonomy&retmode=text&rettype=xml&id='
+const kNCBIRootTaxonomyId = 1 						// Absolute root taxonomic node defined by NCBI
+const kNumberOfWordsInSpecies = 2
+const kDelayTimeBetweenEutilRequest = 334 // No more than three requests per second allowed
+const kDelayBetweenFailures = 1000
+const kRetryTimes = 5
 
 /**
  * Private error used for indicating that a given taxonomic node already exists and breaking out of
@@ -44,22 +46,30 @@ class TaxonomyService {
 	 * @returns {Promise} resolves with an object describing the taxonomy
 	 */
 	fetchFromNCBI(taxonomyId) {
-		let startTime = new Date().getTime()
+		const startTime = new Date().getTime()
 		if (!/^[1-9]\d*$/.test(taxonomyId))
 			return Promise.reject(new Error('invalid taxonomy id: must be positive integer'))
 
-		let url = this.eutilUrl(taxonomyId)
+		const url = this.eutilUrl(taxonomyId)
 
-		return requestPromise(url)
+		let promise = Promise.reject()
+		const tries = Math.max(kRetryTimes, 0) + 1
+		for (let i = 0; i < tries; i++) {
+			promise = promise.catch(() => requestPromise(url))
+				.catch(() => {
+					return Promise.delay(kDelayBetweenFailures)
+					.then(() => Promise.reject())
+				})
+		}
+
+		return promise
 		.then(this.parseNCBITaxonomyXML.bind(this))
 		.then((result) => {
-			let endTime = new Date().getTime(),
-				spentTime = endTime - startTime,
-				waitTime = spentTime > kDelayTimeBetweenEutilRequest ? 0 : kDelayTimeBetweenEutilRequest - spentTime
+			const endTime = new Date().getTime()
+			const spentTime = endTime - startTime
+			const waitTime = spentTime > kDelayTimeBetweenEutilRequest ? 0 : kDelayTimeBetweenEutilRequest - spentTime
 			return Promise.delay(waitTime)
-			.then(() => {
-				return result
-			})
+			.then(() => result)
 		})
 	}
 

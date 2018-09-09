@@ -30,13 +30,13 @@ const setupAssociations = require('./associations')
 module.exports = function(sequelize, seqdepotModels, logger = null) {
 	const modelExtras = require('core-lib/model-extras')(sequelize.Sequelize) // eslint-disable-line global-require
 
-	let models = modelLoader(__dirname, sequelize, {
+	const models = modelLoader(__dirname, sequelize, {
 		logger,
 		context: modelExtras
 	})
 
 	for (let name in seqdepotModels) {
-		let isConflictingName = Reflect.has(models, name)
+		const isConflictingName = Reflect.has(models, name)
 		if (isConflictingName)
 			throw new Error(`model name conflict: ${name} exists in both MiST and SeqDepot`)
 		models[name] = seqdepotModels[name]

@@ -70,8 +70,8 @@ const config = {
 			basePath: path.resolve(vendorPath, 'ecf', '1.0')
 		},
 		pfam: {
-			version: '30.0',
-			basePath: path.resolve(vendorPath, 'pfam', '30.0')
+			version: '31.0',
+			basePath: path.resolve(vendorPath, 'pfam', '31.0')
 		}
 	},
 
@@ -82,8 +82,8 @@ const config = {
 		segs: {
 			ticksPerProgressEvent: 25000
 		},
-		pfam30: {
-			databasePath: path.resolve(vendorPath, 'pfam', '30.0', 'Pfam-A.hmm'),
+		pfam31: {
+			databasePath: path.resolve(vendorPath, 'pfam', '31.0', 'Pfam-A.hmm'),
 			ticksPerProgressEvent: 50
 		},
 		agfam2: {

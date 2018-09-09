@@ -11,13 +11,13 @@
  * @returns {Function}
  */
 module.exports = function(app, middlewares) {
-	let criteriaService = app.get('services').criteria,
-		CriteriaError = app.get('errors').CriteriaError
+	const criteriaService = app.get('services').criteria
+	const CriteriaError = app.get('errors').CriteriaError
 
 	return (primaryModel, accessibleModels) => {
 		return function parseCriteria(req, res, next) {
-			let criteria = criteriaService.createFromQueryObject(primaryModel, req.query),
-				errors = criteriaService.findErrors(criteria, primaryModel, accessibleModels)
+			const criteria = criteriaService.createFromQueryObject(primaryModel, req.query)
+			const errors = criteriaService.findErrors(criteria, primaryModel, accessibleModels)
 			if (!errors) {
 				res.locals.criteria = criteria
 				next()

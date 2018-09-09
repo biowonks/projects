@@ -1,14 +1,13 @@
 /* eslint-disable no-mixed-requires, no-unused-expressions, no-magic-numbers */
-
 'use strict'
 
 // Vendor
-const BootService = require('core-lib/services/BootService'),
-	Seq = require('core-lib/bio/Seq')
+const BootService = require('core-lib/services/BootService')
+const Seq = require('core-lib/bio/Seq')
 
 // Local
-const loadModels = require('./index'),
-	AseqModelFn = require('./Aseq.model')
+const loadModels = require('./index')
+const AseqModelFn = require('./Aseq.model')
 
 describe('models', function() {
 	describe('Aseq', function() {
@@ -26,7 +25,7 @@ describe('models', function() {
 
 		describe('kToolIdFieldNames (static property)', function() {
 			it('returns a list of supported tool ids', function() {
-				expect(AseqModelFn.kToolIdFieldNames).members(['pfam30', 'agfam2', 'segs', 'coils', 'tmhmm2'])
+				expect(AseqModelFn.kToolIdFieldNames).members(['pfam31', 'agfam2', 'segs', 'coils', 'tmhmm2', 'ecf1'])
 			})
 		})
 
@@ -50,7 +49,7 @@ describe('models', function() {
 				let seq = new Seq('MLTY'),
 					x = Aseq.fromSeq(seq)
 
-				expect(x instanceof Aseq.sequelize.Instance).true
+				expect(x instanceof Aseq).true
 				expect(x.id).equal(seq.seqId())
 				expect(x.sequence).equal(seq.normalizedSequence())
 				expect(x.length).equal(seq.length())
@@ -59,15 +58,15 @@ describe('models', function() {
 
 		describe('toolIdFieldNames', function() {
 			it('returns a list of supported tool ids', function() {
-				expect(Aseq.toolIdFieldNames()).members(['pfam30', 'agfam2', 'segs', 'coils', 'tmhmm2'])
+				expect(Aseq.toolIdFieldNames()).members(['pfam31', 'agfam2', 'segs', 'coils', 'tmhmm2', 'ecf1'])
 			})
 		})
 
-		it('pfam30 getter / setter', function() {
+		it('pfam31 getter / setter', function() {
 			let seq = new Seq('MTNVLIVEDEQAIRRFLRTALEGDGMRVFEAETLQRGLLEAATRKPDLIILDLGLPDGDGIEFIRDLRQWSAVPVIVLSARSEESDKIAALDAGADDYLSKPFGIGELQARLRVALRRHSATTAPDPLVKFSDVTVDLAARVIHRGEEEVHLTPIEFRLLAVLLNNAGKVLTQRQLLNQVWGPNAVEHSHYLRIYMGHLRQKLEQDPARPRHFITETGIGYRFML'),
 				x = Aseq.fromSeq(seq)
 
-			expect(x.pfam30).not.ok
+			expect(x.pfam31).not.ok
 			let newDomains = [
 				{
 					name: 'Response_reg',
@@ -105,8 +104,8 @@ describe('models', function() {
 				}
 			]
 
-			x.pfam30 = newDomains
-			expect(x.getDataValue('pfam30')).eql([
+			x.pfam31 = newDomains
+			expect(x.getDataValue('pfam31')).eql([
 				[
 					'Response_reg',
 					101.9,
@@ -143,7 +142,7 @@ describe('models', function() {
 				]
 			])
 
-			expect(x.pfam30).eql(newDomains)
+			expect(x.pfam31).eql(newDomains)
 		})
 	})
 })

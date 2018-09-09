@@ -1,0 +1,4 @@
+family	name	accession	id	marker	kind	function	group
+agfam	RR	AG00001	RR	1	receiver	Receiver
+agfam	HK_CA	AG00025	HK_CA	1	transmitter	Transmitter	HK
+agfam	HK_CA:1	AG00002	HK_CA		transmitter	Transmitter

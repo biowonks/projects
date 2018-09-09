@@ -1,7 +1,7 @@
 'use strict'
 
 module.exports = function(Sequelize, models, extras) {
-	let fields = {
+	const fields = {
 		genome_id: extras.positiveInteger(),
 		worker_id: extras.requiredPositiveInteger(),
 		module: extras.requiredText(),
@@ -26,7 +26,7 @@ module.exports = function(Sequelize, models, extras) {
 		}
 	}
 
-	let instanceMethods = {
+	const instanceMethods = {
 		updateState: function(newState, optTransaction) {
 			let changes = {
 				state: newState
@@ -45,8 +45,8 @@ module.exports = function(Sequelize, models, extras) {
 
 	return {
 		fields,
+		instanceMethods,
 		params: {
-			instanceMethods,
 			indexes: [
 				{
 					unique: true,

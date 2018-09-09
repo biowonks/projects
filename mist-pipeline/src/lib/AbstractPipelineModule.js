@@ -35,7 +35,7 @@ class AbstractPipelineModule {
 
 	/**
 	 * To reference a submodule, simply suffix the module name with a colon and then the submodule
-	 * name (e.g. AseqCompute:pfam30).
+	 * name (e.g. AseqCompute:pfam31).
 	 *
 	 * @returns {Array.<String>} - one or more "flat" module id strings
 	 */
