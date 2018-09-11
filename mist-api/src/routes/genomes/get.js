@@ -32,10 +32,10 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 	const processSearch = (queryValue, target, modelFieldName) => {
 		const terms = checkAndGetTerms(queryValue, target, modelFieldName)
 		if (terms.length > 0) {
-			_.set(target, `criteria.where.$or.${modelFieldName}.$ilike.$any`, terms)
+			_.set(target, `criteria.where.$or.${modelFieldName}.$ilike.$all`, terms)
 			taxonomyTextFieldNames
 			.forEach((fieldName) => {
-				_.set(target, `criteria.where.$or.${fieldName}.$ilike.$any`, terms)
+				_.set(target, `criteria.where.$or.${fieldName}.$ilike.$all`, terms)
 			})
 		}
 	}
@@ -43,7 +43,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 	const processWhereTextCondition = (queryValue, target, modelFieldName) => {
 		const terms = checkAndGetTerms(queryValue, target, modelFieldName)
 		if (terms.length > 0)
-			_.set(target, `criteria.where.${modelFieldName}.$ilike.$any`, terms)
+			_.set(target, `criteria.where.${modelFieldName}.$ilike.$all`, terms)
 	}
 
 	return [

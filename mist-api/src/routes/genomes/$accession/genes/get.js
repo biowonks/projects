@@ -27,7 +27,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		if (terms.length > 0) {
 			textFieldNames
 			.forEach((fieldName) => {
-				_.set(target, `criteria.where.$or.${fieldName}.$ilike.$any`, terms)
+				_.set(target, `criteria.where.$or.${fieldName}.$ilike.$all`, terms)
 			})
 		}
 	}

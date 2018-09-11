@@ -11,11 +11,11 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 
 
 	const textFieldNames = [
-			'version',
-			'locus',
-			'old_locus',
-			'stable_id',
-			'product'
+		'version',
+		'locus',
+		'old_locus',
+		'stable_id',
+		'product'
 	]
 
 	const processSearch = (queryValue, target) => {
@@ -27,7 +27,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		if (terms.length > 0) {
 			textFieldNames
 			.forEach((fieldName) => {
-				_.set(target, `criteria.where.$or.${fieldName}.$ilike.$any`, terms)
+				_.set(target, `criteria.where.$or.${fieldName}.$ilike.$all`, terms)
 			})
 		}
 	}
