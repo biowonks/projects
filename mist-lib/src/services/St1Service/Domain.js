@@ -23,6 +23,16 @@ class Domain {
     return new Set(domains.map((domain) => domain.name_))
   }
 
+  toHmmer3() {
+    return {
+      ali_from: this.start_,
+      ali_to: this.stop_,
+      score: this.score_,
+      i_evalue: this.evalue_,
+      name: this.name_,
+    }
+  }
+
   get start() {
     return this.start_
   }

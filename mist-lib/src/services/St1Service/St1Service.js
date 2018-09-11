@@ -3,246 +3,24 @@
 // Core
 const assert = require('assert')
 
-// Vendor
-const _ = require('lodash')
-
 // Local
-const Domain = require('Domain')
+const Domain = require('./Domain')
 const RegionContainer = require('./RegionContainer')
+const StpiMatchHelper = require('./StpiMatchHelper')
 const st1utils = require('./st1-utils')
+const {
+  AGFAM_TOOL_ID,
+  ECF_TOOL_ID,
+  MAX_HYBRID_RECEIVER_START,
+  PFAM_TOOL_ID,
+  THRESHOLD,
+  PrimaryRank,
+  SecondaryRank,
+} = require('./stpi.constants')
 
-function setContainsSomeDomains(someSet, domains) {
-  if (!someSet || !domains)
-    return false
-
-  for (let domain of domains) {
-    if (someSet.contains(domain.name))
-      return true
-  }
-  return false
-}
-
-module.exports = {}
-const PrimaryRank = module.exports.PrimaryRank = {
-  ecf: 'ecf',
-  ocp: 'ocp',
-  tcp: 'tcp',
-  chemotaxis: 'chemotaxis',
-  other: 'other',
-}
-
-const SecondaryRank = module.exports.SecondaryRank = {
-  chea: 'chea',
-  cheb: 'cheb',
-  checx: 'checx',
-  ched: 'ched',
-  cher: 'cher',
-  chev: 'chev',
-  chew: 'chew',
-  chez: 'chez',
-  hhk: 'hhk',
-  hk: 'hk',
-  hrr: 'hrr',
-  rr: 'rr',
-  mcp: 'mcp',
-  other: 'other',
-}
-
-class StpiMatchHelper {
-  constructor(stpiSpec) {
-    const filters = {
-      isMarker: {marker: true},
-      isHK_CA: {id: 'HK_CA'},
-      isHisKA: {id: 'HisKA'},
-      isChemotaxis: {kind: 'chemotaxis'},
-      isTransmitter: {kind: 'transmitter'},
-      isReceiver: {kind: 'receiver'},
-      isOutput: {kind: 'output'},
-    }
-
-    const agfam = _.filter(stpiSpec, {family: 'agfam'})
-    const ecf = _.filter(stpiSpec, {family: 'ecf'})
-    const pfam = _.filter(stpiSpec, {family: 'pfam'})
-    const pfamEcf = _.filter(pfam, {kind: 'ecf'})
-    this.groups = {
-      agfam,
-      agfamMarker: _.filter(agfam, filters.isMarker),
-      agfamHatpase: _.filter(agfam, filters.isHK_CA),
-      agfamTransmitter: _.filter(agfam, filters.isTransmitter),
-      agfamReceiver: _.filter(agfam, filters.isReceiver),
-      agfamChemo: _.filter(agfam, filters.isChemotaxis),
-      agfamOutput: _.filter(agfam, filters.isOutput),
-
-      ecf,
-      ecfMarker: _.filter(ecf, filters.isMarker),
-
-      pfam,
-      pfamMarker: _.filter(pfam, filters.isMarker),
-      pfamHatpase: _.filter(pfam, filters.isHK_CA),
-      pfamHiska: _.filter(pfam, filters.isHisKA),
-      pfamChemo: _.filter(pfam, filters.isChemotaxis),
-      pfamTransmitter: _.filter(pfam, filters.isTransmitter),
-      pfamReceiver: _.filter(pfam, filters.isReceiver),
-      pfamEcf,
-      pfamEcfMarker: _.filter(pfamEcf, filters.isMarker),
-      pfamOutput: _.filter(pfam, filters.isOutput),
-    }
-
-    // Create sets of unique domain names for each group for quickly determining
-    // membership to a group
-    // e.g. [agfam] = Set([RR, HK_CA, HK_CA:1, ...])
-    this.sets = {
-      // Pfam domain names
-      hdUnrelatedSignalDomains: new Set([
-        'PolyA_pol',
-        'TGS',
-        'RelA_SpoT',
-        'KH_1',
-        'KH_2',
-        'tRNA_anti',
-        'PPx-GppA',
-        'DEAD',
-        'Helicase_C',
-        'tRNA-synt_1d',
-      ]),
-
-      // Pfam domain names
-      hkNonSignalDomains: new Set([
-        'DNA_gyraseA_C',
-        'DNA_gyraseB',
-        'DNA_gyraseB_C',
-        'Toprim',
-        'HSP90',
-        'DNA_topoisoIV',
-        'DNA_mis_repair',
-        'MutL_C',
-        'Topo-VIb_trans',
-      ]),
-    }
-
-    //      {group name}->{domain name} = signal domain
-    // e.g. {agfam}->{RR} = {family: agfam, name: RR, ...}
-    this.toSignalDomain = {}
-    for (let [groupName, signalDomains] of Object.entries(this.groups)) {
-      const nameToSignalDomain = {}
-      signalDomains.forEach((signalDomain) => {
-        nameToSignalDomain[signalDomain.name] = signalDomain
-      })
-      this.toSignalDomain[groupName] = nameToSignalDomain
-
-      this.sets[groupName] = new Set(signalDomains.map((signalDomain) => signalDomain.name))
-    }
-
-    this.signalDomainIdToPfamNames = {}
-    this.groups.pfam.forEach((signalDomain) => {
-      const { id, name } = signalDomain
-      const set = this.signalDomainIdToPfamNames[id]
-      if (!set) {
-        set = this.signalDomainIdToPfamNames[id] = new Set()
-      }
-      set.add(name)
-    })
-  }
-
-  contains(domains, name) {
-    if (!domains)
-      return false
-
-    for (let i = 0, z = domains.length; i < z; ++i) {
-      if (domains[i].name === name)
-        return true
-    }
-
-    return false
-  }
-
-  hasPrimaryMarker(bundle) {
-    return setContainsSomeDomains(bundle.pfam, this.sets.pfamMarker) ||
-      setContainsSomeDomains(bundle.agfam, this.sets.agfamMarker)
-  }
-
-  hasEcfMarker(bundle) {
-    return setContainsSomeDomains(bundle.ecf, this.sets.ecfMarker)
-  }
-
-  hasHatpase(bundle) {
-    return setContainsSomeDomains(bundle.pfam, this.sets.pfamHatpase) ||
-      setContainsSomeDomains(bundle.pfam, this.sets.pfamHiska) ||
-      setContainsSomeDomains(bundle.agfam, this.sets.agfamHatpase)
-  }
-
-  hasHpt(bundle) {
-    return this.contains(pfam, 'Hpt')
-  }
-
-  hasTransmitter(bundle) {
-    return setContainsSomeDomains(bundle.pfam, this.sets.pfamTransmitter) ||
-      setContainsSomeDomains(bundle.agfam, this.sets.agfamTransmitter)
-  }
-
-  hasReceiver(bundle) {
-    return setContainsSomeDomains(bundle.pfam, this.sets.pfamReceiver) ||
-      setContainsSomeDomains(bundle.agfam, this.sets.agfamReceiver)
-  }
-
-  hasOutput(bundle) {
-    return setContainsSomeDomains(bundle.agfam, this.sets.agfamOutput) ||
-      setContainsSomeDomains(bundle.pfam, this.sets.pfamOutput)
-  }
-
-  hasPfamEcf(bundle) {
-    return setContainsSomeDomains(bundle.pfam, this.sets.pfamEcf)
-  }
-
-  hasPfamEcfMarker(bundle) {
-    return setContainsSomeDomains(bundle.pfam, this.sets.pfamEcfMarker)
-  }
-
-  isChemotaxis(bundle) {
-    return setContainsSomeDomains(bundle.pfam, this.sets.pfamChemo) ||
-      setContainsSomeDomains(bundle.afam, this.sets.agfamChemo)
-  }
-
-  isHdWithUnrelatedDomains(bundle) {
-    return this.contains(bundle.pfam, 'HD') &&
-      setContainsSomeDomains(bundle.pfam, this.sets.hdUnrelatedSignalDomains)
-  }
-
-  isNonSignalingHK(bundle) {
-    return this.hasHatpase(bundle) &&
-      setContainsSomeDomains(bundle.pfam, this.sets.hkNonSignalDomains)
-  }
-
-  findNterminalHatpase(bundle) {
-    let hatpase = this.findNterminalKind_(bundle.agfam, this.sets.agfamHatpase)
-    hatpase = this.findNterminalHatpase(bundle.pfam, this.sets.pfamHatpase, hatpase)
-    return hatpase
-  }
-
-  findNterminalReceiver(bundle) {
-    let receiver = this.findNterminalKind_(bundle.agfam, this.sets.agfamReceiver)
-    receiver = this.findNterminalHatpase(bundle.pfam, this.sets.pfamReceiver, receiver)
-    return receiver
-  }
-
-  findNterminalKind_(domains, targetSet, currentMatch = null) {
-    for (let domain of domains) {
-      if (targetSet.contains(domain.name) && (!currentMatch || domain.start < currentMatch.start)) {
-        currentMatch = domain
-      }
-    }
-    return currentMatch
-  }
-}
-
-module.exports.St1Service =
+module.exports =
 class St1Service {
-  static PFAM_TOOL_ID = 'pfam31'
-  static AGFAM_TOOL_ID = 'agfam2'
-  static ECF_TOOL_ID = 'ecf1'
-  static THRESHOLD = .001
-  static MAX_HYBRID_RECEIVER_START = 60
-
+  // Async friendly method for creating St1Service
   static create(stpiSpecFile) {
     return st1utils.parseSTPISpec(stpiSpecFile)
       .then((stpiSpec) => new St1Service(stpiSpec))
@@ -255,7 +33,7 @@ class St1Service {
 
   analyze(aseq) {
     const bundle = this.createDomainBundle_(aseq)
-    const ranks = this.predictRanks_()
+    const ranks = this.predictRanks_(bundle)
     if (!ranks)
       return null
 
@@ -279,15 +57,15 @@ class St1Service {
 
   createDomainBundle_(aseq) {
     const bundle = {
-      pfam: (aseq[St1Service.PFAM_TOOL_ID] || []).map(Domain.createFromHmmer3),
-      agfam: (aseq[St1Service.AGFAM_TOOL_ID] || []).map(Domain.createFromHmmer3),
-      ecf: (aseq[St1Service.ECF_TOOL_ID] || []).map(Domain.createFromHmmer2),
+      pfam: (aseq[PFAM_TOOL_ID] || []).map(Domain.createFromHmmer3),
+      agfam: (aseq[AGFAM_TOOL_ID] || []).map(Domain.createFromHmmer3),
+      ecf: (aseq[ECF_TOOL_ID] || []).map(Domain.createFromHmmer2),
     }
 
     for (let key in bundle)
       st1utils.sortByEvalue(bundle[key])
 
-    st1utils.removeInsignificantOverlaps(bundle.pfam, St1Service.THRESHOLD)
+    st1utils.removeInsignificantOverlaps(bundle.pfam, THRESHOLD)
 
     return bundle
   }
@@ -303,7 +81,7 @@ class St1Service {
 
   // Assume that bundle has at least one match to a marker
   predictMarkerRanks_(bundle) {
-    if (this.matchHelper_.isHdWithUnrelatedDomains(bundle) || this.matchHelper_.isNonSignalingHK(bundle)) {
+    if (this.matchHelper_.isNonSignalingHK(bundle)) {
       return null
     }
 
@@ -406,7 +184,7 @@ class St1Service {
       return null
 
     if (firstReceiver.start < firstHatpase.start) {
-      if (firstReceiver.start <= St1Service.MAX_HYBRID_RECEIVER_START)
+      if (firstReceiver.start <= MAX_HYBRID_RECEIVER_START)
         return SecondaryRank.hrr
 
       return SecondaryRank.other
