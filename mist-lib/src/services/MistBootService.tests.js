@@ -15,7 +15,8 @@ describe('services', function() {
 			before(() => {
 				const bootService = new MistBootService()
 				const models = bootService.setupModels()
-				model = Object.values(models)[0]
+				// Selecting the Xref specific model is brittle; however, leaving for now
+				model = models.Xref
 			})
 
 			it('$excludedFromCriteria returns null', function() {
