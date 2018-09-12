@@ -7,11 +7,21 @@ const assert = require('assert')
 const Domain = require('./Domain')
 const RegionContainer = require('./RegionContainer')
 const StpiMatchHelper = require('./StpiMatchHelper')
-const st1utils = require('./st1-utils')
+const {
+  parseSTPISpec,
+  removeInsignificantOverlaps,
+  removeOverlappingDomains,
+  removeSpecificDomainsOverlappingWith,
+  setContainsSomeDomains,
+  sortByStart,
+  sortByEvalue,
+} = require('./st1-utils')
 const {
   AGFAM_TOOL_ID,
   ECF_TOOL_ID,
   MAX_HYBRID_RECEIVER_START,
+  MAX_HisKA_CA_SEPARATION,
+  MAX_HK_CA_SEPARATION,
   PFAM_TOOL_ID,
   THRESHOLD,
   PrimaryRank,
@@ -22,7 +32,7 @@ module.exports =
 class St1Service {
   // Async friendly method for creating St1Service
   static create(stpiSpecFile) {
-    return st1utils.parseSTPISpec(stpiSpecFile)
+    return parseSTPISpec(stpiSpecFile)
       .then((stpiSpec) => new St1Service(stpiSpec))
   }
 
@@ -39,7 +49,7 @@ class St1Service {
 
     this.removeNonSignalingDomains_(bundle)
     this.removeOverlappingDomains_(bundle)
-    st1utils.sortByStart(bundle.pfam)
+    sortByStart(bundle.pfam)
 
     const agfamSignalDomains = this.analyzeAgfamDomains_(bundle.agfam, bundle.pfam)
     const pfamSignalDomains = this.analyzePfamDomains_(bundle.pfam)
@@ -63,9 +73,9 @@ class St1Service {
     }
 
     for (let key in bundle)
-      st1utils.sortByEvalue(bundle[key])
+      sortByEvalue(bundle[key])
 
-    st1utils.removeInsignificantOverlaps(bundle.pfam, THRESHOLD)
+    removeInsignificantOverlaps(bundle.pfam, THRESHOLD)
 
     return bundle
   }
@@ -126,25 +136,26 @@ class St1Service {
   getChemotaxisRanks_(bundle) {
     const ranks = [PrimaryRank.chemotaxis]
     const {agfam, pfam} = bundle
+    const {signalDomainIdToPfamNames, signalDomainIdToAgfamNames} = this.matchHelper_
 
-    if (this.matchHelper_.contains(pfam, 'CheW')) {
-      if (this.matchHelper_.hasTransmitter(bundle) || this.matchHelper_.contains(agfam, 'HK_CA:Che'))
+    if (setContainsSomeDomains(pfam, signalDomainIdToPfamNames.CheW)) {
+      if (this.matchHelper_.hasTransmitter(bundle) || setContainsSomeDomains(agfam, signalDomainIdToAgfamNames['HK_CA:Che']))
         ranks.push(SecondaryRank.chea)
       else if (this.matchHelper_.hasReceiver(bundle))
         ranks.push(SecondaryRank.chev)
       else
         ranks.push(SecondaryRank.chew)
-    } else if (this.matchHelper_.contains(pfam, 'CheB_methylest')) {
+    } else if (setContainsSomeDomains(pfam, signalDomainIdToPfamNames.CheB_methylest)) {
       ranks.push(SecondaryRank.cheb)
-    } else if (this.matchHelper_.contains(pfam, 'CheR') || this.matchHelper_.contains(pfam, 'CheR_N')) {
+    } else if (setContainsSomeDomains(pfam, signalDomainIdToPfamNames.CheR) || setContainsSomeDomains(pfam, signalDomainIdToPfamNames.CheR_N)) {
       ranks.push(SecondaryRank.cher)
-    } else if (this.matchHelper_.contains(pfam, 'CheD')) {
+    } else if (setContainsSomeDomains(pfam, signalDomainIdToPfamNames.CheD)) {
       ranks.push(SecondaryRank.ched)
-    } else if (this.matchHelper_.contains(pfam, 'CheZ')) {
+    } else if (setContainsSomeDomains(pfam, signalDomainIdToPfamNames.CheZ)) {
       ranks.push(SecondaryRank.chez)
-    } else if (this.matchHelper_.contains(pfam, 'CheC') && !this.matchHelper_.contains(pfam, 'SpoA')) {
+    } else if (setContainsSomeDomains(pfam, signalDomainIdToPfamNames.CheC) && !pfam.map((domain) => domain.name).includes('SpoA')) {
       ranks.push(SecondaryRank.checx)
-    } else if (this.matchHelper_.contains(pfam, 'MCPsignal')) {
+    } else if (setContainsSomeDomains(pfam, signalDomainIdToPfamNames.MCPsignal)) {
       ranks.push(SecondaryRank.mcp)
     } else {
       ranks.push(SecondaryRank.other)
@@ -195,47 +206,49 @@ class St1Service {
 
   // --------------------------
   removeNonSignalingDomains_(bundle) {
-    bundle.pfam = bundle.pfam.filter((pfamDomain) => this.sets.pfam.contains(pfamDomain))
+    bundle.pfam = bundle.pfam.filter((pfamDomain) => this.matchHelper_.sets.pfam.has(pfamDomain))
     // Currenty all agfam domains are involved in signal transduction
   }
 
   removeOverlappingDomains_(bundle) {
     const container = new RegionContainer()
-    st1utils.removeOverlappingDomains(container, bundle.agfam)
-    st1utils.removeOverlappingDomains(container, bundle.pfam)
+    removeOverlappingDomains(container, bundle.agfam)
+    removeOverlappingDomains(container, bundle.pfam)
   }
 
+  // Assumes array of domains sorted by start
   analyzeAgfamDomains_(agfamDomains, pfamDomains) {
-    const signalDomains = agfamDomains
-      .map((agfamDomain) => {
-        const signalDomain = this.matchHelper_.toSignalDomain.agfam[agfamDomain.name]
-        if (!signalDomain)
-          return
+    const signalDomains = []
+    for (let agfamDomain of agfamDomains) {
+      const signalDomain = this.matchHelper_.toSignalDomain.agfam[agfamDomain.name]
+      if (!signalDomain)
+        continue
 
-        const equivalentPfamNameSet = this.matchHelper_.signalDomainIdToPfamNames[signalDomain.id]
-        st1utils.removeSpecificDomainsOverlappingWith(agfamDomain, equivalentPfamNameSet, pfamDomains)
+      const equivalentPfamNameSet = this.matchHelper_.signalDomainIdToPfamNames[signalDomain.id]
+      removeSpecificDomainsOverlappingWith(agfamDomain, equivalentPfamNameSet, pfamDomains)
 
-        // Remove any pfam HisKA domains that are immediately upstream (within 60 aa)
-        // of the identified Agfam histidine kinase domain.
-        if (signalDomain.id === 'HK_CA' || signalDomain.id === 'HK:Che') {
-          for (let i = pfamDomains.length - 1; i >= 0; --i) {
-            const pfamDomain = pfamDomains[i]
-            const name = pfamDomain.name
-            if (this.matchHelper_.signalDomainIdToPfamNames.HK_CA.has(name) &&
-                pfamDomain.start < agfamDomain.start &&
-                pfamDomain.stop + 60 >= agfamDomain.start
-              ) {
-              pfamDomains.splice(i, 1)
-            }
+      // Remove any pfam HisKA domains that are immediately upstream (within ${MAX_HisKA_CA_SEPARATION} aa)
+      // of the identified Agfam histidine kinase domain.
+      if (signalDomain.id === 'HK_CA' || signalDomain.id === 'HK_CA:Che') {
+        for (let i = pfamDomains.length - 1; i >= 0; --i) {
+          const pfamDomain = pfamDomains[i]
+          const name = pfamDomain.name
+          if (this.matchHelper_.signalDomainIdToPfamNames.HisKA.has(name) &&
+              pfamDomain.start < agfamDomain.start &&
+              pfamDomain.stop + MAX_HisKA_CA_SEPARATION >= agfamDomain.start
+            ) {
+            pfamDomains.splice(i, 1)
           }
         }
+      }
 
-        return signalDomain
-      })
+      signalDomains.push(signalDomain)
+    }
 
     return signalDomains
   }
 
+  // Assumes array of domains sorted by start
   analyzePfamDomains_(pfamDomains) {
     const signalDomains = []
     for (let i = 0, z = pfamDomains.length; i < z; i++) {
@@ -247,18 +260,22 @@ class St1Service {
       signalDomains.push(signalDomain)
 
       // Special case for HK_CA
-      if (signalDomain.id === 'HK_CA') {
+      const hasAnotherDomain = i + 1 < z
+      if (signalDomain.id === 'HK_CA' && hasAnotherDomain) {
         // Since there are multiple models for the histidine kinase substructure,
         // Only count pairs of X + HK_CA or cases where the distance between
         // X and HK_CA is <= 60
         //
         // See case study: hiska_hatpase_spacing for details surrounding the use of 60 amino acids
-        if (pfamDomain.name !== 'HK_CA' &&
-            i + 1 < z &&
-            pfamDomains[i+1].name === 'HK_CA' &&
-            pfamDomain.stop + 60 >= pfamDomains[i+1].start
+        //
+        // Skip over the second HK_CA if they occur in pairs
+        const nextDomain = pfamDomains[i+1]
+        const nextSignalDomain = this.matchHelper_.toSignalDomain.pfam[nextDomain.name]
+        if (nextSignalDomain &&
+            nextSignalDomain.id === 'HK_CA' &&
+            pfamDomain.stop + MAX_HK_CA_SEPARATION >= nextDomain.start
           ) {
-          ++$i
+          ++i
         }
       }
     }
@@ -266,7 +283,7 @@ class St1Service {
   }
 
   analyzeEcfDomains_(ecfDomains) {
-    st1utils.removeOverlappingDomains(new RegionContainer(), ecfDomains)
+    removeOverlappingDomains(new RegionContainer(), ecfDomains)
 
     return ecfDomains.map((ecfDomain) => this.matchHelper_.toSignalDomain.ecf[ecfDomain.name])
       .filter((signalDomain) => !!signalDomain)

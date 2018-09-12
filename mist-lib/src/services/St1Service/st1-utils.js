@@ -96,7 +96,7 @@ exports.removeSpecificDomainsOverlappingWith = (domain, targetDomainNameSet, dom
   domainsToFilter.sort((a, b) => a.start - b.start)
   for (let i = domainsToFilter.length - 1; i >= 0; i--) {
     const domainToFilter = domainsToFilter[i]
-    if (!targetDomainNameSet.contains(domainToFilter.name))
+    if (!targetDomainNameSet.has(domainToFilter.name))
       continue
 
     // Hacky overlap test
@@ -151,4 +151,15 @@ exports.parseSTPISpec = (file) => {
         resolve(spec)
       })
   })
+}
+
+exports.setContainsSomeDomains = function(domains, someSet) {
+  if (!someSet || !domains)
+    return false
+
+  for (let domain of domains) {
+    if (someSet.has(domain.name))
+      return true
+  }
+  return false
 }

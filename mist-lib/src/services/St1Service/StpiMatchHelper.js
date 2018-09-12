@@ -1,25 +1,20 @@
 'use strict'
 
+// Core
+const assert = require('assert')
+
 // Vendor
 const _ = require('lodash')
 
 // Local
+const { setContainsSomeDomains } = require('./st1-utils')
 const { pfamHDUnrelatedSignalDomains, pfamHKNonSignalDomains } = require('./stpi.constants')
-
-function setContainsSomeDomains(someSet, domains) {
-  if (!someSet || !domains)
-    return false
-
-  for (let domain of domains) {
-    if (someSet.contains(domain.name))
-      return true
-  }
-  return false
-}
 
 module.exports =
 class StpiMatchHelper {
   constructor(stpiSpec) {
+    assert(Array.isArray(stpiSpec))
+
     const filters = {
       isMarker: {marker: true},
       isHK_CA: {id: 'HK_CA'},
@@ -75,6 +70,7 @@ class StpiMatchHelper {
       signalDomains.forEach((signalDomain) => {
         nameToSignalDomain[signalDomain.name] = signalDomain
       })
+
       this.toSignalDomain[groupName] = nameToSignalDomain
 
       this.sets[groupName] = new Set(signalDomains.map((signalDomain) => signalDomain.name))
@@ -83,9 +79,19 @@ class StpiMatchHelper {
     this.signalDomainIdToPfamNames = {}
     this.groups.pfam.forEach((signalDomain) => {
       const { id, name } = signalDomain
-      const set = this.signalDomainIdToPfamNames[id]
+      let set = this.signalDomainIdToPfamNames[id]
       if (!set) {
         set = this.signalDomainIdToPfamNames[id] = new Set()
+      }
+      set.add(name)
+    })
+
+    this.signalDomainIdToAgfamNames = {}
+    this.groups.agfam.forEach((signalDomain) => {
+      const { id, name } = signalDomain
+      let set = this.signalDomainIdToAgfamNames[id]
+      if (!set) {
+        set = this.signalDomainIdToAgfamNames[id] = new Set()
       }
       set.add(name)
     })
@@ -163,19 +169,19 @@ class StpiMatchHelper {
 
   findNterminalHatpase(bundle) {
     let hatpase = this.findNterminalKind_(bundle.agfam, this.sets.agfamHatpase)
-    hatpase = this.findNterminalHatpase(bundle.pfam, this.sets.pfamHatpase, hatpase)
+    hatpase = this.findNterminalKind_(bundle.pfam, this.sets.pfamHatpase, hatpase)
     return hatpase
   }
 
   findNterminalReceiver(bundle) {
     let receiver = this.findNterminalKind_(bundle.agfam, this.sets.agfamReceiver)
-    receiver = this.findNterminalHatpase(bundle.pfam, this.sets.pfamReceiver, receiver)
+    receiver = this.findNterminalKind_(bundle.pfam, this.sets.pfamReceiver, receiver)
     return receiver
   }
 
   findNterminalKind_(domains, targetSet, currentMatch = null) {
     for (let domain of domains) {
-      if (targetSet.contains(domain.name) && (!currentMatch || domain.start < currentMatch.start)) {
+      if (targetSet.has(domain.name) && (!currentMatch || domain.start < currentMatch.start)) {
         currentMatch = domain
       }
     }
