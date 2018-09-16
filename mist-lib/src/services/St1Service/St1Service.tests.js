@@ -15,7 +15,7 @@ const {
   pfamHKNonSignalDomains,
 } = require('./stpi.constants')
 
-describe.only('St1Service', () => {
+describe('St1Service', () => {
   describe('analyze', () => {
     let stpiSpec = null
     beforeEach(() => {
@@ -68,15 +68,83 @@ describe.only('St1Service', () => {
         {family: 'pfam', id: 'HK_CA', kind: 'transmitter', name: 'HATPase_c', marker: true},
         {family: 'pfam', id: 'HPt', kind: 'transmitter', name: 'HPt', marker: true},
         {family: 'pfam', id: 'CheW', kind: 'chemotaxis', name: 'CheW', marker: true},
+        {family: 'pfam', id: 'CheB_methylest', kind: 'chemotaxis', name: 'CheB_methylest', marker: true},
+        {family: 'pfam', id: 'CheR', kind: 'chemotaxis', name: 'CheR', marker: true},
+        {family: 'pfam', id: 'CheW', kind: 'chemotaxis', name: 'CheW', marker: true},
+        {family: 'pfam', id: 'CheR_N', kind: 'chemotaxis', name: 'CheR_N', marker: true},
+        {family: 'pfam', id: 'CheD', kind: 'chemotaxis', name: 'CheD', marker: true},
+        {family: 'pfam', id: 'CheZ', kind: 'chemotaxis', name: 'CheZ', marker: true},
+        {family: 'pfam', id: 'CheC', kind: 'chemotaxis', name: 'CheC', marker: true},
+        {family: 'pfam', id: 'MCPsignal', kind: 'chemotaxis', name: 'MCPsignal', marker: true},
         {family: 'agfam', id: 'HK_CA:Che', kind: 'chemotaxis', name: 'HK_CA:Che', marker: true},
       ]
       const service = new St1Service(spec)
 
-      it('chea when it has CheW and transmitter or HK_CA:Che', () => {
+      const testSets = [
+        {
+          domains: ['CheW', 'HPt'],
+          secondaryRank: SecondaryRank.chea,
+        },
+        {
+          domains: ['CheW', 'Response_reg'],
+          secondaryRank: SecondaryRank.chev,
+        },
+        {
+          domains: ['CheW'],
+          secondaryRank: SecondaryRank.chew,
+        },
+        {
+          domains: ['CheB_methylest'],
+          secondaryRank: SecondaryRank.cheb,
+        },
+        {
+          domains: ['CheR'],
+          secondaryRank: SecondaryRank.cher,
+        },
+        {
+          domains: ['CheR_N'],
+          secondaryRank: SecondaryRank.cher,
+        },
+        {
+          domains: ['CheD'],
+          secondaryRank: SecondaryRank.ched,
+        },
+        {
+          domains: ['CheZ'],
+          secondaryRank: SecondaryRank.chez,
+        },
+        {
+          domains: ['CheC'],
+          secondaryRank: SecondaryRank.checx,
+        },
+        {
+          domains: ['CheC', 'SpoA'],
+          secondaryRank: SecondaryRank.other,
+        },
+        {
+          domains: ['MCPsignal'],
+          secondaryRank: SecondaryRank.mcp,
+        },
+      ]
+
+      testSets.forEach((testSet) => {
+        it(`should have a ${testSet.secondaryRank} for ${testSet.domains.join(', ')}`, () => {
+          const domains = testSet.domains.map((name, i) => new Domain(i*100 + 1, i*100 + 100, 100, 1e-10, name).toHmmer3())
+          const aseq = {
+            [PFAM_TOOL_ID]: domains
+          }
+          const result = service.analyze(aseq)
+          expect(result.ranks).eql([PrimaryRank.chemotaxis, testSet.secondaryRank])
+        })
+      })
+
+      it('should have a chea secondary rank when it has CheW or HK_CA:Che', () => {
         const aseq = {
           [PFAM_TOOL_ID]: [
             new Domain(1, 100, 100, 1e-10, 'CheW').toHmmer3(),
-            new Domain(101, 200, 100, 1e-10, 'HPt').toHmmer3(),
+          ],
+          [AGFAM_TOOL_ID]: [
+            new Domain(101, 200, 100, 1e-10, 'HK_CA:Che').toHmmer3(),
           ]
         }
         const result = service.analyze(aseq)
