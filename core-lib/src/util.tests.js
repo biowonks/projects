@@ -174,6 +174,14 @@ describe('util', () => {
         expect: [],
       },
       {
+        value: 'methyl-coenzyme',
+        expect: ['methyl-coenzyme'],
+      },
+      {
+        value: '-',
+        expect: ['-'],
+      },
+      {
         value: 'protein',
         expect: ['protein'],
       },

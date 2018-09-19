@@ -1,10 +1,7 @@
 'use strict'
 
-// Vendor
-const _ = require('lodash')
-
 // Local
-const util = require('core-lib/util')
+const searchUtil = require('lib/util')
 
 module.exports = function(app, middlewares, routeMiddlewares) {
 	let models = app.get('models'),
@@ -14,23 +11,10 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		'version',
 		'locus',
 		'old_locus',
-		'stable_id',
-		'product'
+		'stable_id'
 	]
 
-	const processSearch = (queryValue, target) => {
-		if (!queryValue)
-			return
-		if (!target)
-			throw new Error('processSearch must have a defined target')
-		const terms = util.splitIntoTerms(queryValue).map((term) => `%${term}%`)
-		if (terms.length > 0) {
-			textFieldNames
-			.forEach((fieldName) => {
-				_.set(target, `criteria.where.$or.${fieldName}.$ilike.$all`, terms)
-			})
-		}
-	}
+	const product = 'product'
 
 	// eslint-disable-next-line
 	/**
@@ -55,10 +39,8 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 				models.Aseq,
 				models.Dseq
 			],
-			maxPage: null,
-			permittedOrderFields: '*',
 			permittedWhereFields: [
-				...textFieldNames
+				'id'
 			],
 		}),
 
@@ -74,7 +56,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		(req, res, next) => {
 			let fields = []
 			if (Reflect.has(req.query, 'search')) {
-				processSearch(req.query.search, res.locals)
+				searchUtil.processSearch(req.query.search, res.locals, models.Gene.name, [product], textFieldNames)
 				fields = ["version", "definition"]
 			}
 
