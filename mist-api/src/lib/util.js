@@ -16,7 +16,7 @@ exports.processSearch = (queryValue, target, modelName, textFields, exactMatchFi
     if (!queryValue)
         return
     if (!target)
-        throw new Error('processSearch must have a defined target and modelFieldName')
+        throw new Error('processSearch must have a defined target')
 
     const terms = exports.splitIntoQueryTerms(queryValue)
     if (terms.length > 0) {
@@ -44,6 +44,9 @@ exports.processSearch = (queryValue, target, modelName, textFields, exactMatchFi
 }
 
 exports.processWhereTextCondition = (target, textFields) => {
+    if (!target)
+        throw new Error('processWhereTextCondition must have a defined target')
+
     textFields
     .forEach((fieldName) => {
         const queryValue = _.get(target, `criteria.where.${fieldName}`)

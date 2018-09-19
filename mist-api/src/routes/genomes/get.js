@@ -7,17 +7,17 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 	let models = app.get('models'),
 		helper = app.get('lib').RouteHelper.for(models.Genome)
 
-	const taxonomyTextFieldNames = [
+	const exactMatchFieldNames = ['version']
+
+	const textFieldNames = [
 		'superkingdom',
 		'phylum',
 		'class',
 		'order',
 		'family',
 		'genus',
-		'assembly_level',
+		'assembly_level'
 	]
-
-	const version = 'version'
 
 	return [
 		middlewares.parseCriteriaForMany(models.Genome, {
@@ -28,15 +28,14 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 			permittedWhereFields: [
 				'taxonomy_id',
 				'id',
-				...taxonomyTextFieldNames,
+				...textFieldNames
 			],
 		}),
 		(req, res, next) => {
-			// Provide for searching against name
 			if (Reflect.has(req.query, 'search'))
-				searchUtil.processSearch(req.query.search, res.locals, models.Genome.name, [...taxonomyTextFieldNames, 'name'], [version])
-			// Handle searching taxonomy and assembly_level
-			searchUtil.processWhereTextCondition(req.query.search, taxonomyTextFieldNames)
+				searchUtil.processSearch(req.query.search, res.locals, models.Genome.name, [...textFieldNames, 'name'], exactMatchFieldNames)
+			// Handle filtering using taxonomy and assembly_level
+			searchUtil.processWhereTextCondition(res.locals, textFieldNames)
 
 			next()
 		},

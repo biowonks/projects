@@ -7,14 +7,14 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 	let models = app.get('models'),
 		helper = app.get('lib').RouteHelper.for(models.Gene)
 
-	const textFieldNames = [
+	const exactMatchFieldNames = [
 		'version',
 		'locus',
 		'old_locus',
 		'stable_id'
 	]
 
-	const product = 'product'
+	const textFieldNames = ['product']
 
 	// eslint-disable-next-line
 	/**
@@ -56,7 +56,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		(req, res, next) => {
 			let fields = []
 			if (Reflect.has(req.query, 'search')) {
-				searchUtil.processSearch(req.query.search, res.locals, models.Gene.name, [product], textFieldNames)
+				searchUtil.processSearch(req.query.search, res.locals, models.Gene.name, textFieldNames, exactMatchFieldNames)
 				fields = ["version", "definition"]
 			}
 
