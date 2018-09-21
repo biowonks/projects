@@ -39,27 +39,34 @@ module.exports = function(Sequelize, models, extras) {
 		ecf1: Object.assign(hmmer2(Sequelize, 'ecf1'), {
 			description: 'array of extra cytoplasmic factor predictions',
 		}),
-		st1: {
+		stp: {
 			/**
 			 * {
-			 *  rank: ['2cp', 'rr'],
-			 *  inputs: {
-			 *    // <signal_domain_id>: [<family id>, ...]
-			 *    PAS: [PAS_2, PAS_3],
+			 *  ranks: ['2cp', 'rr'],
+			 *  inputs: [
+			 *    PAS,
 			 *    ...
-			 *  },
-			 *  outputs: {
-			 *    HTH_1: [HTH_1]
-			 *  },
-			 *  domain_counts: {
+			 *  ],
+			 *  inputFunctions: [
+			 * 	  'small molecule binding',
+			 *  ],
+			 *  outputs: [
+			 *    HTH_1,
+			 *    ...
+			 *  ],
+			 *  outputFunctions: [
+			 *    'DNA binding'
+			 *  ],
+			 *  counts: {
 			 *    PAS: 2,
 			 *    HTH_1: 1,
 			 *    ...
-			 *  }
+			 *  },
+			 *  version: 1,
 			 * }
 			 */
 			type: Sequelize.JSONB,
-			description: 'MiST2 signal transduction predictions',
+			description: 'signal transduction prediction data; the version field indicates the spec file version used for these predictions',
 		},
 	}
 

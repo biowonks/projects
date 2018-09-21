@@ -14,7 +14,9 @@ module.exports = function(models, optLogger) {
 		GeneClusterMember,
 		Aseq,
 		Dseq,
-		St1Gene,
+		SignalDomain,
+		SignalDomainMember,
+		SignalGene,
 	} = models
 
 	Worker.hasMany(WorkerModule)
@@ -43,10 +45,11 @@ module.exports = function(models, optLogger) {
 	GeneCluster.hasMany(GeneClusterMember)
 	GeneClusterMember.belongsTo(GeneCluster)
 
-	Genome.hasMany(St1Gene)
-	Component.hasMany(St1Gene)
-	Gene.hasOne(St1Gene)
-	St1Gene.belongsTo(Gene)
-	St1Gene.belongsTo(Component)
-	St1Gene.belongsTo(Genome)
+	SignalDomain.hasMany(SignalDomainMember)
+	SignalDomainMember.belongsTo(SignalDomain)
+
+	Component.hasMany(SignalGene)
+	Gene.hasOne(SignalGene)
+	SignalGene.belongsTo(Gene)
+	SignalGene.belongsTo(Component)
 }

@@ -24,9 +24,8 @@ class AseqsComputeService extends AseqsService {
 		return kToolRunnerIdMap
 	}
 
-	constructor(model, config, logger) {
-		super(model, logger)
-
+	constructor(models, model, config, logger) {
+		super(models, model, logger)
 		this.config_ = config
 	}
 
@@ -58,16 +57,17 @@ class AseqsComputeService extends AseqsService {
 
 		return Promise.each(toolIds, (toolId) => {
 			// eslint-disable-next-line no-mixed-requires
-			let meta = kToolRunnerIdMap.get(toolId),
-				ToolRunner = require(meta.path), // eslint-disable-line global-require
-				toolRunnerConfig = this.config_.toolRunners[toolId],
-				toolRunner = new ToolRunner(toolRunnerConfig)
+			const meta = kToolRunnerIdMap.get(toolId)
+			const ToolRunner = require(meta.path) // eslint-disable-line global-require
+			const toolRunnerConfig = this.config_.toolRunners[toolId]
+			const toolRunner = new ToolRunner(toolRunnerConfig, this.models_)
 
 			toolRunner.on('progress', (progress) => {
 				this.logger_.info(progress, `${toolId} progress event: ${Math.floor(progress.percent)}%`)
 			})
 
-			return toolRunner.run(aseqs)
+			return toolRunner.setup_()
+			.then(() => toolRunner.run(aseqs))
 		})
 		.then(() => aseqs)
 	}

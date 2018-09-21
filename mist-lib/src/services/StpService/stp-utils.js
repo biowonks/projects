@@ -110,7 +110,7 @@ exports.removeSpecificDomainsOverlappingWith = (domain, targetDomainNameSet, dom
  * @param {String} file tab delimited stpi spec file
  * @returns array of hashes
  */
-exports.parseSTPISpec = (file) => {
+exports.parseSTPSpec = (file) => {
   return new Promise((resolve, reject) => {
     const spec = []
     let headerFields
@@ -128,7 +128,6 @@ exports.parseSTPISpec = (file) => {
             accession: null,
             family: null,
             function: null,
-            group: null,
             id: null,
             kind: null,
             marker: false,

@@ -7,16 +7,16 @@ const assert = require('assert')
 const _ = require('lodash')
 
 // Local
-const { setContainsSomeDomains } = require('./st1-utils')
-const { pfamHDUnrelatedSignalDomains, pfamHKNonSignalDomains } = require('./stpi.constants')
+const { setContainsSomeDomains } = require('./stp-utils')
+const { pfamHDUnrelatedSignalDomains, pfamHKNonSignalDomains } = require('./stp.constants')
 
 module.exports =
-class StpiMatchHelper {
-  constructor(stpiSpec) {
-    assert(Array.isArray(stpiSpec))
+class StpMatchHelper {
+  constructor(stpSpec) {
+    assert(Array.isArray(stpSpec))
 
     const filters = {
-      isMarker: {marker: true},
+      isSpecific: {specific: true},
       isHK_CA: {id: 'HK_CA'},
       isHisKA: {id: 'HisKA'},
       isChemotaxis: {kind: 'chemotaxis'},
@@ -25,13 +25,13 @@ class StpiMatchHelper {
       isOutput: {kind: 'output'},
     }
 
-    const agfam = _.filter(stpiSpec, {family: 'agfam'})
-    const ecf = _.filter(stpiSpec, {family: 'ecf'})
-    const pfam = _.filter(stpiSpec, {family: 'pfam'})
+    const agfam = _.filter(stpSpec, {source: 'agfam'})
+    const ecf = _.filter(stpSpec, {source: 'ecf'})
+    const pfam = _.filter(stpSpec, {source: 'pfam'})
     const pfamEcf = _.filter(pfam, {kind: 'ecf'})
     this.groups = {
       agfam,
-      agfamMarker: _.filter(agfam, filters.isMarker),
+      agfamMarker: _.filter(agfam, filters.isSpecific),
       agfamHatpase: _.filter(agfam, filters.isHK_CA),
       agfamTransmitter: _.filter(agfam, filters.isTransmitter),
       agfamReceiver: _.filter(agfam, filters.isReceiver),
@@ -39,17 +39,17 @@ class StpiMatchHelper {
       agfamOutput: _.filter(agfam, filters.isOutput),
 
       ecf,
-      ecfMarker: _.filter(ecf, filters.isMarker),
+      ecfMarker: _.filter(ecf, filters.isSpecific),
 
       pfam,
-      pfamMarker: _.filter(pfam, filters.isMarker),
+      pfamMarker: _.filter(pfam, filters.isSpecific),
       pfamHatpase: _.filter(pfam, filters.isHK_CA),
       pfamHiska: _.filter(pfam, filters.isHisKA),
       pfamChemo: _.filter(pfam, filters.isChemotaxis),
       pfamTransmitter: _.filter(pfam, filters.isTransmitter),
       pfamReceiver: _.filter(pfam, filters.isReceiver),
       pfamEcf,
-      pfamEcfMarker: _.filter(pfamEcf, filters.isMarker),
+      pfamEcfMarker: _.filter(pfamEcf, filters.isSpecific),
       pfamOutput: _.filter(pfam, filters.isOutput),
     }
 
@@ -63,7 +63,7 @@ class StpiMatchHelper {
     }
 
     //      {group name}->{domain name} = signal domain
-    // e.g. {agfam}->{RR} = {family: agfam, name: RR, ...}
+    // e.g. {agfam}->{RR} = {source: agfam, name: RR, ...}
     this.toSignalDomain = {}
     for (let [groupName, signalDomains] of Object.entries(this.groups)) {
       const nameToSignalDomain = {}

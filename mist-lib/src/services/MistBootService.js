@@ -1,13 +1,10 @@
 'use strict'
 
-// Core
-const assert = require('assert')
-
 // Local
-const BootService = require('core-lib/services/BootService'),
-	loadSeqdepotModels = require('seqdepot-lib/models'),
-	loadMistModels = require('../models'),
-	dbConfig = require('../db/config')
+const BootService = require('core-lib/services/BootService')
+const loadSeqdepotModels = require('seqdepot-lib/models')
+const loadMistModels = require('../models')
+const dbConfig = require('../db/config')
 
 module.exports =
 class MistBootService extends BootService {

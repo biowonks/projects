@@ -79,7 +79,8 @@ class AbstractPipelineModule {
 			}
 			yield self.updateWorkerModulesState_(workerModules, 'done')
 			self.shutdownCheck_()
-			yield self.optimize();	self.shutdownCheck_()
+			yield self.optimize()
+			self.shutdownCheck_()
 			yield self.teardown()
 			return workerModules
 		})()
@@ -100,7 +101,8 @@ class AbstractPipelineModule {
 				throw error
 			}
 			yield self.deleteWorkerModules_(workerModules)
-			yield self.optimize();	self.shutdownCheck_()
+			yield self.optimize()
+			self.shutdownCheck_()
 			yield self.teardown()
 		})()
 	}

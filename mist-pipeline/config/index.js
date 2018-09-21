@@ -96,6 +96,10 @@ const config = {
 		ecf1: {
 			databasePath: path.resolve(vendorPath, 'ecf', '1.0', 'ecfs.bin'),
 			ticksPerProgressEvent: 250
+		},
+		stp: {
+			version: 1,
+			ticksPerProgressEvent: 100000,
 		}
 	},
 

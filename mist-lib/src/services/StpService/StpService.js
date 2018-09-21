@@ -6,16 +6,16 @@ const assert = require('assert')
 // Local
 const Domain = require('./Domain')
 const RegionContainer = require('./RegionContainer')
-const StpiMatchHelper = require('./StpiMatchHelper')
+const StpMatchHelper = require('./StpMatchHelper')
 const {
-  parseSTPISpec,
+  parseSTPSpec,
   removeInsignificantOverlaps,
   removeOverlappingDomains,
   removeSpecificDomainsOverlappingWith,
   setContainsSomeDomains,
   sortByStart,
   sortByEvalue,
-} = require('./st1-utils')
+} = require('./stp-utils')
 const {
   AGFAM_TOOL_ID,
   ECF_TOOL_ID,
@@ -26,19 +26,19 @@ const {
   THRESHOLD,
   PrimaryRank,
   SecondaryRank,
-} = require('./stpi.constants')
+} = require('./stp.constants')
 
 module.exports =
-class St1Service {
-  // Async friendly method for creating St1Service
-  static create(stpiSpecFile) {
-    return parseSTPISpec(stpiSpecFile)
-      .then((stpiSpec) => new St1Service(stpiSpec))
+class StpService {
+  // Async friendly method for creating StpService
+  static create(stpSpecFile) {
+    return parseSTPSpec(stpSpecFile)
+      .then((stpSpec) => new StpService(stpSpec))
   }
 
-  constructor(stpiSpec) {
-    this.stpiSpec_ = stpiSpec
-    this.matchHelper_ = new StpiMatchHelper(stpiSpec)
+  constructor(stpSpec) {
+    this.stpiSpec_ = stpSpec
+    this.matchHelper_ = new StpMatchHelper(stpSpec)
   }
 
   analyze(aseq) {
@@ -206,7 +206,9 @@ class St1Service {
 
   // --------------------------
   removeNonSignalingDomains_(bundle) {
-    bundle.pfam = bundle.pfam.filter((pfamDomain) => this.matchHelper_.sets.pfam.has(pfamDomain))
+    bundle.pfam = bundle.pfam.filter((pfamDomain) => {
+      return this.matchHelper_.sets.pfam.has(pfamDomain.name)
+    })
     // Currenty all agfam domains are involved in signal transduction
   }
 
@@ -291,7 +293,7 @@ class St1Service {
 
   summarize_(signalDomains, ranks) {
     // Tally up inputs / outputs / input functions / output functions
-    const domainCounts = {}
+    const counts = {}
     const idSets = {
       input: new Set(),
       output: new Set(),
@@ -302,9 +304,9 @@ class St1Service {
     }
     signalDomains.forEach((signalDomain) => {
       const { id, kind } = signalDomain
-      if (!domainCounts[id])
-        domainCounts[id] = 0
-      domainCounts[id]++
+      if (!counts[id])
+        counts[id] = 0
+      counts[id]++
 
       if (kind !== 'input' && kind !== 'output')
         return
@@ -318,10 +320,10 @@ class St1Service {
       functionSets.output.delete('DNA-binding')
 
     return {
-      domainCounts,
-      inputDomains: Array.from(idSets.input).sort(),
+      counts,
+      inputs: Array.from(idSets.input).sort(),
       inputFunctions: Array.from(functionSets.input).sort(),
-      outputDomains: Array.from(idSets.output).sort(),
+      outputs: Array.from(idSets.output).sort(),
       outputFunctions: Array.from(functionSets.output).sort(),
       ranks,
     }

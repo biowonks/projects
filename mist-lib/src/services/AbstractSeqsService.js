@@ -5,7 +5,8 @@ const assert = require('assert')
 
 module.exports =
 class AbstractSeqsService {
-	constructor(model, logger) {
+	constructor(models, model, logger) {
+		this.models_ = models
 		this.model_ = model
 		this.logger_ = logger
 		this.sequelize_ = model.sequelize

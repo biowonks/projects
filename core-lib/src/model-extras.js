@@ -26,6 +26,29 @@ module.exports = function(Sequelize) {
 		}
 	}
 
+	function arrayWithNoEmptyValues(type = Sequelize.TEXT) {
+		return {
+			// eslint-disable-next-line new-cap
+			type: Sequelize.ARRAY(type),
+			validate: {
+				noEmptyValues: function(value) {
+					if (!value)
+						return value
+
+					if (!Array.isArray(value))
+						throw new Error('Must be an array')
+
+					for (let val of value) {
+						if (!val || /^\s*$/.test(val))
+							throw new Error('Each value must not be empty')
+					}
+
+					return value
+				}
+			}
+		}
+	}
+
 	function dnaStrand() {
 		return {
 			type: Sequelize.TEXT,
@@ -63,6 +86,13 @@ module.exports = function(Sequelize) {
 		let result = accessionVersion()
 		result.allowNull = false
 		return result
+	}
+
+	function requiredBoolean() {
+		return {
+			type: Sequelize.BOOLEAN,
+			allowNull: false,
+		}
 	}
 
 	function requiredPercentage() {
@@ -187,9 +217,11 @@ module.exports = function(Sequelize) {
 	return {
 		accessionVersion,
 		accessionWithoutVersion,
+		arrayWithNoEmptyValues,
 		dnaStrand,
 		requiredDnaStrand,
 		requiredAccessionWithoutVersion,
+		requiredBoolean,
 		positiveInteger,
 		seqId,
 		aseqId,
