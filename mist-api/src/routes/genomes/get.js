@@ -32,9 +32,11 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 			],
 		}),
 		(req, res, next) => {
-			if (Reflect.has(req.query, 'search'))
-				searchUtil.processSearch(req.query.search, res.locals, models.Genome.name, [...textFieldNames, 'name'], exactMatchFieldNames)
-			// Handle filtering using taxonomy and assembly_level
+			if (Reflect.has(req.query, 'search')) {
+				searchUtil.assignExactMatchCriteria(req.query.search, res.locals, exactMatchFieldNames)
+				searchUtil.assignInexactMatchCriteria(req.query.search, res.locals, [...textFieldNames, 'name'])
+			}
+			// Handle searching taxonomy and assembly_level
 			searchUtil.processWhereTextCondition(res.locals, textFieldNames)
 
 			next()

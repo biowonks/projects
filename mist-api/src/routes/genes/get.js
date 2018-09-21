@@ -25,12 +25,14 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 			],
 			permittedWhereFields: [
 				'id'
-			]
+			],
 		}),
 		(req, res, next) => {
 			// Provide for searching against textFieldNames (see above)
-			if (Reflect.has(req.query, 'search'))
-				searchUtil.processSearch(req.query.search, res.locals, models.Gene.name, textFieldNames, exactMatchFieldNames)
+			if (Reflect.has(req.query, 'search')) {
+				searchUtil.assignExactMatchCriteria(req.query.search, res.locals, exactMatchFieldNames)
+				searchUtil.assignInexactMatchCriteria(req.query.search, res.locals, textFieldNames)
+			}
 
 			next()
 		},

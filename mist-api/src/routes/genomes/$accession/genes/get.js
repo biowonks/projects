@@ -56,7 +56,8 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		(req, res, next) => {
 			let fields = []
 			if (Reflect.has(req.query, 'search')) {
-				searchUtil.processSearch(req.query.search, res.locals, models.Gene.name, textFieldNames, exactMatchFieldNames)
+				searchUtil.assignExactMatchCriteria(req.query.search, res.locals, exactMatchFieldNames)
+				searchUtil.assignInexactMatchCriteria(req.query.search, res.locals, textFieldNames)
 				fields = ["version", "definition"]
 			}
 
