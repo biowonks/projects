@@ -4,8 +4,8 @@
 const assert = require('assert')
 
 // Local
-const Domain = require('./Domain')
-const RegionContainer = require('./RegionContainer')
+const Domain = require('core-lib/bio/Domain')
+const RegionContainer = require('core-lib/bio/RegionContainer')
 const StpMatchHelper = require('./StpMatchHelper')
 const {
   parseSTPSpec,
@@ -13,8 +13,6 @@ const {
   removeOverlappingDomains,
   removeSpecificDomainsOverlappingWith,
   setContainsSomeDomains,
-  sortByStart,
-  sortByEvalue,
 } = require('./stp-utils')
 const {
   AGFAM_TOOL_ID,
@@ -49,7 +47,7 @@ class StpService {
 
     this.removeNonSignalingDomains_(bundle)
     this.removeOverlappingDomains_(bundle)
-    sortByStart(bundle.pfam)
+    Domain.sortByStart(bundle.pfam)
 
     const agfamSignalDomains = this.analyzeAgfamDomains_(bundle.agfam, bundle.pfam)
     const pfamSignalDomains = this.analyzePfamDomains_(bundle.pfam)
@@ -73,7 +71,7 @@ class StpService {
     }
 
     for (let key in bundle)
-      sortByEvalue(bundle[key])
+      Domain.sortByEvalue(bundle[key])
 
     removeInsignificantOverlaps(bundle.pfam, THRESHOLD)
 

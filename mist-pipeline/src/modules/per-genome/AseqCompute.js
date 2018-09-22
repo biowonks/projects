@@ -93,6 +93,15 @@ class AseqCompute extends PerGenomePipelineModule {
 		})
 	}
 
+	/**
+	 * The following provides for derived modules to provide alternate criteria for re-running
+	 * a particular slice of data. This default implementation does nothing. See the Stp module
+	 * for an example of how this is used otherwise.
+	 */
+	alternateAseqsMissingDataCondition() {
+		return null
+	}
+
 	// ----------------------------------------------------
 	// Private methods
 	/**
@@ -113,11 +122,12 @@ class AseqCompute extends PerGenomePipelineModule {
 		const otherAseqFields = targetAseqFields.length ? ', ' + targetAseqFields.join(', ') : ''
 		const toolSelectFields = toolIds.map((x) => `case when ${x} is not null then 1 else null end`).join(', ')
 		const anyToolNullClause = toolIds.map((x) => x + ' is null').join(' OR ')
+		const alternateCondition = this.alternateCondition_()
 		const sql = `
 SELECT c.id, c.sequence, ${toolSelectFields} ${otherAseqFields}
 FROM ${Component.getTableName()} a JOIN ${Gene.getTableName()} b ON (a.id = b.component_id)
 	JOIN ${Aseq.getTableName()} c ON (b.aseq_id = c.id)
-WHERE a.genome_id = ? AND b.aseq_id is not null and (${anyToolNullClause})
+WHERE a.genome_id = ? AND b.aseq_id is not null AND (${anyToolNullClause} ${alternateCondition})
 ORDER BY b.id`
 
 		return this.sequelize_.query(sql, {
@@ -157,12 +167,20 @@ ORDER BY b.id`
 	 * @returns {Promise}
 	 */
 	saveGroups_(groups, transaction) {
+		const alternateCondition = this.alternateCondition_()
 		return Promise.each(groups, (group) => {
 			this.logger_.info({
 				numAseqs: group.aseqs.length,
 				toolIds: group.toolIds
 			}, `Saving ${group.toolIds.join(', ')} results for ${group.aseqs.length} aseqs`)
-			return this.aseqsService_.saveToolData(group.aseqs, group.toolIds, transaction)
+			return this.aseqsService_.saveToolData(group.aseqs, group.toolIds, alternateCondition, transaction)
 		})
+	}
+
+	alternateCondition_() {
+		let alternateCondition = this.alternateAseqsMissingDataCondition() || ''
+		if (alternateCondition)
+			alternateCondition = 'OR (' + alternateCondition + ')'
+		return alternateCondition
 	}
 }

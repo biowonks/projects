@@ -33,16 +33,22 @@ class GeneClusters extends PerGenomePipelineModule {
 	}
 
 	undo() {
-		this.logger_.info('Deleting genome genes_clusters')
-		return this.genome_.getComponents({
-			attributes: ['id']
-		})
-		.then((components) => {
-			let componentIds = components.map((component) => component.id)
-			return this.GeneCluster_.destroy({
-				where: {
-					component_id: componentIds
-				}
+		return this.sequelize_.transaction({
+			isolationLevel: 'READ COMMITTED'
+		}, (transaction) => {
+			this.logger_.info('Deleting genome genes_clusters')
+			return this.genome_.getComponents({
+				attributes: ['id'],
+				transaction,
+			})
+			.then((components) => {
+				let componentIds = components.map((component) => component.id)
+				return this.GeneCluster_.destroy({
+					where: {
+						component_id: componentIds
+					},
+					transaction
+				})
 			})
 		})
 	}

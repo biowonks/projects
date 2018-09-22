@@ -73,6 +73,7 @@ ${putil.modulesHelp(availableModules.perGenome)}
 .usage('[options] <module ...>')
 .option('-g, --genome-ids <genome id,...>', 'CSV list of genome ids', parseGenomeIds)
 .option('-q, --query <value>', 'arbitrary query data passed to each module')
+.option('-o, --optimize', 'analyze database tables after each module completes (undo or redo, per-genome only)')
 .option('-r, --redo <module,...>', 'CSV list of module names', (value) => value.split(','))
 .option('-u, --undo <module,...>', 'CSV list of module names', (value) => value.split(','))
 .parse(process.argv)
@@ -80,7 +81,6 @@ ${putil.modulesHelp(availableModules.perGenome)}
 const requestedModuleIds = ModuleId.nest(ModuleId.fromStrings([...(program.redo || []), ...program.args]))
 const requestedRedoModuleIds = ModuleId.nest(ModuleId.fromStrings(program.redo || []))
 const requestedUndoModuleIds = ModuleId.nest(ModuleId.fromStrings(program.undo || []))
-
 if (!requestedUndoModuleIds.length && !requestedModuleIds.length) {
 	program.outputHelp()
 	process.exit(1)
@@ -107,6 +107,9 @@ let logger = bootService.logger()
 let worker = null
 let shuttingDown = false
 let numShutdownRequests = 0
+const moduleOptions = {
+	optimize: !!program.optimize,
+}
 
 process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)
@@ -552,7 +555,7 @@ function undoModules(app, genome, unnestedUndoModuleIds, depGraph, moduleClassMa
 			logger.info(`Undoing module: ${moduleId}`)
 			const moduleInstance = new ModuleClass(app, genome, moduleId.subNames())
 			const workerModules = depGraph.toNodes(unnestedModuleIds).map((x) => x.workerModule())
-			yield moduleInstance.mainUndo(workerModules)
+			yield moduleInstance.mainUndo(workerModules, moduleOptions)
 			depGraph.removeState(workerModules)
 			logger.info(`Undo finished normally: ${moduleId}`)
 		}
@@ -583,7 +586,7 @@ function runModules(app, genome, unnestedModuleIds, depGraph, moduleClassMap) {
 			})
 			logger.info(`Starting module: ${moduleId}`)
 			const moduleInstance = new ModuleClass(app, genome, moduleId.subNames())
-			const workerModules = yield moduleInstance.main()
+			const workerModules = yield moduleInstance.main(moduleOptions)
 			depGraph.updateState(workerModules)
 			logger.info(`Module finished normally: ${moduleId}`)
 		}

@@ -1,7 +1,7 @@
 'use strict'
 
 // Local
-const StpService = require('mist-lib/services/StpService/StpService')
+const StpService = require('mist-lib/services/Stp/StpService')
 
 const AbstractToolRunner = require('./AbstractToolRunner')
 const Pfam31ToolRunner = require('./Pfam31ToolRunner')
@@ -16,21 +16,25 @@ class StpToolRunner extends AbstractToolRunner {
   constructor(config, models) {
     super(config, models)
     this.stpService_ = null
+    this.version_ = config.version
   }
 
   setup_() {
-    return this.models_.SignalDomain.getMinimalStpSpec(this.config_.version)
-      .then((stpSpec) => {
-        this.stpService_ = new StpService(stpSpec)
-      })
+    return this.models_.SignalDomain.getMinimalStpSpec(this.version_)
+    .then((stpSpec) => {
+      this.stpService_ = new StpService(stpSpec)
+    })
   }
 
   onRun_(aseqs) {
     return new Promise((resolve, reject) => {
       try {
         aseqs.forEach((aseq) => {
-          const result = this.stpService_.analyze(aseq)
-          aseq[kStpId] = result !== null ? result : {}
+          const stp = this.stpService_.analyze(aseq) || {version: null}
+          delete stp.inputFunctions
+          delete stp.outputFunctions
+          stp.version = this.version_
+          aseq[kStpId] = stp
         })
       } catch (error) {
         reject(error)
