@@ -99,7 +99,7 @@ const config = {
 		},
 		stp: {
 			version: 1,
-			ticksPerProgressEvent: 100000,
+			ticksPerProgressEvent: 50000,
 		}
 	},
 
