@@ -1,5 +1,8 @@
 'use strict'
 
+// Core
+const assert = require('assert')
+
 // Local
 const { tsvFile2ArrayOfObjects } = require('core-lib/util')
 const Region = require('core-lib/bio/Region')
@@ -104,7 +107,8 @@ exports.removeSpecificDomainsOverlappingWith = (domain, targetDomainNameSet, dom
 }
 
 exports.setContainsSomeDomains = function(domains, someSet) {
-  if (!someSet || !domains)
+  assert(someSet, 'missing required argument')
+  if (!domains)
     return false
 
   for (let domain of domains) {

@@ -170,6 +170,7 @@ class StpMatchHelper {
   findNterminalHatpase(bundle) {
     let hatpase = this.findNterminalKind_(bundle.agfam, this.sets.agfamHatpase)
     hatpase = this.findNterminalKind_(bundle.pfam, this.sets.pfamHatpase, hatpase)
+    hatpase = this.findNterminalKind_(bundle.pfam, this.sets.pfamHiska, hatpase)
     return hatpase
   }
 
