@@ -47,12 +47,7 @@ class FileMapper {
 		if (!this.genome_)
 			throw new Error('Genome has not been set. Please call setGenome first')
 
-		let urlAssemblyName = this.genome_.assembly_name.replace(/ /g, '_')
-			.replace(/\//g, '_')
-			.replace(/[#:,]/g, '_')
-			.replace(/_{2,}/, '_')
-			.replace(/[()]/g, '_')
-		return `${this.genome_.version}_${urlAssemblyName}`
+		return this.genome_.ftp_path.split('/').pop();
 	}
 
 	ncbiUrlFor(sourceType) {
