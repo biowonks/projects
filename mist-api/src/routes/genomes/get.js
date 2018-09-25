@@ -8,7 +8,6 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		helper = app.get('lib').RouteHelper.for(models.Genome)
 
 	const exactMatchFieldNames = ['version']
-
 	const textFieldNames = [
 		'superkingdom',
 		'phylum',

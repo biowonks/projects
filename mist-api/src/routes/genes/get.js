@@ -8,10 +8,10 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		helper = app.get('lib').RouteHelper.for(models.Gene)
 
 	const exactMatchFieldNames = [
-			'version',
-			'locus',
-			'old_locus',
-			'stable_id'
+		'version',
+		'locus',
+		'old_locus',
+		'stable_id'
 	]
 	const textFieldNames = ['product']
 

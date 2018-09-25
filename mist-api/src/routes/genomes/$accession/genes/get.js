@@ -13,9 +13,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		'old_locus',
 		'stable_id'
 	]
-
 	const textFieldNames = ['product']
-
 	// eslint-disable-next-line
 	/**
 	 * Series of middleware functions that limit returning all genes for a particular genome.
