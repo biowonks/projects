@@ -1,27 +1,28 @@
 'use strict'
 
 // Core
-const fs = require('fs')
-
-// Vendor
-const split = require('split')
+const assert = require('assert')
 
 // Local
-const Region = require('./Region')
+const { tsvFile2ArrayOfObjects } = require('core-lib/util')
+const Region = require('core-lib/bio/Region')
+const RegionContainer = require('core-lib/bio/RegionContainer')
 
 // Constants
 exports.kTolerance = 10
-
-/**
- * @param {Domain[]} domains
- */
-exports.sortByEvalue = (domains) => {
-  domains.sort((a, b) => a.evalue - b.evalue)
-}
-
-exports.sortByStart = (domains) => {
-  domains.sort((a, b) => a.start - b.start)
-}
+const kStpSpecFieldNames = new Set([
+  'group_name',
+  'accession',
+  'name',
+  'superfamily',
+  'description',
+  'function',
+  'kind',
+  'specific',
+  'source',
+  'pubmed_ids',
+  'pdb_ids',
+])
 
 /**
  * @param {RegionContainer} regionContainer
@@ -95,7 +96,7 @@ exports.removeSpecificDomainsOverlappingWith = (domain, targetDomainNameSet, dom
   domainsToFilter.sort((a, b) => a.start - b.start)
   for (let i = domainsToFilter.length - 1; i >= 0; i--) {
     const domainToFilter = domainsToFilter[i]
-    if (!targetDomainNameSet.contains(domainToFilter.name))
+    if (!targetDomainNameSet.has(domainToFilter.name))
       continue
 
     // Hacky overlap test
@@ -105,69 +106,59 @@ exports.removeSpecificDomainsOverlappingWith = (domain, targetDomainNameSet, dom
   }
 }
 
+exports.setContainsSomeDomains = function(domains, someSet) {
+  assert(someSet, 'missing required argument')
+  if (!domains)
+    return false
+
+  for (let domain of domains) {
+    if (someSet.has(domain.name))
+      return true
+  }
+  return false
+}
+
 /**
  * @param {String} file tab delimited stpi spec file
  * @returns array of hashes
  */
-exports.parseSTPISpec = (file) => {
-  return new Promise((resolve, reject) => {
-    const spec = []
-    let headerFields
+exports.readStpSpecFile = (file) => {
+  return tsvFile2ArrayOfObjects(file)
+  .then((rows) => {
+    rows.forEach((row) => {
+      row.group_name = row.group_name || row.name
 
-    fs.createReadStream(file)
-      .pipe(split())
-      .on('data', (line) => {
-        const isEmptyLine = /^\s*$/.test(line)
-        if (isEmptyLine)
-          return
+      if (row.specific) {
+        const specific = row.specific.toLowerCase()
+        row.specific = specific === 'yes' || specific == 1 || specific === 'true'
+      } else {
+        row.specific = false
+      }
 
-        if (headerFields) {
-          const parts = line.split(/\t/)
-          const row = {
-            accession: null,
-            family: null,
-            function: null,
-            group: null,
-            id: null,
-            kind: null,
-            marker: false,
-            name: null,
-          }
-          headerFields
-            .forEach((fieldName, i) => {
-              if (Reflect.has(row, fieldName) && !!parts[i])
-                row[fieldName] = parts[i]
-            })
-          if (row.marker)
-            row.marker = true
-          spec.push(row)
-        } else {
-          headerFields = line.split(/\t/)
-        }
-      })
-      .on('error', reject)
-      .on('end', () => {
-        resolve(spec)
-      })
+      row.pubmed_ids = combineIds(row, 'pubmed', 3, /^\d+$/)
+      row.pdb_ids = combineIds(row, 'pdb', 3, /^\S+$/)
+    })
+
+    return rows.map((row) => exports.pluck(row, kStpSpecFieldNames))
   })
 }
 
-// exports.getFamilyNameSet = (spec, family) => {
-//   const domainNames = spec
-//     .filter((signalDomain) => signalDomain.family === family)
-//     .map((signalDomain) => signalDomain.name)
+function combineIds(row, prefix, amount, regex) {
+  const ids = []
+  for (let i = 1; i <= amount; i++) {
+    const fieldName = prefix + i
+    const id = row[fieldName]
+    if (id && regex.test(id)) {
+      ids.push(id)
+    }
+  }
+  return ids
+}
 
-//   return new Set(domainNames)
-// }
-
-// exports.pfamNameSet = (spec) => exports.getFamilyNameSet(spec, 'pfam')
-// exports.agfamNameSet = (spec) => exports.getFamilyNameSet(spec, 'agfam')
-// exports.ecfNameSet = (spec) => exports.getFamilyNameSet(spec, 'ecf')
-
-// exports.setContainsSomeDomains = (someSet, domains) => {
-//   for (let domain of domains) {
-//     if (someSet.contains(domain.name))
-//       return true
-//   }
-//   return false
-// }
+exports.pluck = (row, fieldNames) => {
+  const result = {}
+  fieldNames.forEach((fieldName) => {
+    result[fieldName] = Reflect.has(row, fieldName) ? row[fieldName] : null
+  })
+  return result
+}

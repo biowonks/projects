@@ -10,7 +10,8 @@ const AseqModelFn = require('seqdepot-lib/models/Aseq.model')
 
 // Other
 const kAseqModelToolIdSet = new Set(AseqModelFn.kToolIdFieldNames)
-const kSupportedTools = AseqsComputeService.tools().filter((x) => kAseqModelToolIdSet.has(x.id))
+const kSupportedTools = AseqsComputeService.tools()
+	.filter((x) => kAseqModelToolIdSet.has(x.id) && !x.hidden)
 const kSupportedSubModuleMap = new Map(kSupportedTools.map((x) => [
 		x.id,
 		{
@@ -44,12 +45,8 @@ class AseqCompute extends PerGenomePipelineModule {
 	constructor(app, genome, toolIds) {
 		super(app, genome)
 		this.toolIds_ = toolIds
-		this.aseqsService_ = new AseqsComputeService(this.models_.Aseq, app.config, this.logger_)
+		this.aseqsService_ = new AseqsComputeService(this.models_, this.models_.Aseq, app.config, this.logger_)
 		this.totalAseqsToProcess_ = null
-	}
-
-	optimize() {
-		return this.analyze(this.models_.Aseq.getTableName())
 	}
 
 	undo() {
@@ -57,7 +54,28 @@ class AseqCompute extends PerGenomePipelineModule {
 	}
 
 	run() {
-		return this.aseqsMissingData_(this.toolIds_)
+		return this.sequelize_.transaction({
+			isolationLevel: 'READ COMMITTED'
+		}, (transaction) => {
+			return this.doRun(transaction)
+		})
+	}
+
+	/**
+	 * @returns {Array.<Object>} - an array of worker module records, one for each tool id provided to the constructor
+	 */
+	workerModuleRecords() {
+		return this.toolIds_.map((toolId) => {
+			let data = this.newWorkerModuleData()
+			data.module += ':' + toolId
+			return data
+		})
+	}
+
+	// ----------------------------------------------------
+	// Protected methods
+	doRun(transaction) {
+		return this.aseqsMissingData_(this.toolIds_, transaction)
 		.then((aseqs) => {
 			this.totalAseqsToProcess_ = aseqs.length
 			let toolIdString = this.toolIds_.join(', ')
@@ -70,19 +88,18 @@ class AseqCompute extends PerGenomePipelineModule {
 			this.shutdownCheck_()
 			let groups = this.aseqsService_.groupByUndoneTools(aseqs, this.toolIds_)
 			return this.computeGroups_(groups)
-			.then(() => this.saveGroups_(groups))
+			.then(() => this.saveGroups_(groups, transaction))
+			.then(() => aseqs)
 		})
 	}
 
 	/**
-	 * @returns {Array.<Object>} - an array of worker module records, one for each tool id provided to the constructor
+	 * The following provides for derived modules to provide alternate criteria for re-running
+	 * a particular slice of data. This default implementation does nothing. See the Stp module
+	 * for an example of how this is used otherwise.
 	 */
-	workerModuleRecords() {
-		return this.toolIds_.map((toolId) => {
-			let data = super.newWorkerModuleData()
-			data.module += ':' + toolId
-			return data
-		})
+	alternateAseqsMissingDataCondition() {
+		return null
 	}
 
 	// ----------------------------------------------------
@@ -105,17 +122,19 @@ class AseqCompute extends PerGenomePipelineModule {
 		const otherAseqFields = targetAseqFields.length ? ', ' + targetAseqFields.join(', ') : ''
 		const toolSelectFields = toolIds.map((x) => `case when ${x} is not null then 1 else null end`).join(', ')
 		const anyToolNullClause = toolIds.map((x) => x + ' is null').join(' OR ')
+		const alternateCondition = this.alternateCondition_()
 		const sql = `
 SELECT c.id, c.sequence, ${toolSelectFields} ${otherAseqFields}
 FROM ${Component.getTableName()} a JOIN ${Gene.getTableName()} b ON (a.id = b.component_id)
 	JOIN ${Aseq.getTableName()} c ON (b.aseq_id = c.id)
-WHERE a.genome_id = ? AND b.aseq_id is not null and (${anyToolNullClause})
+WHERE a.genome_id = ? AND b.aseq_id is not null AND (${anyToolNullClause} ${alternateCondition})
 ORDER BY b.id`
 
 		return this.sequelize_.query(sql, {
 			model: this.models_.Aseq,
 			replacements: [this.genome_.id],
-			transaction: optTransaction
+			transaction: optTransaction,
+			type: this.sequelize_.QueryTypes.SELECT,
 		})
 	}
 
@@ -144,19 +163,24 @@ ORDER BY b.id`
 	 * Persists each of the results for each group of tool results.
 	 *
 	 * @param {Array.<Object>} groups
+	 * @param {Transaction} transaction
 	 * @returns {Promise}
 	 */
-	saveGroups_(groups) {
-		return this.sequelize_.transaction({
-			isolationLevel: 'READ COMMITTED'
-		}, (transaction) => {
-			return Promise.each(groups, (group) => {
-				this.logger_.info({
-					numAseqs: group.aseqs.length,
-					toolIds: group.toolIds
-				}, `Saving ${group.toolIds.join(', ')} results for ${group.aseqs.length} aseqs`)
-				return this.aseqsService_.saveToolData(group.aseqs, group.toolIds, transaction)
-			})
+	saveGroups_(groups, transaction) {
+		const alternateCondition = this.alternateCondition_()
+		return Promise.each(groups, (group) => {
+			this.logger_.info({
+				numAseqs: group.aseqs.length,
+				toolIds: group.toolIds
+			}, `Saving ${group.toolIds.join(', ')} results for ${group.aseqs.length} aseqs`)
+			return this.aseqsService_.saveToolData(group.aseqs, group.toolIds, alternateCondition, transaction)
 		})
+	}
+
+	alternateCondition_() {
+		let alternateCondition = this.alternateAseqsMissingDataCondition() || ''
+		if (alternateCondition)
+			alternateCondition = 'OR (' + alternateCondition + ')'
+		return alternateCondition
 	}
 }

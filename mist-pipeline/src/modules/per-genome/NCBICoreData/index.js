@@ -56,8 +56,8 @@ class NCBICoreData extends PerGenomePipelineModule {
 
 		this.ncbiDataHelper_ = new NCBIDataHelper(this.fileMapper_, this.logger_)
 		this.locationStringParser_ = new LocationStringParser()
-		this.aseqsService_ = new AseqsService(this.models_.Aseq, this.logger_)
-		this.dseqsService_ = new DseqsService(this.models_.Dseq, this.logger_)
+		this.aseqsService_ = new AseqsService(this.models_, this.models_.Aseq, this.logger_)
+		this.dseqsService_ = new DseqsService(this.models_, this.models_.Dseq, this.logger_)
 		this.idService_ = new IdService(this.models_.IdSequence, this.logger_)
 		// {RefSeq accession: {}}
 		this.assemblyReportMap_ = new Map()

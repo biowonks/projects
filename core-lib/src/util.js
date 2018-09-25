@@ -2,6 +2,10 @@
 
 // Core
 const assert = require('assert')
+const fs = require('fs')
+
+// Vendor
+const split = require('split')
 
 // Constants
 const kDefaultNeighborAmount = 5
@@ -105,4 +109,39 @@ exports.splitIntoTerms = (value) => {
     .concat(quotedTerms)
     .map((word) => word.replace(/[^\w .]/g, '').trim()) // Allow word characters, spaces, and periods
     .filter((word) => !!word)
+}
+
+/**
+ * @param {string} file input file containing tsv data
+ * @returns {Promise.<Object[]>} array of objects that map to the first line containing header fields
+ */
+exports.tsvFile2ArrayOfObjects = (file) => {
+  return new Promise((resolve, reject) => {
+    const result = []
+    let headerFields
+
+    fs.createReadStream(file)
+      .pipe(split())
+      .on('data', (line) => {
+        const isEmptyLine = /^\s*$/.test(line)
+        if (isEmptyLine)
+          return
+
+        if (headerFields) {
+          const parts = line.split(/\t/)
+          const row = {}
+          headerFields.forEach((fieldName, i) => {
+            row[fieldName] = !!parts[i] ? parts[i].trim() : null
+          })
+
+          result.push(row)
+        } else {
+          headerFields = line.toLowerCase().split(/\t/)
+        }
+      })
+      .on('error', reject)
+      .on('end', () => {
+        resolve(result)
+      })
+  })
 }

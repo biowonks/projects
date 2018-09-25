@@ -24,7 +24,7 @@ module.exports = {
 
 	migrations: {
 		path: path.resolve(__dirname, 'migrations'),
-		pattern: /^\d{4}_[\w-_]+\.sql$/
+		pattern: /^\d{4}_[\w-_\.]+\.sql$/
 	},
 
 	seqdepot: {
