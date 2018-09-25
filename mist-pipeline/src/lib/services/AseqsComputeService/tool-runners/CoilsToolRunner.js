@@ -1,8 +1,8 @@
 'use strict'
 
 // Local
-const FastaStreamToolRunner = require('./FastaStreamToolRunner'),
-	coilsStream = require('lib/streams/coils-stream')
+const FastaStreamToolRunner = require('./FastaStreamToolRunner')
+const coilsStream = require('lib/streams/coils-stream')
 
 module.exports =
 class CoilsToolRunner extends FastaStreamToolRunner {

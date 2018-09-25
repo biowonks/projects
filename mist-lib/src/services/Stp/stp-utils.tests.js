@@ -4,9 +4,9 @@
 const path = require('path')
 
 // Local
-const Domain = require('./Domain')
-const Region = require('./Region')
-const RegionContainer = require('./RegionContainer')
+const Domain = require('core-lib/bio/Domain')
+const Region = require('core-lib/bio/Region')
+const RegionContainer = require('core-lib/bio/RegionContainer')
 const stpUtils = require('./stp-utils')
 
 const kOriginalTolerance = stpUtils.kTolerance

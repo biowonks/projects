@@ -26,7 +26,7 @@ class AbstractToolRunner extends EventEmitter {
 		this.models_ = models
 
 		// Progress
-		this.ticksPerProgressEvent_ = config.ticksPerProgressEvent || 0
+		this.ticksPerProgressEvent_ = this.config_.ticksPerProgressEvent || 0
 		this.progressEnabled_ = this.ticksPerProgressEvent_ > 0
 		this.stopWatch_ = new StopWatch()
 		this.completedAseqs_ = 0

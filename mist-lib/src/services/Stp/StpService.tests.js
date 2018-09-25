@@ -1,7 +1,7 @@
 'use strict'
 
 // Local
-const Domain = require('./Domain')
+const Domain = require('core-lib/bio/Domain')
 const StpService = require('./StpService')
 const {
   AGFAM_TOOL_ID,
