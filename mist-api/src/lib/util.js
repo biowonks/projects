@@ -44,10 +44,8 @@ exports.processWhereTextCondition = (target, textFields) => {
     textFields
     .forEach((fieldName) => {
         const queryValue = _.get(target, `criteria.where.${fieldName}`)
-        if (queryValue) {
-            const terms = exports.splitIntoQueryTerms(queryValue)
-            if (terms.length > 0)
-                _.set(target, ['criteria', 'where', fieldName, Op.iLike, Op.all], terms)
-        }
+        const terms = exports.splitIntoQueryTerms(queryValue)
+        if (terms.length > 0)
+            _.set(target, ['criteria', 'where', fieldName, Op.iLike, Op.all], terms)
     })
 }
