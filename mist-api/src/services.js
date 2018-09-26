@@ -7,6 +7,7 @@ const path = require('path')
 const AnalyticsService = require('mist-lib/services/AnalyticsService')
 const CriteriaService = require('lib/services/CriteriaService')
 const TaxonomyService = require('mist-lib/services/TaxonomyService')
+const SignalTransductionService = require('mist-lib/services/SignalTransductionService')
 
 module.exports = function(app) {
 	const logger = app.get('logger')
@@ -19,6 +20,7 @@ module.exports = function(app) {
 			beaconImageFile: path.resolve(__dirname, '..', 'assets', 'img', 'beacon.gif')
 		}),
 		criteria: new CriteriaService(models),
+		signalTransduction: new SignalTransductionService(models, config.signalTransduction.version),
 		taxonomy: new TaxonomyService(models.Taxonomy, logger)
 	}
 }
