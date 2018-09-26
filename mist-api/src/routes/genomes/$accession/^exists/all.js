@@ -12,6 +12,6 @@ module.exports = function(app, middlewares) {
     queryAttribute: 'version',
     paramName: 'accession',
     targetName: 'genome',
-    attributes: ['id'] // Only return the genome id field, which we use in middleware #3
+    attributes: ['id'] // Only return the genome id field
   })
 }

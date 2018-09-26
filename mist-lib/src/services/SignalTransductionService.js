@@ -91,8 +91,8 @@ class SignalTransductionService {
 
     return [
       takeGroupOrUseDefault('chemotaxis'),
-      takeGroupOrUseDefault('receiver'),
       takeGroupOrUseDefault('transmitter'),
+      takeGroupOrUseDefault('receiver'),
       ...inputsOutputs(),
       ecf,
       unknown,
