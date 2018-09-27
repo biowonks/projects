@@ -14,6 +14,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		'stable_id'
 	]
 	const textFieldNames = ['product']
+
 	// eslint-disable-next-line
 	/**
 	 * Series of middleware functions that limit returning all genes for a particular genome.
@@ -23,10 +24,10 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		middlewares.parseCriteriaForMany(models.Gene, {
 			accessibleModels: [
 				models.Aseq,
-				models.Dseq
+				models.Dseq,
 			],
 			permittedWhereFields: [
-				'id'
+				'id',
 			],
 		}),
 
@@ -43,17 +44,18 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 			let fields = []
 			if (Reflect.has(req.query, 'search')) {
 				searchUtil.assignExactMatchCriteria(req.query.search, res.locals, exactMatchFieldNames)
-				searchUtil.assignInexactMatchCriteria(req.query.search, res.locals, textFieldNames)
-				fields = ["version", "definition"]
+				searchUtil.assignPartialMatchCriteria(req.query.search, res.locals, textFieldNames)
+				fields.push('version')
+				fields.push('definition')
 			}
 
 			res.locals.criteria.include.push({
 				model: models.Component,
 				attributes: fields,
 				where: {
-					genome_id: res.locals.genome.id
+					genome_id: res.locals.genome.id,
 				},
-				required: true
+				required: true,
 			})
 
 			next()
@@ -72,14 +74,14 @@ module.exports.docs = function(modelExamples) {
 		example: {
 			request: {
 				parameters: {
-					accession: modelExamples.Genome.version
-				}
+					accession: modelExamples.Genome.version,
+				},
 			},
 			response: {
 				body: [
-					modelExamples.Gene
-				]
-			}
-		}
+					modelExamples.Gene,
+				],
+			},
+		},
 	}
 }

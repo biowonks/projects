@@ -11,7 +11,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		'version',
 		'locus',
 		'old_locus',
-		'stable_id'
+		'stable_id',
 	]
 	const textFieldNames = ['product']
 
@@ -21,17 +21,16 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 				models.Genome,
 				models.Component,
 				models.Aseq,
-				models.Dseq
+				models.Dseq,
 			],
 			permittedWhereFields: [
-				'id'
+				'id',
 			],
 		}),
 		(req, res, next) => {
-			// Provide for searching against textFieldNames (see above)
 			if (Reflect.has(req.query, 'search')) {
 				searchUtil.assignExactMatchCriteria(req.query.search, res.locals, exactMatchFieldNames)
-				searchUtil.assignInexactMatchCriteria(req.query.search, res.locals, textFieldNames)
+				searchUtil.assignPartialMatchCriteria(req.query.search, res.locals, textFieldNames)
 			}
 
 			next()
@@ -47,9 +46,9 @@ module.exports.docs = function(modelExamples) {
 		example: {
 			response: {
 				body: [
-					modelExamples.Gene
-				]
-			}
-		}
+					modelExamples.Gene,
+				],
+			},
+		},
 	}
 }

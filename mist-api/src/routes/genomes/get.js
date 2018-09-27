@@ -9,34 +9,33 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 
 	const exactMatchFieldNames = ['version']
 	const textFieldNames = [
+		'name',
 		'superkingdom',
 		'phylum',
 		'class',
 		'order',
 		'family',
 		'genus',
-		'assembly_level'
+		'assembly_level',
 	]
 
 	return [
 		middlewares.parseCriteriaForMany(models.Genome, {
 			accessibleModels: [
 				models.WorkerModule,
-				models.Component
+				models.Component,
 			],
 			permittedWhereFields: [
-				'taxonomy_id',
 				'id',
-				...textFieldNames
+				'taxonomy_id',
+				...textFieldNames,
 			],
 		}),
 		(req, res, next) => {
 			if (Reflect.has(req.query, 'search')) {
 				searchUtil.assignExactMatchCriteria(req.query.search, res.locals, exactMatchFieldNames)
-				searchUtil.assignInexactMatchCriteria(req.query.search, res.locals, [...textFieldNames, 'name'])
+				searchUtil.assignPartialMatchCriteria(req.query.search, res.locals, textFieldNames)
 			}
-			// Handle searching taxonomy and assembly_level
-			searchUtil.processWhereTextCondition(res.locals, textFieldNames)
 
 			next()
 		},
@@ -54,9 +53,9 @@ module.exports.docs = function(modelExamples) {
 		example: {
 			response: {
 				body: [
-					modelExamples.Genome
-				]
-			}
+					modelExamples.Genome,
+				],
+			},
 		},
 		har: null
 	}

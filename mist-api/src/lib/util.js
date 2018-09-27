@@ -1,51 +1,39 @@
 'use strict'
 
+// Core
 const assert = require('assert')
 
 // Vendor
 const _ = require('lodash')
-const Op = require('sequelize').Op
+const { Op } = require('sequelize')
 
 // Local
 const util = require('core-lib/util')
 
-exports.splitIntoQueryTerms = (value) => {
-    return util.splitIntoTerms(value).map((term) => `%${term}%`)
+exports.splitIntoMatchAnywhereTerms = (value) => {
+  return util.splitIntoTerms(value).map((term) => `%${term}%`)
 }
 
 exports.assignExactMatchCriteria = (queryValue, target, fields) => {
-    assert(target, "Must have a defind target.")
-    const terms = util.splitIntoTerms(queryValue)
-    if (terms.length > 0) {
-        if (fields) {
-            fields
-            .forEach((fieldName) => {
-                _.set(target, ['criteria', 'where', Op.or, fieldName], terms)
-            })
-        }
-    }
+  assert(target)
+
+  const terms = util.splitIntoTerms(queryValue)
+  if (!terms.length)
+    return
+
+  fields.forEach((fieldName) => {
+    _.set(target, ['criteria', 'where', Op.or, fieldName], terms)
+  })
 }
 
-exports.assignInexactMatchCriteria = (queryValue, target, fields) => {
-    assert(target, "Must have a defind target.")
-    const terms = exports.splitIntoQueryTerms(queryValue)
-    if (terms.length > 0) {
-        if (fields) {
-            fields
-            .forEach((fieldName) => {
-                _.set(target, ['criteria', 'where', Op.or, fieldName, Op.iLike, Op.all], terms)
-            })
-        }
-    }
-}
+exports.assignPartialMatchCriteria = (queryValue, target, fields) => {
+  assert(target)
 
-exports.processWhereTextCondition = (target, textFields) => {
-    assert(target, "Must have a defind target.")
-    textFields
-    .forEach((fieldName) => {
-        const queryValue = _.get(target, `criteria.where.${fieldName}`)
-        const terms = exports.splitIntoQueryTerms(queryValue)
-        if (terms.length > 0)
-            _.set(target, ['criteria', 'where', fieldName, Op.iLike, Op.all], terms)
-    })
+  const terms = exports.splitIntoMatchAnywhereTerms(queryValue)
+  if (!terms.length)
+    return
+
+  fields.forEach((fieldName) => {
+    _.set(target, ['criteria', 'where', Op.or, fieldName, Op.iLike, Op.all], terms)
+  })
 }
