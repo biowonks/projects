@@ -338,6 +338,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 
 		this.logger_.info(`Loading ${records.length} ${model.name}s`)
 		return model.bulkCreate(records, {
+			hooks: false,
 			validate: true,
 			transaction
 		})
