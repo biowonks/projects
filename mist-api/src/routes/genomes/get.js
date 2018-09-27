@@ -1,35 +1,42 @@
 'use strict'
 
-// Vendor
-const _ = require('lodash')
-
 // Local
-const util = require('core-lib/util')
+const searchUtil = require('lib/util')
 
 module.exports = function(app, middlewares, routeMiddlewares) {
 	const models = app.get('models')
 	const helper = app.get('lib').RouteHelper.for(models.Genome)
 
+	const exactMatchFieldNames = ['version']
+	const textFieldNames = [
+		'name',
+		'superkingdom',
+		'phylum',
+		'class',
+		'order',
+		'family',
+		'genus',
+		'assembly_level',
+	]
+
 	return [
 		middlewares.parseCriteriaForMany(models.Genome, {
 			accessibleModels: [
 				models.WorkerModule,
-				models.Component
+				models.Component,
 			],
-			maxPage: null,
-			permittedOrderFields: '*',
 			permittedWhereFields: [
+				'id',
 				'taxonomy_id',
+				...textFieldNames,
 			],
 		}),
-		// Provide for searching against name
 		(req, res, next) => {
 			if (Reflect.has(req.query, 'search')) {
-				const searchTerms = util.splitIntoTerms(req.query.search)
-					.map((term) => `%${term}%`)
-				if (searchTerms.length > 0)
-					_.set(res.locals, 'criteria.where.name.$iLike.$any', searchTerms)
+				searchUtil.assignExactMatchCriteria(req.query.search, res.locals, exactMatchFieldNames)
+				searchUtil.assignPartialMatchCriteria(req.query.search, res.locals, textFieldNames)
 			}
+
 			next()
 		},
 		helper.findManyHandler()
@@ -46,9 +53,9 @@ module.exports.docs = function(modelExamples) {
 		example: {
 			response: {
 				body: [
-					modelExamples.Genome
-				]
-			}
+					modelExamples.Genome,
+				],
+			},
 		},
 		har: null
 	}

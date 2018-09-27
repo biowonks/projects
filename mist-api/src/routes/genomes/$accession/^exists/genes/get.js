@@ -1,8 +1,19 @@
 'use strict'
 
+// Local
+const searchUtil = require('lib/util')
+
 module.exports = function(app, middlewares, routeMiddlewares) {
 	const models = app.get('models')
 	const helper = app.get('lib').RouteHelper.for(models.Gene)
+
+	const exactMatchFieldNames = [
+		'version',
+		'locus',
+		'old_locus',
+		'stable_id'
+	]
+	const textFieldNames = ['product']
 
 	// eslint-disable-next-line
 	/**
@@ -13,10 +24,11 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		middlewares.parseCriteriaForMany(models.Gene, {
 			accessibleModels: [
 				models.Aseq,
-				models.Dseq
+				models.Dseq,
 			],
-			maxPage: null,
-			permittedOrderFields: '*'
+			permittedWhereFields: [
+				'id',
+			],
 		}),
 
 		// 2. Now the tricky part. Our goal is to limit all genes to those associated with the
@@ -29,13 +41,21 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		//    If the Component model is also an accessibleModel (middleware #2), it would be
 		//    necessary to upsert that include rather than simply pushing as is done below.
 		(req, res, next) => {
+			let fields = []
+			if (Reflect.has(req.query, 'search')) {
+				searchUtil.assignExactMatchCriteria(req.query.search, res.locals, exactMatchFieldNames)
+				searchUtil.assignPartialMatchCriteria(req.query.search, res.locals, textFieldNames)
+				fields.push('version')
+				fields.push('definition')
+			}
+
 			res.locals.criteria.include.push({
 				model: models.Component,
-				attributes: [],
+				attributes: fields,
 				where: {
-					genome_id: res.locals.genome.id
+					genome_id: res.locals.genome.id,
 				},
-				required: true
+				required: true,
 			})
 
 			next()
@@ -54,14 +74,14 @@ module.exports.docs = function(modelExamples) {
 		example: {
 			request: {
 				parameters: {
-					accession: modelExamples.Genome.version
-				}
+					accession: modelExamples.Genome.version,
+				},
 			},
 			response: {
 				body: [
-					modelExamples.Gene
-				]
-			}
-		}
+					modelExamples.Gene,
+				],
+			},
+		},
 	}
 }

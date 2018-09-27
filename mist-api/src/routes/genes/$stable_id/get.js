@@ -7,6 +7,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 	return [
 		middlewares.parseCriteria(models.Gene, {
 			accessibleModels: [
+				models.Genome,
 				models.Component,
 				models.Aseq,
 				models.Dseq

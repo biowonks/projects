@@ -107,7 +107,7 @@ exports.splitIntoTerms = (value) => {
 
   return valueWithoutQuotedTerms.split(/\s+/)
     .concat(quotedTerms)
-    .map((word) => word.replace(/[^\w .]/g, '').trim()) // Allow word characters, spaces, and periods
+    .map((word) => word.replace(/[^\w .-]/g, '').trim()) // Allow word characters, spaces, hyphens and periods
     .filter((word) => !!word)
 }
 
