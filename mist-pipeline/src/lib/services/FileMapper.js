@@ -50,15 +50,20 @@ class FileMapper {
 		return this.genome_.ftp_path.split('/').pop();
 	}
 
-	ncbiUrlFor(sourceType) {
-		return `${this.genome_.ftp_path}/${this.ncbiFileNameFor(sourceType)}`
-	}
-
 	ncbiRsyncUrlFor(sourceType) {
 		let url = `${this.genome_.ftp_path}/`.replace(/^ftp:/, 'rsync:')
 		if (sourceType !== 'checksums')
 			url += '*_'
 		url += this.localFileNameFor(sourceType)
+		return url
+	}
+
+	ncbiHttpsUrlFor(sourceType) {
+		let url = `${this.genome_.ftp_path}/`.replace(/^ftp:/, 'https:')
+		if (sourceType === 'checksums')
+			url += this.localFileNameFor(sourceType)
+		else
+			url += this.ncbiFileNameFor(sourceType)
 		return url
 	}
 
