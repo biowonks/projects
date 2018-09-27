@@ -65,10 +65,17 @@ class AbstractPipelineModule {
 
 	// ----------------------------------------------------
 	// Public methods
-	main() {
+	/**
+	 * @param {Object} options
+	 * @param {boolean} options.optimize if true, run optimization routine after each module completes
+	 * @returns {Promise.<WorkerModule[]>}
+	 */
+	main(options) {
+		options = options || {}
 		let self = this
 		return Promise.coroutine(function *() {
-			yield self.setup();		self.shutdownCheck_()
+			yield self.setup();
+			self.shutdownCheck_()
 			let workerModules = yield self.createWorkerModules_()
 			try {
 				yield self.run()
@@ -79,13 +86,22 @@ class AbstractPipelineModule {
 			}
 			yield self.updateWorkerModulesState_(workerModules, 'done')
 			self.shutdownCheck_()
-			yield self.optimize();	self.shutdownCheck_()
+			if (options.optimize) {
+				yield self.optimize()
+				self.shutdownCheck_()
+			}
 			yield self.teardown()
 			return workerModules
 		})()
 	}
 
-	mainUndo(workerModules) {
+	/**
+	 * @param {Object} options
+	 * @param {boolean} options.optimize if true, run optimization routine after each module completes
+	 * @returns {Promise.<void>}
+	 */
+	mainUndo(workerModules, options) {
+		options = options || {}
 		let self = this
 		return Promise.coroutine(function *() {
 			yield self.setup()
@@ -100,7 +116,9 @@ class AbstractPipelineModule {
 				throw error
 			}
 			yield self.deleteWorkerModules_(workerModules)
-			yield self.optimize();	self.shutdownCheck_()
+			if (options.optimize)
+				yield self.optimize()
+			self.shutdownCheck_()
 			yield self.teardown()
 		})()
 	}

@@ -28,13 +28,14 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "bluebird": "^3.4.5",
+    "bluebird": "3.5.2",
     "bunyan": "^1.8.1",
-    "pg": "^6.1.0",
-    "public-ip": "^2.0.1",
-    "sequelize": "^3.24.1",
+    "pg": "7.4.3",
+    "public-ip": "2.4.0",
+    "sequelize": "4.38.0",
     "sequelize-migrator": "https://github.com/lukeulrich/sequelize-migrator.git",
-    "sequelize-model-loader": "https://github.com/lukeulrich/sequelize-model-loader.git"
+    "sequelize-model-loader": "https://github.com/lukeulrich/sequelize-model-loader.git",
+    "split": "^1.0.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",

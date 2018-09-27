@@ -336,7 +336,7 @@ class CriteriaService {
 				type: 'InaccessibleFieldError',
 				fields: excludedAttributes,
 				model: primaryModel.name,
-				message: `Accessing the following ${primaryModel.name} fields is not supported: ${excludedAttributes.join(', ')}`
+				message: `Accessing any of the following ${primaryModel.name} fields is not supported: ${excludedAttributes.join(', ')}`
 			})
 		}
 
@@ -687,6 +687,7 @@ class CriteriaService {
 	excludedAttributes_(attributes, model) {
 		let excludeSet = model.$excludedFromCriteria(),
 			notRequestingAnyAttributes = attributes && attributes.length === 0
+
 		if (!excludeSet || excludeSet.size === 0 || notRequestingAnyAttributes)
 			return null
 

@@ -1,13 +1,10 @@
 'use strict'
 
-// Core
-const assert = require('assert')
-
 // Local
-const BootService = require('core-lib/services/BootService'),
-	loadSeqdepotModels = require('seqdepot-lib/models'),
-	loadMistModels = require('../models'),
-	dbConfig = require('../db/config')
+const BootService = require('core-lib/services/BootService')
+const loadSeqdepotModels = require('seqdepot-lib/models')
+const loadMistModels = require('../models')
+const dbConfig = require('../db/config')
 
 module.exports =
 class MistBootService extends BootService {
@@ -21,8 +18,6 @@ class MistBootService extends BootService {
 		dbConfig.applicationName = options.applicationName
 		super(dbConfig, options)
 		this.seqdepotMigrator_ = null
-
-		this.addGlobalClassMethods_()
 	}
 
 	/**
@@ -46,6 +41,7 @@ class MistBootService extends BootService {
 		this.setupSequelize()
 		let seqdepotModels = loadSeqdepotModels(this.sequelize_, dbConfig.seqdepot.schema, this.bootLogger_)
 		this.models_ = loadMistModels(this.sequelize_, seqdepotModels, this.bootLogger_)
+		this.addGlobalClassMethods_(this.models_)
 		return this.models_
 	}
 
@@ -70,31 +66,36 @@ class MistBootService extends BootService {
 	// ----------------------------------------------------
 	// Private methods
 	/**
-	 * Adds a couple methods to the global sequelize options.
+	 * Adds various methods to each model
 	 */
-	addGlobalClassMethods_() {
-		let classMethods = this.dbConfig_.sequelizeOptions.define.classMethods
-		assert(typeof classMethods === 'object')
+	addGlobalClassMethods_(models) {
+		Object.values(models).forEach((model) => {
+			/**
+			 * @returns {Set} - those attributes which are excluded from selection via the CriteriaService
+			 */
+			if (!model.$excludedFromCriteria) {
+				model.$excludedFromCriteria = function() {
+					return null
+				}
+			}
 
-		/**
-		 * @returns {Set} - those attributes which are excluded from selection via the CriteriaService
-		 */
-		classMethods.$excludedFromCriteria = function() {
-			return null
-		}
+			/**
+			 * @returns {Array.<String>} - attributes that may be selected via the CriteriaService; if null, indicates all attributes may be selected
+			 */
+			if (!model.$criteriaAttributes) {
+				model.$criteriaAttributes = function() {
+					return null
+				}
+			}
 
-		/**
-		 * @returns {Array.<String>} - attributes that may be selected via the CriteriaService; if null, indicates all attributes may be selected
-		 */
-		classMethods.$criteriaAttributes = function() {
-			return null
-		}
-
-		/**
-		 * @returns {String} - name of sequence to be used by IdService; defaults to the model name
-		 */
-		classMethods.$idSequence = function() {
-			return this.name
-		}
+			/**
+			 * @returns {String} - name of sequence to be used by IdService; defaults to the model name
+			 */
+			if (!model.$idSequence) {
+				model.$idSequence = function() {
+					return this.name
+				}
+			}
+		})
 	}
 }

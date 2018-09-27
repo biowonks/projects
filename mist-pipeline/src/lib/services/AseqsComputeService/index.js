@@ -1,8 +1,8 @@
 'use strict'
 
 // Core
-const fs = require('fs'),
-	path = require('path')
+const fs = require('fs')
+const path = require('path')
 
 // Vendor
 const Promise = require('bluebird')
@@ -24,9 +24,8 @@ class AseqsComputeService extends AseqsService {
 		return kToolRunnerIdMap
 	}
 
-	constructor(model, config, logger) {
-		super(model, logger)
-
+	constructor(models, model, config, logger) {
+		super(models, model, logger)
 		this.config_ = config
 	}
 
@@ -58,16 +57,17 @@ class AseqsComputeService extends AseqsService {
 
 		return Promise.each(toolIds, (toolId) => {
 			// eslint-disable-next-line no-mixed-requires
-			let meta = kToolRunnerIdMap.get(toolId),
-				ToolRunner = require(meta.path), // eslint-disable-line global-require
-				toolRunnerConfig = this.config_.toolRunners[toolId],
-				toolRunner = new ToolRunner(toolRunnerConfig)
+			const meta = kToolRunnerIdMap.get(toolId)
+			const ToolRunner = require(meta.path) // eslint-disable-line global-require
+			const toolRunnerConfig = this.config_.toolRunners[toolId]
+			const toolRunner = new ToolRunner(toolRunnerConfig, this.models_)
 
 			toolRunner.on('progress', (progress) => {
 				this.logger_.info(progress, `${toolId} progress event: ${Math.floor(progress.percent)}%`)
 			})
 
-			return toolRunner.run(aseqs)
+			return toolRunner.setup_()
+			.then(() => toolRunner.run(aseqs))
 		})
 		.then(() => aseqs)
 	}
@@ -78,10 +78,11 @@ class AseqsComputeService extends AseqsService {
 	 *
 	 * @param {Array.<Aseq>} aseqs
 	 * @param {Array.<String>} toolIds
+	 * @param {string} [alternateCondition] additional condition to use when updating aseqs; should contain correct boolean operator
 	 * @param {Transaction} [transaction=null]
 	 * @returns {Array.<Aseq>}
 	 */
-	saveToolData(aseqs, toolIds, transaction = null) {
+	saveToolData(aseqs, toolIds, alternateCondition = '', transaction = null) {
 		if (!toolIds.length)
 			return Promise.resolve(aseqs)
 
@@ -101,14 +102,14 @@ class AseqsComputeService extends AseqsService {
 			return 0
 		})
 
-		let setSql = toolIds.map((toolId) => `${toolId} = coalesce(${toolId}, ?)`).join(', '),
-			nullClause = toolIds.map((toolId) => `${toolId} IS NULL`).join(' OR '),
-			replacements = [],
-			nToolIds = toolIds.length,
-			sql = `
+		const setSql = toolIds.map((toolId) => `${toolId} = ?`).join(', ')
+		const nullClause = toolIds.map((toolId) => `${toolId} IS NULL`).join(' OR ')
+		const replacements = []
+		const nToolIds = toolIds.length
+		const sql = `
 UPDATE ${this.model_.getTableName()}
 SET ${setSql}
-WHERE id = ? AND (${nullClause})`
+WHERE id = ? AND (${nullClause} ${alternateCondition})`
 
 		return Promise.each(aseqsCopy, (aseq) => {
 			for (let i = 0; i < nToolIds; i++)

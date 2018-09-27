@@ -1,27 +1,27 @@
 'use strict'
 
 // Core
-const fs = require('fs'),
-	zlib = require('zlib')
+const fs = require('fs')
+const zlib = require('zlib')
 
 // Vendor
-const pumpify = require('pumpify'),
-	streamEach = require('stream-each')
+const pumpify = require('pumpify')
+const streamEach = require('stream-each')
 
 // Local
-const PerGenomePipelineModule = require('lib/PerGenomePipelineModule'),
-	NCBIDataHelper = require('./NCBIDataHelper'),
-	AseqsService = require('mist-lib/services/AseqsService'),
-	DseqsService = require('mist-lib/services/DseqsService'),
-	IdService = require('mist-lib/services/IdService'),
-	LocationStringParser = require('mist-lib/bio/LocationStringParser'),
-	genbankStream = require('mist-lib/streams/genbank-stream'),
-	genbankMistStream = require('lib/streams/genbank-mist-stream'),
-	mutil = require('mist-lib/mutil'),
-	ncbiAssemblyReportStream = require('lib/streams/ncbi-assembly-report-stream')
+const PerGenomePipelineModule = require('lib/PerGenomePipelineModule')
+const NCBIDataHelper = require('./NCBIDataHelper')
+const AseqsService = require('mist-lib/services/AseqsService')
+const DseqsService = require('mist-lib/services/DseqsService')
+const IdService = require('mist-lib/services/IdService')
+const LocationStringParser = require('mist-lib/bio/LocationStringParser')
+const genbankStream = require('mist-lib/streams/genbank-stream')
+const genbankMistStream = require('lib/streams/genbank-mist-stream')
+const mutil = require('mist-lib/mutil')
+const ncbiAssemblyReportStream = require('lib/streams/ncbi-assembly-report-stream')
 
 // Other
-let streamEachPromise = Promise.promisify(streamEach)
+const streamEachPromise = Promise.promisify(streamEach)
 
 /**
  * This module handles downloading and loading raw genomic data into the database.
@@ -56,8 +56,8 @@ class NCBICoreData extends PerGenomePipelineModule {
 
 		this.ncbiDataHelper_ = new NCBIDataHelper(this.fileMapper_, this.logger_)
 		this.locationStringParser_ = new LocationStringParser()
-		this.aseqsService_ = new AseqsService(this.models_.Aseq, this.logger_)
-		this.dseqsService_ = new DseqsService(this.models_.Dseq, this.logger_)
+		this.aseqsService_ = new AseqsService(this.models_, this.models_.Aseq, this.logger_)
+		this.dseqsService_ = new DseqsService(this.models_, this.models_.Dseq, this.logger_)
 		this.idService_ = new IdService(this.models_.IdSequence, this.logger_)
 		// {RefSeq accession: {}}
 		this.assemblyReportMap_ = new Map()
@@ -147,10 +147,10 @@ class NCBICoreData extends PerGenomePipelineModule {
 	 */
 	indexAssemblyReport_() {
 		return Promise.try(() => {
-			let assemblyReportFile = this.fileMapper_.pathFor('assembly-report'),
-				readStream = fs.createReadStream(assemblyReportFile),
-				ncbiAssemblyReportReader = ncbiAssemblyReportStream(),
-				pipeline = pumpify.obj(readStream, ncbiAssemblyReportReader)
+			const assemblyReportFile = this.fileMapper_.pathFor('assembly-report')
+			const readStream = fs.createReadStream(assemblyReportFile)
+			const ncbiAssemblyReportReader = ncbiAssemblyReportStream()
+			const pipeline = pumpify.obj(readStream, ncbiAssemblyReportReader)
 
 			return streamEachPromise(pipeline, (assembly, next) => {
 				this.assemblyReportMap_.set(assembly.refseqAccession, assembly)
@@ -198,7 +198,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 	 * @returns {Promise.<Object>}
 	 */
 	readAllGenBankData_() {
-		let result = {
+		const result = {
 			geneSeqs: [],
 			proteinSeqs: [],
 			genomeReferences: null, // special case: only save first batch of genome references
@@ -209,12 +209,12 @@ class NCBICoreData extends PerGenomePipelineModule {
 		}
 
 		return Promise.try(() => {
-			let genbankFlatFile = this.fileMapper_.pathFor('genomic-genbank'),
-				readStream = fs.createReadStream(genbankFlatFile),
-				gunzipStream = zlib.createGunzip(),
-				genbankReader = genbankStream(),
-				genbankMistReader = genbankMistStream(this.genome_.id, this.genome_.version),
-				pipeline = pumpify.obj(readStream, gunzipStream, genbankReader, genbankMistReader)
+			const genbankFlatFile = this.fileMapper_.pathFor('genomic-genbank')
+			const readStream = fs.createReadStream(genbankFlatFile)
+			const gunzipStream = zlib.createGunzip()
+			const genbankReader = genbankStream()
+			const genbankMistReader = genbankMistStream(this.genome_.id, this.genome_.version)
+			const pipeline = pumpify.obj(readStream, gunzipStream, genbankReader, genbankMistReader)
 
 			genbankReader.on('error', (error) => {
 				this.logger_.fatal(error, 'Genbank reader error')
@@ -271,11 +271,11 @@ class NCBICoreData extends PerGenomePipelineModule {
 	 * @returns {Promise}
 	 */
 	loadComponents_(components, transaction) {
-		let numComponents = components.length
+		const numComponents = components.length
 		this.logger_.info(`Loading ${numComponents} components`)
 		return Promise.each(components, (component, i) => {
 			this.addAssemblyReportData_(component)
-			let logger = this.logger_.child({
+			const logger = this.logger_.child({
 				version: component.version,
 				dnaLength: component.length,
 				componentName: component.name,
@@ -313,7 +313,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 		 * throw a validation error when attempting to save it).
 		 */
 		if (assemblyReport.genbankAccession !== 'na') {
-			let parts = mutil.parseAccessionVersion(assemblyReport.genbankAccession)
+			const parts = mutil.parseAccessionVersion(assemblyReport.genbankAccession)
 			component.genbank_accession = parts[0]
 			component.genbank_version = assemblyReport.genbankAccession
 		}
@@ -338,6 +338,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 
 		this.logger_.info(`Loading ${records.length} ${model.name}s`)
 		return model.bulkCreate(records, {
+			hooks: false,
 			validate: true,
 			transaction
 		})
@@ -349,7 +350,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 	 * @returns {null|Promise}
 	 */
 	loadGeneSeqs_(geneSeqs, transaction) {
-		let numDseqs = geneSeqs.length
+		const numDseqs = geneSeqs.length
 		if (!numDseqs)
 			return null
 
@@ -363,7 +364,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 	 * @returns {null|Promise}
 	 */
 	loadProteinSeqs_(proteinSeqs, transaction) {
-		let numAseqs = proteinSeqs.length
+		const numAseqs = proteinSeqs.length
 		if (!numAseqs)
 			return null
 

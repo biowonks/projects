@@ -11,10 +11,10 @@ cd /tmp
 # ---------------------------------------------------------
 # Setup default environment variables
 CERT_SUBJ=${CERT_SUBJ:=/C=US/ST=South Carolina/L=Charleston/O=BioWonks/OU=biowonks/CN=local-mistdb.com/emailAddress=biowonks@gmail.com}
-DB_NAME=${DB_NAME:=mist_dev}
-DB_ADMIN_USER=${DB_ADMIN_USER:=mist_dev_admin}
+DB_NAME=${DB_NAME:=mist}
+DB_ADMIN_USER=${DB_ADMIN_USER:=mist_admin}
 DB_ADMIN_PASSWORD=${DB_ADMIN_PASSWORD:=$&hxsALC!7_c}
-DB_API_USER=${DB_API_USER:=mist_api_dev}
+DB_API_USER=${DB_API_USER:=mist_api}
 DB_API_PASSWORD=${DB_API_PASSWORD:=aFqn3fWfKAq}
 
 # ---------------------------------------------------------
@@ -56,7 +56,7 @@ CREATE ROLE "$DB_API_USER" NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICA
 ALTER ROLE "$DB_API_USER" WITH LOGIN PASSWORD '$DB_API_PASSWORD';
 
 -- 2) MiST database
-CREATE DATABASE "$DB_NAME" OWNER '$DB_ADMIN_USER';
+CREATE DATABASE "$DB_NAME" OWNER "$DB_ADMIN_USER";
 REVOKE ALL ON DATABASE "$DB_NAME" FROM public;
 GRANT CONNECT ON DATABASE "$DB_NAME" TO "$DB_ADMIN_USER";
 GRANT CONNECT ON DATABASE "$DB_NAME" TO "$DB_API_USER";

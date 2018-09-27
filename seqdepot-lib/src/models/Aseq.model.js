@@ -39,6 +39,35 @@ module.exports = function(Sequelize, models, extras) {
 		ecf1: Object.assign(hmmer2(Sequelize, 'ecf1'), {
 			description: 'array of extra cytoplasmic factor predictions',
 		}),
+		stp: {
+			/**
+			 * {
+			 *  ranks: ['2cp', 'rr'],
+			 *  inputs: [
+			 *    PAS,
+			 *    ...
+			 *  ],
+			 *  inputFunctions: [
+			 * 	  'small molecule binding',
+			 *  ],
+			 *  outputs: [
+			 *    HTH_1,
+			 *    ...
+			 *  ],
+			 *  outputFunctions: [
+			 *    'DNA binding'
+			 *  ],
+			 *  counts: {
+			 *    PAS: 2,
+			 *    HTH_1: 1,
+			 *    ...
+			 *  },
+			 *  version: 1,
+			 * }
+			 */
+			type: Sequelize.JSONB,
+			description: 'signal transduction prediction data; the version field indicates the spec file version used for these predictions',
+		},
 	}
 
 	// Ensure that the fields and tool id fields are in sync
@@ -96,13 +125,13 @@ module.exports = function(Sequelize, models, extras) {
 	}
 
 	return {
+		classMethods,
 		fields,
+		instanceMethods,
 		params: {
-			classMethods,
-			instanceMethods,
+			timestamps: false,
 			validate,
-			timestamps: false
-		}
+		},
 	}
 }
 module.exports.kToolIdFieldNames = kToolIdFieldNames

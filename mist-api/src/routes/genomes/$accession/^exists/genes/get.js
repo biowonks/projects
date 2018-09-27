@@ -4,8 +4,8 @@
 const searchUtil = require('lib/util')
 
 module.exports = function(app, middlewares, routeMiddlewares) {
-	let models = app.get('models'),
-		helper = app.get('lib').RouteHelper.for(models.Gene)
+	const models = app.get('models')
+	const helper = app.get('lib').RouteHelper.for(models.Gene)
 
 	const exactMatchFieldNames = [
 		'version',
@@ -19,19 +19,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 	 * Series of middleware functions that limit returning all genes for a particular genome.
 	 */
 	return [
-		// 1. Ensure that the genome identified by the query parameter ${accession} exists. Note
-		//    that although the query parameter is labelled 'accession', the search is really done
-		//    against the genome version (accession plus its version number). The following
-		//    middlewares are not executed if this genome is not found. If it is found, the genome
-		//    will be available on res.locals.genome (by virtue of setting 'genome' for targetName)
-		middlewares.exists(models.Genome, {
-			queryAttribute: 'version',
-			paramName: 'accession',
-			targetName: 'genome',
-			attributes: ['id'] // Only return the genome id field, which we use in middleware #3
-		}),
-
-		// 2. Parse the criteria - same old, same old here
+		// 1. Parse the criteria - same old, same old here
 		middlewares.parseCriteriaForMany(models.Gene, {
 			accessibleModels: [
 				models.Aseq,
@@ -42,7 +30,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 			],
 		}),
 
-		// 3. Now the tricky part. Our goal is to limit all genes to those associated with the
+		// 2. Now the tricky part. Our goal is to limit all genes to those associated with the
 		//    genome identified in the exists middleware above. Thus, it is necessary to inner join
 		//    the genes table to the components table (vs Sequelize's default left join) and
 		//    specify the genome_id found earlier. This is accomplished by adding the Component
@@ -71,7 +59,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 			next()
 		},
 
-		// 4. Pass control to the default find handler which processes applies the
+		// 3. Pass control to the default find handler which processes applies the
 		//    res.locals.criteria to the primary model defined in the RouteHelper.
 		helper.findManyHandler()
 	]

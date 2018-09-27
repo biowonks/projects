@@ -1,0 +1,534 @@
+group_name	accession	name	superfamily	description	function	kind	specific	source	pubmed1	pubmed2	pubmed3	pdb1	
+PAS	PF00989	PAS	PAS_Fold	PAS small molecule binding domain	small molecule binding	input	YES	pfam	9301332	9382818			
+PAS		PAS_2	PAS_Fold	PAS small molecule binding domain	small molecule binding	input	YES	pfam	9301332	9382818			
+PAS		PAS_3	PAS_Fold	PAS small molecule binding domain	small molecule binding	input	YES	pfam	9301332	9382818			
+PAS		PAS_4	PAS_Fold	PAS small molecule binding domain	small molecule binding	input	YES	pfam	9301332	9382818			
+PAS		PAS_5	PAS_Fold	PAS small molecule binding domain	small molecule binding	input	YES	pfam	9301332	9382818			
+PAS		PAS_6	PAS_Fold	PAS small molecule binding domain	small molecule binding	input	YES	pfam	9301332	9382818			
+PAS		PAS_7	PAS_Fold	PAS small molecule binding domain	small molecule binding	input	YES	pfam	9301332	9382818			
+PAS		PAS_8	PAS_Fold	PAS small molecule binding domain	small molecule binding	input	YES	pfam	9301332	9382818			
+PAS		PAS_9	PAS_Fold	PAS small molecule binding domain	small molecule binding	input	YES	pfam	9301332	9382818			
+PAS		PAS_10	PAS_Fold	PAS small molecule binding domain	small molecule binding	input	YES	pfam	9301332	9382818			
+PAS		PAS_11	PAS_Fold	PAS small molecule binding domain	small molecule binding	input	YES	pfam	9301332	9382818			
+		PocR	No clan, related to PAS, GAF and sCache	hydrocarbon derivatives binding domain	small molecule binding	input	YES	pfam	15814558	27049771			
+GAF		GAF	GAF	GAF small molecule binding domain	small molecule binding	input	YES	pfam	9433123				
+GAF		GAF_2	GAF	GAF small molecule binding domain	small molecule binding	input	YES	pfam	9433123				
+GAF		GAF_3	GAF	GAF small molecule binding domain	small molecule binding	input	YES	pfam	9433123				
+		IclR	GAF	GAF-like small molecule binding domain	small molecule binding	input	YES	pfam	16472303				
+		PHY	GAF	GAF-like small molecule binding domain	small molecule binding	input	YES	pfam	 19720999				
+		SpoVT_C	GAF	GAF-like small molecule binding domain	small molecule binding	input	NO	pfam					
+		DUF3369	GAF	GAF-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		DUF484	GAF	GAF-like small molecule binding domain	small molecule binding	input	NO	pfam	27049771				
+		HrcA	GAF	GAF-like small molecule binding domain	small molecule binding	input	YES	pfam	15979091				
+		Autoind_bind	GAF	GAF-like small molecule binding domain	small molecule binding	input	YES	pfam	 17921255				
+		CodY	GAF	GAF-like small molecule binding domain	small molecule binding	input	YES	pfam	 16488888				
+		H_kinase_N	No clan, related to GAF   	GAF-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		CHASE	Cache	double Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	11590000	11590001	27049771		
+		dCache_1	Cache	double Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	11084361	27049771			
+		dCache_2	Cache	double Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		dCache_3	Cache	double Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		Cache_3-Cache_2	Cache	double Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		LuxQ-periplasm	Cache	double Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		CHASE7	Cache	double Cache-like small molecule binding domain	small molecule binding	input	YES	pfam					
+		GAPES1	Cache	double Cache-like small molecule binding domain	small molecule binding	input	YES	pfam					
+		sCache2	Cache	single Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		sCache3_1	Cache	single Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		sCache3_2	Cache	single Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		sCache3_3	Cache	single Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		sCache-like	Cache	single Cache-like small molecule binding domain	small molecule binding	input	YES	pfam					
+		Ykul_C	Cache	single Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		CHASE4	Cache	single Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	12486065	27049771			
+		CHASE8	Cache	single Cache-like small molecule binding domain	small molecule binding	input	YES	pfam					
+		Stimulus_sens_1	Cache	single Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		DUF2222	Cache	single Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		SMP_2	Cache	single Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		2CSK_N	Cache	single Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		PhoQ_sensor	Cache	single Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	27049771				
+		CpxA_peri	No clan, related to sCache	single Cache-like small molecule binding domain	small molecule binding	input	YES	pfam	22760860				
+		Diacid_rec	No clan, related to GAF and sCache	Carbohydrate binding  domain	small molecule binding	input	YES	pfam	27049771				
+		LapD_MoxY_N	No clan, related to sCache	putative ligand binding domain	small molecule binding	input	YES	pfam	21304926				
+		CHASE5	No clan, related to sCache	putative ligand binding domain	small molecule binding	input	YES	pfam	12486065				
+		GAPES3	No clan, related to sCache	putative ligand binding domain	small molecule binding	input	YES	pfam					
+4HB_MCP		4HB_MCP	4HB_MCP	single four-helix bundle, small-molecule binding  domain	small molecule binding	input	YES	agfam	16306392				
+4HB_MCP		4HB_MCP_1	4HB_MCP	single four-helix bundle, small-molecule binding  domain	small molecule binding	input	YES	pfam	16306392				
+		CHASE3	4HB_MCP	single four-helix bundle, small-molecule binding  domain	small molecule binding	input	YES	pfam	12486065				
+		PilJ	No clan, related to 4HB_MCP	single four-helix bundle, small-molecule binding  domain	small molecule binding	input	YES	pfam					
+		HBM	4HB_MCP	double four-helix bundle, bimodular, small molecule binding  domain	small molecule binding	input	YES	pfam	24347303				
+		NIT	No clan, related to 4HB_MCP	double four-helix bundle, nitrate and nitrite sensing domain	small molecule binding	input	YES	pfam	12633990				
+		KinB_sensor	No clan, related to 4HB_MCP	single four-helix bundle, small-molecule binding  domain	small molecule binding	input	YES	pfam	24573685				
+		Peripla_BP_2	HBMR	small molecule binding domain	small molecule binding	input	NO	pfam					
+		Peripla_BP_1	Peripla_BP	small molecule binding domain	small molecule binding	input	NO	pfam					
+		Peripla_BP_3	Peripla_BP	small molecule binding domain	small molecule binding	input	YES	pfam	7973627				
+		Peripla_BP_4	Peripla_BP	small molecule binding domain	small molecule binding	input	NO	pfam					
+		Peripla_BP_5	Peripla_BP	small molecule binding domain	small molecule binding	input	NO	pfam					
+		Peripla_BP_6	Peripla_BP	small molecule binding domain	small molecule binding	input	NO	pfam					
+		ABC_sub_bind	Peripla_BP	small molecule binding domain	small molecule binding	input	NO	pfam					
+		LysR_substrate	PBP	small molecule binding domain	small molecule binding	input	YES	pfam	9309218				
+		PBP_like	PBP	small molecule binding domain	small molecule binding	input	NO	pfam					
+		Phosphonate-bd	PBP	alkylphosphonate binding domain	small molecule binding	input	NO	pfam					
+		SBP_bac_3	PBP	small molecule binding domain	small molecule binding	input	NO	pfam	8336670				
+		SBP_bac_5	PBP	small molecule binding domain	small molecule binding	input	NO	pfam	8336670				
+		SBP_bac_8	PBP	small molecule binding domain	small molecule binding	input	NO	pfam	8336670				
+		SBP_bac_11	PBP	small molecule binding domain	small molecule binding	input	NO	pfam	8336670				
+		YhfZ_C	PBP	small molecule binding domain	small molecule binding	input	NO	pfam					
+		BLUF	No clan	FAD-binding domain	cofactor binding	input	NO	pfam	12368079				
+		HNOB	HNOX-like	heme-NO-binding domain	cofactor binding	input	YES	pfam	12590654				
+		V4R	HNOX-like	small molecule binding domain	small molecule binding	input	NO	pfam	11292341				
+		XylR_N	HNOX-like	small molecule (likely aromatic) binding domain	small molecule binding	input	YES	pfam				5kbg	
+		SKI	P-loop_NTPase	Shikimate kinase enzymatic  domain	enzymatic	input	NO	pfam					
+		CbiA	P-loop_NTPase	Coburinic acid diamide synthase enzymatic  domain	enzymatic	input	NO	pfam					
+		MEDS	P-loop_NTPase	hydrocarbon derivatives binding domain	small molecule binding	input	YES	pfam	15814558				
+		CbiC	No clan	precorrin-8x methylmutase domain	enzymatic	input	NO	pfam					
+		Sugar-bind	ISOCOT_Fold	putative sugar-binding domain	small molecule binding	input	NO	pfam					
+		HNOBA	No clan	heme-NO-binding associated domain	cofactor binding	input	YES	pfam	 18006497				
+		Hemerythrin	No clan	hemerythrin HHE cation binding domain	cofactor binding	input	NO	pfam					
+		Aminotran_1_2	PLP_aminotran	aminotransferase enzymatic, ligand-binding domain	enzymatic	input	NO	pfam					
+		Aminotran_5	PLP_aminotran	aminotransferase enzymatic, ligand-binding domain	enzymatic	input	NO	pfam					
+		Acetyltransf_1	Acetyltrans	acetyltransferase catalytic domain	enzymatic	input	NO	pfam					
+		Acetyltransf_4	Acetyltrans	acetyltransferase catalytic domain	enzymatic	input	NO	pfam					
+		Acetyltransf_7	Acetyltrans	acetyltransferase catalytic domain	enzymatic	input	NO	pfam					
+		Acetyltransf_10	Acetyltrans	acetyltransferase catalytic domain	enzymatic	input	NO	pfam					
+		Ammonium_transp	No clan	ammonium transporter, ligand-binding domain	small molecule binding	input	NO	pfam					
+		HEM4	No clan	Uroporphyrinogen III synthase enzymatic ligand-binding domain	small molecule binding	input	NO	pfam					
+		4HBT	HotDog	thiodiesterase catalytic domain	enzymatic	input	NO	pfam					
+		MaoC_dehydratas	HotDog	putative enoyl-CoA hydratase catalytic domain	enzymatic	input	NO	pfam					
+		SnoaL_3	NTF2	polyketide cyclase-like domain	enzymatic	input	NO	pfam					
+		PfkB	Ribokinase	Carbohydrate and pyrimidine kinase enzymatic domain	enzymatic	input	NO	pfam					
+		Ada_Zn_binding	No clan	Ada metal-binding  domain	small molecule binding	input	NO	pfam					
+		DZR	Zn_Beta_Ribbon	zinc ribbon DNA, protein or other molecule binding domain	small molecule binding	input	NO	pfam					
+		AlkA_N	TBP-like	AlkA N-terminal  domain	unknown	input	NO	pfam					
+		AsnC_trans_reg	Dim_A_B_barrel	Lrp/AsnC ligand-binding  domain	small molecule binding	input	YES	pfam	 17962306				
+		B12-binding	B12-binding	Cobalamin binding  domain	small molecule binding	input	NO	pfam					
+		B12-binding_2	No clan	Cobalamin binding  domain	small molecule binding	input	NO	pfam					
+		FHA	SMAD-FHA	Forkhead-associated phosphopeptide-binding  domain	small molecule binding	input	NO	pfam	7482699	11911881			
+		Yop-YscD_cpl	SMAD-FHA	Forkhead-associated phosphopeptide-binding  domain	small molecule binding	input	NO	pfam					
+		FIST	No clan	small molecule binding   domain	small molecule binding	input	YES	pfam	17855421				
+		FIST_C	No clan	small molecule binding   domain	small molecule binding	input	YES	pfam	17855421				
+		FeoA	TrB	Metal-binding  domain	small molecule binding	input	NO	pfam					
+		TusA	TusA-like	sulfurtransferase enzymatic ligand binding domain	small molecule binding	input	NO	pfam					
+		Fic	No clan	small molecule binding   domain	small molecule binding	input	NO	pfam					
+		CBS	No clan	small molecule binding   domain	small molecule binding	input	NO	pfam	9020585				
+		SIS	SIS	phosphosugar binding domain	small molecule binding	input	NO	pfam	10203754				
+		Protoglobin	Globin	heme-containing oxygen-sensing domain	cofactor binding	input	NO	pfam					
+		CZB	No clan	zinc-binding domain	small molecule binding	input	YES	pfam	21725005				
+		TOBE	OB	Inorganic molecule-binding domain	small molecule binding	input	NO	pfam					
+		cNMP_binding	No clan	Cyclic nucleotide-binding (sensory, input) domain	small molecule binding	input	NO	pfam					
+		CHASE2	No clan	unknown	unknown	input	YES	pfam	12486065				
+		MASE1	No clan	unknown	unknown	input	YES	pfam	12673057				
+		MASE2	No clan	unknown	unknown	input	YES	pfam	12673057				
+		MHYT	No clan	unknown	unknown	input	YES	pfam	11728710				
+		CSS-motif	No clan	unknown	unknown	input	NO	pfam					
+		7TMR-DISMED2	No clan	putative carbohydrate-binding domain	small molecule binding	input	YES	pfam	12914674				
+		7TMR-DISM_7TM	No clan	7TM diverse signaling domain	small molecule binding	input	YES	pfam	12914674				
+		7TMR-HDED	No clan	putative ligand-binding domain	small molecule binding	input	YES	pfam	12914674				
+		7TMR-7TMR_HD	GPCR_A	7TM sensory domain	small molecule binding	input	YES	pfam	12914674				
+		5TM-5TMR_LYT	Gx_transp	5TM sensory domain	small molecule binding	input	YES	pfam	12914674				
+		TrkA_C	TrkA_C	ligand-binding domain	small molecule binding	input	NO	pfam	11292341				
+		AraC_binding	Cupin	AraC-like ligand-binding  domain	small molecule binding	input	NO	pfam					
+		AraC_binding_2	Cupin	AraC-like ligand-binding  domain	small molecule binding	input	NO	pfam					
+		AraC_N	Cupin	AraC-like ligand-binding  domain	small molecule binding	input	NO	pfam					
+		Cupin_2	Cupin	enzymatic ligand-binding domain	small molecule binding	input	NO	pfam					
+		Cupin_6	Cupin	enzymatic ligand-binding domain	small molecule binding	input	YES	pfam					
+		NikR_C	ACT	nickel binding domain	small molecule binding	input	NO	pfam					
+		ACT_4	ACT	putative amino acid binding protein	small molecule binding	input	NO	pfam					
+		DeoRC	ISOCOT_Fold	sugar derivative binding domain	small molecule binding	input	YES	pfam	16376935				
+		Arabinose_bd	No clan	arabinose-binding domain	small molecule binding	input	YES	pfam	 27119725				
+		Arg_repressor_C	No clan	arginine binding domain	small molecule binding	input	NO	pfam					
+		Fe_dep_repr_C	HTH	iron binding domain	small molecule binding	input	NO	pfam					
+		GyrI-like	SHS2	small molecule binding   domain	small molecule binding	input	NO	pfam	15281131				
+		Cass2	SHS2	small molecule binding   domain	small molecule binding	input	NO	pfam					
+		FCD	FadR-C	ligand-binding domain	small molecule binding	input	YES	pfam	11013219				
+		FadR_C	FadR-C	fatty acid binding domain	small molecule binding	input	YES	pfam	 11013219				
+		Regulator_TrmB	PLD	sugar-binding domain	small molecule binding	input	NO	pfam					
+		PrpR_N	No clan	putative propionate binding domain	small molecule binding	input	YES	pfam					
+		PmoA	No clan	putative methane oxygenase domain	enzymatic	input	NO	pfam					
+		UTRA	UTRA	small molecule binding   domain	small molecule binding	input	YES	pfam	12757941				
+		ROK	Actin_ATPase	putative sugar-binding domain	small molecule binding	input	NO	pfam					
+		Glucokinase	Actin_ATPase	putative sugar-binding domain	small molecule binding	input	NO	pfam					
+		SCP2	SCP2	sterol carrier domain	small molecule binding	input	NO	pfam					
+		Alkyl_sulf_C	SCP2	alkyl sulfatase non-catalytic, hydrophobic substrate binding domain	small molecule binding	input	NO	pfam					
+		WYL	No clan	ligand-binding domain	small molecule binding	input	YES	pfam	24817877				
+		Arc_trans_TRASH	TRASH	metal-sensing domain	small molecule binding	input	NO	pfam					
+		BPL_LplA_LipB	tRNA_synt_II	cofactor transferase ligand binding domain	small molecule binding	input	NO	pfam					
+		PhoU	PhoU	phosphate binding domain	small molecule binding	input	NO	pfam					
+		AhpC-TSA	Thioredoxin	alkyl hydroperoxide reductase-like domain	enzymatic	input	NO	pfam					
+		Redoxin	Thioredoxin	thioredoxin-like domain	cofactor binding	input	NO	pfam					
+		ThiP_synth	No clan	thiamine-phosphate synthase domain	enzymatic	input	NO	pfam					
+		3H	No clan	ligand-binding domain	small molecule binding	input	NO	pfam					
+		DJ-1_PfpI	Glutaminase_I	glutaminase/protease catalytic domain	enzymatic	input	NO	pfam					
+		PTS_EIIA_2	Ptase-anion_tr	PEP-dependent sugar phosphotransferase domain	enzymatic	input	NO	pfam					
+		PTS_IIB	No clan	PTS system lactose/cellobiose specific IIB subunit domain	small molecule binding	input	NO	pfam					
+		RNB	No clan	Ribonuclease catalytic domain	enzymatic	input	NO	pfam					
+		MerB	No clan	alkylmercury lyase catalytic domain	enzymatic	input	NO	pfam					
+		PfkB	Ribokinase	carbohydrate kinase domain	enzymatic	input	NO	pfam					
+		Citrate_synt	No clan	citrate synthase catalytic domain	enzymatic	input	NO	pfam					
+		EPSP_synthase	EPT_RTPC	enolpyruvateshikimate-3-phosphate synthase domain	enzymatic	input	NO	pfam					
+		PEP_hydrolase	PK_TIM	phosphoenolpyruvate hydrolase-like domain	enzymatic	input	NO	pfam					
+		NTP_transf_3	GT-A	NTP transferase catalytic domain	enzymatic	input	NO	pfam					
+		NTP_transferase	GT-A	NTP transferase catalytic domain	enzymatic	input	NO	pfam					
+		NTP_transf_2	GT-A	NTP transferase catalytic domain	enzymatic	input	NO	pfam					
+		Choline_kinase	Pkinase	cholie/ethanolamine kinase domain	enzymatic	input	NO	pfam					
+		TipAS	No clan	antibiotic-recognition domain	small molecule binding	input	NO	pfam		12682015			
+		NosL	No clan	putative copper binding domain	small molecule binding	input	NO	pfam					
+		ParBc	ParBc	ParB-like nuclease domain	small molecule binding	input	NO	pfam					
+		Fic_N	No clan	ligand-binding domain	small molecule binding	input	NO	pfam					
+		Fic	No clan	ligand-binding domain	small molecule binding	input	NO	pfam					
+		RsbRD_N	No clan	putative ligand-binding domain	small molecule binding	input	NO	pfam					
+		SGL	Beta_propeller	gluconolaconase-like domain	enzymatic	input	NO	pfam					
+		PD40	Beta_propeller	WD40-like beta propeller repeat	protein-protein interactions	input	NO	pfam					
+		SinI	No clan	unknown	unknown	input	NO	pfam					
+		2TM	No clan	unknown	unknown	input	NO	pfam					
+		Peptidase_M23	Hybrid	Metallopeptidase enzymatic, ligand-binding domain	enzymatic	input	NO	pfam					
+		Peptidase_S24	Peptidase_SF	unknown	unknown	input	NO	pfam					
+		DUF955	Peptidase_MA	unknown	unknown	input	NO	pfam					
+		Pep_deformylase	No clan	polypeptide deformylase domain	enzymatic	input	NO	pfam					
+		PilZ	No clan	c-di-GMP-binding domain	small molecule binding	input	NO	pfam	16249258				
+		Pribosyltran	PRTase-like	phosphorybosyl transferase domain	enzymatic	input	NO	pfam					
+		Rhodanese	No clan	Cysteine/sulfate binding domain	small molecule binding	input	NO	pfam					
+		NUDIX	NUDIX	phosphohydrolase domain	enzymatic	input	NO	pfam					
+		LMWPc	No clan	protein tyrosine phosphatase domain	enzymatic	input	NO	pfam					
+		CoA_binding	NADP_Rossmann	CoA synthetase-like domain	enzymatic	input	NO	pfam					
+		DNA_methylase	NADP_Rossmann	DNA methylase catalytic domain	enzymatic	input	NO	pfam					
+		Methyltransf_23	NADP_Rossmann	methyltransferase catalytic domain	enzymatic	input	NO	pfam					
+		Methyltransf_11	NADP_Rossmann	methyltransferase catalytic domain	enzymatic	input	NO	pfam					
+		Methyltransf_25	NADP_Rossmann	methyltransferase catalytic domain	enzymatic	input	NO	pfam					
+		Methyltransf_31	NADP_Rossmann	methyltransferase catalytic domain	enzymatic	input	NO	pfam					
+		Methyltransf_14	No clan	methyltransferase catalytic domain	enzymatic	input	NO	pfam					
+		CTP-dep_RFKase	No clan	riboflavin kinase catalytic domain	enzymatic	input	NO	pfam					
+		Pyridox_ox_2	FMN-binding	pyridoxamine 5'-phosphate oxidase catalytic domain	enzymatic	input	NO	pfam					
+		FlpD	No clan	methyl-viologen-reducing hydrogenase catalytic domain	enzymatic	input	NO	pfam					
+		Y_Y_Y	E-set	ligand-binding domain	small molecule binding	input	YES	pfam	22532667				
+		PaaX_C	No clan	putative phenylacetate binding domain	small molecule binding	input	NO	pfam					
+		Thiamine_BP	MTH1187-YkoF	putative thiamine binding domain	small molecule binding	input	NO	pfam					
+		PG_binding_1	PGBD	putative peptidoglycan binding domain	small molecule binding	input	NO	pfam					
+		GrpE	No clan	nucleotide binding domain	small molecule binding	input	NO	pfam					
+		WhiA_N	Homing_endonuc	endonuclease-like domain	enzymatic	input	NO	pfam					
+		LAGLIDADG_WhiA	Homing_endonuc	endonuclease-like domain	enzymatic	input	NO	pfam					
+		PucR	No clan	putative purine binding domain	small molecule binding	input	YES	pfam					
+		TetR_C	TetR_C	inducer-binding domain	small molecule binding	input	YES	pfam	8153629				
+		TetR_C_2	TetR_C	inducer-binding domain	small molecule binding	input	YES	pfam					
+		TetR_C_3	TetR_C	inducer-binding domain	small molecule binding	input	YES	pfam					
+		TetR_C_4	TetR_C	inducer-binding domain	small molecule binding	input	YES	pfam					
+		TetR_C_5	TetR_C	inducer-binding domain	small molecule binding	input	YES	pfam					
+		TetR_C_6	TetR_C	inducer-binding domain	small molecule binding	input	YES	pfam					
+		TetR_C_7	TetR_C	inducer-binding domain	small molecule binding	input	YES	pfam					
+		TetR_C_8	TetR_C	inducer-binding domain	small molecule binding	input	YES	pfam					
+		TetR_C_9	TetR_C	inducer-binding domain	small molecule binding	input	YES	pfam					
+		TetR_C_10	TetR_C	inducer-binding domain	small molecule binding	input	YES	pfam					
+		TetR_C_11	TetR_C	inducer-binding domain	small molecule binding	input	YES	pfam					
+		TetR_C_12	TetR_C	inducer-binding domain	small molecule binding	input	YES	pfam					
+		TetR_C_13	TetR_C	inducer-binding domain	small molecule binding	input	YES	pfam					
+		WHG	TetR_C	inducer-binding domain	small molecule binding	input	YES	pfam					
+		DUF1956	TetR_C	putative inducer-binding domain	small molecule binding	input	YES	pfam					
+		AHSA1	Bet_V_1_like	unknown	unknown	input	NO	pfam					
+		PEGA	Transthyretin	unknown	unknown	input	NO	pfam					
+		Virul_fac_BkrB	No clan	unknown	unknown	input	NO	pfam					
+		Uma2	PDDEXK	unknown	unknown	input	NO	pfam					
+		DUF128	No clan	ligand-binding domain	small molecule binding	input	YES	pfam					
+		DUF234	PDDEXK	unknown	unknown	input	NO	pfam					
+		DUF1232	No clan	unknown	unknown	input	NO	pfam					
+		DUF1612	No clan	ligand-binding domain	small molecule binding	input	YES	pfam					
+		DUF1724	No clan	putative ligand-binding domain	small molecule binding	input	YES	pfam					
+		DUF2083	No clan	ligand-binding domain	small molecule binding	input	YES	pfam					
+		DUF2087	No clan	ligand-binding domain	small molecule binding	input	YES	pfam					
+		DUF2442	No clan	putative ligand-binding domain	small molecule binding	input	NO	pfam					
+		DUF2637	No clan	unknown	unknown	input	NO	pfam					
+		DUF2690	No clan	unknown	unknown	input	NO	pfam					
+		DUF3612	No clan	ligand-binding domain	small molecule binding	input	YES	pfam					
+		DUF4115	No clan	unknown	unknown	input	NO	pfam					
+		DUF4870	No caln	putative orotate phosphoribosyltransferase domain	enzymatic	input	NO	pfam					
+		FeS	4Fe-4S	Fe-S cluster domain	cofactor binding	input	NO	pfam					
+		Fer4	4Fe-4S	4Fe-4S binding domain	cofactor binding	input	NO	pfam					
+		Fer4_12	4Fe-4S	4Fe-4S single cluster domain	cofactor binding	input	NO	pfam					
+		Sensor_TM1	No clan	putative small ligand binding domain	small molecule binding	input	YES	pfam					
+		RisS_PPD	No clan	putative small ligand binding domain	small molecule binding	input	YES	pfam					
+		DUF3365	No clan	putative small ligand binding domain	small molecule binding	input	YES	pfam					
+		HK_sensor	No clan	putative small ligand binding domain	small molecule binding	input	YES	pfam					
+		STAS	STAS	NTP-binding domain	small molecule binding	input	NO	pfam	10662676				
+		STAS_2	STAS	NTP-binding domain	small molecule binding	input	NO	pfam	10662676				
+		DUF4173	Cache	unknown 	small molecule binding	input	NO	pfam					
+		DUF4118	No clan	putative small ligand binding domain	small molecule binding	input	YES	pfam					
+		KdpD	P-loop_NTPase	monovalent cation sensor	small molecule binding	input	YES	pfam					
+		Usp	HUP	unknown	unknown	input	YES	pfam					
+		Reg_prop	Beta_propeller	putative disaccharide binding domain	small molecule binding	input	YES	pfam					
+		DUF3329	No clan	putative small ligand binding domain	small molecule binding	input	YES	pfam					
+		DICT	No clan	putative small ligand binding domain, bi-partite together with CHASE6_C	small molecule binding	input	YES	pfam					
+		CHASE6_C	No clan	putative small ligand binding domain, bi-partite together with DICT	small molecule binding	input	YES	pfam	12486065				
+		RsbRD_N	No clan	putative small ligand binding domain	small molecule binding	input	YES	pfam					
+		HisKA_7TM	No clan	7TM putative sensory domain	small molecule binding	input	YES	pfam					
+		HisK_N	No clan, globin-related	putative small ligand binding domain	small molecule binding	input	YES	pfam					
+		DUF3404	No clan	putative small ligand binding domain	small molecule binding	input	YES	pfam					
+		AA_permease_2	APC	permease ligand binding domain	small molecule binding	input	NO	pfam					
+		MASE4	No clan	integral membrane domain	unknown	input	YES	pfam					
+		MASE3	No clan	integral membrane domain	unknown	input	YES	pfam					
+		SnoaL_3	NTF2	putative small ligand binding domain	small molecule binding	input	NO	pfam					
+		SSF	APC	sodium solute symporter domain	small molecule binding	input	NO	pfam					
+		Bac_rhodopsin	GPCR_A	rhodopsin light sensory domain	cofactor binding	input	NO	pfam					
+		RsbU_N	No clan	putative small ligand binding domain	small molecule binding	input	YES	pfam					
+		NMT1	PBP	small molecule binding   domain	small molecule binding	input	NO	pfam					
+		DUF1638	No clan	unknown	unknown	input	NO	pfam					
+		DUF4154	No clan	unknown	unknown	input	NO	pfam					
+		Sensor	No clan	unknown	unknown	input	YES	pfam					
+		DegS	No clan	unknown	unknown	input	YES	pfam					
+		Sigma54_activat	P-loop_NTPase	Sigma-54 interaction domain	enzymatic	unknown	YES	pfam	12618438				
+		AAA_16	P-loop_NTPase	AAA+ domain	enzymatic	unknown	NO	pfam					
+		AAA_22	P-loop_NTPase	AAA+ domain	enzymatic	unknown	NO	pfam					
+		AAA_25	P-loop_NTPase	AAA+ domain	enzymatic	unknown	NO	pfam					
+		AAA_28	P-loop_NTPase	AAA+ domain	enzymatic	unknown	NO	pfam					
+		AAA_31	P-loop_NTPase	AAA+ domain	enzymatic	unknown	NO	pfam					
+		NB-ARC	P-loop_NTPase	domain of unknown signaling role	enzymatic	unknown	NO	pfam	9545207				
+		NACHT	P-loop_NTPase	AAA+ domain	enzymatic	unknown	NO	pfam	10782090				
+		ATPase_2	P-loop_NTPase	ATP-binding domain	enzymatic	unknown	NO	pfam	9045616				
+		ABC_tran	P-loop_NTPase	ATP-binding domain	enzymatic	unknown	NO	pfam					
+		Bat	No clan	GAF and HTH associated domain	unknown	unknown	YES	pfam					
+		BTAD	TPR	TPR-containing regulatory domain,  protein-protein interactions	protein-protein interactions	input	YES	pfam	12625841				
+		HEAT_2	TPR	TPR-containing regulatory domain,  protein-protein interactions	protein-protein interactions	input	NO	pfam					
+		TPR_7	TPR	TPR-containing regulatory domain,  protein-protein interactions	protein-protein interactions	input	NO	pfam					
+		TPR_8	TPR	TPR-containing regulatory domain,  protein-protein interactions	protein-protein interactions	input	NO	pfam					
+		TPR_10	TPR	TPR-containing regulatory domain,  protein-protein interactions	protein-protein interactions	input	NO	pfam					
+		TPR_12	TPR	TPR-containing regulatory domain,  protein-protein interactions	protein-protein interactions	input	NO	pfam					
+		TPR_16	TPR	TPR-containing regulatory domain,  protein-protein interactions	protein-protein interactions	input	NO	pfam					
+		SPOB_a	No clan	histidine kinase dimerization domain	protein-protein interactions	transmitter	YES	pfam					
+HisKA		HisKA	His_Kinase_A	histidine kinase dimerization domain	protein-protein interactions	transmitter	YES	pfam					
+HisKA		HisKA_2	His_Kinase_A	histidine kinase dimerization domain	protein-protein interactions	transmitter	YES	pfam					
+HisKA		HisKA_3	His_Kinase_A	histidine kinase dimerization domain	protein-protein interactions	transmitter	YES	pfam					
+		H-kinase_dim	His_Kinase_A	histidine kinase dimerization (P3) domain, CheA-specific	protein-protein interactions	transmitter	YES	pfam					
+HK_CA		HATPase_c	His_Kinase_A	histidine kinase catalytic domain	enzymatic	transmitter	NO	pfam	10637609				
+HK_CA		HATPase_c_2	His_Kinase_A	anti-sigma regulatory factor, monomeric histidine kinase domain	enzymatic	transmitter	NO	pfam					
+HK_CA		HATPase_c_5	His_Kinase_A	histidine kinase catalytic domain	enzymatic	transmitter	YES	pfam	10637609				
+HisKA		HWE_HK	His_Kinase_A	histidine kinase catalytic domain	enzymatic	transmitter	YES	pfam					
+HK_CA:Che		HK_CA:Che		histidine kinase catalytic domain, CheA-specific	enzymatic	transmitter	YES	agfam	19900966				Needs class-specific HMMs
+HK_CA		HK_CA		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:1		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:2		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:3		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:5		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:6		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:7		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:8		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:9		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:10		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:11		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:12		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:13		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:14		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:15		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:16		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:17		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:18		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:19		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:20		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:21		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:22		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+HK_CA		HK_CA:23		histidine kinase catalytic domain	enzymatic	transmitter	YES	agfam	19900966				
+		Hpt	No clan	histidine-containing phosphotransfer domain	enzymatic	transmitter	YES	pfam					
+		P2	No clan	CheY-binding (P2) domain, CheA-specific	protein-protein interactions	transmitter	YES	pfam	15289606				
+		CheY-binding	No clan	CheY-binding (P2) domain, CheA-specific	protein-protein interactions	transmitter	YES	pfam	15289606				
+		CheW	No clan	adaptor, scaffolding domain, chemotaxis-specific	protein-protein interactions	chemotaxis	YES	pfam					
+		HAMP	No clan	signal amplifier/transmitter in transmembrane sensors	signaling	transmitter	YES	pfam	10418137				
+		MCPsignal	No clan	chemoreceptor signaling domain	protein-protein interactions	chemotaxis	YES	pfam	17299051				
+		CheB_methylest	No clan	chemotaxis methylesterase, enzymatic domain	enzymatic	chemotaxis	YES	pfam	9465023				
+		CheR	NADP_Rossmann	chemotaxis methyltransferase, enzymatic domain	enzymatic	chemotaxis	YES	pfam	9628482				
+		CheR_N	No clan	chemotaxis methyltransferase, N-terminal domain	protein-protein interactions	chemotaxis	YES	pfam					
+		CheD	No clan	chemotaxis glutamine deamidase, enzymatic domain	enzymatic	chemotaxis	YES	pfam	16469702				
+		CheC	CheC-like	chemotaxis phosphatase CheC enzymatic domain	enzymatic	chemotaxis	YES	pfam	15546616				
+		CheX	CheC-like	chemotaxis phosphatase CheX enzymatic domain	enzymatic	chemotaxis	YES	pfam	15546616				
+		CheZ	No clan	chemotaxis phosphatase CheZ enzymatic domain	enzymatic	chemotaxis	YES	pfam	12080332				
+		PRD	PRD	phosphorylatable regulatory domain	signaling	input	YES	pfam	11751049				
+		PRD_Mga	PRD	phosphorylatable regulatory domain	signaling	input	YES	pfam	11751049				
+RR		RR		response regulator receiver domain	protein-protein interactions	receiver	YES	agfam	19900966				
+RR		Response_reg	CheY	response regulator receiver domain	protein-protein interactions	receiver	YES	pfam					
+		FleQ	CheY	response regulator receiver domain	protein-protein interactions	receiver	YES	pfam					
+		Arc	Met_repress	DNA-binding, ribbon-helix-helix binding motif	DNA binding	output	YES	pfam	8107872				
+		MetJ	Met_repress	DNA-binding, ribbon-helix-helix binding motif	DNA binding	output	YES	pfam	8092669				
+		Omega_Repress	Met_repress	DNA-binding, ribbon-helix-helix binding motif	DNA binding	output	YES	pfam	11733997				
+		PSK_trans_fac	Met_repress	DNA-binding, ribbon-helix-helix binding motif	DNA binding	output	YES	pfam	26150422				
+		RHH_1	Met_repress	DNA-binding, ribbon-helix-helix binding motif	DNA binding	output	YES	pfam	9857196				
+		RHH_3	Met_repress	DNA-binding, ribbon-helix-helix binding motif	DNA binding	output	YES	pfam					
+		RHH_4	Met_repress	DNA-binding, ribbon-helix-helix binding motif	DNA binding	output	YES	pfam					
+		RHH_7	Met_repress	DNA-binding, ribbon-helix-helix binding motif	DNA binding	output	YES	pfam	18623065				
+		AphA_like	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	10331868				
+		Arg_repressor	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		BetR	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		Cro	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	9653036				
+		Crp	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	1653449				
+		FaeA	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 20979070				
+		Fe_dep_repress	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 8823163				
+		FeoC	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 22580893				
+		FUR	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	12581348				
+		GcrA	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	15087506				
+		GerE	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	8780507				
+		GntR	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	11013219	11756427			
+		HrcA_DNA-bdg	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		HSF_DNA-bind	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	NO	pfam					
+		HTH_1	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	10075916				
+		HTH_10	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		HTH_11	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 11353844				
+		HTH_12	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		HTH_13	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		HTH_15	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 19004822				
+		HTH_17	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		HTH_18	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	10802742 				
+		HTH_19	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 21440553				
+		HTH_20	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 21632538				
+		HTH_21	HTH	DNA-binding, helix-turn-helix domain	DNA binding	unknown	NO	pfam					
+		HTH_22	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		HTH_23	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	NO	pfam					
+		HTH_24	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	16528101				
+		HTH_25	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	NO	pfam					
+		HTH_26	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		HTH_27	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 23396446				
+		HTH_28	HTH	DNA-binding, helix-turn-helix domain, transposase	DNA binding	output	NO	pfam					
+		HTH_29	HTH	DNA-binding, helix-turn-helix domain, transposase	DNA binding	output	NO	pfam					
+		HTH_3	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 25847993				
+		HTH_30	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		HTH_31	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 27907154				
+		HTH_32	HTH	DNA-binding, helix-turn-helix domain, transposase	DNA binding	output	NO	pfam					
+		HTH_33	HTH	DNA-binding, helix-turn-helix domain, transposase	DNA binding	output	NO	pfam					
+		HTH_34	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 16506234				
+		HTH_35	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	8590003				
+		HTH_36	HTH	DNA-binding, helix-turn-helix domain	DNA binding	unknown	NO	pfam					
+		HTH_37	HTH	DNA-binding, helix-turn-helix domain	DNA binding	unknown	NO	pfam					
+		HTH_38	HTH	DNA-binding, helix-turn-helix domain, transposase	DNA binding	unknown	NO	pfam					
+		HTH_39	HTH	DNA-binding, helix-turn-helix domain	DNA binding	unknown	NO	pfam					
+		HTH_40	HTH	DNA-binding, helix-turn-helix domain, helicase	DNA binding	unknown	NO	pfam					
+		HTH_41	HTH	DNA-binding, helix-turn-helix domain	DNA binding	unknown	NO	pfam					
+		HTH_43	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		HTH_45	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 15312764				
+		HTH_46	HTH	DNA-binding, helix-turn-helix domain	DNA binding	unknown	NO	pfam					
+		HTH_47	HTH	DNA-binding, helix-turn-helix domain	DNA binding	unknown	NO	pfam					
+		HTH_5	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	19286656				
+		HTH_6	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	23832782				
+		HTH_7	HTH	DNA-binding, helix-turn-helix domain, transposon resolvase	DNA binding	unknown	NO	pfam					
+		HTH_8	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	16005641				
+		HTH_AraC	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 23241389				
+		HTH_AsnC-type	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	17962306				
+		HTH_CodY	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 16488888				
+		HTH_Crp_2	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 19740754				
+		HTH_DeoR	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		HTH_IclR	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	11877432				
+		HTH_Mga	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		HTH_WhiA	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 19836336				
+		HxlR	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	23479646				
+		KORA	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	27016739				
+		KorB	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	15170177				
+		LacI	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 15369672				
+		LexA_DNA_bind	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 8076591				
+		MarR	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	11473263				
+		MarR_2	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 24531929				
+		MerR	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 11201751				
+		MerR-DNA-bind	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	12958362				
+		MerR_1	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 25691471				
+		MerR_2	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	24945826				
+		Mga	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	25402841				
+		Mor	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	14729670				
+		PaaX	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		PadR	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 15647287				
+		Pencillinase_R	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 14568532				
+		Phage_CI_repr	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 16507359				
+		PuR_N	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	12837783				
+		Put_DNA-bind_N	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	25463021				
+		RepL	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	NO	pfam					
+		Rrf2	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 22553203				
+		SgrR_N	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	17209026				
+		Sigma70_r2	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	11931761				
+		Sigma70_r3	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		Sigma70_r4	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		Sigma70_r4_2	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		TetR_N	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 23800819				
+		Trans_reg_C	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 24526190				
+		TrmB	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	17720190				
+		Trp_repressor	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	3419502				
+		UPF0122	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam	 15213388				
+		Vir_act_alpha_C	HTH	DNA-binding, helix-turn-helix domain	DNA binding	output	YES	pfam					
+		ArsD	Thioredoxin	DNA-binding	DNA binding	output	YES	pfam	11980902				
+		ComK	No clan	DNA-binding	DNA binding	output	YES	pfam	12761164				
+		CtsR	No clan	DNA-binding	DNA binding	output	YES	pfam	19498169				
+		LytTR	No clan	DNA-binding	DNA binding	output	YES	pfam	12034833	 23181972			
+		ROS_MUCR	No clan	DNA-binding	DNA binding	output	YES	pfam	 17956987				
+		EAL	No clan	diguanylate phosphodiesterase	enzymatic	output	YES	pfam	11557134	19536266			
+		GGDEF	Nucleot_cyclase	diguanylate cyclase	enzymatic	output	YES	pfam	15075296	 22843345			
+		HD	HD_PDEase	hydrolase	enzymatic	output	NO	pfam					
+		HDOD	HD_PDEase	hydrolase	enzymatic	output	NO	pfam	16287129				
+		HD_4	HD_PDEase	hydrolase	enzymatic	output	NO	pfam					
+		HD_5	HD_PDEase	hydrolase	enzymatic	output	YES	pfam	9868367	 25691523 			
+		Guanylate_cyc	Nucleot_cyclase	adenylate and guanylate cyclase	enzymatic	output	YES	pfam	 15678099	 22226839			
+		RseA_N	No clan	Sigma-E binding domain	protein-protein interactions	output	YES	pfam	12718891				
+		SpoIIE	PP2C	protein phosphatase 	enzymatic	output	YES	pfam	28527238				
+		Pkinase	Pkinase	serine/threonine protein kinase	enzymatic	output	YES	pfam	16244704				
+		Pkinase_Tyr	Pkinase 	tyrosine kinase	enzymatic	output	YES	pfam					
+		ANTAR	No clan	RNA-binding domain	RNA binding	output	YES	pfam	11796212	22690729 			
+		CsrA	No clan	RNA-binding domain	RNA binding	output	YES	pfam	 23980177				
+		Cat_RBD	No clan	RNA-binding domain	RNA binding	output	YES	pfam	 22750856				
+		YcgR	No clan	protein-protein interaction domain, flagellar-specific	protein-protein interactions	output	YES	pfam	20346719				
+		KaiB	Thioredoxin	putative protein-protein interaction domain	protein-protein interactions	unknown	YES	pfam	15716274				
+		Resolvase	No clan	unknown	unknown	unknown	NO	pfam					
+		DUF835	No clan	unknown, archael-specific	unknown	unknown	NO	pfam					
+		ECF_1		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_2		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_3		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_4		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_5		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_6		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_7		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_8		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_9		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_10		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_11		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_12		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_13		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_14		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_15		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_16		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_17		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_18		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_19		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_20		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_21		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_22		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_23		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_24		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_25		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_26		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_27		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_28		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_29		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_30		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_31		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_32		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_33		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_34		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_35		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_36		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_37		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_38		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_39		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_40		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_41		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_42		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_43		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_101		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_102		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_103		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_104		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_105		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_106		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_107		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_108		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_109		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_110		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_111		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_112		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_113		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_114		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_115		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_116		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_117		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_118		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_119		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_120		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_121		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_122		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_123		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_124		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					
+		ECF_999		extracytoplasmic function sigma factor	extracytoplasmic function	ecf	YES	ecf					

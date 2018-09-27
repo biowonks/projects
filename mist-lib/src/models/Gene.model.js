@@ -4,16 +4,11 @@
 const coreUtil = require('core-lib/util')
 
 module.exports = function(Sequelize, models, extras) {
-	let fields = {
-		stable_id: {
-			type: Sequelize.TEXT,
+	const fields = {
+		stable_id: Object.assign(extras.requiredText(), {
 			description: 'permanent, universal gene identifier composed of the genome version and locus separated by a dash character',
 			example: 'GCF_000302455.1-A994_RS01985',
-			allowNull: false,
-			validate: {
-				notEmpty: true
-			}
-		},
+		}),
 		component_id: Object.assign(extras.requiredPositiveInteger(), {
 			description: 'foreign identifier to this gene\'s component',
 			example: 1
@@ -56,28 +51,10 @@ module.exports = function(Sequelize, models, extras) {
 			description: 'gene sequence length; typically equals stop - start + 1 except in cases where the gene spans the origin',
 			example: 612
 		}),
-		names: {
-			// eslint-disable-next-line new-cap
-			type: Sequelize.ARRAY(Sequelize.TEXT),
-			description: 'symbol of the gene corresponding to a sequence region',
+		names: Object.assign(extras.arrayWithNoEmptyValues(), {
+			description: 'array of symbols of the gene corresponding to a sequence region',
 			example: ['hisH'],
-			validate: {
-				noEmptyValues: function(value) {
-					if (!value)
-						return value
-
-					if (!Array.isArray(value))
-						throw new Error('Must be an array')
-
-					for (let val of value) {
-						if (!val || /^\s*$/.test(val))
-							throw new Error('Each value must not be empty')
-					}
-
-					return value
-				}
-			}
-		},
+		}),
 		pseudo: {
 			type: Sequelize.BOOLEAN,
 			description: 'if true, indicates this gene is a non-functional gene of sorts',
@@ -134,7 +111,7 @@ module.exports = function(Sequelize, models, extras) {
 		}
 	}
 
-	let validate = {
+	const validate = {
 		accessionVersion: extras.validate.bothNullOrBothNotEmpty('accession', 'version')
 	}
 
@@ -148,7 +125,7 @@ module.exports = function(Sequelize, models, extras) {
 		 */
 		findNeighborIds: function(options) {
 			if (!this.component_id)
-				return []
+				return Promise.resolve([])
 
 			return Promise.all([
 				this.getComponent({
@@ -166,10 +143,10 @@ module.exports = function(Sequelize, models, extras) {
 
 	return {
 		fields,
+		instanceMethods,
 		params: {
-			instanceMethods,
 			timestamps: false,
 			validate,
-		}
+		},
 	}
 }

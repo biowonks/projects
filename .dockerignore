@@ -1,2 +1,2 @@
 *
-!docker.node-bootstrap.entrypoint.sh
+!docker.dev.entrypoint.sh

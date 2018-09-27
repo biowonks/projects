@@ -5,8 +5,8 @@
 const path = require('path')
 
 // Vendor
-const pm2 = require('pm2'),
-	os = require('os')
+const pm2 = require('pm2')
+const os = require('os')
 
 // Local
 const config = require('../config')
@@ -28,9 +28,9 @@ pm2.connect(() => {
 		}
 
 		// KeyMetrics logging
-		let keyMetricsPrivateKey = process.env.KEYMETRICS_PRIVATE_KEY || config.KEYMETRICS_PRIVATE_KEY,
-			keyMetricsPublicKey = process.env.KEYMETRICS_PUBLIC_KEY || config.KEYMETRICS_PUBLIC_KEY,
-			keyMetricsMachineName = process.env.DYNO || os.hostname()
+		const keyMetricsPrivateKey = process.env.KEYMETRICS_PRIVATE_KEY || config.KEYMETRICS_PRIVATE_KEY
+		const keyMetricsPublicKey = process.env.KEYMETRICS_PUBLIC_KEY || config.KEYMETRICS_PUBLIC_KEY
+		const keyMetricsMachineName = process.env.DYNO || os.hostname()
 		if (keyMetricsPrivateKey && keyMetricsPublicKey && keyMetricsMachineName) {
 			console.log('Connecting to KeyMetrics monitoring service')
 			pm2.interact(keyMetricsPrivateKey, keyMetricsPublicKey, keyMetricsMachineName, () => {

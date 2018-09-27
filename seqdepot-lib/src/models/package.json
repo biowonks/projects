@@ -1,6 +1,0 @@
-{
-  "description": "packages that the seqdepot-lib models depend on",
-  "dependencies": {
-    "sequelize-model-loader": "https://github.com/lukeulrich/sequelize-model-loader.git"
-  }
-}

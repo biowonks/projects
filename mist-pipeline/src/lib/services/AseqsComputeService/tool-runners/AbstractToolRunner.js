@@ -1,8 +1,8 @@
 'use strict'
 
 // Core
-const assert = require('assert'),
-	EventEmitter = require('events')
+const assert = require('assert')
+const EventEmitter = require('events')
 
 // Vendor
 const Promise = require('bluebird')
@@ -16,15 +16,17 @@ class AbstractToolRunner extends EventEmitter {
 	 * This base class encapsulates bootstrapping details of running a particular tool and emitting
 	 * progress events (enabled if ${config.ticksPerProgressEvent} is a positive number).
 	 *
-	 * @consttructor
+	 * @constructor
 	 * @param {Object} config - tool runner specific configuration
+	 * @param {Object.<string,Model>} models list of database models
 	 */
-	constructor(config = {}) {
+	constructor(config, models) {
 		super()
-		this.config_ = config
+		this.config_ = config || {}
+		this.models_ = models
 
 		// Progress
-		this.ticksPerProgressEvent_ = config.ticksPerProgressEvent || 0
+		this.ticksPerProgressEvent_ = this.config_.ticksPerProgressEvent || 0
 		this.progressEnabled_ = this.ticksPerProgressEvent_ > 0
 		this.stopWatch_ = new StopWatch()
 		this.completedAseqs_ = 0
@@ -74,6 +76,10 @@ class AbstractToolRunner extends EventEmitter {
 
 	// ----------------------------------------------------
 	// Protected methods
+	setup_() {
+		return Promise.resolve()
+	}
+
 	// eslint-disable-next-line valid-jsdoc
 	/**
 	 * Virtual protected method that must be defined in the child class implementation.
@@ -139,6 +145,9 @@ class AbstractToolRunner extends EventEmitter {
  * Template metadata to follow when describing this tool runner.
  */
 module.exports.meta = {
+	hidden: false,			// If this tool runner should be displayed as part of the AseqCompute.
+											// Usually true; however in some cases such as the StpiToolRunner
+											// which runs as part of the Stpi module, this property is true.
 	id: null,						// Unique string identifying this tool
 	dependencies: [],		// Flat module id
 	description: null,

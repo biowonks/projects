@@ -181,7 +181,7 @@ class GenbankMistAdapter {
 			genome_id: this.genomeId_,
 			pubmed_id: reference.pubmed,
 			medline_id: reference.medline,
-			title: reference.title,
+			title: reference.title || 'Untitled',
 			authors: reference.authors,
 			consortium: reference.consortium,
 			journal: reference.journal,

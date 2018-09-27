@@ -57,7 +57,12 @@ let config = {
 		version: 'X-' + packageJSON.name + '-version'
 	},
 
-	package: packageJSON
+	package: packageJSON,
+
+	signalTransduction: {
+		// Version of st analysis results to return to user
+		version: 1,
+	}
 }
 
 loadConfig(__dirname, config)
