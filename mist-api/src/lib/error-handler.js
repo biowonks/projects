@@ -49,6 +49,11 @@ module.exports = function(app) {
 	const sequelize = app.get('sequelize')
 
 	const errorHandler = (error, req, res, next) => {
+		// Handle any orphan transactions
+		if (res.locals.criteria && res.locals.criteria.transaction) {
+			res.locals.criteria.transaction.rollback()
+		}
+
 		// Translate missing files into NotFoundErrors. For example, this may occur
 		// when a static handler does not map to an actual file on the filesystem.
 		if (error.code === 'ENOENT') {

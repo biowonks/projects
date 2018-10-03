@@ -138,12 +138,12 @@ class CriteriaService {
 			rootModelNode = this.createModelTree_(queryObject)
 
 		this.mapFieldsToCriteria_(rootModelNode, criteria, primaryModel)
-		this.mapWhereToCriteria_(queryObject, criteria, primaryModel)
+		this.mapWhereToCriteria_(queryObject, criteria)
 
 		return criteria
 	}
 
-	mapWhereToCriteria_(queryObject, criteria, model) {
+	mapWhereToCriteria_(queryObject, criteria) {
 		const where = {}
 		let addedFilter = false
 		for (let key in queryObject) {
@@ -197,15 +197,23 @@ class CriteriaService {
 	 * @returns {Object} - criteria object compatible with Sequelizejs find operations
 	 */
 	createFromQueryObjectForMany(primaryModel, queryObject = {}, options = {}) {
-		let criteria = this.createFromQueryObject(primaryModel, queryObject),
-			perPage = this.perPageFrom(queryObject.per_page, options.defaultPerPage, options.maxPerPage),
-			page = this.pageFrom(queryObject.page, options.maxPage)
+		const criteria = this.createFromQueryObject(primaryModel, queryObject)
+		const perPage = this.getPerPage(queryObject, options)
+		const page = this.getPage(queryObject)
 
 		criteria.limit = perPage
 		criteria.offset = this.offsetFromPage(page, perPage) || null
 		criteria.order = this.orderFrom(primaryModel, queryObject.order)
 
 		return criteria
+	}
+
+	getPerPage(queryObject = {}, options = {}) {
+		return this.perPageFrom(queryObject.per_page, options.defaultPerPage, options.maxPerPage)
+	}
+
+	getPage(queryObject = {}, options = {}) {
+		return this.pageFrom(queryObject.page, options.maxPage)
 	}
 
 	/**

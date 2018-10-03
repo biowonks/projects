@@ -57,6 +57,24 @@ module.exports = function(Sequelize, models, extras) {
           },
         )
       },
+
+      getSignalDomainNames: function(version, kind, func, transaction) {
+        const where = {
+          version,
+          kind,
+        }
+        if (func) {
+          where.function = func
+        }
+
+        return models.SignalDomain.findAll({
+          where,
+          attributes: ['name'],
+          raw: true,
+          transaction,
+        })
+        .then((rows) => rows.map((row) => row.name))
+      },
     },
     fields,
 		params: {

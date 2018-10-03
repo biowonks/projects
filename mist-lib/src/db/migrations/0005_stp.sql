@@ -9,6 +9,7 @@ create table signal_domains (
 
   unique(name, version)
 );
+create index on signal_domains(version, kind, function);
 comment on table signal_domains is 'composite signal domain identifiers';
 comment on column signal_domains.name is 'unique human friendly identifier that is source independent (e.g. may relate to domain models across pfam and agfam)';
 comment on column signal_domains.kind is 'e.g. transmitter, receiver, ecf, etc.';
@@ -51,6 +52,8 @@ create table signal_genes (
   foreign key(component_id) references components(id) on update cascade on delete cascade
 );
 create index on signal_genes(component_id);
+create index on signal_genes using gin(ranks);
+create index on signal_genes using gin(counts);
 comment on table signal_genes is 'destructured representation of the genes corresponding to those aseqs predicted to be involved in signal transduction';
 comment on column signal_genes.component_id is 'not strictly necessary, but duplicated here for performance reasons';
 comment on column signal_genes.signal_domains_version is 'version of signal domain names used for this prediction';
