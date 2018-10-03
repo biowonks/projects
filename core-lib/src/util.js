@@ -80,6 +80,21 @@ exports.findNeighoringIndices = (index, rangeStart, rangeStop, isCircular, optio
   return result
 }
 
+exports.scrub = (value, invalidRegex = /[^\w .-]/g) => {
+  return value ? value.replace(invalidRegex, '').trim() : value
+}
+
+exports.splitAndScrubString = (value, delimiter = /\s+/) => {
+  const result = []
+  if (value === undefined || value === null)
+    return result
+
+  value += '' // Convert to string
+  return value.split(delimiter)
+    .map(exports.scrub)
+    .filter((word) => !!word)
+}
+
 /**
  * Splits ${value} into terms that are separated by whitespace and preserving
  * simple quoted groups of words (only double quotes - does not handle nested
@@ -107,7 +122,7 @@ exports.splitIntoTerms = (value) => {
 
   return valueWithoutQuotedTerms.split(/\s+/)
     .concat(quotedTerms)
-    .map((word) => word.replace(/[^\w .-]/g, '').trim()) // Allow word characters, spaces, hyphens and periods
+    .map(exports.scrub)
     .filter((word) => !!word)
 }
 
