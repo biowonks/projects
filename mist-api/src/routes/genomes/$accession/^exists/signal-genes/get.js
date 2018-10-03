@@ -29,13 +29,13 @@ module.exports = function(app, middlewares, routeMiddlewares) {
         'id',
         'gene_id',
 				'component_id',
-				'ranks',
-			],
+				'ranks'
+      ],
     }),
     (req, res, next) => {
 			res.locals.criteria.include.push({
 				model: models.Component,
-				attributes: ['name', 'version'],
+				attributes: ['name', 'version', 'definition'],
 				where: {
 					genome_id: res.locals.genome.id
 				},
