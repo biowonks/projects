@@ -122,7 +122,7 @@ exports.splitIntoTerms = (value) => {
 
   return valueWithoutQuotedTerms.split(/\s+/)
     .concat(quotedTerms)
-    .map(exports.scrub)
+    .map((dirtyWord) => exports.scrub(dirtyWord))
     .filter((word) => !!word)
 }
 
