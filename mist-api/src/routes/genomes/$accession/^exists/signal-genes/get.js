@@ -81,10 +81,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 
 				// User provided kind and function, but there are no corresponding rows in the database
 				// matching those query values. Thus, return no results.
-				res.locals.criteria.transaction.commit()
-				.finally(() => {
-					res.json([])
-				})
+				res.json([])
 			})
 			.catch(next)
     },

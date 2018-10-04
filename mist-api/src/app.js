@@ -22,6 +22,7 @@ const helmet = require('helmet') // Security practices
 const httpShutdown = require('http-shutdown')
 const pathRoutify = require('path-routify')
 const responseTime = require('response-time')
+const onHeaders = require('on-headers')
 
 // Local
 const config = require('../config')
@@ -72,6 +73,15 @@ bootService.setup()
 	// Main setup
 	let app = express()
 	app.use(helmet()) // Security measures
+
+	// If we have any open transaction - commit it
+	app.use((req, res, next) => {
+		onHeaders(res, () => {
+			if (res.locals.criteria && res.locals.criteria.transaction)
+				res.locals.criteria.transaction.commit();
+		})
+		next();
+	})
 
 	// Use the native queryparser module (vs the qs module). Thus, nested objects are no longer
 	// automaticallky constructed when brackets are used in the query string.

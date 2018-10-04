@@ -15,6 +15,7 @@ ENV HOME=/app
 
 COPY . /app
 WORKDIR /app/mist-api
-RUN yarn
+RUN chown -R biowonks:biowonks /app
 USER biowonks
+RUN yarn
 CMD ["yarn", "start"]

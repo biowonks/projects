@@ -30,7 +30,7 @@
   "dependencies": {
     "bluebird": "3.5.2",
     "bunyan": "^1.8.1",
-    "pg": "7.4.3",
+    "pg": "7.5.0",
     "public-ip": "2.4.0",
     "sequelize": "4.38.0",
     "sequelize-migrator": "https://github.com/lukeulrich/sequelize-migrator.git",
