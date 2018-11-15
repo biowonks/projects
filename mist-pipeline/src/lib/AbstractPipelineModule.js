@@ -49,8 +49,8 @@ class AbstractPipelineModule {
 	 *   stp: {
 	 *     description: 'predict signal transduction proteins',
 	 *     dependencies: [
-	 *       'AseqCompute:pfam',
-	 *       'AseqCompute:agfam',
+	 *       'AseqCompute:pfam31',
+	 *       'AseqCompute:agfam2',
 	 *       ...
 	 *     ]
 	 *   },
@@ -85,6 +85,7 @@ class AbstractPipelineModule {
 				throw error
 			}
 			yield self.updateWorkerModulesState_(workerModules, 'done')
+			yield self.afterRun()
 			self.shutdownCheck_()
 			if (options.optimize) {
 				yield self.optimize()
@@ -138,6 +139,9 @@ class AbstractPipelineModule {
 
 	run() {
 		throw new Error('not implemented')
+	}
+
+	afterRun() {
 	}
 
 	optimize() {

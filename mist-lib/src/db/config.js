@@ -17,6 +17,9 @@ module.exports = {
 	name: 'mist_dev',
 	ssl: true,
 	logging: false,
+	pool: {
+		acquire: 60000,
+	},
 
 	models: {
 		path: path.resolve(__dirname, '..', 'models')

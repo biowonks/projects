@@ -54,10 +54,26 @@ class AseqCompute extends PerGenomePipelineModule {
 	}
 
 	run() {
-		return this.sequelize_.transaction({
-			isolationLevel: 'READ COMMITTED'
-		}, (transaction) => {
-			return this.doRun(transaction)
+		return this.aseqsMissingData_(this.toolIds_)
+		.then((aseqs) => {
+			this.totalAseqsToProcess_ = aseqs.length
+			let toolIdString = this.toolIds_.join(', ')
+			if (!aseqs.length) {
+				this.logger_.info(`All ${toolIdString} for this genome has already been precomputed`)
+				return null
+			}
+
+			this.logger_.info(`${aseqs.length} aseqs are missing data for some of ${toolIdString}`)
+			this.shutdownCheck_()
+			let groups = this.aseqsService_.groupByUndoneTools(aseqs, this.toolIds_)
+			return this.computeGroups_(groups)
+			.then(() => {
+				return this.sequelize_.transaction({isolationLevel: 'READ COMMITTED'}, (transaction) => {
+					return this.saveGroups_(groups, transaction)
+						.then(() => this.afterSave(transaction));
+				})
+			})
+			.then(() => aseqs)
 		})
 	}
 
@@ -74,23 +90,14 @@ class AseqCompute extends PerGenomePipelineModule {
 
 	// ----------------------------------------------------
 	// Protected methods
-	doRun(transaction) {
-		return this.aseqsMissingData_(this.toolIds_, transaction)
-		.then((aseqs) => {
-			this.totalAseqsToProcess_ = aseqs.length
-			let toolIdString = this.toolIds_.join(', ')
-			if (!aseqs.length) {
-				this.logger_.info(`All ${toolIdString} for this genome has already been precomputed`)
-				return null
-			}
-
-			this.logger_.info(`${aseqs.length} aseqs are missing data for some of ${toolIdString}`)
-			this.shutdownCheck_()
-			let groups = this.aseqsService_.groupByUndoneTools(aseqs, this.toolIds_)
-			return this.computeGroups_(groups)
-			.then(() => this.saveGroups_(groups, transaction))
-			.then(() => aseqs)
-		})
+	/**
+	 * Provides for performing additional logic after the group data has been computed
+	 * and saved. ${transaction} is the same transaction as that used to save the groups
+	 * to the database.
+	 *
+	 * @param {Transaction} transaction
+	 */
+	afterSave(transaction) {
 	}
 
 	/**
