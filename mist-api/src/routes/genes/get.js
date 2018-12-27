@@ -13,7 +13,6 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		'old_locus',
 		'stable_id',
 	]
-	const textFieldNames = ['product']
 
 	return [
 		middlewares.parseCriteriaForMany(models.Gene, {
@@ -30,7 +29,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 		(req, res, next) => {
 			if (Reflect.has(req.query, 'search')) {
 				searchUtil.assignExactMatchCriteria(req.query.search, res.locals, exactMatchFieldNames)
-				searchUtil.assignPartialMatchCriteria(req.query.search, res.locals, textFieldNames)
+				// For the time being, only exact searches across a limited amount of fields
 			}
 
 			next()
