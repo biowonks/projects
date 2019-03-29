@@ -10,7 +10,7 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 	const Aseq = models.Aseq
 
 	return [
-		bodyParser(),
+		bodyParser.json(),
 		(req, res, next) => {
 			const aseqIds = req.body
 			const numAseqIds = aseqIds.length

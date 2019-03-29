@@ -3,6 +3,9 @@
 // Core
 const assert = require('assert')
 
+// Vendor
+const Sequelize = require('sequelize')
+
 module.exports =
 class AbstractPipelineModule {
 	constructor(app) {
@@ -71,10 +74,9 @@ class AbstractPipelineModule {
 	 * @returns {Promise.<WorkerModule[]>}
 	 */
 	main(options) {
-		options = options || {}
 		let self = this
 		return Promise.coroutine(function *() {
-			yield self.setup();
+			yield self.setup()
 			self.shutdownCheck_()
 			let workerModules = yield self.createWorkerModules_()
 			try {
@@ -87,7 +89,7 @@ class AbstractPipelineModule {
 			yield self.updateWorkerModulesState_(workerModules, 'done')
 			yield self.afterRun()
 			self.shutdownCheck_()
-			if (options.optimize) {
+			if (options && options.optimize) {
 				yield self.optimize()
 				self.shutdownCheck_()
 			}
@@ -97,12 +99,12 @@ class AbstractPipelineModule {
 	}
 
 	/**
+	 * @param {Array.<WorkerModule>} workerModules
 	 * @param {Object} options
 	 * @param {boolean} options.optimize if true, run optimization routine after each module completes
 	 * @returns {Promise.<void>}
 	 */
 	mainUndo(workerModules, options) {
-		options = options || {}
 		let self = this
 		return Promise.coroutine(function *() {
 			yield self.setup()
@@ -117,7 +119,7 @@ class AbstractPipelineModule {
 				throw error
 			}
 			yield self.deleteWorkerModules_(workerModules)
-			if (options.optimize)
+			if (options && options.optimize)
 				yield self.optimize()
 			self.shutdownCheck_()
 			yield self.teardown()
@@ -191,7 +193,7 @@ class AbstractPipelineModule {
 					genome_id: workerModuleRecords[0].genome_id,
 					state: 'error',
 					module: {
-						$in: workerModuleRecords.map((x) => x.module)
+						[Sequelize.Op.in]: workerModuleRecords.map((x) => x.module)
 					}
 				},
 				transaction

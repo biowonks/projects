@@ -9,6 +9,7 @@ const path = require('path')
 // Vendor
 const program = require('commander')
 const Promise = require('bluebird')
+const Sequelize = require('sequelize')
 
 // Local
 const config = require('../config')
@@ -329,12 +330,12 @@ function tagModulesForRedo(app, moduleIds) {
 		redo: false,
 		state: 'done',
 		module: {
-			$in: ModuleId.unnest(moduleIds).map((x) => x.toString())
+			[Sequelize.Op.in]: ModuleId.unnest(moduleIds).map((x) => x.toString())
 		}
 	}
 	if (program.genomeIds) {
 		where.genome_id = {
-			$in: program.genomeIds
+			[Sequelize.Op.in]: program.genomeIds
 		}
 	}
 

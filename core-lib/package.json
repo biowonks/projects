@@ -30,12 +30,12 @@
   "dependencies": {
     "bluebird": "3.5.2",
     "bunyan": "^1.8.1",
-    "pg": "7.5.0",
+    "pg": "7.9.0",
     "public-ip": "2.4.0",
-    "sequelize": "4.38.0",
+    "sequelize": "5.2.3",
     "sequelize-migrator": "https://github.com/lukeulrich/sequelize-migrator.git",
     "sequelize-model-loader": "https://github.com/lukeulrich/sequelize-model-loader.git",
-    "split": "^1.0.0"
+    "split": "1.0.0"
   },
   "devDependencies": {
     "chai": "^3.5.0",

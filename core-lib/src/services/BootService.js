@@ -5,10 +5,10 @@ const bunyan = require('bunyan'),
 	Promise = require('bluebird')
 
 // Vendor
-const publicIp = require('public-ip'),
-	Migrator = require('sequelize-migrator').Migrator,
-	modelLoader = require('sequelize-model-loader'),
-	Sequelize = require('sequelize')
+const publicIp = require('public-ip')
+const Migrator = require('sequelize-migrator').Migrator
+const modelLoader = require('sequelize-model-loader')
+const Sequelize = require('sequelize')
 
 // Local
 const normalizeConfig = require('../db/normalize-config')
@@ -92,7 +92,7 @@ class BootService {
 				throw error
 			})
 		})
-		.catch(this.sequelize_.DatabaseError, (databaseError) => {
+		.catch(Sequelize.DatabaseError, (databaseError) => {
 			this.bootLogger_.fatal({sql: databaseError.sql}, databaseError.message)
 			throw databaseError
 		})
