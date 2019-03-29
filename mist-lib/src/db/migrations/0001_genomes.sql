@@ -67,6 +67,7 @@ create table genomes (
 	unique(version),
 	foreign key(worker_id) references workers(id) on update cascade on delete set null
 );
+create index on genomes(worker_id);
 create index on genomes(taxonomy_id);
 
 comment on table genomes is 'Microbial genomes / assemblies';

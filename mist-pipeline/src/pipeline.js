@@ -108,7 +108,7 @@ let worker = null
 let shuttingDown = false
 let numShutdownRequests = 0
 const moduleOptions = {
-	optimize: !!program.optimize,
+	optimize: !!program.optimize
 }
 
 process.on('SIGINT', shutdown)
@@ -469,12 +469,13 @@ function lockNextAvailableGenome(app, undoModuleIds, moduleIds, lastGenomeId = n
 
 	const whereClauseSql = whereClauses.join(' OR ')
 	const sql =
-`WITH done_genomes_modules AS (
-	SELECT b.genome_id, array_agg(module) as modules, array_agg(case when redo is false then module else null end) as no_redo_modules
-	FROM ${genomesTable} a JOIN ${workerModulesTable} b ON (a.id = b.genome_id)
-	WHERE a.worker_id is null AND b.state = 'done'
-	GROUP BY b.genome_id
-)
+`WITH
+	done_genomes_modules AS (
+		SELECT genome_id, array_agg(module) as modules, array_agg(case when redo is false then module else null end) as no_redo_modules
+		FROM ${workerModulesTable}
+		WHERE state = 'done'
+		GROUP BY genome_id
+	)
 SELECT a.*
 FROM ${genomesTable} a LEFT OUTER JOIN done_genomes_modules b ON (a.id = b.genome_id)
 WHERE ${genomeIdCondition()} a.worker_id is null ${minGenomeIdClause} AND (${whereClauseSql})
@@ -530,7 +531,7 @@ function undoModules(app, genome, unnestedUndoModuleIds, depGraph, moduleClassMa
 			shutdownCheck()
 
 			const unnestedModuleIds = moduleId.unnest()
-			const dependentModuleIds = new Set()
+			let dependentModuleIds = new Set()
 
 			unnestedModuleIds.forEach((unnestedModuleId) => {
 				for (let x of depGraph.moduleIdsDependingOn(unnestedModuleId))
