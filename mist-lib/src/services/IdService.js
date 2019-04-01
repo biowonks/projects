@@ -63,7 +63,7 @@ class IdService {
 		return this.idSequenceModel_.sequelize.transaction({
 			isolationLevel: 'READ COMMITTED'
 		}, (transaction) => {
-			return this.idSequenceModel_.find({
+			return this.idSequenceModel_.findOne({
 				where: {
 					name: sequenceName
 				},

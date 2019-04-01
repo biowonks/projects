@@ -18,7 +18,7 @@ module.exports = {
 	ssl: true,
 	logging: false,
 	pool: {
-		acquire: 60000,
+		acquire: 60000
 	},
 
 	models: {

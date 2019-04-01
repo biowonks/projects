@@ -457,30 +457,24 @@ function lockNextAvailableGenome(app, undoModuleIds, moduleIds, lastGenomeId = n
 	assert(undoModuleIds.length + moduleIds.length > 0)
 
 	const genomesTable = app.models.Genome.getTableName()
-	const workerModulesTable = app.models.WorkerModule.getTableName()
-	const minGenomeIdClause = lastGenomeId ? `AND a.id > ${lastGenomeId} ` : ''
+	const minGenomeIdClause = lastGenomeId ? `AND id > ${lastGenomeId} ` : ''
 	const queryUndoModuleArrayString = `ARRAY['${undoModuleIds.join("','")}']`
 	const queryModuleArrayString = `ARRAY['${moduleIds.join("','")}']`
 	const whereClauses = []
 
 	if (undoModuleIds.length)
-		whereClauses.push(`(b.genome_id is not null AND b.modules && ${queryUndoModuleArrayString})`)
-	if (moduleIds.length)
-		whereClauses.push(`(b.genome_id is null OR NOT b.no_redo_modules @> ${queryModuleArrayString})`)
+		whereClauses.push(`done_modules && ${queryUndoModuleArrayString}`)
+	if (moduleIds.length) {
+		whereClauses.push(`NOT done_modules @> ${queryModuleArrayString}`)
+		whereClauses.push(`redo_modules @> ${queryModuleArrayString}`)
+	}
 
 	const whereClauseSql = whereClauses.join(' OR ')
 	const sql =
-`WITH
-	done_genomes_modules AS (
-		SELECT genome_id, array_agg(module) as modules, array_agg(case when redo is false then module else null end) as no_redo_modules
-		FROM ${workerModulesTable}
-		WHERE state = 'done'
-		GROUP BY genome_id
-	)
-SELECT a.*
-FROM ${genomesTable} a LEFT OUTER JOIN done_genomes_modules b ON (a.id = b.genome_id)
-WHERE ${genomeIdCondition()} a.worker_id is null ${minGenomeIdClause} AND (${whereClauseSql})
-ORDER BY a.id
+`SELECT *
+FROM ${genomesTable}
+WHERE ${genomeIdCondition()} worker_id is null ${minGenomeIdClause} AND (${whereClauseSql})
+ORDER BY id
 LIMIT 1
 FOR UPDATE`
 
@@ -509,7 +503,7 @@ FOR UPDATE`
 }
 
 function genomeIdCondition() {
-	return program.genomeIds ? `a.id IN (${program.genomeIds.join(',')}) AND ` : ''
+	return program.genomeIds ? `id IN (${program.genomeIds.join(',')}) AND ` : ''
 }
 
 function loadGenomeState(app, genome, depGraph) {

@@ -97,6 +97,7 @@ create table workers_modules (
 );
 create index on workers_modules(genome_id);
 create index on workers_modules(worker_id);
+create index on workers_modules(module);
 
 comment on table workers_modules is 'catalog of all modules that have been performed on a given genome and by what worker';
 comment on column workers_modules.genome_id is 'not all modules have to be associated with a genome (e.g. enqueue-new-genomes)';

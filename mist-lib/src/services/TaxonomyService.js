@@ -257,7 +257,7 @@ class TaxonomyService {
 	 * @returns {Promise} with resolve as boolean true if the give node Taxonomy ID exists in the taxonomy table
 	 */
 	nodeExists_(taxonomyId, transaction = null) {
-		return this.taxonomyModel_.find({
+		return this.taxonomyModel_.findOne({
 			where: {
 				id: taxonomyId
 			},
