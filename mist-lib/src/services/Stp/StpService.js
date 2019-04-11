@@ -60,7 +60,12 @@ class StpService {
       ...ecfSignalDomains,
     ]
 
-    return this.summarize_(signalDomains, ranks)
+    const summary = this.summarize_(signalDomains, ranks)
+    const isChemotaxis = summary.ranks[0] === PrimaryRank.chemotaxis
+    if (isChemotaxis) {
+      // Run classification
+    }
+    return summary
   }
 
   createDomainBundle_(aseq) {
