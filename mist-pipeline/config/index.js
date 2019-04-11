@@ -72,7 +72,11 @@ const config = {
 		pfam: {
 			version: '31.0',
 			basePath: path.resolve(vendorPath, 'pfam', '31.0')
-		}
+		},
+		che: {
+			version: '3.0',
+			basePath: path.resolve(vendorPath, 'che', '3.0')
+		},
 	},
 
 	toolRunners: {
