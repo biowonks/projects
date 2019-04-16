@@ -25,7 +25,6 @@ const hmmscanStream = require('../../streams/hmmscan-stream')
 const StpMatchHelper = require('./StpMatchHelper')
 const {
   canClassifyChemotaxis,
-  parseSTPSpec,
   removeInsignificantOverlaps,
   removeOverlappingDomains,
   removeSpecificDomainsOverlappingWith,
@@ -37,12 +36,6 @@ const NUM_CHE_HITS_TO_KEEP = 5
 // TODO: Refactor this service and tool streams (e.g. hmmscan) to mist-lib
 module.exports =
 class StpService {
-  // Async friendly method for creating StpService
-  static create(stpSpecFile, cheHmmDatabasePath) {
-    return parseSTPSpec(stpSpecFile)
-      .then((stpSpec) => new StpService(stpSpec, cheHmmDatabasePath))
-  }
-
   constructor(stpSpec, cheHmmDatabasePath) {
     this.stpiSpec_ = stpSpec
     this.cheHmmDatabasePath_ = cheHmmDatabasePath
