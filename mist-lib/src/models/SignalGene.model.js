@@ -1,5 +1,7 @@
 'use strict'
 
+const { mapHmmer3RowArraysToHashes } = require('seqdepot-lib/hmmer-utils')
+
 module.exports = function(Sequelize, models, extras) {
   const fields = {
     gene_id: Object.assign(extras.requiredPositiveInteger(), {
@@ -39,6 +41,19 @@ module.exports = function(Sequelize, models, extras) {
       description: 'array of output signal transduction domains (signal domain names)',
       example: ['HTH_1'],
     }),
+    data: {
+      type: Sequelize.JSONB,
+      allowNull: false,
+      description: 'supporting data such as top chemotaxis classification hits',
+			get: function() {
+				const data = this.getDataValue('data')
+				if (!data || !data.cheHits)
+					return data
+
+				data.cheHits = mapHmmer3RowArraysToHashes(data.cheHits)
+				return data
+			}
+    },
   }
 
   return {

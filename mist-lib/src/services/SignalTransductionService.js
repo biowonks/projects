@@ -10,7 +10,7 @@ const {
 } = require('lodash')
 
 // Local
-const { PrimaryRank } = require('./Stp/stp.constants.js')
+const { PrimaryRank } = require('./stp.constants.js')
 
 module.exports =
 class SignalTransductionService {

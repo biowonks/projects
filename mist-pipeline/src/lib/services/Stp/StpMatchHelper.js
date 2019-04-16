@@ -7,8 +7,8 @@ const assert = require('assert')
 const _ = require('lodash')
 
 // Local
+const { pfamHDUnrelatedSignalDomains, pfamHKNonSignalDomains } = require('mist-lib/services/stp.constants')
 const { setContainsSomeDomains } = require('./stp-utils')
-const { pfamHDUnrelatedSignalDomains, pfamHKNonSignalDomains } = require('./stp.constants')
 
 module.exports =
 class StpMatchHelper {

@@ -1,8 +1,10 @@
+'use strict'
+
 module.exports = {
   AGFAM_TOOL_ID: 'agfam2',
   ECF_TOOL_ID: 'ecf1',
   MAX_HYBRID_RECEIVER_START: 60,
-  MAX_HisKA_CA_SEPARATION: 60,
+  MAX_HISKA_CA_SEPARATION: 60,
   MAX_HK_CA_SEPARATION: 60,
   PFAM_TOOL_ID: 'pfam31',
   THRESHOLD: .001,

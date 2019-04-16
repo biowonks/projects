@@ -1,8 +1,8 @@
 'use strict'
 
 // Vendor
-const streamEach = require('stream-each'),
-	Promise = require('bluebird')
+const streamEach = require('stream-each')
+const Promise = require('bluebird')
 
 // Local
 const AbstractToolRunner = require('./AbstractToolRunner')

@@ -81,30 +81,31 @@ const config = {
 
 	toolRunners: {
 		coils: {
-			ticksPerProgressEvent: 25000
+			ticksPerProgressEvent: 25000,
 		},
 		segs: {
-			ticksPerProgressEvent: 25000
+			ticksPerProgressEvent: 25000,
 		},
 		pfam31: {
 			databasePath: path.resolve(vendorPath, 'pfam', '31.0', 'Pfam-A.hmm'),
-			ticksPerProgressEvent: 50
+			ticksPerProgressEvent: 50,
 		},
 		agfam2: {
 			databasePath: path.resolve(vendorPath, 'agfam', '2.0', 'agfam.hmm'),
-			ticksPerProgressEvent: 1000
+			ticksPerProgressEvent: 1000,
 		},
 		tmhmm2: {
-			ticksPerProgressEvent: 250
+			ticksPerProgressEvent: 250,
 		},
 		ecf1: {
 			databasePath: path.resolve(vendorPath, 'ecf', '1.0', 'ecfs.bin'),
-			ticksPerProgressEvent: 250
+			ticksPerProgressEvent: 250,
 		},
 		stp: {
 			version: 1,
-			ticksPerProgressEvent: 50000
-		}
+			ticksPerProgressEvent: 50000,
+			che3DatabasePath: path.resolve(vendorPath, 'che', '3.0', 'che.hmm'),
+		},
 	},
 
 	// ----------------------------------------------------

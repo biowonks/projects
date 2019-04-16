@@ -10,7 +10,7 @@ module.exports = {
 		sinon: true
 	},
 	parserOptions: {
-		ecmaVersion: 6
+		ecmaVersion: 8
 	},
 	rules: {
 		// Possible errors

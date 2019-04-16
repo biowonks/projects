@@ -3,43 +3,69 @@
 // Core
 const assert = require('assert')
 
+// Vendor
+const Promise = require('bluebird')
+const streamEach = require('stream-each')
+
 // Local
 const Domain = require('core-lib/bio/Domain')
 const RegionContainer = require('core-lib/bio/RegionContainer')
+const {
+  AGFAM_TOOL_ID,
+  ECF_TOOL_ID,
+  MAX_HYBRID_RECEIVER_START,
+  MAX_HISKA_CA_SEPARATION,
+  MAX_HK_CA_SEPARATION,
+  PFAM_TOOL_ID,
+  THRESHOLD,
+  PrimaryRank,
+  SecondaryRank,
+} = require('mist-lib/services/stp.constants')
+const hmmscanStream = require('../../streams/hmmscan-stream')
 const StpMatchHelper = require('./StpMatchHelper')
 const {
+  canClassifyChemotaxis,
   parseSTPSpec,
   removeInsignificantOverlaps,
   removeOverlappingDomains,
   removeSpecificDomainsOverlappingWith,
   setContainsSomeDomains,
 } = require('./stp-utils')
-const {
-  AGFAM_TOOL_ID,
-  ECF_TOOL_ID,
-  MAX_HYBRID_RECEIVER_START,
-  MAX_HisKA_CA_SEPARATION,
-  MAX_HK_CA_SEPARATION,
-  PFAM_TOOL_ID,
-  THRESHOLD,
-  PrimaryRank,
-  SecondaryRank,
-} = require('./stp.constants')
 
+const NUM_CHE_HITS_TO_KEEP = 5
+
+// TODO: Refactor this service and tool streams (e.g. hmmscan) to mist-lib
 module.exports =
 class StpService {
   // Async friendly method for creating StpService
-  static create(stpSpecFile) {
+  static create(stpSpecFile, cheHmmDatabasePath) {
     return parseSTPSpec(stpSpecFile)
-      .then((stpSpec) => new StpService(stpSpec))
+      .then((stpSpec) => new StpService(stpSpec, cheHmmDatabasePath))
   }
 
-  constructor(stpSpec) {
+  constructor(stpSpec, cheHmmDatabasePath) {
     this.stpiSpec_ = stpSpec
+    this.cheHmmDatabasePath_ = cheHmmDatabasePath
     this.matchHelper_ = new StpMatchHelper(stpSpec)
   }
 
-  analyze(aseq) {
+  // Must analyze in batches to facilitate chemotaxis classification which
+  // requires opening a HMMER3 stream. Because HMMER3 buffers its STDIN
+  // it waits until a certain amount of sequence data (1KB?) before it begins
+  // processing. This complicates interacting with this stream interface on
+  // a sequence by sequence basis. To achieve this effect, a bunch of empty
+  // data must be written or the stream closed to flush the input and begin
+  // processing.
+  //
+  // Rather than hack the above, it's simpler to write all relevant sequences
+  // to HMMER3 and process in batches.
+  async analyze(aseqs) {
+    const summaries = aseqs.map((aseq) => this.predict(aseq))
+    await this.classify(aseqs, summaries)
+    return summaries
+  }
+
+  predict(aseq) {
     const bundle = this.createDomainBundle_(aseq)
     const ranks = this.predictRanks_(bundle)
     if (!ranks)
@@ -60,12 +86,67 @@ class StpService {
       ...ecfSignalDomains,
     ]
 
-    const summary = this.summarize_(signalDomains, ranks)
-    const isChemotaxis = summary.ranks[0] === PrimaryRank.chemotaxis
-    if (isChemotaxis) {
-      // Run classification
-    }
-    return summary
+    return this.summarize_(signalDomains, ranks)
+  }
+
+  async classify(aseqs, summaries) {
+    if (aseqs.length !== summaries.length)
+      throw new Error(`Unable to run STP classification: unequal number of aseqs (${aseqs.length}) and summaries (${summaries.length})`)
+
+    const cheItems = []
+    summaries.forEach((summary, i) => {
+      if (summary && canClassifyChemotaxis(summary.ranks))
+        cheItems.push({aseq: aseqs[i], summary})
+    })
+    if (!cheItems.length)
+      return null
+
+    return new Promise((resolve, reject) => {
+      const stream = this.createCheToolStream_()
+      let i = 0
+      streamEach(stream, (hmmerResult, next) => {
+        // The che database contains HMMs for all chemotaxis type proteins.
+        // ${allCheHits} will contain all matches even to irrelevant chemotaxis
+        // types.
+        const allCheHits = hmmerResult.domains
+        const { summary } = cheItems[i]
+        i++
+
+        // Filter out chemotaxis domain matches that do not match the predicted chemotaxis type
+        const cheType = summary.ranks[1]
+        let hits = []
+        for (let hit of allCheHits) {
+          if (hit.name.toLowerCase().startsWith(cheType)) {
+            hits.push(hit)
+            // Only keep the top X matching hits
+            if (hits.length === NUM_CHE_HITS_TO_KEEP)
+              break
+          }
+        }
+
+        if (hits.length) {
+          const bestHit = hits[0]
+          const type = bestHit.name.replace(/^\w+-/, '')
+
+          // Modify the summary in-place
+          summary.ranks.push(type)
+          summary.cheHits = hits
+        }
+        next()
+      }, (error) => {
+        if (error) {
+          stream.destroy()
+          reject(error)
+        }
+        else {
+          resolve()
+        }
+      })
+
+      // Write all chemotaxis sequences to the stream
+      Promise.each(cheItems, (cheItem) => stream.writePromise(cheItem.aseq.toFasta()))
+      .then(() => stream.end())
+    })
   }
 
   createDomainBundle_(aseq) {
@@ -232,7 +313,7 @@ class StpService {
       const equivalentPfamNameSet = this.matchHelper_.signalDomainIdToPfamNames[signalDomain.id]
       removeSpecificDomainsOverlappingWith(agfamDomain, equivalentPfamNameSet, pfamDomains)
 
-      // Remove any pfam HisKA domains that are immediately upstream (within ${MAX_HisKA_CA_SEPARATION} aa)
+      // Remove any pfam HisKA domains that are immediately upstream (within ${MAX_HISKA_CA_SEPARATION} aa)
       // of the identified Agfam histidine kinase domain.
       if (signalDomain.id === 'HK_CA' || signalDomain.id === 'HK_CA:Che') {
         for (let i = pfamDomains.length - 1; i >= 0; --i) {
@@ -240,7 +321,7 @@ class StpService {
           const name = pfamDomain.name
           if (this.matchHelper_.signalDomainIdToPfamNames.HisKA.has(name) &&
               pfamDomain.start < agfamDomain.start &&
-              pfamDomain.stop + MAX_HisKA_CA_SEPARATION >= agfamDomain.start
+              pfamDomain.stop + MAX_HISKA_CA_SEPARATION >= agfamDomain.start
             ) {
             pfamDomains.splice(i, 1)
           }
@@ -330,5 +411,17 @@ class StpService {
       outputFunctions: Array.from(functionSets.output).sort(),
       ranks,
     }
+  }
+
+  createCheToolStream_() {
+    /* eslint-disable no-magic-numbers */
+    const args = [
+      '-E', 1,
+      '--domE', 1,
+      '--incE', 0.01,
+      '--incdomE', 0.03,
+    ]
+    /* eslint-enable no-magic-numbers */
+    return hmmscanStream(this.cheHmmDatabasePath_, args)
   }
 }

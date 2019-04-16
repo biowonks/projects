@@ -1,13 +1,13 @@
 'use strict'
 
 // Core
-const assert = require('assert'),
-	stream = require('stream'),
-	StringDecoder = require('string_decoder').StringDecoder
+const assert = require('assert')
+const stream = require('stream')
+const StringDecoder = require('string_decoder').StringDecoder
 
 // Vendor
-const split = require('split'),
-	pumpify = require('pumpify')
+const split = require('split')
+const pumpify = require('pumpify')
 
 // Constants
 const kNumberOfDomainFields = 17

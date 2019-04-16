@@ -7,6 +7,7 @@ const assert = require('assert')
 const { tsvFile2ArrayOfObjects } = require('core-lib/util')
 const Region = require('core-lib/bio/Region')
 const RegionContainer = require('core-lib/bio/RegionContainer')
+const { PrimaryRank, SecondaryRank } = require('mist-lib/services/stp.constants')
 
 // Constants
 exports.kTolerance = 10
@@ -162,3 +163,25 @@ exports.pluck = (row, fieldNames) => {
   })
   return result
 }
+
+exports.canClassifyChemotaxis = (ranks) => {
+  if (!ranks || ranks[0] !== PrimaryRank.chemotaxis)
+    return false
+
+  switch (ranks[1]) {
+    case SecondaryRank.chea:
+    case SecondaryRank.cheb:
+    case SecondaryRank.checx:
+    case SecondaryRank.ched:
+    case SecondaryRank.cher:
+    case SecondaryRank.chev:
+    case SecondaryRank.chez:
+    case SecondaryRank.mcp:
+      return true
+
+    default:
+      return false
+  }
+}
+
+exports.isChemotaxis = (summary) => false

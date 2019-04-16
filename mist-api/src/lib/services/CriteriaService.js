@@ -199,7 +199,7 @@ class CriteriaService {
 	createFromQueryObjectForMany(primaryModel, queryObject = {}, options = {}) {
 		const criteria = this.createFromQueryObject(primaryModel, queryObject)
 		const perPage = this.getPerPage(queryObject, options)
-		const page = this.getPage(queryObject)
+		const page = this.getPage(queryObject, options)
 
 		criteria.limit = perPage
 		criteria.offset = this.offsetFromPage(page, perPage) || null
@@ -404,7 +404,7 @@ class CriteriaService {
 			}
 			else {
 				whereAttributes.forEach((whereAttribute) => {
-					const isValidField = Reflect.has(model.attributes, whereAttribute)
+					const isValidField = Reflect.has(model.rawAttributes, whereAttribute)
 					const isPermitted = permittedWhereFields.includes(whereAttribute)
 					if (isValidField && !isPermitted)
 						unauthorizedWhereAttributes.push(whereAttribute)
@@ -455,7 +455,7 @@ class CriteriaService {
 			}
 			else {
 				orderFields.forEach((orderField) => {
-					let validField = Reflect.has(primaryModel.attributes, orderField),
+					let validField = Reflect.has(primaryModel.rawAttributes, orderField),
 						permitted = permittedOrderFields.includes(orderField)
 					if (validField && !permitted)
 						unauthorizedOrderAttributes.push(orderField)
@@ -683,7 +683,7 @@ class CriteriaService {
 		if (!attributes || attributes.length === 0)
 			return null
 
-		let invalidAttributes = attributes.filter((attribute) => !model.attributes[attribute])
+		let invalidAttributes = attributes.filter((attribute) => !model.rawAttributes[attribute])
 		return invalidAttributes.length ? invalidAttributes : null
 	}
 

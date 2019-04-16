@@ -11,13 +11,13 @@ const AseqModelFn = require('./Aseq.model')
 
 describe('models', function() {
 	describe('Aseq', function() {
-		let models = null,
-			Aseq = null
+		let models = null
+		let Aseq = null
 		before(() => {
-			let bootService = new BootService({
-					name: 'dummy-database'
-				}),
-				sequelize = bootService.setupSequelize()
+			const bootService = new BootService({
+				name: 'dummy-database',
+			})
+			const sequelize = bootService.setupSequelize()
 
 			models = loadModels(sequelize)
 			Aseq = models.Aseq
@@ -46,8 +46,8 @@ describe('models', function() {
 
 		describe('fromSeq', function() {
 			it('creates an Aseq instance from seq', function() {
-				let seq = new Seq('MLTY'),
-					x = Aseq.fromSeq(seq)
+				const seq = new Seq('MLTY')
+				const x = Aseq.fromSeq(seq)
 
 				expect(x instanceof Aseq).true
 				expect(x.id).equal(seq.seqId())
@@ -63,11 +63,11 @@ describe('models', function() {
 		})
 
 		it('pfam31 getter / setter', function() {
-			let seq = new Seq('MTNVLIVEDEQAIRRFLRTALEGDGMRVFEAETLQRGLLEAATRKPDLIILDLGLPDGDGIEFIRDLRQWSAVPVIVLSARSEESDKIAALDAGADDYLSKPFGIGELQARLRVALRRHSATTAPDPLVKFSDVTVDLAARVIHRGEEEVHLTPIEFRLLAVLLNNAGKVLTQRQLLNQVWGPNAVEHSHYLRIYMGHLRQKLEQDPARPRHFITETGIGYRFML'),
-				x = Aseq.fromSeq(seq)
+			const seq = new Seq('MTNVLIVEDEQAIRRFLRTALEGDGMRVFEAETLQRGLLEAATRKPDLIILDLGLPDGDGIEFIRDLRQWSAVPVIVLSARSEESDKIAALDAGADDYLSKPFGIGELQARLRVALRRHSATTAPDPLVKFSDVTVDLAARVIHRGEEEVHLTPIEFRLLAVLLNNAGKVLTQRQLLNQVWGPNAVEHSHYLRIYMGHLRQKLEQDPARPRHFITETGIGYRFML')
+			const x = Aseq.fromSeq(seq)
 
 			expect(x.pfam31).not.ok
-			let newDomains = [
+			const newDomains = [
 				{
 					name: 'Response_reg',
 					score: 101.9,
