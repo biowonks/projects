@@ -2,6 +2,7 @@
 
 // Vendor
 const _ = require('lodash')
+const { Op } = require('sequelize')
 
 // Local
 const {
@@ -14,7 +15,6 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 	const helper = app.get('lib').RouteHelper.for(models.SignalGene)
 	const signalTransductionVersion = app.get('config').signalTransduction.version
 	const sequelize = app.get('sequelize')
-	const { Op } = sequelize
 
   return [
     middlewares.parseCriteriaForMany(models.SignalGene, {

@@ -3,6 +3,7 @@
 // Vendor
 const _ = require('lodash')
 const validator = require('validator')
+const { Op } = require('sequelize')
 
 // Local
 const arrayUtil = require('core-lib/array-util')
@@ -74,10 +75,10 @@ module.exports = function(app, middlewares, routeMiddlewares) {
       }
 
       criteria.where = {
-        $or: neighborGeneIdRanges.map((range) => {
+        [Op.or]: neighborGeneIdRanges.map((range) => {
           return {
             id: {
-              $between: range,
+              [Op.between]: range,
             },
           }
         }),
