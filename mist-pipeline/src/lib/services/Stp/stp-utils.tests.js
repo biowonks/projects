@@ -153,45 +153,4 @@ describe('stp utils', () => {
       expect(stpUtils.hasInsignificantOverlap(regions, queryEvalue, threshold)).true
     })
   })
-
-  describe('parseSTPISpec', () => {
-    it('should correctly parse stpi file', () => {
-      const file = path.resolve(__dirname, 'test-data/stpi-spec.tsv')
-      return stpUtils.parseSTPISpec(file)
-        .then((spec) => {
-          expect(spec).eql([
-            {
-              accession: 'AG00001',
-              family: 'agfam',
-              function: 'Receiver',
-              group: null,
-              id: 'RR',
-              kind: 'receiver',
-              marker: true,
-              name: 'RR',
-            },
-            {
-              accession: 'AG00025',
-              family: 'agfam',
-              function: 'Transmitter',
-              group: 'HK',
-              id: 'HK_CA',
-              kind: 'transmitter',
-              marker: true,
-              name: 'HK_CA',
-            },
-            {
-              accession: 'AG00002',
-              family: 'agfam',
-              function: 'Transmitter',
-              group: null,
-              id: 'HK_CA',
-              kind: 'transmitter',
-              marker: false,
-              name: 'HK_CA:1',
-            },
-          ])
-        })
-    })
-  })
 })

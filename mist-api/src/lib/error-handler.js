@@ -1,5 +1,22 @@
 'use strict'
 
+// Vendor
+const {
+	UniqueConstraintError,
+	ValidationError,
+	ForeignKeyConstraintError,
+	ExclusionConstraintError,
+	DatabaseError,
+	TimeoutError,
+	ConnectionRefusedError,
+	AccessDeniedError,
+	HostNotFoundError,
+	HostNotReachableError,
+	InvalidConnectionError,
+	ConnectionTimedOutError,
+	ConnectionError,
+} = require('sequelize')
+
 // Local
 const HttpStatusCodes = require('./http-status-codes')
 const NotFoundError = require('./errors/NotFoundError')
@@ -46,7 +63,6 @@ const kIsProduction = process.env.NODE_ENV === 'production'
 module.exports = function(app) {
 	const config = app.get('config')
 	const logger = app.get('logger')
-	const sequelize = app.get('sequelize')
 
 	const errorHandler = (error, req, res, next) => {
 		// Handle any orphan transactions
@@ -79,16 +95,16 @@ module.exports = function(app) {
 			})
 		}
 
-		if (error instanceof sequelize.UniqueConstraintError) {
+		if (error instanceof UniqueConstraintError) {
 			result.message = 'Unique constraint error'
 			result.debug = {
 				fields: error.fields
 			}
 		}
-		else if (error instanceof sequelize.ValidationError) {
+		else if (error instanceof ValidationError) {
 			result.code = HttpStatusCodes.BadRequest
 		}
-		else if (error instanceof sequelize.ForeignKeyConstraintError) {
+		else if (error instanceof ForeignKeyConstraintError) {
 			result.message = 'Foreign key constraint error'
 			result.debug = {
 				fields: error.fields,
@@ -98,7 +114,7 @@ module.exports = function(app) {
 				sql: error.sql
 			}
 		}
-		else if (error instanceof sequelize.ExclusionConstraintError) {
+		else if (error instanceof ExclusionConstraintError) {
 			result.message = 'Exclusion constraint error'
 			result.debug = {
 				constraint: error.constraint,
@@ -107,35 +123,35 @@ module.exports = function(app) {
 				sql: error.sql
 			}
 		}
-		else if (error instanceof sequelize.DatabaseError) {
+		else if (error instanceof DatabaseError) {
 			result.message = 'Database error'
 			result.debug = {
 				sql: error.sql,
 				message: error.message
 			}
 		}
-		else if (error instanceof sequelize.TimeoutError) {
+		else if (error instanceof TimeoutError) {
 			result.message = 'Timeout error'
 		}
-		else if (error instanceof sequelize.ConnectionRefusedError) {
+		else if (error instanceof ConnectionRefusedError) {
 			result.message = 'Connection refused'
 		}
-		else if (error instanceof sequelize.AccessDeniedError) {
+		else if (error instanceof AccessDeniedError) {
 			result.message = 'Access denied'
 		}
-		else if (error instanceof sequelize.HostNotFoundError) {
+		else if (error instanceof HostNotFoundError) {
 			result.message = 'Host not found'
 		}
-		else if (error instanceof sequelize.HostNotReachableError) {
+		else if (error instanceof HostNotReachableError) {
 			result.message = 'Host not reachable'
 		}
-		else if (error instanceof sequelize.InvalidConnectionError) {
+		else if (error instanceof InvalidConnectionError) {
 			result.message = 'Invalid connection'
 		}
-		else if (error instanceof sequelize.ConnectionTimedOutError) {
+		else if (error instanceof ConnectionTimedOutError) {
 			result.message = 'Connection timeout error'
 		}
-		else if (error instanceof sequelize.ConnectionError) {
+		else if (error instanceof ConnectionError) {
 			result.message = 'Connection error'
 		}
 

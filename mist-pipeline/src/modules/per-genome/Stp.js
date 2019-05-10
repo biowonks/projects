@@ -54,7 +54,8 @@ class Stp extends AseqCompute {
         ranks,
         counts,
         inputs,
-        outputs
+        outputs,
+        data
       )
       SELECT
         b.id as gene_id,
@@ -63,7 +64,8 @@ class Stp extends AseqCompute {
         array(select jsonb_array_elements_text(stp->'ranks')),
         stp->'counts',
         array(select jsonb_array_elements_text(stp->'inputs')),
-        array(select jsonb_array_elements_text(stp->'outputs'))
+        array(select jsonb_array_elements_text(stp->'outputs')),
+        case when stp->'cheHits' is not null then jsonb_set('{}', '{cheHits}', stp->'cheHits') else '{}' end
       FROM ${componentTableName} a JOIN ${geneTableName} b ON (a.id = b.component_id)
         JOIN ${aseqTableName} c ON (b.aseq_id = c.id)
       WHERE a.genome_id = ? AND stp is not null AND stp->'ranks'->0 is not null

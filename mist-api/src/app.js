@@ -78,9 +78,9 @@ bootService.setup()
 	app.use((req, res, next) => {
 		onHeaders(res, () => {
 			if (res.locals.criteria && res.locals.criteria.transaction)
-				res.locals.criteria.transaction.commit();
+				res.locals.criteria.transaction.commit()
 		})
-		next();
+		next()
 	})
 
 	// Use the native queryparser module (vs the qs module). Thus, nested objects are no longer

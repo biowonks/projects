@@ -10,11 +10,11 @@ module.exports = {
 		sinon: true
 	},
 	parserOptions: {
-		ecmaVersion: 6
+		ecmaVersion: 8
 	},
 	rules: {
 		// Possible errors
-		'comma-dangle': [2, 'never'],
+		'comma-dangle': [1, 'always-multiline'],
 		'no-cond-assign': 2,
 		'no-console': 1,
 		'no-constant-condition': 1,
@@ -161,7 +161,7 @@ module.exports = {
 		'id-blacklist': 0,
 		'id-length': 0,
 		'id-match': 0,
-		'indent': [2, 'tab', {'SwitchCase': 1}],
+		'indent': [2, 2, {'SwitchCase': 1}],
 		'jsx-quotes': [2, 'prefer-double'],
 		'key-spacing': [2, {beforeColon: false, afterColon: true}],
 		'keyword-spacing': [2, {before: true, after: true}],
@@ -237,7 +237,7 @@ module.exports = {
 		'object-shorthand': [2, 'properties'],
 		'prefer-arrow-callback': 0,
 		'prefer-const': 0,
-		'prefer-reflect': 2,
+		'prefer-reflect': 0,
 		'prefer-rest-params': 2,
 		'prefer-spread': 2,
 		'prefer-template': 0,

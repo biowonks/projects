@@ -1,7 +1,8 @@
 'use strict'
 
 // Local
-const StpService = require('mist-lib/services/Stp/StpService')
+const { mapHmmer3RowHashesToArrays } = require('seqdepot-lib/hmmer-utils')
+const StpService = require('../../Stp/StpService')
 
 const AbstractToolRunner = require('./AbstractToolRunner')
 const Pfam31ToolRunner = require('./Pfam31ToolRunner')
@@ -17,31 +18,31 @@ class StpToolRunner extends AbstractToolRunner {
     super(config, models)
     this.stpService_ = null
     this.version_ = config.version
+    this.cheHmmDatabasePath = config.che3DatabasePath
   }
 
   setup_() {
     return this.models_.SignalDomain.getMinimalStpSpec(this.version_)
     .then((stpSpec) => {
-      this.stpService_ = new StpService(stpSpec)
+      this.stpService_ = new StpService(stpSpec, this.cheHmmDatabasePath)
     })
   }
 
   onRun_(aseqs) {
-    return new Promise((resolve, reject) => {
-      try {
-        aseqs.forEach((aseq) => {
-          const stp = this.stpService_.analyze(aseq) || {version: null}
-          delete stp.inputFunctions
-          delete stp.outputFunctions
-          stp.version = this.version_
-          aseq[kStpId] = stp
-        })
-      } catch (error) {
-        reject(error)
-        return
-      }
+    return this.stpService_.analyze(aseqs)
+    .then((summaries) => {
+      summaries.forEach((summary, i) => {
+        if (summary) {
+          delete summary.inputFunctions
+          delete summary.outputFunctions
+          summary.version = this.version_
+          if (summary.cheHits)
+            summary.cheHits = mapHmmer3RowHashesToArrays(summary.cheHits)
+        }
+        aseqs[i][kStpId] = summary || {version: null}
+      })
       this.tick_(aseqs.length)
-      resolve(aseqs)
+      return aseqs
     })
   }
 }
@@ -54,5 +55,5 @@ module.exports.meta = {
     Pfam31ToolRunner.meta.id,
     Agfam2ToolRunner.meta.id,
     Ecf1ToolRunner.meta.id,
-  ]
+  ],
 }

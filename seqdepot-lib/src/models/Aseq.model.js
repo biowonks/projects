@@ -5,6 +5,10 @@ const assert = require('assert')
 
 // Local
 const seqUtil = require('core-lib/bio/seq-util')
+const {
+	mapHmmer3RowArraysToHashes,
+	mapHmmer3RowHashesToArrays,
+} = require('../hmmer-utils')
 
 // Constants
 const kToolIdFieldNames = ['pfam31', 'agfam2', 'segs', 'coils', 'tmhmm2', 'ecf1']
@@ -67,6 +71,14 @@ module.exports = function(Sequelize, models, extras) {
 			 */
 			type: Sequelize.JSONB,
 			description: 'signal transduction prediction data; the version field indicates the spec file version used for these predictions',
+			get: function() {
+				const stp = this.getDataValue('stp')
+				if (!stp || !stp.cheHits)
+					return stp
+
+				stp.cheHits = mapHmmer3RowArraysToHashes(stp.cheHits)
+				return stp
+			}
 		},
 	}
 
@@ -144,25 +156,7 @@ function hmmer3(Sequelize, fieldName) {
 			if (!domains)
 				return domains
 
-			return domains.map((x) => {
-				return {
-					name: x[0],
-					score: x[1],
-					bias: x[2],
-					c_evalue: x[3],
-					i_evalue: x[4],
-					hmm_from: x[5],
-					hmm_to: x[6],
-					hmm_cov: x[7],
-					ali_from: x[8],
-					ali_to: x[9],
-					ali_cov: x[10],
-					env_from: x[11],
-					env_to: x[12],
-					env_cov: x[13],
-					acc: x[14]
-				}
-			})
+			return mapHmmer3RowArraysToHashes(domains)
 		},
 		set: function(domains) {
 			if (!domains) {
@@ -170,25 +164,9 @@ function hmmer3(Sequelize, fieldName) {
 				return
 			}
 
-			const arrayifiedDomains = domains.map((domain) => [
-				domain.name,
-				domain.score,
-				domain.bias,
-				domain.c_evalue,
-				domain.i_evalue,
-				domain.hmm_from,
-				domain.hmm_to,
-				domain.hmm_cov,
-				domain.ali_from,
-				domain.ali_to,
-				domain.ali_cov,
-				domain.env_from,
-				domain.env_to,
-				domain.env_cov,
-				domain.acc
-			])
+			const arrayifiedDomains = mapHmmer3RowHashesToArrays(domains)
 			this.setDataValue(fieldName, arrayifiedDomains)
-		}
+		},
 	}
 }
 

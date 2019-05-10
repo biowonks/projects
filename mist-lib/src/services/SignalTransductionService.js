@@ -6,11 +6,7 @@ const assert = require('assert')
 // Vendor
 const {
   sortBy,
-  sum,
 } = require('lodash')
-
-// Local
-const { PrimaryRank } = require('./Stp/stp.constants.js')
 
 module.exports =
 class SignalTransductionService {
@@ -273,42 +269,61 @@ class SignalTransductionService {
     ])
   }
 
+  /**
+   * ranksCounts: {component_id, ranks: string[], count: number}
+   * stpTotals: {ranks: string[], count: number}
+   */
   createStpMatrix_(components, ranksCounts, stpTotals) {
-    let numStp = 0
-    let numChemotaxis = 0
-    const counts = {}
+    const counts = {
+      $total: 0,
+    }
+
     stpTotals.forEach((stpTotal) => {
-      const jointRank = stpTotal.ranks.join(',')
-      counts[jointRank] = stpTotal.count
-      numStp += stpTotal.count
-      if (stpTotal.ranks[0] === PrimaryRank.chemotaxis)
-        numChemotaxis += stpTotal.count
+      counts.$total += stpTotal.count
+
+      let parent = counts
+      stpTotal.ranks.forEach((rank) => {
+        if (!parent[rank]) {
+          parent[rank] = {
+            $total: stpTotal.count,
+          }
+        }
+        else {
+          parent[rank].$total += stpTotal.count
+        }
+        parent = parent[rank]
+      })
     })
 
     const cidToComponent = {}
     components.forEach((component) => {
       cidToComponent[component.id] = component
-      component.counts = {}
-      component.numChemotaxis = 0
+      component.counts = {
+        $total: 0,
+      }
     })
 
     ranksCounts.forEach((ranksCount) => {
       const component = cidToComponent[ranksCount.component_id]
-      const jointRank = ranksCount.ranks.join(',')
-      component.counts[jointRank] = ranksCount.count
-      if (ranksCount.ranks[0] === PrimaryRank.chemotaxis)
-        component.numChemotaxis += ranksCount.count
-    })
+      component.counts.$total += ranksCount.count
 
-    components.forEach((component) => {
-      component.numStp = sum(Object.values(component.counts))
+      let parent = component.counts
+      ranksCount.ranks.forEach((rank) => {
+        if (!parent[rank]) {
+          parent[rank] = {
+            $total: ranksCount.count,
+          }
+        }
+        else {
+          parent[rank].$total += ranksCount.count
+        }
+        parent = parent[rank]
+      })
     })
 
     return {
       components,
       counts,
-      numChemotaxis,
-      numStp,
     }
   }
 }

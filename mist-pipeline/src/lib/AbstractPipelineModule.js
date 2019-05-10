@@ -190,7 +190,7 @@ class AbstractPipelineModule {
 		return this.sequelize_.transaction((transaction) => {
 			return this.models_.WorkerModule.destroy({
 				where: {
-					genome_id: workerModuleRecords[0].genome_id,
+					genome_id: workerModuleRecords[0].genome_id || null,
 					state: 'error',
 					module: {
 						[Sequelize.Op.in]: workerModuleRecords.map((x) => x.module)
