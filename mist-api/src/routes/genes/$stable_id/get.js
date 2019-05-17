@@ -10,7 +10,8 @@ module.exports = function(app, middlewares, routeMiddlewares) {
 				models.Genome,
 				models.Component,
 				models.Aseq,
-				models.Dseq
+				models.Dseq,
+				models.SignalGene,
 			]
 		}),
 		helper.findHandler('stable_id')
