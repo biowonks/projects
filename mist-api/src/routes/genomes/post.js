@@ -3,7 +3,7 @@
 const getPostHelpers = require('./get-post-helpers')
 
 module.exports = function(app, middlewares, routeMiddlewares) {
-  const isPOST = false
+  const isPOST = true
   return getPostHelpers.genomeFinder(app, middlewares, isPOST)
 }
 
