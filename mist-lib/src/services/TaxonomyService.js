@@ -245,7 +245,10 @@ class TaxonomyService {
 	fetchLineage(taxonomyId) {
 		return this.fetchLocal_(taxonomyId)
 			.then((result) => {
-				return result.lineage.slice().reverse()
+				if (result)
+					return result.lineage.slice().reverse()
+
+				return []
 			})
 	}
 
