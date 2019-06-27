@@ -1,10 +1,8 @@
 'use strict'
 
-const bodyParser = require('body-parser')
-
 const searchUtil = require('lib/util')
 
-exports.geneFinder = function(app, middlewares, isPOST = false) {
+exports.geneFinderMiddlewares = function(app, middlewares, inputGetter) {
 	const models = app.get('models')
 	const helper = app.get('lib').RouteHelper.for(models.Gene)
 
@@ -15,13 +13,8 @@ exports.geneFinder = function(app, middlewares, isPOST = false) {
 		'stable_id',
 	]
 
-  const specificMiddlewares = []
-  if (isPOST) {
-    specificMiddlewares.push(bodyParser.urlencoded({extended: false}))
-  }
-
-  specificMiddlewares.push(
-    middlewares.parseCriteriaForMany(models.Gene, {
+	return [
+		middlewares.parseCriteriaForMany(models.Gene, {
 			accessibleModels: [
 				models.Genome,
 				models.Component,
@@ -31,24 +24,16 @@ exports.geneFinder = function(app, middlewares, isPOST = false) {
 			permittedWhereFields: [
 				'id',
 			],
-    }, isPOST),
-  )
-
-  specificMiddlewares.push(
+		}, inputGetter),
 		(req, res, next) => {
-			const userInput = isPOST ? req.body : req.query
-			if (Reflect.has(userInput, 'search')) {
-				searchUtil.assignExactMatchCriteria(userInput.search, res.locals, exactMatchFieldNames)
+			if (Reflect.has(inputGetter(req), 'search')) {
+				searchUtil.assignExactMatchCriteria(inputGetter(req).search, res.locals, exactMatchFieldNames)
 				// For the time being, only exact searches across a limited amount of fields
 			}
-
 			next()
-    }
-  )
-
-  specificMiddlewares.push(helper.findManyHandler())
-
-  return specificMiddlewares
+		},
+		helper.findManyHandler()
+	]
 }
 
 exports.docs = function(modelExamples) {

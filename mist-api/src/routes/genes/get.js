@@ -1,10 +1,9 @@
 'use strict'
 
-const getPostHelpers = require('./get-post-helpers')
+const { geneFinderMiddlewares, docs } = require('./genes-route-helpers');
 
-module.exports = function(app, middlewares, routeMiddlewares) {
-  const isPOST = false
-  return getPostHelpers.geneFinder(app, middlewares, isPOST)
+module.exports = function(app, middlewares) {
+  return geneFinderMiddlewares(app, middlewares, (req) => { return req.query })
 }
 
-module.exports.docs = getPostHelpers.docs
+module.exports.docs = docs

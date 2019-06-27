@@ -1,10 +1,15 @@
 'use strict'
 
-const getPostHelpers = require('./get-post-helpers')
+// Vendor
+const bodyParser = require('body-parser')
+// Local
+const { signalGeneFinderMiddlewares, docs } = require('./signal-genes-route-helpers')
 
-module.exports = function(app, middlewares, routeMiddlewares) {
-  const isPOST = true
-  return getPostHelpers.signalGeneFinder(app, middlewares, isPOST)
+module.exports = function(app, middlewares) {
+  return [
+    bodyParser.urlencoded({extended: false}),
+    ...signalGeneFinderMiddlewares(app, middlewares, (req) => { return req.body })
+  ]
 }
 
-module.exports.docs = getPostHelpers.docs
+module.exports.docs = docs

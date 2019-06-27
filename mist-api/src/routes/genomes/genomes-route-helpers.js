@@ -1,10 +1,9 @@
 'use strict'
 
-const bodyParser = require('body-parser')
 // Local
 const searchUtil = require('lib/util')
 
-exports.genomeFinder = function(app, middlewares, isPOST = false) {
+exports.genomeFinderMiddlewares = function(app, middlewares, inputGetter) {
 	const models = app.get('models')
     const helper = app.get('lib').RouteHelper.for(models.Genome)
 
@@ -19,12 +18,8 @@ exports.genomeFinder = function(app, middlewares, isPOST = false) {
 		'genus',
 		'assembly_level',
 	]
-    const specificMiddlewares = []
-    if (isPOST) {
-        specificMiddlewares.push(bodyParser.urlencoded({extended: false}))
-    }
 
-    specificMiddlewares.push(
+    return [
         middlewares.parseCriteriaForMany(models.Genome, {
             accessibleModels: [
                 models.WorkerModule,
@@ -35,23 +30,16 @@ exports.genomeFinder = function(app, middlewares, isPOST = false) {
                 'taxonomy_id',
                 ...textFieldNames,
             ],
-        }, isPOST),
-    )
-
-    specificMiddlewares.push(
+        }, inputGetter),
         (req, res, next) => {
-            const userInput = isPOST ? req.body : req.query
-            if (Reflect.has(userInput, 'search')) {
-                searchUtil.assignExactMatchCriteria(userInput.search, res.locals, exactMatchFieldNames)
-                searchUtil.assignPartialMatchCriteria(userInput.search, res.locals, textFieldNames)
+            if (Reflect.has(inputGetter(req), 'search')) {
+                searchUtil.assignExactMatchCriteria(inputGetter(req).search, res.locals, exactMatchFieldNames)
+                searchUtil.assignPartialMatchCriteria(inputGetter(req).search, res.locals, textFieldNames)
             }
             next()
-        }
-    )
-
-    specificMiddlewares.push(helper.findManyHandler())
-
-    return specificMiddlewares
+        },
+        helper.findManyHandler()
+    ]
 }
 
 module.exports.docs = function(modelExamples) {

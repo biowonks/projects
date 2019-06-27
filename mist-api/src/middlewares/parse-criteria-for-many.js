@@ -15,11 +15,11 @@ module.exports = function(app, middlewares) {
 		CriteriaError = app.get('errors').CriteriaError
 
 	/**
-	 * {input} is optional string input
+	 * {inputGetter} is optional function
 	 */
-	return (primaryModel, criteriaOptions = {}, isPOST = false) => {
+	return (primaryModel, criteriaOptions = {}, inputGetter = null) => {
 		return function parseCriteriaForMany(req, res, next) {
-			const input = isPOST ? req.body : req.query
+			const input = inputGetter ? inputGetter(req) : req.query
 			const criteria = criteriaService.createFromQueryObjectForMany(primaryModel, input, criteriaOptions)
 			const errors = criteriaService.findErrors(criteria, primaryModel, criteriaOptions)
 			if (!errors) {

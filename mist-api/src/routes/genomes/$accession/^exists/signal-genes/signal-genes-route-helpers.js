@@ -1,7 +1,6 @@
 'use strict'
 
 // Vendor
-const bodyParser = require('body-parser')
 const _ = require('lodash')
 const { Op } = require('sequelize')
 
@@ -11,19 +10,14 @@ const {
 	splitAndScrubString,
 } = require('core-lib/util')
 
-exports.signalGeneFinder = function(app, middlewares, isPOST = false) {
+exports.signalGeneFinderMiddlewares = function(app, middlewares, inputGetter) {
     const models = app.get('models')
 	const helper = app.get('lib').RouteHelper.for(models.SignalGene)
 	const signalTransductionVersion = app.get('config').signalTransduction.version
     const sequelize = app.get('sequelize')
 
-    const specificMiddlewares = []
-    if (isPOST) {
-        specificMiddlewares.push(bodyParser.urlencoded({extended: false}))
-    }
-
-    specificMiddlewares.push(
-        middlewares.parseCriteriaForMany(models.SignalGene, {
+	return [
+		middlewares.parseCriteriaForMany(models.SignalGene, {
             accessibleModels: [
                       models.Component,
                       models.Gene,
@@ -37,11 +31,8 @@ exports.signalGeneFinder = function(app, middlewares, isPOST = false) {
                       'component_id',
                       'ranks'
             ],
-          }, isPOST),
-    )
-
-    specificMiddlewares.push(
-        (req, res, next) => {
+		  }, inputGetter),
+		  (req, res, next) => {
 			res.locals.criteria.include.push({
 				model: models.Component,
 				attributes: ['name', 'version', 'definition'],
@@ -50,8 +41,7 @@ exports.signalGeneFinder = function(app, middlewares, isPOST = false) {
 				},
 				required: true
 			})
-			const userInput = isPOST ? req.body : req.query
-			const ranks = splitAndScrubString(userInput['where.ranks'], ',')
+			const ranks = splitAndScrubString(inputGetter(req)['where.ranks'], ',')
 			if (ranks.length) {
 				// Perform a contains query so that we can accomodate partial array matches.
 				// For example, finding all tcp proteins regardless of their second rank would
@@ -62,13 +52,13 @@ exports.signalGeneFinder = function(app, middlewares, isPOST = false) {
 			}
 
 			// Provide for searching by function / kind
-			const kind = scrub(userInput.kind)
+			const kind = scrub(inputGetter(req).kind)
 			if (!kind) {
 				next()
 				return
 			}
 
-			const func = scrub(userInput.function)
+			const func = scrub(inputGetter(req).function)
 			sequelize.transaction()
 			.then((transaction) => {
 				res.locals.criteria.transaction = transaction
@@ -93,12 +83,9 @@ exports.signalGeneFinder = function(app, middlewares, isPOST = false) {
 				res.json([])
 			})
 			.catch(next)
-        }
-    )
-
-    specificMiddlewares.push(helper.findManyHandler())
-
-    return specificMiddlewares
+		},
+		helper.findManyHandler()
+	]
 }
 
 module.exports.docs = function(modelExamples) {
