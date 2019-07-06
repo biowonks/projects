@@ -14,9 +14,13 @@ module.exports = function(app, middlewares) {
 	let criteriaService = app.get('services').criteria,
 		CriteriaError = app.get('errors').CriteriaError
 
-	return (primaryModel, criteriaOptions = {}) => {
+	/**
+	 * {inputGetter} is optional function
+	 */
+	return (primaryModel, criteriaOptions = {}, inputGetter = null) => {
 		return function parseCriteriaForMany(req, res, next) {
-			const criteria = criteriaService.createFromQueryObjectForMany(primaryModel, req.query, criteriaOptions)
+			const input = inputGetter ? inputGetter(req) : req.query
+			const criteria = criteriaService.createFromQueryObjectForMany(primaryModel, input, criteriaOptions)
 			const errors = criteriaService.findErrors(criteria, primaryModel, criteriaOptions)
 			if (!errors) {
 				res.locals.criteria = criteria
