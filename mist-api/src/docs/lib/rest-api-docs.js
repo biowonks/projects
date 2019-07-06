@@ -428,7 +428,7 @@ function highlightJSON(object) {
  * @param {Array.<Object>} [examples = null]
  */
 function normalizeExample(baseUrl, method, endpoint, example) {
-	if (method !== 'get' || !example)
+	if (!example)
 		return
 
 	example.request = normalizeRequest(baseUrl, endpoint, example.request)
