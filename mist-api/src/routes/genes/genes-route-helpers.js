@@ -32,7 +32,7 @@ exports.geneFinderMiddlewares = function(app, middlewares, inputGetter) {
 			}
 			next()
 		},
-		helper.findManyHandler()
+		helper.findManyHandler(inputGetter)
 	]
 }
 

@@ -63,7 +63,7 @@ exports.memberGenesFinderMiddlewares = function(app, middlewares, inputGetter) {
 
 		// 3. Pass control to the default find handler which processes applies the
 		//    res.locals.criteria to the primary model defined in the RouteHelper.
-		helper.findManyHandler()
+		helper.findManyHandler(inputGetter)
 	]
 }
 

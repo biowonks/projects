@@ -45,12 +45,13 @@ class RouteHelper {
 	 * - Partial fields
 	 * - Nested record fields
 	 * - Total count respecting conditions
-	 *
+	 * - inputGetter is an optional function which returns request query or body
 	 * @returns {Function} - express compatible handler function
 	 */
-	findManyHandler() {
+	findManyHandler(inputGetter = null) {
 		return (req, res, next) => {
-			const countRows = Reflect.has(req.query, 'count')
+			const input = inputGetter ? inputGetter(req) : req.query
+			const countRows = Reflect.has(input, 'count')
 			this.findAll_(res, countRows)
 			.then((entities) => {
 				res.append('Link', this.linkHeaders(req, res.locals.criteria.offset, res.locals.criteria.limit, res.locals.totalCount))

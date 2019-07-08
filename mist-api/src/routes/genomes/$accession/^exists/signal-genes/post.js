@@ -8,7 +8,7 @@ const { signalGeneFinderMiddlewares, docs } = require('./signal-genes-route-help
 module.exports = function(app, middlewares) {
   return [
     bodyParser.urlencoded({extended: false}),
-    ...signalGeneFinderMiddlewares(app, middlewares, (req) => { return req.body })
+    ...signalGeneFinderMiddlewares(app, middlewares, req => req.body)
   ]
 }
 

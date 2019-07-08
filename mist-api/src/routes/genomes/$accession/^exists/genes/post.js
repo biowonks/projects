@@ -8,7 +8,7 @@ const { memberGenesFinderMiddlewares, docs } = require('./member-genes-route-hel
 module.exports = function(app, middlewares) {
   return [
     bodyParser.urlencoded({extended: false}),
-    ...memberGenesFinderMiddlewares(app, middlewares, (req) => { return req.body })
+    ...memberGenesFinderMiddlewares(app, middlewares, req => req.body)
   ]
 }
 
