@@ -84,7 +84,7 @@ exports.signalGeneFinderMiddlewares = function(app, middlewares, inputGetter) {
 			})
 			.catch(next)
 		},
-		helper.findManyHandler()
+		helper.findManyHandler(inputGetter)
 	]
 }
 

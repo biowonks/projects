@@ -8,7 +8,7 @@ const { geneFinderMiddlewares, docs } = require('./genes-route-helpers');
 module.exports = function(app, middlewares) {
   return [
     bodyParser.urlencoded({extended: false}),
-    ...geneFinderMiddlewares(app, middlewares, (req) => { return req.body })
+    ...geneFinderMiddlewares(app, middlewares, (req) => req.body)
   ]
 }
 
