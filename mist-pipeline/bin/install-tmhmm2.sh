@@ -14,7 +14,7 @@ fi
 
 BIN_PATH=$TARGET_DIR/bin
 
-if [[ -z "$BIN_PATH/decodeanhmm.Linux_x86_64" ]]; then
+if [[ -s "$BIN_PATH/decodeanhmm.Linux_x86_64" ]]; then
 	echo "TMHMM2 is already installed"
 	exit
 fi
