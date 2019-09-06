@@ -68,7 +68,7 @@
     "sequelize": "5.6.0",
     "sequelize-migrator": "https://github.com/lukeulrich/sequelize-migrator.git",
     "sequelize-model-loader": "https://github.com/lukeulrich/sequelize-model-loader.git",
-    "split": "^1.0.0",
+    "split": "1.0.0",
     "through2": "^2.0.1",
     "universal-analytics": "^0.4.2",
     "validator": "^9.2.0",
