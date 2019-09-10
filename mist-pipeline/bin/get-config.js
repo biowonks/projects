@@ -18,5 +18,7 @@ jsonPaths.forEach((jsonPath) => {
 		ref = ref[part]
 	}
 
-	console.log(ref)
+	if (ref) {
+		console.log(ref)
+	}
 })
