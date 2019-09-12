@@ -9,5 +9,3 @@ do
 done;
 
 tar $EXCLUDE -zcf - bin/merge-deps.js _common/dep-merge.js $PROJECTS | docker build --build-arg GIT_HASH=${GIT_HASH} -t biowonks/mist-api:${GIT_HASH} -f mist-api/Dockerfile -
-
-# 6HkAL8hM2dnVGuQt

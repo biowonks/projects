@@ -12,6 +12,7 @@ RUN addgroup biowonks && \
 	mkdir /app
 
 ENV HOME=/app
+ENV NODE_ENV=production
 
 COPY . /app
 WORKDIR /app/mist-api
