@@ -27,7 +27,8 @@ exports.genomeFinderMiddlewares = function(app, middlewares, inputGetter) {
             ],
             permittedWhereFields: [
                 'id',
-                'taxonomy_id',
+				'taxonomy_id',
+				'version',
                 ...textFieldNames,
             ],
         }, inputGetter),
