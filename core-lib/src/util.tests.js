@@ -230,4 +230,56 @@ describe('util', () => {
       })
     })
   })
+
+  describe('camelize', () => {
+    const examples = [
+      {
+        value: undefined,
+        expect: undefined,
+      },
+      {
+        value: null,
+        expect: null,
+      },
+      {
+        value: '',
+        expect: '',
+      },
+      {
+        value: ' ',
+        expect: '',
+      },
+      {
+        value: 'a',
+        expect: 'a',
+      },
+      {
+        value: 'a b',
+        expect: 'aB',
+      },
+      {
+        value: 'a 1',
+        expect: 'a1',
+      },
+      {
+        value: ' a ',
+        expect: 'a',
+      },
+      {
+        value: 'homo sapiens',
+        expect: 'homoSapiens',
+      },
+      {
+        value: 'one two three',
+        expect: 'oneTwoThree',
+      },
+    ]
+
+    examples.forEach((example) => {
+      it(`${example.value} -> ${example.expect}`, () => {
+        let result = util.camelize(example.value)
+        expect(result).eql(example.expect)
+      })
+    })
+  })
 })

@@ -160,3 +160,22 @@ exports.tsvFile2ArrayOfObjects = (file) => {
       })
   })
 }
+
+exports.camelize = (value) => {
+  if (!value) {
+    return value
+  }
+
+  const parts = value.trim().split(/\s+/)
+  if (parts.length === 1) {
+    return value.trim()
+  }
+
+  const initial = parts.shift()
+  return parts.reduce(
+    (acc, part) => {
+      return acc + part[0].toUpperCase() + part.substr(1)
+    },
+    initial
+  )
+}
