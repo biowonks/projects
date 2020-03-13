@@ -20,6 +20,8 @@ const ModuleDepNode = require('lib/ModuleDepNode')
 const ModuleDepGraph = require('lib/ModuleDepGraph')
 const MistBootService = require('mist-lib/services/MistBootService')
 const WorkerService = require('mist-lib/services/WorkerService')
+const EUtilsService = require('mist-lib/services/EUtilsService')
+const BioSampleService = require('mist-lib/services/BioSampleService')
 
 // Constants
 const k1KB = 1024
@@ -144,7 +146,10 @@ bootService.setup()
 	logger.info('Registered new worker')
 })
 .then(() => {
+	const eutils = new EUtilsService()
 	const app = {
+		eutils,
+		bioSampleService: new BioSampleService(eutils),
 		worker,
 		config,
 		logger: null,
