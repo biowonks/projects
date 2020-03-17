@@ -15,13 +15,13 @@ fi
 TARBALL_FILENAME="${TOOL_NAME}.tar.gz"
 
 echo "Downloading ${TOOL_NAME} to /tmp/biowonks/${TARBALL_FILENAME}"
-mkdir -p /tmp/biowonks
+mkdir -p /tmp/biowonks/${TOOL_NAME}
 cd /tmp/biowonks
 
 rm -f $TARBALL_FILENAME
 wget --no-check-certificate -q -O $TARBALL_FILENAME "$URL"
-echo "Decompressing"
-tar zxvf $TARBALL_FILENAME
+echo "Decompressing to /tmp/biowonks/${TOOL_NAME}"
+tar zxvf $TARBALL_FILENAME -C $TOOL_NAME --strip-components=1
 
 echo "Installing in ${TARGET_DIR}"
 mkdir -p $TARGET_DIR

@@ -29,6 +29,8 @@ Node is used for various scripting tasks as well as other tooling helpers (e.g. 
 
 | After installing Docker, we recommend configuring docker to start up on boot.
 
+
+
 ## Setup
 Clone the repository:
 ```bash
@@ -43,7 +45,27 @@ Checkout the develop branch:
 $ git checkout develop
 ```
 
-Setup and attach to the docker development environment:
+### Installing third party tools.
+
+MiST3 so far uses 1 proprietary tool: [TMHMM2](https://services.healthtech.dtu.dk/service.php?TMHMM-2.0)
+
+To be able to run the pipeline with `AseqCompute:tmhmm2` and build the TM predictions, we must go to the [TMHMM2](https://services.healthtech.dtu.dk/service.php?TMHMM-2.0) download page and sign up for download. They will send you an e-mail with a link. Follow the instructions below:
+
+1) Click on the link TMHMM team sent you. It will take you to a "ftp style" download page with a LICENCE file and a `.tar.gz`.
+2) Copy the link address to the `tar.gz` file.
+3) Go to the root directory of the MiST3 project and find the file `docker-compose.yml`
+4) Edit `docker-compose.yml` to include `TMHMM2_SECURE_URL` environmental variable in the section `biowonks-dev` - `environment`.
+5) Paste the link address as the value of the variable. Save the file.
+
+Example of how the insertion should look like:
+
+```yml
+  - TMHMM2_SECURE_URL=https://services.healthtech.dtu.dk/download/a742125a-c3b4-4622-93c2-b3ac77ec4fbe/tmhmm-2.0c.Linux.tar.gz
+```
+> Note that this link won't work in your case, you must get a link that works at the TMHMM Download page
+
+### Setup and attach to the docker development environment
+
 ```
 $ bin/setup-docker-dev.sh
 $ docker attach biowonks-dev
