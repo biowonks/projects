@@ -23,6 +23,7 @@ exports.geneFinderMiddlewares = function(app, middlewares, inputGetter) {
 			],
 			permittedWhereFields: [
 				'id',
+				'stable_id'
 			],
 		}, inputGetter),
 		(req, res, next) => {
