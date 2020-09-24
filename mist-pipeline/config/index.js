@@ -123,7 +123,17 @@ const config = {
 				fileName: 'bacteria-assembly-summary.tsv'
 			}
 		]
-	}
+	},
+
+	seedNewMAGs: {
+		summaryFileDuration: moment.duration(1, 'day'),
+		maxNewGenomesPerRun: 0,
+		assemblySummaryLink: {
+			fileName: 'assembly-summary-genbank.tsv',
+			url: 'https://ftp.ncbi.nlm.nih.gov/genomes/genbank/assembly_summary_genbank.txt',
+		},
+		targetFile: path.resolve(__dirname, '..', 'gold-mags-with-genbank.11mar20.json'),
+	},
 }
 
 if (config.vendor.tmhmm2.secureUrl)
