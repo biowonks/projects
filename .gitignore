@@ -5,8 +5,9 @@ npm-debug.log
 coverage
 test-results.xml
 tmp/
-**/yarn.lock
+**/package-lock.json
 .cache
 yarn-error.log
 .yarnrc
 .yarnclean
+.nyc_output/

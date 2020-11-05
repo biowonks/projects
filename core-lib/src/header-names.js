@@ -1,5 +1,5 @@
-'use strict'
+'use strict';
 
 module.exports = {
-	XTotalCount: 'x-total-count'
-}
+  XTotalCount: 'x-total-count',
+};
