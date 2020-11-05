@@ -3,6 +3,10 @@
  * Genomes (MAGs). The list of available MAGs is currently procured manually from the GOLD database,
  * although could be scripted to scrape this information as it is not available for direct
  * download in bulk.
+ *
+ * TODO:
+ * 1. DRY this implementation with the SeedNewGenomes module.
+ * 2. Remove hard-coded targetFile in the mist-pipeline/src/config/index::seedNewMAGs
  */
 
 'use strict'
