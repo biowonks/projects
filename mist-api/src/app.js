@@ -14,45 +14,47 @@ if (process.env.NEW_RELIC_LICENSE_KEY) {
 const http = require('http')
 
 // Vendor
-const bodyParser = require('body-parser'),
-	compression = require('compression'), // Gzip support
-	corser = require('corser'), // CORS
-	express = require('express'),
-	helmet = require('helmet'), // Security practices
-	httpShutdown = require('http-shutdown'),
-	pathRoutify = require('path-routify'),
-	responseTime = require('response-time')
+const bodyParser = require('body-parser')
+const compression = require('compression') // Gzip support
+const corser = require('corser') // CORS
+const express = require('express')
+const helmet = require('helmet') // Security practices
+const httpShutdown = require('http-shutdown')
+const pathRoutify = require('path-routify')
+const responseTime = require('response-time')
+const onHeaders = require('on-headers')
 
 // Local
-const config = require('../config'),
-	errorHandler = require('lib/error-handler'),
-	loadServices = require('./services'),
-	errors = require('lib/errors'),
-	latestDocs = require('./routes/docs/use'),
-	MistBootService = require('mist-lib/services/MistBootService'),
-	RouteHelper = require('lib/RouteHelper')
+const config = require('../config')
+const errorHandler = require('lib/error-handler')
+const coreHeaderNames = require('core-lib/header-names')
+const loadServices = require('./services')
+const errors = require('lib/errors')
+const latestDocs = require('./routes/docs/use')
+const MistBootService = require('mist-lib/services/MistBootService')
+const RouteHelper = require('lib/RouteHelper')
 
 // Constants
-const kMsPerSecond = 1000,
-	kJsonPrettyPrintSpaces = 2,
-	kErrorExitCode = 1
+const kMsPerSecond = 1000
+const kJsonPrettyPrintSpaces = 2
+const kErrorExitCode = 1
 
 // Maintain reference to server variable because the handleUncaughtErrors middleware references it.
-let server = null,
-	bootService = new MistBootService({
-		applicationName: 'mist-api',
-		logger: {
-			name: 'mist-api',
-			streams: [
-				{
-					level: 'info',
-					stream: process.stdout
-				}
-			]
-		}
-	}),
-	logger = bootService.logger(),
-	shutdownRequestReceived = false
+let server = null
+const bootService = new MistBootService({
+	applicationName: 'mist-api',
+	logger: {
+		name: 'mist-api',
+		streams: [
+			{
+				level: 'info',
+				stream: process.stdout
+			}
+		]
+	}
+})
+const logger = bootService.logger()
+let shutdownRequestReceived = false
 
 process.on('SIGINT', shutdown) // React to user interruptions (e.g. Ctrl-C)
 process.on('SIGTERM', shutdown) // React to termination requests (e.g. Heroku)
@@ -71,6 +73,15 @@ bootService.setup()
 	// Main setup
 	let app = express()
 	app.use(helmet()) // Security measures
+
+	// If we have any open transaction - commit it
+	app.use((req, res, next) => {
+		onHeaders(res, () => {
+			if (res.locals.criteria && res.locals.criteria.transaction)
+				res.locals.criteria.transaction.commit()
+		})
+		next()
+	})
 
 	// Use the native queryparser module (vs the qs module). Thus, nested objects are no longer
 	// automaticallky constructed when brackets are used in the query string.
@@ -120,6 +131,10 @@ bootService.setup()
 	else
 		app.use(router)
 
+	// For the time being, ignore all favicon requests
+	app.get('/favicon.ico', (req, res) => {
+		res.status(204)
+	})
 	app.use('/', latestDocs())
 
 	app.use(errorHandler(app))
@@ -159,7 +174,7 @@ function shutdown() {
 		exit()
 	})
 
-	let failSafeTimer = setTimeout(() => {
+	const failSafeTimer = setTimeout(() => {
 		logger.fatal('Timed out waiting for open connections to close normally, forcefully exiting')
 		exit(kErrorExitCode)
 	}, config.server.killTimeoutMs)
@@ -198,9 +213,11 @@ function throwErrorIfNotSSL(req, res, next) {
 }
 
 function cors() {
+	const coreHeaders = Object.keys(coreHeaderNames).map((key) => coreHeaderNames[key])
+
 	return corser.create({
 		methods: ['GET', 'OPTIONS', 'POST', 'PUT', 'DELETE'],
 		requestHeaders: [...corser.simpleRequestHeaders, config.headerNames.apiToken],
-		responseHeaders: [...corser.simpleResponseHeaders, config.headerNames.version]
+		responseHeaders: [...corser.simpleResponseHeaders, config.headerNames.version, ...coreHeaders]
 	})
 }

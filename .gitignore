@@ -1,6 +1,12 @@
 node_modules
+docker-compose.override.yml
 npm-debug.log
 .DS_Store
 coverage
 test-results.xml
 tmp/
+**/yarn.lock
+.cache
+yarn-error.log
+.yarnrc
+.yarnclean

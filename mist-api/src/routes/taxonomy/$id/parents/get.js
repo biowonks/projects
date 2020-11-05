@@ -1,7 +1,7 @@
 'use strict'
 
 module.exports = function(app, middlewares, routeMiddlewares) {
-	let	taxonomyService = app.get('services').taxonomy
+	const	taxonomyService = app.get('services').taxonomy
 
 	return [
 		(req, res, next) => {

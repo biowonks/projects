@@ -11,31 +11,27 @@ describe('services', function() {
 		})
 
 		describe('global class methods', function() {
-			let mockModel = null
+			let model = null
 			before(() => {
-				let bootService = new MistBootService(),
-					sequelize = bootService.setupSequelize()
-
-				mockModel = sequelize.define('MockModel', {
-					field: {
-						type: sequelize.Sequelize.TEXT
-					}
-				})
+				const bootService = new MistBootService()
+				const models = bootService.setupModels()
+				// Selecting the Xref specific model is brittle; however, leaving for now
+				model = models.Xref
 			})
 
 			it('$excludedFromCriteria returns null', function() {
-				expect(mockModel.$excludedFromCriteria).a('Function')
-				expect(mockModel.$excludedFromCriteria()).null
+				expect(model.$excludedFromCriteria).a('Function')
+				expect(model.$excludedFromCriteria()).null
 			})
 
 			it('$criteriaAttributes returns null', function() {
-				expect(mockModel.$criteriaAttributes).a('Function')
-				expect(mockModel.$criteriaAttributes()).null
+				expect(model.$criteriaAttributes).a('Function')
+				expect(model.$criteriaAttributes()).null
 			})
 
 			it('$idSequence returns null', function() {
-				expect(mockModel.$idSequence).a('Function')
-				expect(mockModel.$idSequence()).equal('MockModel')
+				expect(model.$idSequence).a('Function')
+				expect(model.$idSequence()).equal(model.name)
 			})
 		})
 	})

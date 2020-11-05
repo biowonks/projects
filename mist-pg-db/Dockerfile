@@ -1,6 +1,9 @@
-FROM postgres:9.6.0
+FROM postgres:10.3
 
-MAINTAINER BioWonks <biowonks@users.noreply.github.com>
+ARG GIT_HASH
 
-ADD ./postgres-setup.sh /docker-entrypoint-initdb.d
+LABEL BioWonks <biowonks@users.noreply.github.com>
+LABEL GIT_HASH=$GIT_HASH
+
+ADD ./postgres-setup.sh /docker-entrypoint-initdb.d/
 RUN chmod 755 /docker-entrypoint-initdb.d/postgres-setup.sh

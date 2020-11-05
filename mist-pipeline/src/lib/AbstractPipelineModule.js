@@ -3,11 +3,15 @@
 // Core
 const assert = require('assert')
 
+// Vendor
+const Sequelize = require('sequelize')
+
 module.exports =
 class AbstractPipelineModule {
 	constructor(app) {
 		this.config_ = app.config
 		this.logger_ = app.logger
+		this.query_ = (app.query || '').trim()
 		this.models_ = app.models
 		this.sequelize_ = app.sequelize
 		this.worker_ = app.worker
@@ -34,7 +38,7 @@ class AbstractPipelineModule {
 
 	/**
 	 * To reference a submodule, simply suffix the module name with a colon and then the submodule
-	 * name (e.g. AseqCompute:pfam30).
+	 * name (e.g. AseqCompute:pfam31).
 	 *
 	 * @returns {Array.<String>} - one or more "flat" module id strings
 	 */
@@ -43,7 +47,20 @@ class AbstractPipelineModule {
 	}
 
 	/**
-	 * @returns {Map.<String,String>} - a map with submodule names as keys, and descriptions as values
+	 * Example return value:
+	 * {
+	 *   stp: {
+	 *     description: 'predict signal transduction proteins',
+	 *     dependencies: [
+	 *       'AseqCompute:pfam31',
+	 *       'AseqCompute:agfam2',
+	 *       ...
+	 *     ]
+	 *   },
+	 *   ...
+	 * }
+	 *
+	 * @returns {Map.<String,Object>} - a map with submodule names as keys that maps to an object with a description and dependencies keys
 	 */
 	static subModuleMap() {
 		return new Map()
@@ -51,10 +68,16 @@ class AbstractPipelineModule {
 
 	// ----------------------------------------------------
 	// Public methods
-	main() {
+	/**
+	 * @param {Object} options
+	 * @param {boolean} options.optimize if true, run optimization routine after each module completes
+	 * @returns {Promise.<WorkerModule[]>}
+	 */
+	main(options) {
 		let self = this
 		return Promise.coroutine(function *() {
-			yield self.setup();		self.shutdownCheck_()
+			yield self.setup()
+			self.shutdownCheck_()
 			let workerModules = yield self.createWorkerModules_()
 			try {
 				yield self.run()
@@ -64,14 +87,24 @@ class AbstractPipelineModule {
 				throw error
 			}
 			yield self.updateWorkerModulesState_(workerModules, 'done')
+			yield self.afterRun()
 			self.shutdownCheck_()
-			yield self.optimize();	self.shutdownCheck_()
+			if (options && options.optimize) {
+				yield self.optimize()
+				self.shutdownCheck_()
+			}
 			yield self.teardown()
 			return workerModules
 		})()
 	}
 
-	mainUndo(workerModules) {
+	/**
+	 * @param {Array.<WorkerModule>} workerModules
+	 * @param {Object} options
+	 * @param {boolean} options.optimize if true, run optimization routine after each module completes
+	 * @returns {Promise.<void>}
+	 */
+	mainUndo(workerModules, options) {
 		let self = this
 		return Promise.coroutine(function *() {
 			yield self.setup()
@@ -86,7 +119,9 @@ class AbstractPipelineModule {
 				throw error
 			}
 			yield self.deleteWorkerModules_(workerModules)
-			yield self.optimize();	self.shutdownCheck_()
+			if (options && options.optimize)
+				yield self.optimize()
+			self.shutdownCheck_()
 			yield self.teardown()
 		})()
 	}
@@ -106,6 +141,9 @@ class AbstractPipelineModule {
 
 	run() {
 		throw new Error('not implemented')
+	}
+
+	afterRun() {
 	}
 
 	optimize() {
@@ -152,10 +190,10 @@ class AbstractPipelineModule {
 		return this.sequelize_.transaction((transaction) => {
 			return this.models_.WorkerModule.destroy({
 				where: {
-					genome_id: workerModuleRecords[0].genome_id,
+					genome_id: workerModuleRecords[0].genome_id || null,
 					state: 'error',
 					module: {
-						$in: workerModuleRecords.map((x) => x.module)
+						[Sequelize.Op.in]: workerModuleRecords.map((x) => x.module)
 					}
 				},
 				transaction

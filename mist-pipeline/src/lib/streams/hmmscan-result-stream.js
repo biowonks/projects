@@ -1,23 +1,20 @@
 'use strict'
 
 // Core
-const assert = require('assert'),
-	stream = require('stream'),
-	StringDecoder = require('string_decoder').StringDecoder
+const assert = require('assert')
+const stream = require('stream')
+const StringDecoder = require('string_decoder').StringDecoder
 
 // Vendor
-const split = require('split'),
-	pumpify = require('pumpify')
+const split = require('split')
+const pumpify = require('pumpify')
 
 // Constants
 const kNumberOfDomainFields = 17
 
 /**
- * HmmscanResultReaderStream parses the textual output from the HMMER3 hmmscan tool
- * and streams out all the domain hits for each query sequence.
- *
- * By extending from LineStream, the input is processed line by line in a streaming
- * fashion for optimal performance.
+ * HmmscanResultStream parses the textual output from the HMMER3 hmmscan tool and streams out all
+ * the domain hits for each query sequence.
  */
 class HmmscanResultStream extends stream.Transform {
 	constructor(options = {}) {

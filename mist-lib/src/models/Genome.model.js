@@ -1,7 +1,7 @@
 'use strict'
 
 module.exports = function(Sequelize, models, extras) {
-	let fields = {
+	const fields = {
 		worker_id: Object.assign(extras.positiveInteger(), {
 			description: 'foreign identifier to the current worker operating on this genome',
 			example: 3
@@ -142,31 +142,36 @@ module.exports = function(Sequelize, models, extras) {
 			type: Sequelize.JSONB,
 			allowNull: false,
 			defaultValue: {}
-		}
+		},
+		meta: {
+			type: Sequelize.JSONB,
+			allowNull: false,
+			defaultValue: {}
+		},
 	}
 
-	let instanceMethods = {
+	const instanceMethods = {
 		compoundAccession: function() {
 			return this.accession + '.' + this.version
 		}
 	}
 
-	let validate = {
+	const validate = {
 		genbankAccessionVersion: extras.validate.bothNullOrBothNotEmpty('genbank_accession',
 			'genbank_version')
 	}
 
 	return {
+		classMethods: {
+			sequenceName: function() {
+				return 'genomes'
+			}
+		},
 		description: 'Genome markdown goes here',
 		fields,
+		instanceMethods,
 		params: {
-			classMethods: {
-				sequenceName: function() {
-					return 'genomes'
-				}
-			},
-			instanceMethods,
-			validate
-		}
+			validate,
+		},
 	}
 }

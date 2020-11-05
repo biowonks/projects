@@ -18,7 +18,20 @@ module.exports = [
 			[18, 25],
 			[120, 143],
 			[431, 446]
-		]
+		],
+		tmhmm2: {
+			topology: [
+				['o', 1, 9],
+				['M', 10, 32],
+				['i', 33, 330],
+				['M', 331, 353],
+				['O', 354, 914]
+			],
+			tms: [
+				[10, 32],
+				[331, 353]
+			]
+		}
 	},
 
 	// 1
@@ -34,15 +47,29 @@ module.exports = [
 			[315, 330],
 			[452, 472],
 			[514, 527]
-		]
+		],
+		tmhmm2: {
+			topology: [
+				['o', 1, 19],
+				['M', 20, 42],
+				['i', 43, 314],
+				['M', 315, 334],
+				['O', 335, 949]
+			],
+			tms: [
+				[20, 42],
+				[315, 334]
+			]
+		}
 	},
+
 	// 2
 	{
 		coreData: {
 			id: 'yg8A8H8N-4x1Ezf8WW-YbA',
 			sequence: 'MTNVLIVEDEQAIRRFLRTALEGDGMRVFEAETLQRGLLEAATRKPDLIILDLGLPDGDGIEFIRDLRQWSAVPVIVLSARSEESDKIAALDAGADDYLSKPFGIGELQARLRVALRRHSATTAPDPLVKFSDVTVDLAARVIHRGEEEVHLTPIEFRLLAVLLNNAGKVLTQRQLLNQVWGPNAVEHSHYLRIYMGHLRQKLEQDPARPRHFITETGIGYRFML'
 		},
-		pfam30: [
+		pfam31: [
 			{
 				name: 'Response_reg',
 				score: 101.9,
@@ -114,5 +141,26 @@ module.exports = [
 				acc: 0.98
 			}
 		]
-	}
+	},
+
+	// 3
+	{
+		coreData: {
+			id: 'j4CpN55SAjIhp88GJS60zA',
+			sequence: 'MSNQEPATILLIDDHPMLRTGVKQLISMAPDITVVGEASNGEQGIELAESLDPDLILLDLNMPGMNGLETLDKLREKSLSGRIVVFSVSNHEEDVVTALKRGADGYLLKDMEPEDLLKALHQAAAGEMVLSEALTPVLAASLRANRATTERDVNQLTPRERDILKLIAQGLPNKMIARRLDITESTVKVHVKHMLKKMKLKSRVEAAVWVHQERIF'
+		},
+		ecf1: [
+			{
+				name: 'ECF_999',
+				ali_from: 91,
+				ali_to: 206,
+				ali_cov: '..',
+				hmm_from: 1,
+				hmm_to: 140,
+				hmm_cov: '[]',
+				score: 3.9,
+				evalue: 2.8,
+			},
+		]
+	},
 ]

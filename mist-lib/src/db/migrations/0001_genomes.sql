@@ -17,13 +17,13 @@ comment on column workers.job is 'job details such as the pipeline modules and g
 
 create table genomes (
 	id serial primary key,
-	worker_id integer,					-- Defined if a current worker is assigned to this genome
+	worker_id integer,					  -- Defined if a current worker is assigned to this genome
 	accession text not null,			-- e.g. NCBI RefSeq accession (no version); GCF_000762265
 	version text not null,				-- e.g. NCBI RefSeq accession and version; GCF_000762265.1
-	version_number integer not null,	-- 1
+	version_number integer not null,
 	genbank_accession text,				-- e.g. Source GenBank accession (no version) GCA_000762265
-	genbank_version text,				-- e.g. Source GenBank accession and version GCA_000762265.1
-	taxonomy_id integer,				-- NCBI taxonomy id
+	genbank_version text,				  -- e.g. Source GenBank accession and version GCA_000762265.1
+	taxonomy_id integer,				  -- NCBI taxonomy id
 
 	name text not null,
 	refseq_category text,
@@ -67,6 +67,9 @@ create table genomes (
 	unique(version),
 	foreign key(worker_id) references workers(id) on update cascade on delete set null
 );
+create index on genomes(worker_id);
+create index on genomes(taxonomy_id);
+
 comment on table genomes is 'Microbial genomes / assemblies';
 comment on column genomes.accession is 'RefSeq # assembly accession in the NCBI assembly report spreadsheet';
 comment on column genomes.refseq_category is 'reference, representative, or na';
@@ -75,8 +78,6 @@ comment on column genomes.assembly_level is 'complete, scaffold, contig, or chro
 comment on column genomes.release_type is 'major or minor';
 comment on column genomes.assembly_name is 'not necessarily different between genome versions';
 comment on column genomes.orderr is 'intentional typo because order is a reserved word';
-
-create index on genomes(taxonomy_id);
 
 create table workers_modules (
 	id serial primary key,
@@ -96,6 +97,7 @@ create table workers_modules (
 );
 create index on workers_modules(genome_id);
 create index on workers_modules(worker_id);
+create index on workers_modules(module);
 
 comment on table workers_modules is 'catalog of all modules that have been performed on a given genome and by what worker';
 comment on column workers_modules.genome_id is 'not all modules have to be associated with a genome (e.g. enqueue-new-genomes)';

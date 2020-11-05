@@ -1,8 +1,8 @@
 'use strict'
 
 // Core
-const fs = require('fs'),
-	path = require('path')
+const fs = require('fs')
+const path = require('path')
 
 // Vendor
 const Promise = require('bluebird')
@@ -11,8 +11,8 @@ const Promise = require('bluebird')
 const AseqsService = require('mist-lib/services/AseqsService')
 
 // Other
-const kToolRunners = discoverToolRunners(),
-	kToolRunnerIdMap = new Map(kToolRunners.map((x) => [x.id, x]))
+const kToolRunners = discoverToolRunners()
+const kToolRunnerIdMap = new Map(kToolRunners.map((x) => [x.id, x]))
 
 module.exports =
 class AseqsComputeService extends AseqsService {
@@ -20,10 +20,29 @@ class AseqsComputeService extends AseqsService {
 		return kToolRunners
 	}
 
-	constructor(model, config, logger) {
-		super(model, logger)
+	static toolRunnerIdMap() {
+		return kToolRunnerIdMap
+	}
 
+	constructor(models, model, config, logger) {
+		super(models, model, logger)
 		this.config_ = config
+	}
+
+	targetAseqFields(toolIds) {
+		const aseqFields = new Set()
+
+		toolIds
+			.map((toolId) => AseqsComputeService.toolRunnerIdMap().get(toolId))
+			.filter((meta) => !!meta)
+			.map((meta) => meta.requiredAseqFields || [])
+			.forEach((toolAseqFields) => {
+				toolAseqFields.forEach((toolAseqField) => {
+					aseqFields.add(toolAseqField)
+				})
+			})
+
+		return Array.from(aseqFields)
 	}
 
 	/**
@@ -38,16 +57,17 @@ class AseqsComputeService extends AseqsService {
 
 		return Promise.each(toolIds, (toolId) => {
 			// eslint-disable-next-line no-mixed-requires
-			let meta = kToolRunnerIdMap.get(toolId),
-				ToolRunner = require(meta.path), // eslint-disable-line global-require
-				toolRunnerConfig = this.config_.toolRunners[toolId],
-				toolRunner = new ToolRunner(toolRunnerConfig)
+			const meta = kToolRunnerIdMap.get(toolId)
+			const ToolRunner = require(meta.path) // eslint-disable-line global-require
+			const toolRunnerConfig = this.config_.toolRunners[toolId]
+			const toolRunner = new ToolRunner(toolRunnerConfig, this.models_)
 
 			toolRunner.on('progress', (progress) => {
 				this.logger_.info(progress, `${toolId} progress event: ${Math.floor(progress.percent)}%`)
 			})
 
-			return toolRunner.run(aseqs)
+			return toolRunner.setup_()
+			.then(() => toolRunner.run(aseqs))
 		})
 		.then(() => aseqs)
 	}
@@ -58,10 +78,11 @@ class AseqsComputeService extends AseqsService {
 	 *
 	 * @param {Array.<Aseq>} aseqs
 	 * @param {Array.<String>} toolIds
+	 * @param {string} [alternateCondition] additional condition to use when updating aseqs; should contain correct boolean operator
 	 * @param {Transaction} [transaction=null]
 	 * @returns {Array.<Aseq>}
 	 */
-	saveToolData(aseqs, toolIds, transaction = null) {
+	saveToolData(aseqs, toolIds, alternateCondition = '', transaction = null) {
 		if (!toolIds.length)
 			return Promise.resolve(aseqs)
 
@@ -81,14 +102,14 @@ class AseqsComputeService extends AseqsService {
 			return 0
 		})
 
-		let setSql = toolIds.map((toolId) => `${toolId} = coalesce(${toolId}, ?)`).join(', '),
-			nullClause = toolIds.map((toolId) => `${toolId} IS NULL`).join(' OR '),
-			replacements = [],
-			nToolIds = toolIds.length,
-			sql = `
+		const setSql = toolIds.map((toolId) => `${toolId} = ?`).join(', ')
+		const nullClause = toolIds.map((toolId) => `${toolId} IS NULL`).join(' OR ')
+		const replacements = []
+		const nToolIds = toolIds.length
+		const sql = `
 UPDATE ${this.model_.getTableName()}
 SET ${setSql}
-WHERE id = ? AND (${nullClause})`
+WHERE id = ? AND (${nullClause} ${alternateCondition})`
 
 		return Promise.each(aseqsCopy, (aseq) => {
 			for (let i = 0; i < nToolIds; i++)
@@ -168,11 +189,17 @@ function discoverToolRunners() {
 	.map((fileName) => {
 		// eslint-disable-next-line no-mixed-requires
 		let runnerPath = `./${basePath}/${fileName}`,
-			runner = require(runnerPath), // eslint-disable-line global-require
-			meta = runner.meta || {}
+			runner = require(runnerPath) // eslint-disable-line global-require
 
-		meta.path = runnerPath
+		runner.$path = runnerPath
 
+		return runner
+	})
+	.filter((runner) => runner.isEnabled())
+	.map((runner) => {
+		let meta = runner.meta || {}
+		meta.path = runner.$path
+		Reflect.deleteProperty(runner, '$path')
 		return meta
 	})
 	// Only include those that have a non-null id

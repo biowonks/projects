@@ -1,13 +1,21 @@
 #!/bin/bash
+#
+# This script is run as the postgres user and no longer as root. Thus
+# affects which directories may be written to.
 
 set -e
+
+# Do all work in /tmp
+cd /tmp
 
 # ---------------------------------------------------------
 # Setup default environment variables
 CERT_SUBJ=${CERT_SUBJ:=/C=US/ST=South Carolina/L=Charleston/O=BioWonks/OU=biowonks/CN=local-mistdb.com/emailAddress=biowonks@gmail.com}
-DB_USER=${DB_USER:=mist_dev}
-DB_NAME=${DB_NAME:=mist_dev}
-DB_PASSWORD=${DB_PASSWORD:=$&hxsALC!7_c}
+DB_NAME=${DB_NAME:=mist}
+DB_ADMIN_USER=${DB_ADMIN_USER:=mist_admin}
+DB_ADMIN_PASSWORD=${DB_ADMIN_PASSWORD:=$&hxsALC!7_c}
+DB_API_USER=${DB_API_USER:=mist_api}
+DB_API_PASSWORD=${DB_API_PASSWORD:=aFqn3fWfKAq}
 
 # ---------------------------------------------------------
 CONF_FILE=$PGDATA/postgresql.conf
@@ -35,22 +43,33 @@ fi
 
 # ---------------------------------------------------------
 # Local database setup
+echo "Creating admin user: ${DB_ADMIN_USER}"
+echo "Creating API user: ${DB_API_USER}"
+
 psql -v ON_ERROR_STOP=1 --username "$POSTGRES_USER" <<-EOSQL
 
--- 1) MiST user (make it look like Heroku)
-CREATE ROLE $DB_USER;
-ALTER ROLE $DB_USER WITH LOGIN PASSWORD '$DB_PASSWORD' NOSUPERUSER NOCREATEROLE;
+-- 1) MiST user
+CREATE ROLE "$DB_ADMIN_USER";
+ALTER ROLE "$DB_ADMIN_USER" WITH LOGIN PASSWORD '$DB_ADMIN_PASSWORD' NOSUPERUSER NOCREATEROLE;
+
+CREATE ROLE "$DB_API_USER" NOSUPERUSER INHERIT NOCREATEDB NOCREATEROLE NOREPLICATION VALID UNTIL 'infinity';
+ALTER ROLE "$DB_API_USER" WITH LOGIN PASSWORD '$DB_API_PASSWORD';
 
 -- 2) MiST database
-CREATE DATABASE $DB_NAME OWNER $DB_USER;
-REVOKE ALL ON DATABASE $DB_NAME FROM PUBLIC;
-GRANT CONNECT ON DATABASE $DB_NAME TO $DB_USER;
-GRANT ALL ON DATABASE $DB_NAME TO $DB_USER;
-\c $DB_NAME;
-ALTER SCHEMA public OWNER TO $DB_USER;
+CREATE DATABASE "$DB_NAME" OWNER "$DB_ADMIN_USER";
+REVOKE ALL ON DATABASE "$DB_NAME" FROM public;
+GRANT CONNECT ON DATABASE "$DB_NAME" TO "$DB_ADMIN_USER";
+GRANT CONNECT ON DATABASE "$DB_NAME" TO "$DB_API_USER";
+GRANT ALL ON DATABASE "$DB_NAME" TO "$DB_ADMIN_USER";
+GRANT USAGE ON SCHEMA public TO "$DB_API_USER";
+GRANT SELECT ON ALL TABLES IN SCHEMA public TO "$DB_API_USER";
+GRANT SELECT ON ALL SEQUENCES IN SCHEMA public TO "$DB_API_USER";
+\c "$DB_NAME";
+ALTER SCHEMA public OWNER TO "$DB_ADMIN_USER";
 
 -- Enable statement tracking
 CREATE EXTENSION pg_stat_statements;
+CREATE EXTENSION pg_trgm;
 
 EOSQL
 

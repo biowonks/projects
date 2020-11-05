@@ -2,6 +2,7 @@
 
 // Local
 const CriteriaError = require('lib/errors/CriteriaError')
+const arrayUtil = require('core-lib/array-util')
 
 // Constants
 const kDefaults = {
@@ -137,8 +138,34 @@ class CriteriaService {
 			rootModelNode = this.createModelTree_(queryObject)
 
 		this.mapFieldsToCriteria_(rootModelNode, criteria, primaryModel)
+		this.mapWhereToCriteria_(queryObject, criteria)
 
 		return criteria
+	}
+
+	mapWhereToCriteria_(queryObject, criteria) {
+		const where = {}
+		let addedFilter = false
+		for (let key in queryObject) {
+			const matches = /^where\.(\S+)/.exec(key)
+			if (!matches)
+				continue
+
+			const attributeName = matches[1]
+			let value = queryObject[key]
+			if (value === undefined || value === null)
+				continue
+			value = value + '' // Convert to string for handling non-string types
+			const values = value.split(',').map((x) => x.trim()).filter((x) => !!x)
+			if (!values.length)
+				continue
+
+			where[attributeName] = values.length > 1 ? values : values[0]
+			addedFilter = true
+		}
+
+		if (addedFilter)
+			criteria.where = where
 	}
 
 	/**
@@ -170,15 +197,23 @@ class CriteriaService {
 	 * @returns {Object} - criteria object compatible with Sequelizejs find operations
 	 */
 	createFromQueryObjectForMany(primaryModel, queryObject = {}, options = {}) {
-		let criteria = this.createFromQueryObject(primaryModel, queryObject),
-			perPage = this.perPageFrom(queryObject.per_page, options.defaultPerPage, options.maxPerPage),
-			page = this.pageFrom(queryObject.page, options.maxPage)
+		const criteria = this.createFromQueryObject(primaryModel, queryObject)
+		const perPage = this.getPerPage(queryObject, options)
+		const page = this.getPage(queryObject, options)
 
 		criteria.limit = perPage
 		criteria.offset = this.offsetFromPage(page, perPage) || null
 		criteria.order = this.orderFrom(primaryModel, queryObject.order)
 
 		return criteria
+	}
+
+	getPerPage(queryObject = {}, options = {}) {
+		return this.perPageFrom(queryObject.per_page, options.defaultPerPage, options.maxPerPage)
+	}
+
+	getPage(queryObject = {}, options = {}) {
+		return this.pageFrom(queryObject.page, options.maxPage)
 	}
 
 	/**
@@ -270,9 +305,11 @@ class CriteriaService {
 	 * @returns {Array.<Object>}
 	 */
 	findErrors(criteria, primaryModel, criteriaOptions = {}) {
-		let attributeErrors = this.findAttributeErrors_(criteria, primaryModel, criteriaOptions.accessibleModels),
-			orderErrors = this.findOrderErrors_(criteria.order, primaryModel, criteriaOptions.permittedOrderFields || primaryModel.primaryKeyAttributes),
-			errors = [...attributeErrors, ...orderErrors]
+		const permittedOrderFields = criteriaOptions.permittedOrderFields || primaryModel.primaryKeyAttributes
+		const attributeErrors = this.findAttributeErrors_(criteria, primaryModel, criteriaOptions.accessibleModels)
+		const whereErrors = this.findWhereErrors_(criteria, primaryModel, criteriaOptions.permittedWhereFields)
+		const	orderErrors = this.findOrderErrors_(criteria.order, primaryModel, permittedOrderFields)
+		const errors = [...attributeErrors, ...whereErrors, ...orderErrors]
 
 		return errors.length ? errors : null
 	}
@@ -307,7 +344,7 @@ class CriteriaService {
 				type: 'InaccessibleFieldError',
 				fields: excludedAttributes,
 				model: primaryModel.name,
-				message: `Accessing the following ${primaryModel.name} fields is not supported: ${excludedAttributes.join(', ')}`
+				message: `Accessing any of the following ${primaryModel.name} fields is not supported: ${excludedAttributes.join(', ')}`
 			})
 		}
 
@@ -329,10 +366,58 @@ class CriteriaService {
 		if (target.include) {
 			for (let i = 0, z = target.include.length; i < z; i++) {
 				let include = target.include[i]
-				errors = this.findErrors(include, include.model, accessibleModels)
+				errors = this.findAttributeErrors_(include, include.model, accessibleModels)
 
 				if (errors && errors.length)
 					return errors
+			}
+		}
+
+		return errors
+	}
+
+	findWhereErrors_(target, model, permittedWhereFields) {
+		const errors = []
+		if (!target.where)
+			return errors
+
+		let whereAttributes = Object.keys(target.where)
+		const invalidAttributes = this.invalidAttributes_(whereAttributes, model)
+		if (invalidAttributes) {
+			errors.push({
+				// Technically, this is an invalid attribute; however, from the user's
+				// perspective, it is a "field"
+				type: 'InvalidFieldError',
+				fields: invalidAttributes,
+				model: model.name,
+				message: `${model.name} does not contain the following fields: ${invalidAttributes.join(', ')}`
+			})
+
+			// Skip checking invalid fields for permission
+			whereAttributes = arrayUtil.difference(whereAttributes, invalidAttributes)
+		}
+
+		let unauthorizedWhereAttributes = []
+		if (whereAttributes.length) {
+			if (!permittedWhereFields || !permittedWhereFields instanceof Array) {
+				unauthorizedWhereAttributes = whereAttributes
+			}
+			else {
+				whereAttributes.forEach((whereAttribute) => {
+					const isValidField = Reflect.has(model.rawAttributes, whereAttribute)
+					const isPermitted = permittedWhereFields.includes(whereAttribute)
+					if (isValidField && !isPermitted)
+						unauthorizedWhereAttributes.push(whereAttribute)
+				})
+			}
+
+			if (unauthorizedWhereAttributes.length) {
+				errors.push({
+					type: 'WhereFieldError',
+					fields: unauthorizedWhereAttributes,
+					model: model.name,
+					message: `${model.name} may not be queried with the following fields: ${unauthorizedWhereAttributes.join(', ')}`
+				})
 			}
 		}
 
@@ -370,7 +455,7 @@ class CriteriaService {
 			}
 			else {
 				orderFields.forEach((orderField) => {
-					let validField = Reflect.has(primaryModel.attributes, orderField),
+					let validField = Reflect.has(primaryModel.rawAttributes, orderField),
 						permitted = permittedOrderFields.includes(orderField)
 					if (validField && !permitted)
 						unauthorizedOrderAttributes.push(orderField)
@@ -516,8 +601,7 @@ class CriteriaService {
 			includes.push(include)
 		}
 
-		if (includes.length)
-			target.include = includes
+		target.include = includes
 	}
 
 	/**
@@ -599,7 +683,7 @@ class CriteriaService {
 		if (!attributes || attributes.length === 0)
 			return null
 
-		let invalidAttributes = attributes.filter((attribute) => !model.attributes[attribute])
+		let invalidAttributes = attributes.filter((attribute) => !model.rawAttributes[attribute])
 		return invalidAttributes.length ? invalidAttributes : null
 	}
 
@@ -611,6 +695,7 @@ class CriteriaService {
 	excludedAttributes_(attributes, model) {
 		let excludeSet = model.$excludedFromCriteria(),
 			notRequestingAnyAttributes = attributes && attributes.length === 0
+
 		if (!excludeSet || excludeSet.size === 0 || notRequestingAnyAttributes)
 			return null
 

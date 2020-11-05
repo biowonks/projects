@@ -93,7 +93,7 @@ module.exports = function(routesPath, baseUrl, options = {}) {
 				routeDocs.parameters = finalizeRouteParameters(cascadingParameters.get(relPath), routeDocs.parameters)
 				routeDocs.endpoint = reformatEndpoint(routeDocs.endpoint, routeDocs.parameters)
 				routeDocs.description = toHTMLParagraphs(routeDocs.description)
-				routeDocs.snippets = buildHTMLSnippets(routeDocs.har, route.httpMethod, url, options.languages)
+				routeDocs.snippets = buildHTMLSnippets(routeDocs.har, route.httpMethod.toUpperCase(), url, options.languages)
 
 				normalizeExample(baseUrl, route.httpMethod, routeDocs.endpoint, routeDocs.example)
 
@@ -428,7 +428,7 @@ function highlightJSON(object) {
  * @param {Array.<Object>} [examples = null]
  */
 function normalizeExample(baseUrl, method, endpoint, example) {
-	if (method !== 'get' || !example)
+	if (!example)
 		return
 
 	example.request = normalizeRequest(baseUrl, endpoint, example.request)
@@ -451,7 +451,8 @@ function normalizeRequest(baseUrl, endpoint, request) {
 		// Interpolate all endpoint parameters
 		Object.keys(result.parameters).forEach((parameterName) => {
 			let value = result.parameters[parameterName],
-				regex = new RegExp('{' + parameterName + '}', 'g')
+				regex = new RegExp('\\$' + parameterName + '\\b', 'g')
+
 			result.endpoint = result.endpoint.replace(regex, value)
 		})
 	}

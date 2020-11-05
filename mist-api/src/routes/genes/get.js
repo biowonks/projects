@@ -1,31 +1,9 @@
 'use strict'
 
-module.exports = function(app, middlewares, routeMiddlewares) {
-	let models = app.get('models'),
-		helper = app.get('lib').RouteHelper.for(models.Gene)
+const { geneFinderMiddlewares, docs } = require('./genes-route-helpers');
 
-	return [
-		middlewares.parseCriteriaForMany(models.Gene, {
-			accessibleModels: [
-				models.Component,
-				models.Aseq,
-				models.Dseq
-			]
-		}),
-		helper.findManyHandler()
-	]
+module.exports = function(app, middlewares) {
+  return geneFinderMiddlewares(app, middlewares, (req) => req.query)
 }
 
-module.exports.docs = function(modelExamples) {
-	return {
-		name: 'Fetch Many Genes',
-		description: 'Returns an array of genes',
-		example: {
-			response: {
-				body: [
-					modelExamples.Gene
-				]
-			}
-		}
-	}
-}
+module.exports.docs = docs

@@ -47,17 +47,7 @@ class FileMapper {
 		if (!this.genome_)
 			throw new Error('Genome has not been set. Please call setGenome first')
 
-		let urlAssemblyName = this.genome_.assembly_name.replace(/ /g, '_')
-			.replace(/\//g, '_')
-			.replace(/#/g, '_')
-			.replace(/_{2,}/, '_')
-			.replace(/,/g, '_')
-			.replace(/_{2,}/g, '_')
-		return `${this.genome_.version}_${urlAssemblyName}`
-	}
-
-	ncbiUrlFor(sourceType) {
-		return `${this.genome_.ftp_path}/${this.ncbiFileNameFor(sourceType)}`
+		return this.genome_.ftp_path.split('/').pop();
 	}
 
 	ncbiRsyncUrlFor(sourceType) {
@@ -65,6 +55,15 @@ class FileMapper {
 		if (sourceType !== 'checksums')
 			url += '*_'
 		url += this.localFileNameFor(sourceType)
+		return url
+	}
+
+	ncbiHttpsUrlFor(sourceType) {
+		let url = `${this.genome_.ftp_path}/`.replace(/^ftp:/, 'https:')
+		if (sourceType === 'checksums')
+			url += this.localFileNameFor(sourceType)
+		else
+			url += this.ncbiFileNameFor(sourceType)
 		return url
 	}
 

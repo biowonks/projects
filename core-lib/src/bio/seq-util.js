@@ -43,6 +43,9 @@ exports.fasta = function(header, sequence, optCharsPerLine) {
  * @returns {Number}
  */
 exports.gcPercent = function(rawSequence = '') {
+	if (!rawSequence)
+		return 0
+
 	let distribution = exports.distribution(rawSequence),
 		length = rawSequence.length,
 		numG = (distribution.g || 0) + (distribution.G || 0),

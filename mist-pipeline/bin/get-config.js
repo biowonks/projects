@@ -11,12 +11,14 @@ jsonPaths.forEach((jsonPath) => {
 		ref = config
 
 	for (let part of parts) {
-		if (!ref[part]) {
+		if (!(part in ref) && !ref[part] && ref[part] !== null) {
 			console.error(`Invalid configuration path ${part} of ${jsonPath}`)
 			process.exit(1)
 		}
 		ref = ref[part]
 	}
 
-	console.log(ref)
+	if (ref) {
+		console.log(ref)
+	}
 })

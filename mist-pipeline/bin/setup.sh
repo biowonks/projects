@@ -2,14 +2,18 @@
 
 set -e
 
-npm run install-vendor-tools
-npm run install-hmmer3
+yarn install-vendor-tools
+yarn install-hmmer3
+yarn install-hmmer2
+yarn install-tmhmm2
 
 if [ -z ${CI+x} ]; then
-	npm run install-agfam
-	npm run install-pfam
+	yarn install-agfam
+	yarn install-ecf
+	yarn install-pfam
+	yarn install-chemotaxis-models
 else
-	echo "===> CI variable is defined. Skipping installation of agfam and pfam."
+	echo "===> CI variable is defined. Skipping installation of agfam, ecf, and pfam."
 fi
 
 echo

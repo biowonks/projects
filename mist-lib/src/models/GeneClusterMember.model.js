@@ -1,7 +1,7 @@
 'use strict'
 
 module.exports = function(Sequelize, models, extras) {
-	let fields = {
+	const fields = {
 		genes_cluster_id: extras.requiredPositiveInteger(),
 		gene_id: extras.requiredPositiveInteger()
 	}

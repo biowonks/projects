@@ -1,6 +1,6 @@
 FROM biowonks/node-bootstrap
 
-MAINTAINER BioWonks <biowonks@users.noreply.github.com>
+LABEL BioWonks <biowonks@users.noreply.github.com>
 
 COPY _common /app/_common
 COPY bin /app/bin
@@ -15,7 +15,7 @@ USER biowonks
 
 WORKDIR /app/mist-pipeline
 
-RUN npm install
+RUN yarn install
 
 ENV NODE_PATH=/app/mist-pipeline/node_modules
 

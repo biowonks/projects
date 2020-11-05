@@ -1,24 +1,23 @@
 /* eslint-disable no-mixed-requires, no-unused-expressions, no-magic-numbers */
-
 'use strict'
 
 // Vendor
-const BootService = require('core-lib/services/BootService'),
-	Seq = require('core-lib/bio/Seq')
+const BootService = require('core-lib/services/BootService')
+const Seq = require('core-lib/bio/Seq')
 
 // Local
-const loadModels = require('./index'),
-	AseqModelFn = require('./Aseq.model')
+const loadModels = require('./index')
+const AseqModelFn = require('./Aseq.model')
 
 describe('models', function() {
 	describe('Aseq', function() {
-		let models = null,
-			Aseq = null
+		let models = null
+		let Aseq = null
 		before(() => {
-			let bootService = new BootService({
-					name: 'dummy-database'
-				}),
-				sequelize = bootService.setupSequelize()
+			const bootService = new BootService({
+				name: 'dummy-database',
+			})
+			const sequelize = bootService.setupSequelize()
 
 			models = loadModels(sequelize)
 			Aseq = models.Aseq
@@ -26,16 +25,31 @@ describe('models', function() {
 
 		describe('kToolIdFieldNames (static property)', function() {
 			it('returns a list of supported tool ids', function() {
-				expect(AseqModelFn.kToolIdFieldNames).members(['pfam30', 'agfam2', 'segs', 'coils'])
+				expect(AseqModelFn.kToolIdFieldNames).members(['pfam31', 'agfam2', 'segs', 'coils', 'tmhmm2', 'ecf1'])
+			})
+		})
+
+		describe('validate', function() {
+			it('should return null if invalid aseqId', function() {
+				const invalidAseqId = 'luke'
+				expect(Aseq.isValidId(invalidAseqId)).false
+			})
+			it('empty should return null as invalid aseqId', function() {
+				const invalidAseqId = ''
+				expect(Aseq.isValidId(invalidAseqId)).false
+			})
+			it('valid AseqId should not return null', function() {
+				const invalidAseqId = 'eALFsiVPvD8jtNe_9Qifig'
+				expect(Aseq.isValidId(invalidAseqId)).true
 			})
 		})
 
 		describe('fromSeq', function() {
 			it('creates an Aseq instance from seq', function() {
-				let seq = new Seq('MLTY'),
-					x = Aseq.fromSeq(seq)
+				const seq = new Seq('MLTY')
+				const x = Aseq.fromSeq(seq)
 
-				expect(x instanceof Aseq.sequelize.Instance).true
+				expect(x instanceof Aseq).true
 				expect(x.id).equal(seq.seqId())
 				expect(x.sequence).equal(seq.normalizedSequence())
 				expect(x.length).equal(seq.length())
@@ -44,16 +58,16 @@ describe('models', function() {
 
 		describe('toolIdFieldNames', function() {
 			it('returns a list of supported tool ids', function() {
-				expect(Aseq.toolIdFieldNames()).members(['pfam30', 'agfam2', 'segs', 'coils'])
+				expect(Aseq.toolIdFieldNames()).members(['pfam31', 'agfam2', 'segs', 'coils', 'tmhmm2', 'ecf1'])
 			})
 		})
 
-		it('pfam30 getter / setter', function() {
-			let seq = new Seq('MTNVLIVEDEQAIRRFLRTALEGDGMRVFEAETLQRGLLEAATRKPDLIILDLGLPDGDGIEFIRDLRQWSAVPVIVLSARSEESDKIAALDAGADDYLSKPFGIGELQARLRVALRRHSATTAPDPLVKFSDVTVDLAARVIHRGEEEVHLTPIEFRLLAVLLNNAGKVLTQRQLLNQVWGPNAVEHSHYLRIYMGHLRQKLEQDPARPRHFITETGIGYRFML'),
-				x = Aseq.fromSeq(seq)
+		it('pfam31 getter / setter', function() {
+			const seq = new Seq('MTNVLIVEDEQAIRRFLRTALEGDGMRVFEAETLQRGLLEAATRKPDLIILDLGLPDGDGIEFIRDLRQWSAVPVIVLSARSEESDKIAALDAGADDYLSKPFGIGELQARLRVALRRHSATTAPDPLVKFSDVTVDLAARVIHRGEEEVHLTPIEFRLLAVLLNNAGKVLTQRQLLNQVWGPNAVEHSHYLRIYMGHLRQKLEQDPARPRHFITETGIGYRFML')
+			const x = Aseq.fromSeq(seq)
 
-			expect(x.pfam30).not.ok
-			let newDomains = [
+			expect(x.pfam31).not.ok
+			const newDomains = [
 				{
 					name: 'Response_reg',
 					score: 101.9,
@@ -90,8 +104,8 @@ describe('models', function() {
 				}
 			]
 
-			x.pfam30 = newDomains
-			expect(x.getDataValue('pfam30')).eql([
+			x.pfam31 = newDomains
+			expect(x.getDataValue('pfam31')).eql([
 				[
 					'Response_reg',
 					101.9,
@@ -128,7 +142,7 @@ describe('models', function() {
 				]
 			])
 
-			expect(x.pfam30).eql(newDomains)
+			expect(x.pfam31).eql(newDomains)
 		})
 	})
 })

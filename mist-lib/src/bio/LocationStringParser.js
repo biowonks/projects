@@ -198,9 +198,24 @@ class LocationStringParser {
 	}
 
 	parseLocation_(locationText, optAccession) {
-		let parts = locationText.split('..'),
-			startLocationPoint = this.parseLocationPoint_(parts[0]),
-			stopLocationPoint = parts.length > 1 ? this.parseLocationPoint_(parts[1]) : startLocationPoint
+		const parts = locationText.split('..')
+		let startLocationPoint = this.parseLocationPoint_(parts[0])
+		if (!startLocationPoint)
+			return null
+
+		let stopLocationPoint
+		if (parts.length > 1) {
+			stopLocationPoint = this.parseLocationPoint_(parts[1])
+		} else if (startLocationPoint.hasDefiniteStart() && startLocationPoint.hasDefiniteStop()) {
+			stopLocationPoint = startLocationPoint
+		} else if (startLocationPoint.hasDefiniteStart()) {
+			// e,g, <10
+			stopLocationPoint = new LocationPoint(startLocationPoint.lowerBound())
+		} else if (startLocationPoint.hasDefiniteStop()) {
+			// e.g. >10
+			stopLocationPoint = startLocationPoint
+			startLocationPoint = new LocationPoint(stopLocationPoint.upperBound())
+		}
 
 		if (startLocationPoint && stopLocationPoint)
 			return new Location(startLocationPoint, stopLocationPoint, optAccession)
@@ -214,9 +229,9 @@ class LocationStringParser {
 			return new LocationPoint(parseInt(locationPointText))
 
 		// 102.110 or 123^124
-		if (/^\d+[.^]\d+/.test(locationPointText)) {
-			let isBetween = locationPointText.indexOf('^') >= 0,
-				positions = locationPointText.split(/[.^]/)
+		if (/^\d+[.^]\d+$/.test(locationPointText)) {
+			const isBetween = locationPointText.indexOf('^') >= 0
+			const positions = locationPointText.split(/[.^]/)
 
 			positions[0] = parseInt(positions[0])
 			positions[1] = parseInt(positions[1])
@@ -227,7 +242,7 @@ class LocationStringParser {
 		}
 
 		// <123 or >123
-		if (locationPointText[0] === '>' || locationPointText[0] === '<')
+		if (/^[<>]\d+$/.test(locationPointText))
 			return new FuzzyLocationPoint(locationPointText[0], parseInt(locationPointText.substr(1)))
 
 		return null

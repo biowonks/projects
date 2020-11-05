@@ -5,7 +5,8 @@ const assert = require('assert')
 
 module.exports =
 class AbstractSeqsService {
-	constructor(model, logger) {
+	constructor(models, model, logger) {
+		this.models_ = models
 		this.model_ = model
 		this.logger_ = logger
 		this.sequelize_ = model.sequelize
@@ -18,7 +19,7 @@ class AbstractSeqsService {
 		if (!seqs.length)
 			return Promise.resolve()
 
-		let records = seqs.map(this.model_.dataFromSeq)
+		const records = seqs.map(this.model_.dataFromSeq)
 
 		// Sort all records by their id field so as to insert them in the same order and thereby
 		// avoid potential deadlock issues.

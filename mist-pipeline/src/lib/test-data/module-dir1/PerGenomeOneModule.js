@@ -11,8 +11,20 @@ class PerGenomeOneModule extends PerGenomePipelineModule {
 
 	static subModuleMap() {
 		return new Map([
-			['subModule1', 'subModule 1 description'],
-			['subModule2', 'subModule 2 description']
+			[
+				'subModule1',
+				{
+					description: 'subModule 1 description',
+					dependencies: [],
+				},
+			],
+			[
+				'subModule2',
+				{
+					description: 'subModule 2 description',
+					dependencies: [],
+				},
+			],
 		])
 	}
 }

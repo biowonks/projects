@@ -1,15 +1,17 @@
 'use strict'
 
 module.exports = function(app, middlewares, routeMiddlewares) {
-	let models = app.get('models'),
-		helper = app.get('lib').RouteHelper.for(models.Gene)
+	const models = app.get('models')
+	const helper = app.get('lib').RouteHelper.for(models.Gene)
 
 	return [
 		middlewares.parseCriteria(models.Gene, {
 			accessibleModels: [
+				models.Genome,
 				models.Component,
 				models.Aseq,
-				models.Dseq
+				models.Dseq,
+				models.SignalGene,
 			]
 		}),
 		helper.findHandler('stable_id')

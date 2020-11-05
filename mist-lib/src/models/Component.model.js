@@ -1,7 +1,7 @@
 'use strict'
 
 module.exports = function(Sequelize, models, extras) {
-	let fields = {
+	const fields = {
 		genome_id: Object.assign(extras.requiredPositiveInteger(), {
 			description: 'foreign identifier to this component\'s associated genome',
 			example: 1
@@ -87,46 +87,69 @@ module.exports = function(Sequelize, models, extras) {
 		}
 	}
 
-	let instanceMethods = {
+	// Prevent selection of the dna field. This avoids sending many megabytes of data in an
+	// un-regulated manner.
+	const excludedCriteriaAttributeSet = new Set(['dna'])
+	let criteriaAttributes = new Set(['id', ...Object.keys(fields)])
+	for (let attribute of excludedCriteriaAttributeSet)
+		criteriaAttributes.delete(attribute)
+	criteriaAttributes = Array.from(criteriaAttributes)
+
+	const classMethods = {
+		/**
+		 * @returns {Set.<String>}
+		 */
+		$excludedFromCriteria: function() {
+			return excludedCriteriaAttributeSet
+		},
+
+		/**
+		 * @returns {Array.<String>}
+		 */
+		$criteriaAttributes: function() {
+			return criteriaAttributes
+		},
+
+		/**
+		 * @param {number} componentId
+		 * @returns {Promise.<number>}
+		 */
+		geneIdRange: function(componentId) {
+			const sequelize = models.Component.sequelize
+			return models.Gene.findOne({
+				attributes: [
+					[sequelize.fn('min', sequelize.col('id')), 'min_id'],
+					[sequelize.fn('max', sequelize.col('id')), 'max_id'],
+				],
+				group: [
+					'component_id',
+				],
+				where: {
+					component_id: componentId,
+				},
+			})
+			.then((result) => [result.get('min_id'), result.get('max_id')])
+		},
+	}
+
+	const instanceMethods = {
 		compoundAccession: function() {
 			return this.accession + '.' + this.version
 		}
 	}
 
-	let validate = {
+	const validate = {
 		genbankAccessionVersion: extras.validate.bothNullOrBothNotEmpty('genbank_accession',
 			'genbank_version'),
 		dnaLength: extras.validate.referencedLength('length', 'dna')
 	}
 
-	// Prevent selection of the dna field. This avoids sending many megabytes of data in an
-	// un-regulated manner.
-	let excludedCriteriaAttributeSet = new Set(['dna']),
-		criteriaAttributes = new Set(['id', ...Object.keys(fields)])
-	for (let attribute of excludedCriteriaAttributeSet)
-		criteriaAttributes.delete(attribute)
-	criteriaAttributes = Array.from(criteriaAttributes)
-
 	return {
+		classMethods,
 		fields,
+		instanceMethods,
 		params: {
-			instanceMethods,
-			classMethods: {
-				/**
-				 * @returns {Set.<String>}
-				 */
-				$excludedFromCriteria: function() {
-					return excludedCriteriaAttributeSet
-				},
-
-				/**
-				 * @returns {Array.<String>}
-				 */
-				$criteriaAttributes: function() {
-					return criteriaAttributes
-				}
-			},
-			validate
-		}
+			validate,
+		},
 	}
 }

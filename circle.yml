@@ -30,7 +30,7 @@ dependencies:
 
 test:
   override:
-    - bin/circleci/util/run-tests.sh $(cat ~/projects-to-build.txt)
+    - bin/circleci/util/run-tests.sh $(cat ./build-targets.txt)
   post:
     - bin/circleci/test.post.sh
 
@@ -38,4 +38,4 @@ deployment:
   boom:
     branch: develop
     commands:
-      - bin/circleci/util/deploy-to-heroku.sh develop $(cat ~/projects-to-build.txt)
+      - bin/circleci/util/deploy-to-heroku.sh develop $(cat ./build-targets.txt)

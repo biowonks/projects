@@ -3,34 +3,37 @@
 'use strict'
 
 // Core
-const assert = require('assert'),
-	path = require('path')
+const assert = require('assert')
+const path = require('path')
 
 // Vendor
-const program = require('commander'),
-	Promise = require('bluebird')
+const program = require('commander')
+const Promise = require('bluebird')
+const Sequelize = require('sequelize')
 
 // Local
-const config = require('../config'),
-	putil = require('lib/putil'),
-	ModuleId = require('lib/ModuleId'),
-	InterruptError = require('lib/InterruptError'),
-	ModuleDepNode = require('lib/ModuleDepNode'),
-	ModuleDepGraph = require('lib/ModuleDepGraph'),
-	MistBootService = require('mist-lib/services/MistBootService'),
-	WorkerService = require('mist-lib/services/WorkerService')
+const config = require('../config')
+const putil = require('lib/putil')
+const ModuleId = require('lib/ModuleId')
+const InterruptError = require('lib/InterruptError')
+const ModuleDepNode = require('lib/ModuleDepNode')
+const ModuleDepGraph = require('lib/ModuleDepGraph')
+const MistBootService = require('mist-lib/services/MistBootService')
+const WorkerService = require('mist-lib/services/WorkerService')
+const EUtilsService = require('mist-lib/services/EUtilsService')
+const BioSampleService = require('mist-lib/services/BioSampleService')
 
 // Constants
-const k1KB = 1024,
-	kModulesOncePath = path.resolve(__dirname, '..', 'src', 'modules', 'once'),
-	kModulesPerGenomePath = path.resolve(__dirname, '..', 'src', 'modules', 'per-genome'),
-	kShutdownGracePeriodMs = 30000,
-	kIsolationLevels = MistBootService.Sequelize.Transaction.ISOLATION_LEVELS
+const k1KB = 1024
+const kModulesOncePath = path.resolve(__dirname, '..', 'src', 'modules', 'once')
+const kModulesPerGenomePath = path.resolve(__dirname, '..', 'src', 'modules', 'per-genome')
+const kShutdownGracePeriodMs = 30000
+const kIsolationLevels = MistBootService.Sequelize.Transaction.ISOLATION_LEVELS
 
 // Leverage bluebird globally for all Promises
 global.Promise = Promise
 
-let availableModules = putil.enumerateModules(kModulesOncePath, kModulesPerGenomePath)
+const availableModules = putil.enumerateModules(kModulesOncePath, kModulesPerGenomePath)
 
 program
 .description(`Executes a pipeline of one or more MiST modules. There are two main
@@ -72,14 +75,15 @@ ${putil.modulesHelp(availableModules.perGenome)}
 `)
 .usage('[options] <module ...>')
 .option('-g, --genome-ids <genome id,...>', 'CSV list of genome ids', parseGenomeIds)
+.option('-q, --query <value>', 'arbitrary query data passed to each module')
+.option('-o, --optimize', 'analyze database tables after each module completes (undo or redo, per-genome only)')
 .option('-r, --redo <module,...>', 'CSV list of module names', (value) => value.split(','))
 .option('-u, --undo <module,...>', 'CSV list of module names', (value) => value.split(','))
 .parse(process.argv)
 
-let requestedModuleIds = ModuleId.nest(ModuleId.fromStrings([...(program.redo || []), ...program.args])),
-	requestedRedoModuleIds = ModuleId.nest(ModuleId.fromStrings(program.redo || [])),
-	requestedUndoModuleIds = ModuleId.nest(ModuleId.fromStrings(program.undo || []))
-
+const requestedModuleIds = ModuleId.nest(ModuleId.fromStrings([...(program.redo || []), ...program.args]))
+const requestedRedoModuleIds = ModuleId.nest(ModuleId.fromStrings(program.redo || []))
+const requestedUndoModuleIds = ModuleId.nest(ModuleId.fromStrings(program.undo || []))
 if (!requestedUndoModuleIds.length && !requestedModuleIds.length) {
 	program.outputHelp()
 	process.exit(1)
@@ -89,23 +93,26 @@ dieIfRequestedInvalidModules()
 dieIfRequestedToRedoOnceModule()
 dieIfRequestedToUndoOnceModule()
 
-let requestedOnceModuleIds = putil.matchingModuleIds(requestedModuleIds, availableModules.once),
-	requestedPerGenomeModuleIds = putil.matchingModuleIds(requestedModuleIds, availableModules.perGenome),
-	bootService = new MistBootService({
-		logger: {
-			name: 'pipeline',
-			streams: [
-				{
-					level: 'info',
-					stream: process.stdout
-				}
-			]
-		}
-	}),
-	logger = bootService.logger(),
-	worker = null,
-	shuttingDown = false,
-	numShutdownRequests = 0
+const requestedOnceModuleIds = putil.matchingModuleIds(requestedModuleIds, availableModules.once)
+const requestedPerGenomeModuleIds = putil.matchingModuleIds(requestedModuleIds, availableModules.perGenome)
+const bootService = new MistBootService({
+	logger: {
+		name: 'pipeline',
+		streams: [
+			{
+				level: 'info',
+				stream: process.stdout
+			}
+		]
+	}
+})
+let logger = bootService.logger()
+let worker = null
+let shuttingDown = false
+let numShutdownRequests = 0
+const moduleOptions = {
+	optimize: !!program.optimize
+}
 
 process.on('SIGINT', shutdown)
 process.on('SIGTERM', shutdown)
@@ -119,7 +126,7 @@ Promise.coroutine.addYieldHandler((value) => Promise.resolve(value))
 bootService.setup()
 .then(() => bootService.publicIP())
 .then((publicIP) => {
-	let workerService = new WorkerService(bootService.models(), publicIP)
+	const workerService = new WorkerService(bootService.models(), publicIP)
 	worker = workerService.buildWorker()
 	worker.job = {
 		genomeIds: program.genomeIds,
@@ -139,10 +146,14 @@ bootService.setup()
 	logger.info('Registered new worker')
 })
 .then(() => {
-	let app = {
+	const eutils = new EUtilsService()
+	const app = {
+		eutils,
+		bioSampleService: new BioSampleService(eutils),
 		worker,
 		config,
 		logger: null,
+		query: program.query,
 		shutdownCheck,
 		models: bootService.models(),
 		sequelize: bootService.sequelize()
@@ -165,18 +176,18 @@ bootService.setup()
 	return saveWorkerError(error)
 })
 .catch(logError)
-.finally(() => bootService.sequelize().close())
+.finally(() => bootService.sequelize().close()) // faster shutdown
 
 // --------------------------------------------------------
 // --------------------------------------------------------
 function dieIfRequestedInvalidModules() {
-	let invalidUndoModuleIds = putil.findInvalidModuleIds(requestedUndoModuleIds, availableModules.all)
+	const invalidUndoModuleIds = putil.findInvalidModuleIds(requestedUndoModuleIds, availableModules.all)
 	if (invalidUndoModuleIds.length) {
 		die('the following "undo" modules (or submodules) are invalid\n\n' +
 			`  ${invalidUndoModuleIds.join('\n  ')}\n`)
 	}
 
-	let invalidModuleIds = putil.findInvalidModuleIds(requestedModuleIds, availableModules.all)
+	const invalidModuleIds = putil.findInvalidModuleIds(requestedModuleIds, availableModules.all)
 	if (invalidModuleIds.length) {
 		die('the following modules (or submodules) are invalid\n\n' +
 			`  ${invalidModuleIds.join('\n  ')}\n`)
@@ -184,7 +195,7 @@ function dieIfRequestedInvalidModules() {
 }
 
 function dieIfRequestedToUndoOnceModule() {
-	let onceModuleIds = putil.matchingModuleIds(requestedUndoModuleIds, availableModules.once)
+	const onceModuleIds = putil.matchingModuleIds(requestedUndoModuleIds, availableModules.once)
 	if (onceModuleIds.length) {
 		die('Undo is only supported for per-genome modules, but the following once modules were ' +
 			`specified for undo: ${onceModuleIds.join(', ')}`)
@@ -192,7 +203,7 @@ function dieIfRequestedToUndoOnceModule() {
 }
 
 function dieIfRequestedToRedoOnceModule() {
-	let onceModuleIds = putil.matchingModuleIds(requestedRedoModuleIds, availableModules.once)
+	const onceModuleIds = putil.matchingModuleIds(requestedRedoModuleIds, availableModules.once)
 	if (onceModuleIds.length) {
 		die('Redo is only supported for per-genome modules, but the following once modules were ' +
 			`specified for redo: ${onceModuleIds.join(', ')}`)
@@ -217,7 +228,7 @@ function parseGenomeIds(csvGenomeIds) {
 	if (!csvGenomeIds)
 		return null
 
-	let ids = new Set(csvGenomeIds.split(',').map((genomeId) => Number(genomeId)))
+	const ids = new Set(csvGenomeIds.split(',').map((genomeId) => Number(genomeId)))
 	for (let genomeId of ids) {
 		if (!/^[1-9]\d*$/.test(genomeId))
 			throw new Error('Each genome id must be a positive integer')
@@ -241,7 +252,12 @@ function unregisterWorker() {
 }
 
 function logError(error) {
-	let shortMessage = error.message ? error.message.substr(0, k1KB) : null
+	const shortMessage = error && error.message ? error.message.substr(0, k1KB) : null
+
+	if (error && !error.constructor) {
+		console.log('Unexpected error', error)
+		throw new Error(error)
+	}
 
 	switch (error.constructor) {
 		case MistBootService.Sequelize.DatabaseError:
@@ -290,7 +306,7 @@ function shutdown() {
 		process.exit(1)
 	}
 
-	let failSafeTimer = setTimeout(() => {
+	const failSafeTimer = setTimeout(() => {
 		logger.fatal('Process did not exit within the grace period. Forcefully exiting.')
 		process.exit(1)
 	}, kShutdownGracePeriodMs)
@@ -304,14 +320,14 @@ function shutdownCheck() {
 }
 
 function runOnceModules(app, moduleIds) {
-	let moduleClassMap = putil.mapModuleClassesByName(availableModules.once)
+	const moduleClassMap = putil.mapModuleClassesByName(availableModules.once)
 
 	return Promise.each(moduleIds, (moduleId) => {
 		shutdownCheck()
 		logger.info(`Starting "once" module: ${moduleId}`)
 		app.logger = logger.child({moduleId})
-		let ModuleClass = moduleClassMap.get(moduleId.name()),
-			moduleInstance = new ModuleClass(app, moduleId.subNames())
+		const ModuleClass = moduleClassMap.get(moduleId.name())
+		const moduleInstance = new ModuleClass(app, moduleId.subNames())
 		return moduleInstance.main()
 		.then(() => {
 			logger.info(`Module finished normally: ${moduleId}`)
@@ -320,16 +336,16 @@ function runOnceModules(app, moduleIds) {
 }
 
 function tagModulesForRedo(app, moduleIds) {
-	let where = {
+	const where = {
 		redo: false,
 		state: 'done',
 		module: {
-			$in: ModuleId.unnest(moduleIds).map((x) => x.toString())
+			[Sequelize.Op.in]: ModuleId.unnest(moduleIds).map((x) => x.toString())
 		}
 	}
 	if (program.genomeIds) {
 		where.genome_id = {
-			$in: program.genomeIds
+			[Sequelize.Op.in]: program.genomeIds
 		}
 	}
 
@@ -337,7 +353,7 @@ function tagModulesForRedo(app, moduleIds) {
 		redo: true
 	}, {where})
 	.then((result) => {
-		let affectedCount = result[0]
+		const affectedCount = result[0]
 		if (affectedCount)
 			logger.info(`Marked ${affectedCount} worker modules for redo`)
 	})
@@ -347,24 +363,24 @@ function runPerGenomeModules(app, undoModuleIds, moduleIds) {
 	if (!undoModuleIds.length && !moduleIds.length)
 		return null
 
-	let moduleClassMap = putil.mapModuleClassesByName(availableModules.perGenome),
-		depGraph = createDepGraph(availableModules.perGenome),
-		unnestedUndoModuleIds = ModuleId.unnest(undoModuleIds),
-		unnestedModuleIds = ModuleId.unnest(moduleIds),
-		lastGenomeId = null
+	const moduleClassMap = putil.mapModuleClassesByName(availableModules.perGenome)
+	const depGraph = createDepGraph(availableModules.perGenome)
+	let unnestedUndoModuleIds = ModuleId.unnest(undoModuleIds)
+	const unnestedModuleIds = ModuleId.unnest(moduleIds)
+	let lastGenomeId = null
 
 	return Promise.coroutine(function *() {
 		// eslint-disable-next-line no-constant-condition
 		while (true) {
 			shutdownCheck()
-			let genome = yield lockNextAvailableGenome(app, unnestedUndoModuleIds, unnestedModuleIds, lastGenomeId),
-				nothingAvailableToDo = !genome
+			const genome = yield lockNextAvailableGenome(app, unnestedUndoModuleIds, unnestedModuleIds, lastGenomeId)
+			const nothingAvailableToDo = !genome
 			if (nothingAvailableToDo)
 				break
 
 			try {
 				yield loadGenomeState(app, genome, depGraph)
-				let activeUndoModuleIds = depGraph.moduleIdsInStates('active', 'undo')
+				const activeUndoModuleIds = depGraph.moduleIdsInStates('active', 'undo')
 				if (activeUndoModuleIds.length) {
 					logger.warn({
 						genomeId: genome.id,
@@ -386,8 +402,8 @@ function runPerGenomeModules(app, undoModuleIds, moduleIds) {
 					// redoModuleIds are not necessarily the ones specified on the command line.
 					// They are based on the dependency graph which is build from the database
 					// state.
-					let redoModuleIds = depGraph.matchingModuleIds(unnestedModuleIds, (node) => {
-						let workerModule = node.workerModule()
+					const redoModuleIds = depGraph.matchingModuleIds(unnestedModuleIds, (node) => {
+						const workerModule = node.workerModule()
 						return workerModule &&
 							workerModule.state === 'done' &&
 							workerModule.redo === true
@@ -410,9 +426,21 @@ function runPerGenomeModules(app, undoModuleIds, moduleIds) {
 }
 
 function createDepGraph(ModuleClasses) {
-	let	unnestedDeps = putil.unnestedDependencyArray(ModuleClasses),
-		rootDepNode = ModuleDepNode.createFromDepList(unnestedDeps)
+	const unnestedDeps = putil.unnestedDependencyArray(ModuleClasses)
+	throwErrorIfInvalidDependency(unnestedDeps)
+	const rootDepNode = ModuleDepNode.createFromDepList(unnestedDeps)
 	return new ModuleDepGraph(rootDepNode, logger)
+}
+
+function throwErrorIfInvalidDependency(unnestedDeps) {
+	const validModuleNames = new Set()
+	unnestedDeps.forEach((dep) => validModuleNames.add(dep.name))
+	unnestedDeps.forEach((dep) => {
+		dep.dependencies.forEach((name) => {
+			if (!validModuleNames.has(name))
+				throw new Error(`Invalid dependency in ${dep.name}: ${name} is not a valid module`)
+		})
+	})
 }
 
 /**
@@ -438,38 +466,33 @@ function createDepGraph(ModuleClasses) {
 function lockNextAvailableGenome(app, undoModuleIds, moduleIds, lastGenomeId = null) {
 	assert(undoModuleIds.length + moduleIds.length > 0)
 
-	let genomesTable = app.models.Genome.getTableName(),
-		workerModulesTable = app.models.WorkerModule.getTableName(),
-		minGenomeIdClause = lastGenomeId ? `AND a.id > ${lastGenomeId} ` : '',
-		// genomeIdClause = program.genomeIds ? `AND a.id IN (${program.genomeIds.join(',')}) ` : '',
-		queryUndoModuleArrayString = `ARRAY['${undoModuleIds.join("','")}']`,
-		queryModuleArrayString = `ARRAY['${moduleIds.join("','")}']`,
-		whereClauses = []
+	const genomesTable = app.models.Genome.getTableName()
+	const minGenomeIdClause = lastGenomeId ? `AND id > ${lastGenomeId} ` : ''
+	const queryUndoModuleArrayString = `ARRAY['${undoModuleIds.join("','")}']`
+	const queryModuleArrayString = `ARRAY['${moduleIds.join("','")}']`
+	const whereClauses = []
 
 	if (undoModuleIds.length)
-		whereClauses.push(`(b.genome_id is not null AND b.modules && ${queryUndoModuleArrayString})`)
-	if (moduleIds.length)
-		whereClauses.push(`(b.genome_id is null OR NOT b.no_redo_modules @> ${queryModuleArrayString})`)
+		whereClauses.push(`done_modules && ${queryUndoModuleArrayString}`)
+	if (moduleIds.length) {
+		whereClauses.push(`NOT done_modules @> ${queryModuleArrayString}`)
+		whereClauses.push(`redo_modules @> ${queryModuleArrayString}`)
+	}
 
-	let whereClauseSql = whereClauses.join(' OR '),
-		sql =
-`WITH done_genomes_modules AS (
-	SELECT b.genome_id, array_agg(module) as modules, array_agg(case when redo is false then module else null end) as no_redo_modules
-	FROM ${genomesTable} a JOIN ${workerModulesTable} b ON (a.id = b.genome_id)
-	WHERE a.worker_id is null AND b.state = 'done'
-	GROUP BY b.genome_id
-)
-SELECT a.*
-FROM ${genomesTable} a LEFT OUTER JOIN done_genomes_modules b ON (a.id = b.genome_id)
-WHERE ${genomeIdCondition()} a.worker_id is null ${minGenomeIdClause} AND (${whereClauseSql})
-ORDER BY a.id
+	const whereClauseSql = whereClauses.join(' OR ')
+	const sql =
+`SELECT *
+FROM ${genomesTable}
+WHERE ${genomeIdCondition()} worker_id is null ${minGenomeIdClause} AND (${whereClauseSql})
+ORDER BY id
 LIMIT 1
 FOR UPDATE`
 
-	return app.sequelize.transaction({isolationLevel: kIsolationLevels.READ_COMMITTED}, () => {
+	return app.sequelize.transaction({isolationLevel: kIsolationLevels.READ_COMMITTED}, (transaction) => {
 		return app.sequelize.query(sql, {
 			model: app.models.Genome,
-			type: app.sequelize.QueryTypes.SELECT
+			type: app.sequelize.QueryTypes.SELECT,
+			transaction
 		})
 		.then((genomes) => {
 			if (!genomes.length)
@@ -477,7 +500,10 @@ FOR UPDATE`
 
 			return genomes[0].update({
 				worker_id: app.worker.id
-			}, {fields: ['worker_id']})
+			}, {
+				fields: ['worker_id'],
+				transaction
+			})
 			.then((genome) => {
 				logger.info({genomeId: genome.id, name: genome.name}, `Locked genome: ${genome.name}`)
 				return genome
@@ -487,7 +513,7 @@ FOR UPDATE`
 }
 
 function genomeIdCondition() {
-	return program.genomeIds ? `a.id IN (${program.genomeIds.join(',')}) AND ` : ''
+	return program.genomeIds ? `id IN (${program.genomeIds.join(',')}) AND ` : ''
 }
 
 function loadGenomeState(app, genome, depGraph) {
@@ -509,8 +535,8 @@ function undoModules(app, genome, unnestedUndoModuleIds, depGraph, moduleClassMa
 		for (let moduleId of effectiveUndoModuleIds) {
 			shutdownCheck()
 
-			let unnestedModuleIds = moduleId.unnest(),
-				dependentModuleIds = new Set()
+			const unnestedModuleIds = moduleId.unnest()
+			let dependentModuleIds = new Set()
 
 			unnestedModuleIds.forEach((unnestedModuleId) => {
 				for (let x of depGraph.moduleIdsDependingOn(unnestedModuleId))
@@ -523,7 +549,7 @@ function undoModules(app, genome, unnestedUndoModuleIds, depGraph, moduleClassMa
 				continue
 			}
 
-			let ModuleClass = moduleClassMap.get(moduleId.name())
+			const ModuleClass = moduleClassMap.get(moduleId.name())
 			app.logger = logger.child({
 				action: 'undo',
 				moduleId: moduleId.toString(),
@@ -533,9 +559,9 @@ function undoModules(app, genome, unnestedUndoModuleIds, depGraph, moduleClassMa
 				}
 			})
 			logger.info(`Undoing module: ${moduleId}`)
-			let moduleInstance = new ModuleClass(app, genome, moduleId.subNames()),
-				workerModules = depGraph.toNodes(unnestedModuleIds).map((x) => x.workerModule())
-			yield moduleInstance.mainUndo(workerModules)
+			const moduleInstance = new ModuleClass(app, genome, moduleId.subNames())
+			const workerModules = depGraph.toNodes(unnestedModuleIds).map((x) => x.workerModule())
+			yield moduleInstance.mainUndo(workerModules, moduleOptions)
 			depGraph.removeState(workerModules)
 			logger.info(`Undo finished normally: ${moduleId}`)
 		}
@@ -544,25 +570,19 @@ function undoModules(app, genome, unnestedUndoModuleIds, depGraph, moduleClassMa
 
 function runModules(app, genome, unnestedModuleIds, depGraph, moduleClassMap) {
 	let incompleteModuleIds = depGraph.incompleteModuleIds(unnestedModuleIds)
-	incompleteModuleIds = depGraph.orderByDepth(incompleteModuleIds)
-	incompleteModuleIds = ModuleId.nest(incompleteModuleIds)
+	incompleteModuleIds = depGraph.orderAndNestByDepth(incompleteModuleIds)
 
 	return Promise.coroutine(function *() {
 		for (let moduleId of incompleteModuleIds) {
 			shutdownCheck()
 
-			// Unlike undo'ing which must check every unnested module id for downstream dependencies
-			// running a module (and any submodules) only needs to check the first flat module /
-			// submodule. This is because a given module has the same dependencies for all
-			// submodules.
-			let repModuleId = moduleId.unnest()[0],
-				missingDependencies = depGraph.missingDependencies(repModuleId)
+			const missingDependencies = findMissingDependencies(depGraph, moduleId)
 			if (missingDependencies.length) {
 				logger.info({missingDependencies}, `Unable to run: ${moduleId}. The following dependencies are not satisfied: ${missingDependencies.join(', ')}`)
 				continue
 			}
 
-			let ModuleClass = moduleClassMap.get(moduleId.name())
+			const ModuleClass = moduleClassMap.get(moduleId.name())
 			app.logger = logger.child({
 				moduleId: moduleId.toString(),
 				genome: {
@@ -571,12 +591,23 @@ function runModules(app, genome, unnestedModuleIds, depGraph, moduleClassMap) {
 				}
 			})
 			logger.info(`Starting module: ${moduleId}`)
-			let moduleInstance = new ModuleClass(app, genome, moduleId.subNames()),
-				workerModules = yield moduleInstance.main()
+			const moduleInstance = new ModuleClass(app, genome, moduleId.subNames())
+			const workerModules = yield moduleInstance.main(moduleOptions)
 			depGraph.updateState(workerModules)
 			logger.info(`Module finished normally: ${moduleId}`)
 		}
 	})()
+}
+
+function findMissingDependencies(depGraph, moduleId) {
+	const unnestedModuleIds = moduleId.unnest()
+	for (let i = 0, z = unnestedModuleIds.length; i < z; i++) {
+		const missingDependencies = depGraph.missingDependencies(unnestedModuleIds[i])
+		if (missingDependencies.length)
+			return missingDependencies
+	}
+
+	return []
 }
 
 function unlockGenome(genome) {

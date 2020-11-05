@@ -28,25 +28,25 @@
 'use strict'
 
 // Core
-const fs = require('fs'),
-	path = require('path')
+const fs = require('fs')
+const path = require('path')
 
 // Vendor
-const parse = require('csv-parse'),
-	pumpify = require('pumpify'),
-	split = require('split'),
-	streamEach = require('stream-each'),
-	through2 = require('through2')
+const parse = require('csv-parse')
+const pumpify = require('pumpify')
+const split = require('split')
+const streamEach = require('stream-each')
+const through2 = require('through2')
 
 // Local
-const OncePipelineModule = require('lib/OncePipelineModule'),
-	generatorUtil = require('core-lib/generator-util'),
-	mutil = require('mist-lib/mutil')
+const OncePipelineModule = require('lib/OncePipelineModule')
+const generatorUtil = require('core-lib/generator-util')
+const mutil = require('mist-lib/mutil')
 
 // Constants
-const kBatchSize = 50,
-	kTempTableName = 'seed_new_genomes__summaries',
-	kCreateTempTableSql = `CREATE TEMPORARY TABLE ${kTempTableName} (
+const kBatchSize = 50
+const kTempTableName = 'seed_new_genomes__summaries'
+const kCreateTempTableSql = `CREATE TEMPORARY TABLE ${kTempTableName} (
 	accession text not null,
 	version text not null,
 	version_number integer not null,
@@ -69,29 +69,29 @@ const kBatchSize = 50,
 	ftp_path text,
 
 	unique(accession, version)
-)`,
-	kTempTableFields = [
-		'accession',
-		'version',
-		'version_number',
-		'genbank_accession',
-		'genbank_version',
-		'taxonomy_id',
-		'name',
-		'refseq_category',
-		'bioproject',
-		'biosample',
-		'wgs_master',
-		'strain',
-		'isolate',
-		'version_status',
-		'assembly_level',
-		'release_type',
-		'release_date',
-		'assembly_name',
-		'submitter',
-		'ftp_path'
-	]
+)`
+const kTempTableFields = [
+	'accession',
+	'version',
+	'version_number',
+	'genbank_accession',
+	'genbank_version',
+	'taxonomy_id',
+	'name',
+	'refseq_category',
+	'bioproject',
+	'biosample',
+	'wgs_master',
+	'strain',
+	'isolate',
+	'version_status',
+	'assembly_level',
+	'release_type',
+	'release_date',
+	'assembly_name',
+	'submitter',
+	'ftp_path'
+]
 
 /**
  * Private error used to prematurely exit a Promise.each
@@ -104,6 +104,13 @@ class SeedNewGenomes extends OncePipelineModule {
 		return 'seed the database with genomes sourced from NCBI'
 	}
 
+	static moreInfo() {
+		return 'Use the query parameter to only seed those genomes whose name\n' +
+		  'matches a regular expression. For example:\n' +
+			'  -q "coli" will only match those genomes with "coli" in its name\n' +
+			'  -q "^Escher" will only match those genomes whose name begins with "Escher"'
+	}
+
 	constructor(app) {
 		super(app)
 
@@ -111,6 +118,7 @@ class SeedNewGenomes extends OncePipelineModule {
 		this.numGenomesSeeded_ = 0
 		this.dataDir_ = __dirname
 		this.QueryGenerator_ = this.models_.Genome.QueryGenerator
+		this.queryRegex_ = this.query_ ? new RegExp(this.query_) : null
 	}
 
 	optimize() {
@@ -177,7 +185,7 @@ class SeedNewGenomes extends OncePipelineModule {
 			return null
 
 		this.logger_.info({file}, 'Processing summary file')
-		let parser = parse({
+		const parser = parse({
 			columns: true,
 			delimiter: '\t',
 			trim: true,
@@ -186,30 +194,32 @@ class SeedNewGenomes extends OncePipelineModule {
 			auto_parse: false	// do not attempt to convert input strings to native types
 		})
 
-		let readStream = fs.createReadStream(file),
-			// The assembly summary files have two header lines the first of which is merely
-			// descriptive; however, it causes csv-parse to choke because it is looking for the
-			// header line. Thus, this through stream skips the first line as well as re-appends the
-			// newline character that is stripped by LineStream.
-			skippedFirstLine = false,
-			skipLineStream = through2.obj(function(line, encoding, done) {
-				if (skippedFirstLine)
-					// The CSV parser expects input with newlines. Here we add them back because the
-					// LineStream removes them.
-					this.push(line + '\n') // eslint-disable-line no-invalid-this
-				else
-					skippedFirstLine = true
-				done()
-			}),
-			genomeSummaries = []
+		const readStream = fs.createReadStream(file)
+		// The assembly summary files have two header lines the first of which is merely
+		// descriptive; however, it causes csv-parse to choke because it is looking for the
+		// header line. Thus, this through stream skips the first line as well as re-appends the
+		// newline character that is stripped by LineStream.
+		let skippedFirstLine = false
+		const skipLineStream = through2.obj(function(line, encoding, done) {
+			if (skippedFirstLine)
+				// The CSV parser expects input with newlines. Here we add them back because the
+				// LineStream removes them.
+				this.push(line + '\n') // eslint-disable-line no-invalid-this
+			else
+				skippedFirstLine = true
+			done()
+		})
+		let numGenomeSummaries = 0
+		const genomeSummaries = []
 
 		return new Promise((resolve, reject) => {
-			let pipeline = pumpify.obj(readStream, split(), skipLineStream, parser)
+			const pipeline = pumpify.obj(readStream, split(), skipLineStream, parser)
 			streamEach(pipeline, (row, next) => {
 				this.shutdownCheck_()
-				let genomeData = this.genomeDataFromRow_(row)
-				if (genomeData.refseq_category === 'representative genome' ||
-					genomeData.refseq_category === 'reference genome')
+				const genomeData = this.genomeDataFromRow_(row)
+				if (!!genomeData)
+					numGenomeSummaries++
+				if (this.acceptGenome_(genomeData))
 					genomeSummaries.push(genomeData)
 				next()
 			}, (error) => {
@@ -220,7 +230,9 @@ class SeedNewGenomes extends OncePipelineModule {
 			})
 		})
 		.then(() => {
-			this.logger_.info(`Read ${genomeSummaries.length} genome summaries`)
+			this.logger_.info(`Read ${numGenomeSummaries} genome summaries`)
+			if (genomeSummaries.length)
+				this.logger_.info(`Matched ${genomeSummaries.length} genome summaries`)
 
 			return this.createTemporaryTable_()
 			.then(() => this.insertNewGenomes_(genomeSummaries))
@@ -229,30 +241,30 @@ class SeedNewGenomes extends OncePipelineModule {
 	}
 
 	genomeDataFromRow_(row) {
-		let refseqAccessionParts = mutil.parseAccessionVersion(row['# assembly_accession']),
-			genbankAccessionParts = mutil.parseAccessionVersion(row.gbrs_paired_asm),
-			genomeData = {
-				accession: refseqAccessionParts[0],
-				version: row['# assembly_accession'],
-				version_number: refseqAccessionParts[1],
-				genbank_accession: genbankAccessionParts[0],
-				genbank_version: row.gbrs_paired_asm,
-				taxonomy_id: Number(row.taxid),
-				name: row.organism_name,
-				refseq_category: row.refseq_category,
-				bioproject: row.bioproject,
-				biosample: row.biosample,
-				wgs_master: row.wgs_master,
-				strain: this.extractStrain_(row.infraspecific_name),
-				isolate: row.isolate,
-				version_status: row.version_status,
-				assembly_level: row.assembly_level,
-				release_type: row.release_type,
-				release_date: row.seq_rel_date,
-				assembly_name: row.asm_name,
-				submitter: row.submitter,
-				ftp_path: row.ftp_path
-			}
+		const refseqAccessionParts = mutil.parseAccessionVersion(row['# assembly_accession'])
+		const genbankAccessionParts = mutil.parseAccessionVersion(row.gbrs_paired_asm)
+		const genomeData = {
+			accession: refseqAccessionParts[0],
+			version: row['# assembly_accession'],
+			version_number: refseqAccessionParts[1],
+			genbank_accession: genbankAccessionParts[0],
+			genbank_version: row.gbrs_paired_asm,
+			taxonomy_id: Number(row.taxid),
+			name: row.organism_name,
+			refseq_category: row.refseq_category,
+			bioproject: row.bioproject,
+			biosample: row.biosample,
+			wgs_master: row.wgs_master,
+			strain: this.extractStrain_(row.infraspecific_name),
+			isolate: row.isolate,
+			version_status: row.version_status,
+			assembly_level: row.assembly_level,
+			release_type: row.release_type,
+			release_date: row.seq_rel_date,
+			assembly_name: row.asm_name,
+			submitter: row.submitter,
+			ftp_path: row.ftp_path
+		}
 
 		for (let key in genomeData) {
 			if (!genomeData[key])
@@ -263,8 +275,21 @@ class SeedNewGenomes extends OncePipelineModule {
 	}
 
 	extractStrain_(infraSpecificName) {
-		let matches = /strain=(\S+)/.exec(infraSpecificName)
+		const matches = /strain=(\S+)/.exec(infraSpecificName)
 		return matches ? matches[1] : null
+	}
+
+	acceptGenome_(genomeData) {
+		if (!genomeData)
+			return false
+
+		const { refseq_category } = genomeData
+		const isRepRefGenome = refseq_category === 'representative genome' || refseq_category === 'reference genome'
+		return isRepRefGenome && this.matchesQuery_(genomeData.name)
+	}
+
+	matchesQuery_(name) {
+		return !this.queryRegex_ || this.queryRegex_.test(name)
 	}
 
 	createTemporaryTable_() {
@@ -288,7 +313,7 @@ class SeedNewGenomes extends OncePipelineModule {
 	}
 
 	bulkInsertGenomeSummaries_(genomeSummaries, transaction) {
-		let sql = this.QueryGenerator_.bulkInsertQuery(
+		const sql = this.QueryGenerator_.bulkInsertQuery(
 			kTempTableName,
 			genomeSummaries,
 			{fields: kTempTableFields},
@@ -299,11 +324,11 @@ class SeedNewGenomes extends OncePipelineModule {
 	}
 
 	addNewGenomes_(transaction) {
-		let limit = this.seedConfig_.maxNewGenomesPerRun ?
+		const limit = this.seedConfig_.maxNewGenomesPerRun ?
 			Math.max(0, this.seedConfig_.maxNewGenomesPerRun - this.numGenomesSeeded_) :
 			null
 
-		let sql = `INSERT INTO ${this.models_.Genome.getTableName()} (${kTempTableFields.join(', ')})
+		const sql = `INSERT INTO ${this.models_.Genome.getTableName()} (${kTempTableFields.join(', ')})
 SELECT a.*
 FROM ${kTempTableName} a LEFT OUTER JOIN ${this.models_.Genome.getTableName()} b USING (accession, version)
 WHERE b.accession is null
@@ -311,12 +336,12 @@ ${limit ? 'LIMIT ' + limit : ''}
 RETURNING *`
 
 		return this.sequelize_.query(sql, {transaction, raw: true})
-		.then((result) => {
+		.spread((result) => {
 			if (!result.length)
 				return
 
 			this.numGenomesSeeded_ += result.length
-			let newGenomes = result.map((genome) => {
+			const newGenomes = result.map((genome) => {
 				return {
 					id: genome.id,
 					accession: genome.accession,

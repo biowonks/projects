@@ -2,12 +2,14 @@
 'use strict'
 
 // Local
-const Location = require('./Location'),
-	LocationPoint = require('./LocationPoint'),
-	BetweenLocationPoint = require('./BetweenLocationPoint'),
-	BoundedLocationPoint = require('./BoundedLocationPoint'),
-	FuzzyLocationPoint = require('./FuzzyLocationPoint'),
-	Seq = require('core-lib/bio/Seq')
+const Location = require('./Location')
+const ComplementLocation = require('./ComplementLocation')
+const JoinLocation = require('./JoinLocation')
+const LocationPoint = require('./LocationPoint')
+const BetweenLocationPoint = require('./BetweenLocationPoint')
+const BoundedLocationPoint = require('./BoundedLocationPoint')
+const FuzzyLocationPoint = require('./FuzzyLocationPoint')
+const Seq = require('core-lib/bio/Seq')
 
 describe('Location', function() {
 	describe('constructor', function() {
@@ -34,22 +36,22 @@ describe('Location', function() {
 		})
 
 		it('same location point reference', function() {
-			let lp = new LocationPoint(1)
+			const lp = new LocationPoint(1)
 			new Location(lp, lp)
 		})
 	})
 
 	describe('accession', function() {
 		it('has null accession by default', function() {
-			let lp = new LocationPoint(5),
-				x = new Location(lp, lp)
+			const lp = new LocationPoint(5)
+			const x = new Location(lp, lp)
 
 			expect(x.accession()).null
 		})
 
 		it('returns accession defined in constructor', function() {
-			let lp = new LocationPoint(5),
-				x = new Location(lp, lp, 'ABC123.1')
+			const lp = new LocationPoint(5)
+			const x = new Location(lp, lp, 'ABC123.1')
 
 			expect(x.accession()).equal('ABC123.1')
 		})
@@ -57,10 +59,10 @@ describe('Location', function() {
 
 	describe('length', function() {
 		describe('linear sequences', function() {
-			let notCircular = false,
-				lp1 = new LocationPoint(5),
-				lp2 = new LocationPoint(10),
-				x = new Location(lp1, lp2)
+			const notCircular = false
+			const lp1 = new LocationPoint(5)
+			const lp2 = new LocationPoint(10)
+			const x = new Location(lp1, lp2)
 
 			it('throws error if lower bound is > sequence length', function() {
 				expect(function() {
@@ -80,10 +82,10 @@ describe('Location', function() {
 		})
 
 		describe('circular sequences', function() {
-			let circular = true,
-				lp1 = new LocationPoint(5),
-				lp2 = new LocationPoint(8),
-				x = new Location(lp1, lp2)
+			const circular = true
+			const lp1 = new LocationPoint(5)
+			const lp2 = new LocationPoint(8)
+			const x = new Location(lp1, lp2)
 
 			it('throws error if lower bound is > sequence length', function() {
 				expect(function() {
@@ -102,7 +104,7 @@ describe('Location', function() {
 			})
 
 			it('8..1 (length 8) returns 2', function() {
-				let y = new Location(new LocationPoint(8), new LocationPoint(1))
+				const y = new Location(new LocationPoint(8), new LocationPoint(1))
 				expect(y.length(circular, 8)).equal(2)
 			})
 		})
@@ -110,9 +112,9 @@ describe('Location', function() {
 
 	describe('lowerBound', function() {
 		it('returns the start location points lower bound', function() {
-			let lp1 = new LocationPoint(5),
-				lp2 = new LocationPoint(10),
-				x = new Location(lp1, lp2)
+			const lp1 = new LocationPoint(5)
+			const lp2 = new LocationPoint(10)
+			const x = new Location(lp1, lp2)
 
 			expect(x.lowerBound()).equal(lp1.lowerBound())
 		})
@@ -120,9 +122,9 @@ describe('Location', function() {
 
 	describe('upperBound', function() {
 		it('returns the stop location points upper bound', function() {
-			let lp1 = new LocationPoint(5),
-				lp2 = new LocationPoint(10),
-				x = new Location(lp1, lp2)
+			const lp1 = new LocationPoint(5)
+			const lp2 = new LocationPoint(10)
+			const x = new Location(lp1, lp2)
 
 			expect(x.upperBound()).equal(lp2.upperBound())
 		})
@@ -130,8 +132,8 @@ describe('Location', function() {
 
 	describe('strand', function() {
 		it('always returns +', function() {
-			let lp = new LocationPoint(5),
-				x = new Location(lp, lp)
+			const lp = new LocationPoint(5)
+			const x = new Location(lp, lp)
 
 			expect(x.strand()).equal('+')
 		})
@@ -141,7 +143,7 @@ describe('Location', function() {
 		// ------------------------------------------------
 		// Helper functions
 		function locationFromString(locationString) {
-			let parts = locationString.split('..')
+			const parts = locationString.split('..')
 			return new Location(locationPointFromString(parts[0]), locationPointFromString(parts[1]))
 		}
 
@@ -150,12 +152,12 @@ describe('Location', function() {
 				return new LocationPoint(parseInt(locationPointString))
 
 			if (/\^/.test(locationPointString)) {
-				let parts = locationPointString.split('^')
+				const parts = locationPointString.split('^')
 				return new BetweenLocationPoint(parseInt(parts[0]), parseInt(parts[1]))
 			}
 
 			if (/\./.test(locationPointString)) {
-				let parts = locationPointString.split('.')
+				const parts = locationPointString.split('.')
 				return new BoundedLocationPoint(parseInt(parts[0]), parseInt(parts[1]))
 			}
 
@@ -166,8 +168,8 @@ describe('Location', function() {
 		}
 
 		it('with external acession throws Error', function() {
-			let seq = new Seq('ATG'),
-				x = new Location(new LocationPoint(1), new LocationPoint(3), 'ABC123.1')
+			const seq = new Seq('ATG')
+			const x = new Location(new LocationPoint(1), new LocationPoint(3), 'ABC123.1')
 
 			expect(function() {
 				x.transcriptFrom(seq)
@@ -175,39 +177,39 @@ describe('Location', function() {
 		})
 
 		describe('linear sequence', function() {
-			let seq = new Seq('ABCDEFGHIJ')
-			//                 |   |    |
-			//                 1   5    10
+			const seq = new Seq('ABCDEFGHIJ')
+			//                   |   |    |
+			//                   1   5    10
 
 			it('throws error with string', function() {
 				expect(function() {
-					let x = new Location(new LocationPoint(1), new LocationPoint(5))
+					const x = new Location(new LocationPoint(1), new LocationPoint(5))
 					x.transcriptFrom('ATCGATGC')
 				}).throw(Error)
 			})
 
 			it('>1..5 throws error', function() {
 				expect(function() {
-					let x = new Location(new FuzzyLocationPoint('>', 1), new LocationPoint(5))
+					const x = new Location(new FuzzyLocationPoint('>', 1), new LocationPoint(5))
 					x.transcriptFrom(new Seq('ATCGATGC'))
 				}).throw(Error)
 			})
 
 			it('2..<5 throws error', function() {
 				expect(function() {
-					let x = new Location(new LocationPoint(2), new FuzzyLocationPoint('<', 5))
+					const x = new Location(new LocationPoint(2), new FuzzyLocationPoint('<', 5))
 					x.transcriptFrom(new Seq('ATCGATGC'))
 				}).throw(Error)
 			})
 
 			it('>1..<2 throws error', function() {
 				expect(function() {
-					let x = new Location(new FuzzyLocationPoint('>', 1), new FuzzyLocationPoint('<', 2))
+					const x = new Location(new FuzzyLocationPoint('>', 1), new FuzzyLocationPoint('<', 2))
 					x.transcriptFrom(new Seq('ATCGATGC'))
 				}).throw(Error)
 			})
 
-			let examples = [
+			const examples = [
 				['5..5', 'E'],
 				['5..6', 'EF'],
 				['5..7^8', 'EFGH'],
@@ -221,12 +223,12 @@ describe('Location', function() {
 			]
 
 			examples.forEach((example) => {
-				let locationString = example[0],
-					expectedSequence = example[1]
+				const locationString = example[0]
+				const expectedSequence = example[1]
 
 				it(locationString, function() {
-					let x = locationFromString(locationString),
-						result = x.transcriptFrom(seq)
+					const x = locationFromString(locationString)
+					const result = x.transcriptFrom(seq)
 					expect(result).ok
 					expect(result).instanceof(Seq)
 					expect(result !== seq)
@@ -236,23 +238,24 @@ describe('Location', function() {
 		})
 
 		describe('circular sequence', function() {
-			let seq = new Seq('ABCDEFGHIJ')
-			//                 |   |    |
-			//                 1   5    10
+			const seq = new Seq('ABCDEFGHIJ')
+			//                   |   |    |
+			//                   1   5    10
 			seq.setCircular()
 
-			let examples = [
+			const examples = [
 				['10..1', 'JA'],
-				['5..4', 'EFGHIJABCD']
+				['5..4', 'EFGHIJABCD'],
+				['<10..2', 'JAB'],
 			]
 
 			examples.forEach((example) => {
-				let locationString = example[0],
-					expectedSequence = example[1]
+				const locationString = example[0]
+				const expectedSequence = example[1]
 
 				it(locationString, function() {
-					let x = locationFromString(locationString),
-						result = x.transcriptFrom(seq)
+					const x = locationFromString(locationString)
+					const result = x.transcriptFrom(seq)
 					expect(result).ok
 					expect(result).instanceof(Seq)
 					expect(result !== seq)

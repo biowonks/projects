@@ -1,12 +1,12 @@
 'use strict'
 
 // Core
-const assert = require('assert'),
-	fs = require('fs')
+const assert = require('assert')
+const fs = require('fs')
 
 // Vendor
-const Promise = require('bluebird'),
-	byline = require('byline') // TODO: replace with split
+const Promise = require('bluebird')
+const byline = require('byline') // TODO: replace with split
 
 // Local
 const mutil = require('mist-lib/mutil')
@@ -40,7 +40,7 @@ class NCBIDataHelper {
 		if (sourceType === 'checksums')
 			return this.ensureChecksumsLoaded_()
 
-		let destFile = this.fileMapper_.pathFor(sourceType)
+		const destFile = this.fileMapper_.pathFor(sourceType)
 		return mutil.fileNotEmpty(destFile)
 		.then((notEmpty) => {
 			if (!notEmpty)
@@ -65,11 +65,11 @@ class NCBIDataHelper {
 	downloadAndVerify_(sourceType) {
 		assert(!!this.checksums_, 'Expected checksums to be defined')
 
-		let url = this.fileMapper_.ncbiRsyncUrlFor(sourceType),
-			destFile = this.fileMapper_.pathFor(sourceType)
+		const url = this.fileMapper_.ncbiHttpsUrlFor(sourceType)
+		const destFile = this.fileMapper_.pathFor(sourceType)
 
 		this.logger_.info({sourceType, url, file: destFile}, `Downloading ${sourceType}`)
-		return this.rsyncFile_(url, destFile)
+		return this.downloadFile_(url, destFile)
 		.then(() => this.verify_(sourceType))
 		.then((isComplete) => {
 			if (!isComplete) {
@@ -82,14 +82,15 @@ class NCBIDataHelper {
 	verify_(sourceType) {
 		assert(!!this.checksums_, 'Expected checksums to be defined')
 
-		let destFile = this.fileMapper_.pathFor(sourceType)
+		const destFile = this.fileMapper_.pathFor(sourceType)
 		return mutil.fileExists(destFile)
 		.then((fileExists) => {
 			if (!fileExists)
 				return false
 
-			let fileName = this.fileMapper_.localFileNameFor(sourceType),
-				checksum = this.checksums_[fileName]
+			const fileName = this.fileMapper_.localFileNameFor(sourceType)
+			const ncbiFileName = this.fileMapper_.ncbiFileNameFor(sourceType)
+			const checksum = this.checksums_[ncbiFileName]
 			if (checksum) {
 				this.logger_.info({fileName}, `Verifying ${sourceType} file contents`)
 				return mutil.checkFileMD5(destFile, checksum)
@@ -118,7 +119,7 @@ class NCBIDataHelper {
 	}
 
 	loadChecksums_() {
-		let checksumsFile = this.fileMapper_.pathFor('checksums')
+		const checksumsFile = this.fileMapper_.pathFor('checksums')
 		return this.readChecksumsFromFile_(checksumsFile)
 		.catch((error) => {
 			return mutil.unlink(checksumsFile)
@@ -129,7 +130,7 @@ class NCBIDataHelper {
 			})
 		})
 		.then((checksums) => {
-			let nChecksums = Object.keys(checksums).length
+			const nChecksums = Object.keys(checksums).length
 			this.logger_.info(`Successfully parsed ${nChecksums} checksums`)
 			this.checksums_ = checksums
 			return checksums
@@ -137,20 +138,20 @@ class NCBIDataHelper {
 	}
 
 	downloadChecksums_() {
-		let url = this.fileMapper_.ncbiRsyncUrlFor('checksums'),
-			destFile = this.fileMapper_.pathFor('checksums')
+		const url = this.fileMapper_.ncbiHttpsUrlFor('checksums')
+		const destFile = this.fileMapper_.pathFor('checksums')
 
 		this.logger_.info({url, destFile}, 'Downloading checksums')
-		return this.rsyncFile_(url, destFile)
+		return this.downloadFile_(url, destFile)
 		.then(this.loadChecksums_.bind(this))
 	}
 
 	readChecksumsFromFile_(file) {
 		return new Promise((resolve, reject) => {
-			let readStream = fs.createReadStream(file),
-				lineStream = byline.createStream(readStream),
-				checksums = {},
-				invalidChecksumLine = null
+			const readStream = fs.createReadStream(file)
+			const lineStream = byline.createStream(readStream)
+			const checksums = {}
+			const invalidChecksumLine = null
 
 			readStream
 			.on('error', reject)
@@ -181,16 +182,35 @@ class NCBIDataHelper {
 	}
 
 	parseChecksumLine_(line) {
-		let matches = /^([a-f0-9]{32})\s+(?:\.\/)?(\S+)/i.exec(line)
+		const matches = /^([a-f0-9]{32})\s+(?:\.\/)?(\S+)/i.exec(line)
 		if (!matches)
 			return null
 
-		let md5 = matches[1],
-			fileName = matches[2]
+		const md5 = matches[1]
+		const fileName = matches[2]
 		return [md5, fileName]
+	}
+
+	downloadFile_(url, targetFile) {
+		let tries = 0;
+		const download = () => this.wgetFile_(url, targetFile)
+			.catch((error) => {
+				++tries
+				this.logger_.error({error, url, targetFile, tries}, 'Failed to download file. Retrying');
+				if (tries >= 10)
+					throw error
+				const waitASecond = Promise.delay(1000)
+				return waitASecond.then(download)
+			})
+
+		return download();
 	}
 
 	rsyncFile_(url, localFile) {
 		return mutil.shellCommand(`rsync -q --times "${url}" ${localFile}`)
+	}
+
+	wgetFile_(url, targetFile) {
+		return mutil.shellCommand(`wget --no-check-certificate -4 --dns-timeout=15 --connect-timeout=15 --read-timeout 30 -t 1 --retry-connrefused -O ${targetFile} "${url}"`)
 	}
 }

@@ -1,8 +1,8 @@
 'use strict'
 
 // Vendor
-const streamEach = require('stream-each'),
-	Promise = require('bluebird')
+const streamEach = require('stream-each')
+const Promise = require('bluebird')
 
 // Local
 const AbstractToolRunner = require('./AbstractToolRunner')
@@ -40,7 +40,7 @@ class FastaStreamToolRunner extends AbstractToolRunner {
 			})
 
 			Promise.each(aseqs, (aseq) => {
-				return toolStream.writePromise(aseq.toFasta())
+				return toolStream.writePromise(this.getFasta_(aseq))
 			})
 			.then(() => toolStream.end())
 		})
@@ -68,5 +68,15 @@ class FastaStreamToolRunner extends AbstractToolRunner {
 	 */
 	toolStream_() {
 		throw new Error('not implemented')
+	}
+
+	/**
+	 * Optional override to permit child classes to massage the fasta sequence if needed.
+	 *
+	 * @param {Aseq} aseq
+	 * @returns {string}
+	 */
+	getFasta_(aseq) {
+		return aseq.toFasta()
 	}
 }

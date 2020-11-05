@@ -9,6 +9,33 @@ create table id_sequences (
 -- Unless otherwise specified, all unqualified external database identifers are assumed to be from
 -- RefSeq. For example, components.accession refers to the RefSeq accession.
 
+-- Theoretically, there should never be 2 references with the same pubmed id for the same genome;
+-- however, this does occur in the GenBank data files. For example:
+--
+-- GCF_000152145.1_ASM15214v1_genomic.gbff
+--
+--    PUBMED   21037015
+-- REFERENCE   2  (bases 1 to 67990)
+--   AUTHORS   Kuznetsov,B.B., Ivanovsky,R.N., Keppen,O.I., Sukhacheva,M.V.,
+--             Bumazhkin,B.K., Patutina,E.O., Beletsky,A.V., Mardanov,A.V.,
+--             Baslerov,R.V., Panteleeva,A.N., Kolganova,T.V., Ravin,N.V. and
+--             Skryabin,K.G.
+--   TITLE     Draft Genome Sequence of the Anoxygenic Filamentous Phototrophic
+--             Bacterium Oscillochloris trichoides subsp. DG-6
+--   JOURNAL   J. Bacteriol. 193 (1), 321-322 (2011)
+--    PUBMED   21037015
+-- REFERENCE   3  (bases 1 to 67990)
+--   AUTHORS   Kuznetsov,B.B. and Beletsky,A.V.
+--   TITLE     Direct Submission
+--   JOURNAL   Submitted (19-MAY-2010) Molecular Diagnostics, Center
+--             Bioengineering RAS, Prospekt 60-Letyaya Oktyabrya, 7-1, Moscow
+--             117312, Russia
+--
+-- Clearly there are two separate entities here but both have the same pubmed id. A unique
+-- constraint on both genome_id and pubmed_id would prevent capturing this information at
+-- all (and even bork the pipeline). Thus, a composite index is created on these two fields
+-- that provides for fast lookups without restricting duplicates. At a later point in time,
+-- this will be easy to manually clean up if desired.
 create table genomes_references (
 	id serial primary key,
 	genome_id integer not null,
@@ -24,11 +51,10 @@ create table genomes_references (
 	created_at timestamp with time zone not null default now(),
 	updated_at timestamp with time zone not null default now(),
 
-	unique(genome_id, pubmed_id),
-
 	foreign key(genome_id) references genomes(id) on update cascade on delete cascade
 );
-create index on genomes_references(genome_id);
+-- See above note
+create index on genomes_references(genome_id, pubmed_id);
 
 create table components (
 	id serial primary key,

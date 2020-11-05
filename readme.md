@@ -21,10 +21,14 @@ This structuring of our projects has made development signficantly easier withou
 To effectively leverage and use the BioWonks projects, it is necessary to have the following tools:
 
 * [git](https://git-scm.com/)
-* [Node.js](https://nodejs.org) - we recommend using [NVM](https://github.com/creationix/nvm) to install version 6.x
+* [Node.js](https://nodejs.org) - we recommend using [NVM](https://github.com/creationix/nvm) to install version 8.x
 * [Docker](https://www.docker.com/)
+* [Docker Compose](https://docs.docker.com/compose/)
 
 Node is used for various scripting tasks as well as other tooling helpers (e.g. [eslint](http://eslint.org/) javascript linting). The Docker software provides a reproducible and consistent environment for each project to cleanly express its own infrastructure. Thus, given the above tools, each project simply provides a Docker image or Dockerfile to configure the environment needed to run that project.
+
+| After installing Docker, we recommend configuring docker to start up on boot.
+
 
 
 ## Setup
@@ -41,7 +45,27 @@ Checkout the develop branch:
 $ git checkout develop
 ```
 
-Setup and attach to the docker development environment:
+### Installing third party tools.
+
+MiST3 so far uses 1 proprietary tool: [TMHMM2](https://services.healthtech.dtu.dk/service.php?TMHMM-2.0)
+
+To be able to run the pipeline with `AseqCompute:tmhmm2` and build the TM predictions, we must go to the [TMHMM2](https://services.healthtech.dtu.dk/service.php?TMHMM-2.0) download page and sign up for download. They will send you an e-mail with a link. Follow the instructions below:
+
+1) Click on the link TMHMM team sent you. It will take you to a "ftp style" download page with a LICENCE file and a `.tar.gz`.
+2) Copy the link address to the `tar.gz` file.
+3) Go to the root directory of the MiST3 project and find the file `docker-compose.yml`
+4) Edit `docker-compose.yml` to include `TMHMM2_SECURE_URL` environmental variable in the section `biowonks-dev` - `environment`.
+5) Paste the link address as the value of the variable. Save the file.
+
+Example of how the insertion should look like:
+
+```yml
+  - TMHMM2_SECURE_URL=https://services.healthtech.dtu.dk/download/a742125a-c3b4-4622-93c2-b3ac77ec4fbe/tmhmm-2.0c.Linux.tar.gz
+```
+> Note that this link won't work in your case, you must get a link that works at the TMHMM Download page
+
+### Setup and attach to the docker development environment
+
 ```
 $ bin/setup-docker-dev.sh
 $ docker attach biowonks-dev
@@ -82,3 +106,24 @@ To stop the API service:
 ```
 (biowonks @ docker) /app/mist-api $ yarn stop
 ```
+
+## Local PostgreSQL database access
+
+From within the docker environment, run the following command:
+
+```bash
+(biowonks @ docker) /app $ psql -h mist-pg-db -U mist_dev mist_dev
+```
+
+When prompted for a password, use the password defined in `mist-lib/src/db/config.js`.
+
+The postgresql database image is also accessible from the host environment (expose the postgresql image ports to the host environment):
+
+```bash
+$ psql -h localhost -U mist_dev mist_dev
+```
+
+| Tip: Rather than have to input the password everytime, you may also store your login credentials in a `.pgpass` [file](https://www.postgresql.org/docs/9.6/static/libpq-pgpass.html). This looks like the following (for the host environment): `localhost:5432:mist_dev:mist_dev:DATABASE_PASSWORD`. Be sure to set the permissions properly for this file too.
+
+| Tip: Add an alias for the above psql command to your .bashrc: `alias psql-mist-dev="psql -h localhost -U mist_dev mist_dev`
+
