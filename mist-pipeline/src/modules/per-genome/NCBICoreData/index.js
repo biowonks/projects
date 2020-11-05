@@ -154,6 +154,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 
 			return streamEachPromise(pipeline, (assembly, next) => {
 				this.assemblyReportMap_.set(assembly.refseqAccession, assembly)
+				this.assemblyReportMap_.set(assembly.genbankAccession, assembly)
 				next()
 			})
 			.then(() => {
@@ -299,7 +300,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 	addAssemblyReportData_(component) {
 		let assemblyReport = this.assemblyReportMap_.get(component.version)
 		if (!assemblyReport)
-			throw new Error('Genbank record does not have corresponding assembly report entry')
+			throw new Error('Genbank record does not have corresponding assembly report entry: ' + component.version)
 
 		/**
 		 * In some cases, there is no corresponding GenBank record. For example, take the plasmids

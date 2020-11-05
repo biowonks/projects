@@ -252,7 +252,12 @@ function unregisterWorker() {
 }
 
 function logError(error) {
-	const shortMessage = error.message ? error.message.substr(0, k1KB) : null
+	const shortMessage = error && error.message ? error.message.substr(0, k1KB) : null
+
+	if (error && !error.constructor) {
+		console.log('Unexpected error', error)
+		throw new Error(error)
+	}
 
 	switch (error.constructor) {
 		case MistBootService.Sequelize.DatabaseError:

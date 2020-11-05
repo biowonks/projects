@@ -142,7 +142,12 @@ module.exports = function(Sequelize, models, extras) {
 			type: Sequelize.JSONB,
 			allowNull: false,
 			defaultValue: {}
-		}
+		},
+		meta: {
+			type: Sequelize.JSONB,
+			allowNull: false,
+			defaultValue: {}
+		},
 	}
 
 	const instanceMethods = {

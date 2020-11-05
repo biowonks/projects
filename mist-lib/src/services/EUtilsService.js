@@ -30,8 +30,8 @@ class EUtilsService {
 		for (let i = 0; i < tries; i++) {
 			promise = promise.catch(() => requestPromise(url))
 				.catch(() => {
-					return Promise.delay(kDelayBetweenFailures)
-					.then(() => Promise.reject())
+					return Promise.delay(kDelayBetweenFailures * (i + 1))
+					.then(() => Promise.reject(new Error(`Failed to fetch URL over ${kRetryTimes} times: ${url}`)))
 				})
     }
     return promise
