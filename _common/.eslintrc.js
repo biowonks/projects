@@ -49,7 +49,7 @@ module.exports = {
     'no-unreachable': warn,
     'no-unsafe-finally': error,
     'use-isnan': error,
-    'valid-jsdoc': [warn, {
+    'valid-jsdoc': [off, {
       prefer: {
         return: 'returns',
       },

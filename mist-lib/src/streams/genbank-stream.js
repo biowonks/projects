@@ -1,49 +1,49 @@
-'use strict'
+'use strict';
 
 // Core
 const assert = require('assert'),
-	stream = require('stream'),
-	StringDecoder = require('string_decoder').StringDecoder
+  stream = require('stream'),
+  StringDecoder = require('string_decoder').StringDecoder;
 
 // Vendor
 const split = require('split'),
-	pumpify = require('pumpify')
+  pumpify = require('pumpify');
 
 // Local
-const GenbankKeywordNode = require('../bio/GenbankKeywordNode')
+const GenbankKeywordNode = require('../bio/GenbankKeywordNode');
 
 // Constants
 const kKeywordInformationOffset = 12,
-	kOriginSequenceOffset = 10,
-	kFeatureInformationOffset = 21,
-	kNumLocusFields = 7
-	// kIgnoredKeywords = new Set([
-	// 	'NID',
-	// 	'PROJECT',
-	// 	'BASE COUNT'
-	// ])
-	// kDivisionCodes = new Set([
-	// 	'PRI', // primate
-	// 	'ROD', // rodent
-	// 	'MAM', // other mammalian
-	// 	'VRT', // other vertebrate
-	// 	'INV', // invertebrate
-	// 	'PLN', // plant, fungal, and algal
-	// 	'BCT', // bacterial
-	// 	'VRL', // viral
-	// 	'PHG', // bacteriophage
-	// 	'SYN', // synthetic
-	// 	'UNA', // unannotated
-	// 	'EST', // expressed sequence tags
-	// 	'PAT', // patent
-	// 	'STS', // sequence tagged sites
-	// 	'GSS', // genome survey sequences
-	// 	'HTG', // high throughput genomic
-	// 	'HTC', // high throughput cDNA
-	// 	'ENV', // environental sampling
-	// 	'CON', // constructed
-	// 	'TSA'  // transcriptome shotgun assembly sequences
-	// ])
+  kOriginSequenceOffset = 10,
+  kFeatureInformationOffset = 21,
+  kNumLocusFields = 7;
+// kIgnoredKeywords = new Set([
+// 	'NID',
+// 	'PROJECT',
+// 	'BASE COUNT'
+// ])
+// kDivisionCodes = new Set([
+// 	'PRI', // primate
+// 	'ROD', // rodent
+// 	'MAM', // other mammalian
+// 	'VRT', // other vertebrate
+// 	'INV', // invertebrate
+// 	'PLN', // plant, fungal, and algal
+// 	'BCT', // bacterial
+// 	'VRL', // viral
+// 	'PHG', // bacteriophage
+// 	'SYN', // synthetic
+// 	'UNA', // unannotated
+// 	'EST', // expressed sequence tags
+// 	'PAT', // patent
+// 	'STS', // sequence tagged sites
+// 	'GSS', // genome survey sequences
+// 	'HTG', // high throughput genomic
+// 	'HTC', // high throughput cDNA
+// 	'ENV', // environental sampling
+// 	'CON', // constructed
+// 	'TSA'  // transcriptome shotgun assembly sequences
+// ])
 
 /**
  * Parses one or more input GenBank records and emits a corresponding POD encapsulatingthis
@@ -140,195 +140,195 @@ const kKeywordInformationOffset = 12,
  *   with multiple values without having to modify the code.
  */
 class GenbankStream extends stream.Transform {
-	constructor(options = {}) {
-		options.objectMode = true
-		super(options)
+  constructor(options = {}) {
+    options.objectMode = true;
+    super(options);
 
-		this.decoder_ = new StringDecoder('utf8')
-		this.entry_ = null
+    this.decoder_ = new StringDecoder('utf8');
+    this.entry_ = null;
 
-		this.observedRootKeywords_ = new Set()
-		this.rootKeywordNode_ = null
-		this.currentKeywordNode_ = null
+    this.observedRootKeywords_ = new Set();
+    this.rootKeywordNode_ = null;
+    this.currentKeywordNode_ = null;
 
-		// Because the feature table is so large, it utilizes slightly different parsing
-		// logic than the other keywords. This flag simplifies checking that we are in
-		// the feature table section.
-		this.parsingFeatures_ = false
-		this.currentFeature_ = null
-		this.currentQualifierName_ = null
-		this.currentQualifierValue_ = null
-		this.finishedCurrentFeatureLocation_ = false
-	}
+    // Because the feature table is so large, it utilizes slightly different parsing
+    // logic than the other keywords. This flag simplifies checking that we are in
+    // the feature table section.
+    this.parsingFeatures_ = false;
+    this.currentFeature_ = null;
+    this.currentQualifierName_ = null;
+    this.currentQualifierValue_ = null;
+    this.finishedCurrentFeatureLocation_ = false;
+  }
 
-	// ----------------------------------------------------
-	// Overrided methods
-	_transform(rawLine, encoding, done) {
-		let line = this.decoder_.write(rawLine)
+  // ----------------------------------------------------
+  // Overrided methods
+  _transform(rawLine, encoding, done) {
+    let line = this.decoder_.write(rawLine);
 
-		try {
-			// --------------------------------------------
-			if (!this.entry_) {
-				// Ignore blank lines between records (or at the end of the file)
-				if (!line || /^\s*$/.test(line)) {
-					done()
-					return
-				}
-				this.entry_ = this.blankEntry_()
-			}
+    try {
+      // --------------------------------------------
+      if (!this.entry_) {
+        // Ignore blank lines between records (or at the end of the file)
+        if (!line || /^\s*$/.test(line)) {
+          done();
+          return;
+        }
+        this.entry_ = this.blankEntry_();
+      }
 
-			// --------------------------------------------
-			if (this.parsingFeatures_) {
-				// Hackish way of checking for another keyword without the full check
-				let anotherFeatureLine = line[0] === ' '
-				if (anotherFeatureLine) {
-					this.handleFeatureLine_(line)
-					done()
-					return
-				}
+      // --------------------------------------------
+      if (this.parsingFeatures_) {
+        // Hackish way of checking for another keyword without the full check
+        let anotherFeatureLine = line[0] === ' ';
+        if (anotherFeatureLine) {
+          this.handleFeatureLine_(line);
+          done();
+          return;
+        }
 
-				this.handleCurrentQualifier_()
-				if (this.currentFeature_) {
-					this.entry_.features.push(this.currentFeature_)
-					this.currentFeature_ = null
-				}
+        this.handleCurrentQualifier_();
+        if (this.currentFeature_) {
+          this.entry_.features.push(this.currentFeature_);
+          this.currentFeature_ = null;
+        }
 
-				this.parsingFeatures_ = false
-			}
+        this.parsingFeatures_ = false;
+      }
 
-			// --------------------------------------------
-			if (this.isKeywordContinuationLine_(line)) {
-				if (!this.currentKeywordNode_)
-					throw new Error('keyword continuation line found without associated keyword')
+      // --------------------------------------------
+      if (this.isKeywordContinuationLine_(line)) {
+        if (!this.currentKeywordNode_)
+          throw new Error('keyword continuation line found without associated keyword');
 
-				// Special handling of different
-				let keywordInfoOffset = null
-				switch (this.currentKeywordNode_.keyword()) {
-					case 'ORIGIN':
-						keywordInfoOffset = kOriginSequenceOffset
-						break
-				}
+        // Special handling of different
+        let keywordInfoOffset = null;
+        switch (this.currentKeywordNode_.keyword()) {
+          case 'ORIGIN':
+            keywordInfoOffset = kOriginSequenceOffset;
+            break;
+        }
 
-				this.currentKeywordNode_.pushLine(this.extractKeywordInfo_(line, keywordInfoOffset))
-				done()
-				return
-			}
+        this.currentKeywordNode_.pushLine(this.extractKeywordInfo_(line, keywordInfoOffset));
+        done();
+        return;
+      }
 
-			// --------------------------------------------
-			let keyword = this.keywordFromLine_(line)
-			if (keyword) {
-				this.handleKeywordLine_(keyword, this.extractKeywordInfo_(line))
-				done()
-				return
-			}
+      // --------------------------------------------
+      let keyword = this.keywordFromLine_(line);
+      if (keyword) {
+        this.handleKeywordLine_(keyword, this.extractKeywordInfo_(line));
+        done();
+        return;
+      }
 
-			// --------------------------------------------
-			let isTerminator = line[0] === '/' && line[1] === '/'
-			if (isTerminator) {
-				this.processRootKeywordNode_()
-				this.push(this.entry_)
-				this.resetForNextEntry_()
-				done()
-				return
-			}
+      // --------------------------------------------
+      let isTerminator = line[0] === '/' && line[1] === '/';
+      if (isTerminator) {
+        this.processRootKeywordNode_();
+        this.push(this.entry_);
+        this.resetForNextEntry_();
+        done();
+        return;
+      }
 
-			throw new Error(`internal error; unhandled line: ${line}`)
-		}
-		catch (error) {
-			done(error)
-		}
-	}
+      throw new Error(`internal error; unhandled line: ${line}`);
+    }
+    catch (error) {
+      done(error);
+    }
+  }
 
-	_flush(done) {
-		if (this.entry_)
-			done(new Error('last record missing record terminator: //'))
-		else
-			done()
-	}
+  _flush(done) {
+    if (this.entry_)
+      done(new Error('last record missing record terminator: //'));
+    else
+      done();
+  }
 
-	// ----------------------------------------------------
-	// Private methods
-	resetForNextEntry_() {
-		this.entry_ = null
-		this.observedRootKeywords_.clear()
-	}
+  // ----------------------------------------------------
+  // Private methods
+  resetForNextEntry_() {
+    this.entry_ = null;
+    this.observedRootKeywords_.clear();
+  }
 
-	/**
+  /**
 	 * @returns {object} blank result initialized with null values
 	 */
-	blankEntry_() {
-		return {
-			locus: null,
-			definition: null,
-			accession: null,
-			version: null,
-			dbLink: null,
-			keywords: null,
-			segment: null,
-			source: null,
-			references: [],
-			comment: null,
-			features: [],
-			contig: null,
-			origin: null
-		}
-	}
+  blankEntry_() {
+    return {
+      locus: null,
+      definition: null,
+      accession: null,
+      version: null,
+      dbLink: null,
+      keywords: null,
+      segment: null,
+      source: null,
+      references: [],
+      comment: null,
+      features: [],
+      contig: null,
+      origin: null,
+    };
+  }
 
-	extractKeywordInfo_(line, optOffset) {
-		return line.substr(optOffset || kKeywordInformationOffset).trim()
-	}
+  extractKeywordInfo_(line, optOffset) {
+    return line.substr(optOffset || kKeywordInformationOffset).trim();
+  }
 
-	handleKeywordLine_(keyword, keywordInfo) {
-		let keywordNode = new GenbankKeywordNode(keyword, keywordInfo),
-			keywordLevel = keywordNode.level()
+  handleKeywordLine_(keyword, keywordInfo) {
+    let keywordNode = new GenbankKeywordNode(keyword, keywordInfo),
+      keywordLevel = keywordNode.level();
 
-		let isRootKeyword = keywordLevel === 0
-		if (isRootKeyword) {
-			this.processRootKeywordNode_()
+    let isRootKeyword = keywordLevel === 0;
+    if (isRootKeyword) {
+      this.processRootKeywordNode_();
 
-			// Special case: REFERENCE may occur multiple times
-			if (keyword !== 'REFERENCE' && this.observedRootKeywords_.has(keyword))
-				throw new Error(`record contains multiple ${keyword} lines`)
-			this.observedRootKeywords_.add(keyword)
+      // Special case: REFERENCE may occur multiple times
+      if (keyword !== 'REFERENCE' && this.observedRootKeywords_.has(keyword))
+        throw new Error(`record contains multiple ${keyword} lines`);
+      this.observedRootKeywords_.add(keyword);
 
-			this.rootKeywordNode_ =	this.currentKeywordNode_ = keywordNode
+      this.rootKeywordNode_ =	this.currentKeywordNode_ = keywordNode;
 
-			if (keyword === 'FEATURES')
-				this.parsingFeatures_ = true
+      if (keyword === 'FEATURES')
+        this.parsingFeatures_ = true;
 
-			return
-		}
+      return;
+    }
 
-		// Child of the current keyword node
-		// (current) root -> Level 1 (keywordNode) OR
-		// (current) level 1 -> level 2 (keywordNode)
-		let parentNode = this.currentKeywordNode_
+    // Child of the current keyword node
+    // (current) root -> Level 1 (keywordNode) OR
+    // (current) level 1 -> level 2 (keywordNode)
+    let parentNode = this.currentKeywordNode_;
 
-		// Sibling
-		// (current) level 1 -> level 1 (keywordNode) OR
-		// (current) level 2 -> level 2 (keywordNode)
-		if (keywordLevel === this.currentKeywordNode_.level())
-			parentNode = this.currentKeywordNode_.parent()
-		// Level 2 -> Level 1 (keywordNode)
-		else if (keywordLevel + 1 === this.currentKeywordNode_.level())
-			parentNode = this.currentKeywordNode_.parent().parent()
+    // Sibling
+    // (current) level 1 -> level 1 (keywordNode) OR
+    // (current) level 2 -> level 2 (keywordNode)
+    if (keywordLevel === this.currentKeywordNode_.level())
+      parentNode = this.currentKeywordNode_.parent();
+    // Level 2 -> Level 1 (keywordNode)
+    else if (keywordLevel + 1 === this.currentKeywordNode_.level())
+      parentNode = this.currentKeywordNode_.parent().parent();
 
-		if (parentNode.level() + 1 !== keywordLevel)
-			throw new Error(`invalid sublevel for keyword: ${keyword}`)
+    if (parentNode.level() + 1 !== keywordLevel)
+      throw new Error(`invalid sublevel for keyword: ${keyword}`);
 
-		parentNode.addChild(keywordNode)
-		this.currentKeywordNode_ = keywordNode
-	}
+    parentNode.addChild(keywordNode);
+    this.currentKeywordNode_ = keywordNode;
+  }
 
-	isKeywordContinuationLine_(line) {
-		return /^ {10}/.test(line) || (
-			this.currentKeywordNode_ &&
+  isKeywordContinuationLine_(line) {
+    return /^ {10}/.test(line) || (
+      this.currentKeywordNode_ &&
 			this.currentKeywordNode_.keyword() === 'ORIGIN' &&
 			/^\s*\d+ $/.test(line.substr(0, kOriginSequenceOffset))
-		)
-	}
+    );
+  }
 
-	/**
+  /**
 	 * Based on the specification, looks for the following cases:
 	 * 1) Keyword beginning at the first column up to a maximum of 10 characters
 	 * 2) Subkeyword beginning in column 3 and up to 8 characters long
@@ -337,70 +337,70 @@ class GenbankStream extends stream.Transform {
 	 * @param {string} line the input line to inspect
 	 * @returns {string} any matching keyword or subkeyword (with prefixed spacing); null otherwise
 	 */
-	keywordFromLine_(line) {
-		let keyword = null,
-			matches = /^([A-Z ]{1,10}| {2}[A-Z ]{1,8}| {3}[A-Z ]{1,7}) {2}/.exec(line)
-		if (matches)
-			keyword = matches[1].trimRight()
-		return keyword || null
-	}
+  keywordFromLine_(line) {
+    let keyword = null,
+      matches = /^([A-Z ]{1,10}| {2}[A-Z ]{1,8}| {3}[A-Z ]{1,7}) {2}/.exec(line);
+    if (matches)
+      keyword = matches[1].trimRight();
+    return keyword || null;
+  }
 
-	/**
+  /**
 	 * Features are parsed and handled separately
 	 * @returns {undefined}
 	 */
-	processRootKeywordNode_() {
-		let rootNode = this.rootKeywordNode_
-		if (!rootNode)
-			return
+  processRootKeywordNode_() {
+    let rootNode = this.rootKeywordNode_;
+    if (!rootNode)
+      return;
 
-		switch (rootNode.keyword()) {
-			case 'LOCUS':
-				this.entry_.locus = this.parseLocus_(rootNode)
-				break
-			case 'DEFINITION':
-				this.entry_.definition = this.parseNodeValue_(rootNode)
-				break
-			case 'ACCESSION':
-				this.entry_.accession = this.parseAccession_(rootNode)
-				break
-			case 'VERSION':
-				this.entry_.version = this.parseVersion_(rootNode)
-				break
-			case 'SEGMENT':
-				this.entry_.segment = this.parseSegment_(rootNode)
-				break
-			case 'DBLINK':
-				this.entry_.dbLink = this.parseDbLink_(rootNode)
-				break
-			case 'KEYWORDS':
-				this.entry_.keywords = this.parseKeywords_(rootNode)
-				break
-			case 'SOURCE':
-				this.entry_.source = this.parseSource_(rootNode)
-				break
-			case 'REFERENCE':
-				this.entry_.references.push(this.parseReference_(rootNode))
-				break
-			case 'COMMENT':
-				this.entry_.comment = this.parseComment_(rootNode)
-				break
-			case 'CONTIG':
-				this.entry_.contig = this.parseContig_(rootNode)
-				break
-			case 'ORIGIN':
-				this.entry_.origin = this.parseOrigin_(rootNode)
-				break
+    switch (rootNode.keyword()) {
+      case 'LOCUS':
+        this.entry_.locus = this.parseLocus_(rootNode);
+        break;
+      case 'DEFINITION':
+        this.entry_.definition = this.parseNodeValue_(rootNode);
+        break;
+      case 'ACCESSION':
+        this.entry_.accession = this.parseAccession_(rootNode);
+        break;
+      case 'VERSION':
+        this.entry_.version = this.parseVersion_(rootNode);
+        break;
+      case 'SEGMENT':
+        this.entry_.segment = this.parseSegment_(rootNode);
+        break;
+      case 'DBLINK':
+        this.entry_.dbLink = this.parseDbLink_(rootNode);
+        break;
+      case 'KEYWORDS':
+        this.entry_.keywords = this.parseKeywords_(rootNode);
+        break;
+      case 'SOURCE':
+        this.entry_.source = this.parseSource_(rootNode);
+        break;
+      case 'REFERENCE':
+        this.entry_.references.push(this.parseReference_(rootNode));
+        break;
+      case 'COMMENT':
+        this.entry_.comment = this.parseComment_(rootNode);
+        break;
+      case 'CONTIG':
+        this.entry_.contig = this.parseContig_(rootNode);
+        break;
+      case 'ORIGIN':
+        this.entry_.origin = this.parseOrigin_(rootNode);
+        break;
 
-			default:
-				this.emit('warning', `unhandled root keyword: ${rootNode.keyword()}`)
-				break
-		}
+      default:
+        this.emit('warning', `unhandled root keyword: ${rootNode.keyword()}`);
+        break;
+    }
 
-		this.rootKeywordNode_ = this.currentKeywordNode_ = null
-	}
+    this.rootKeywordNode_ = this.currentKeywordNode_ = null;
+  }
 
-	/**
+  /**
 	 * The LOCUS line is structured with values in specific position ranges; however, it is recommended
 	 * to use a token based approach for parsing and not rely on actual positions in case this changes
 	 * in the future.
@@ -408,64 +408,64 @@ class GenbankStream extends stream.Transform {
 	 * @param {string} locusNode contains the expected locus fields without 'LOCUS'
 	 * @returns {object} parsed locus values
 	 */
-	parseLocus_(locusNode) {
-		let lines = locusNode.lines()
-		if (lines.length > 1)
-			throw new Error('LOCUS may not span multiple lines')
+  parseLocus_(locusNode) {
+    let lines = locusNode.lines();
+    if (lines.length > 1)
+      throw new Error('LOCUS may not span multiple lines');
 
-		let keywordInfo = lines[0],
-			parts = keywordInfo.split(/\s+/),
-			hasRightNumFields = parts.length === kNumLocusFields
-		if (!hasRightNumFields)
-			throw new Error(`LOCUS line does not have ${kNumLocusFields} fields: ${keywordInfo}`)
+    let keywordInfo = lines[0],
+      parts = keywordInfo.split(/\s+/),
+      hasRightNumFields = parts.length === kNumLocusFields;
+    if (!hasRightNumFields)
+      throw new Error(`LOCUS line does not have ${kNumLocusFields} fields: ${keywordInfo}`);
 
-		/* eslint-disable no-magic-numbers */
-		return {
-			name: parts[0],
-			bp: Number(parts[1]),
-			// (ss-|ds-|ms-)(NA|DNA|RNA|tRNA|rRNA|mRNA|uRNA)
-			// ss- = single stranded
-			// ds- = double stranded
-			// ms- = mixed stranded
-			// uRNA = small nuclear RNA
-			moleculeType: parts[3],
-			topology: parts[4],
-			divisionCode: parts[5],
-			date: parts[6]
-		}
-		/* eslint-enable no-magic-numbers */
-	}
+    /* eslint-disable no-magic-numbers */
+    return {
+      name: parts[0],
+      bp: Number(parts[1]),
+      // (ss-|ds-|ms-)(NA|DNA|RNA|tRNA|rRNA|mRNA|uRNA)
+      // ss- = single stranded
+      // ds- = double stranded
+      // ms- = mixed stranded
+      // uRNA = small nuclear RNA
+      moleculeType: parts[3],
+      topology: parts[4],
+      divisionCode: parts[5],
+      date: parts[6],
+    };
+    /* eslint-enable no-magic-numbers */
+  }
 
-	parseAccession_(accessionNode) {
-		let accessions = accessionNode.joinedLines().split(/\s+/),
-			primaryAccession = accessions.shift()
+  parseAccession_(accessionNode) {
+    let accessions = accessionNode.joinedLines().split(/\s+/),
+      primaryAccession = accessions.shift();
 
-		if (!primaryAccession)
-			throw new Error('ACCESSION value is required')
+    if (!primaryAccession)
+      throw new Error('ACCESSION value is required');
 
-		return {
-			primary: primaryAccession,
-			secondary: accessions
-		}
-	}
+    return {
+      primary: primaryAccession,
+      secondary: accessions,
+    };
+  }
 
-	parseVersion_(versionNode) {
-		let lines = versionNode.lines(),
-			version = lines[0]
-		if (lines.length > 1)
-			throw new Error('VERSION may not span multiple lines')
+  parseVersion_(versionNode) {
+    let lines = versionNode.lines(),
+      version = lines[0];
+    if (lines.length > 1)
+      throw new Error('VERSION may not span multiple lines');
 
-		if (!version)
-			throw new Error('VERSION value is required')
+    if (!version)
+      throw new Error('VERSION value is required');
 
-		let matches = /^(\w+\.[1-9]\d*)/.exec(version)
-		if (!matches)
-			throw new Error('VERSION value must contain a compound accession with the primary accession and its corresponding version separated by a period')
+    let matches = /^(\w+\.[1-9]\d*)/.exec(version);
+    if (!matches)
+      throw new Error('VERSION value must contain a compound accession with the primary accession and its corresponding version separated by a period');
 
-		return matches[1]
-	}
+    return matches[1];
+  }
 
-	/**
+  /**
 	 * The specification does not indicate if the values for a given resource may span multiple
 	 * lines; however, this seems like a likely probability and thus is handled here.
 	 *
@@ -481,104 +481,104 @@ class GenbankStream extends stream.Transform {
 	 * @param {GenbankKeywordNode} dbLinkNode associated keywordInfo lines
 	 * @returns {object} map of the associated resource and their associated identifiers
 	 */
-	parseDbLink_(dbLinkNode) {
-		let result = {},
-			currentResource = null,
-			currentIdString = null,
-			lines = dbLinkNode.lines(),
-			firstLine = lines.shift(),
-			matches = this.parseDbLinkResource_(firstLine)
+  parseDbLink_(dbLinkNode) {
+    let result = {},
+      currentResource = null,
+      currentIdString = null,
+      lines = dbLinkNode.lines(),
+      firstLine = lines.shift(),
+      matches = this.parseDbLinkResource_(firstLine);
 
-		if (!matches)
-			throw new Error('DBLINK invalid value; expected format <resource name>:<id[,id...]>')
+    if (!matches)
+      throw new Error('DBLINK invalid value; expected format <resource name>:<id[,id...]>');
 
-		currentResource = matches[1]
-		currentIdString = matches[2]
+    currentResource = matches[1];
+    currentIdString = matches[2];
 
-		lines.forEach((line) => {
-			let resourceMatches = this.parseDbLinkResource_(line)
-			if (resourceMatches) {
-				result[currentResource] = currentIdString.split(/\s*,\s*/)
-				currentResource = resourceMatches[1]
-				currentIdString = resourceMatches[2]
-			}
-			else {
-				// This means that the ids carried on to the next line
-				if (line.indexOf(':') >= 0)
-					throw new Error('DBLINK continuation line has unexpected colon character; resource name must begin the line and immediately be followed by a colon')
+    lines.forEach((line) => {
+      let resourceMatches = this.parseDbLinkResource_(line);
+      if (resourceMatches) {
+        result[currentResource] = currentIdString.split(/\s*,\s*/);
+        currentResource = resourceMatches[1];
+        currentIdString = resourceMatches[2];
+      }
+      else {
+        // This means that the ids carried on to the next line
+        if (line.indexOf(':') >= 0)
+          throw new Error('DBLINK continuation line has unexpected colon character; resource name must begin the line and immediately be followed by a colon');
 
-				// Flexibly handle cases where identifiers span multiple lines and have inconsistent commas
-				let currentEndsWithComma = currentIdString.endsWith(','),
-					lineStartsWithComma = line.startsWith(',')
-				if (currentEndsWithComma && lineStartsWithComma)
-					currentIdString += line.substr(1)
-				else if (!currentEndsWithComma && !lineStartsWithComma)
-					currentIdString += ',' + line
-				else
-					currentIdString += line
-			}
-		})
+        // Flexibly handle cases where identifiers span multiple lines and have inconsistent commas
+        let currentEndsWithComma = currentIdString.endsWith(','),
+          lineStartsWithComma = line.startsWith(',');
+        if (currentEndsWithComma && lineStartsWithComma)
+          currentIdString += line.substr(1);
+        else if (!currentEndsWithComma && !lineStartsWithComma)
+          currentIdString += ',' + line;
+        else
+          currentIdString += line;
+      }
+    });
 
-		result[currentResource] = currentIdString.split(/\s*,\s*/)
+    result[currentResource] = currentIdString.split(/\s*,\s*/);
 
-		// Check that there are no invalid identifiers
-		for (let resource in result) {
-			result[resource].forEach((identifier, i) => {
-				let isInvalidIdentifier = !identifier || /\s/.test(identifier)
-				if (isInvalidIdentifier)
-					throw new Error(`DBLINK identifier cannot contain whitespace or be empty; associated resource: ${resource}; bad value: ${identifier}`)
+    // Check that there are no invalid identifiers
+    for (let resource in result) {
+      result[resource].forEach((identifier, i) => {
+        let isInvalidIdentifier = !identifier || /\s/.test(identifier);
+        if (isInvalidIdentifier)
+          throw new Error(`DBLINK identifier cannot contain whitespace or be empty; associated resource: ${resource}; bad value: ${identifier}`);
 
-				if (/^\d+$/.test(identifier))
-					result[resource][i] = Number(identifier)
-			})
-		}
+        if (/^\d+$/.test(identifier))
+          result[resource][i] = Number(identifier);
+      });
+    }
 
-		return result
-	}
+    return result;
+  }
 
-	parseDbLinkResource_(line) {
-		let matches = /^([\w-. ]+\w):\s*(\S.*)/.exec(line)
-		if (matches)
-			matches[2] = matches[2].trim()
-		return matches
-	}
+  parseDbLinkResource_(line) {
+    let matches = /^([\w-. ]+\w):\s*(\S.*)/.exec(line);
+    if (matches)
+      matches[2] = matches[2].trim();
+    return matches;
+  }
 
-	/**
+  /**
 	 * Ignores empty values and removes duplicates.
 	 *
 	 * @param {GenbankKeywordNode} keywordNode input keyword lines
 	 * @returns {Array.<string>} unique, non-empty keyword result
 	 */
-	parseKeywords_(keywordNode) {
-		let keywordString = keywordNode.joinedLines()
-		if (!keywordString)
-			throw new Error('KEYWORDS value is required')
+  parseKeywords_(keywordNode) {
+    let keywordString = keywordNode.joinedLines();
+    if (!keywordString)
+      throw new Error('KEYWORDS value is required');
 
-		let keywords = keywordString.substr(0, keywordString.length - 1)
-			.trim()
-			.replace(/\./g, ';')
-			.split(/\s*;\s*/),
-			truthyKeywords = keywords.filter((keyword) => !!keyword),
-			uniqueKeywords = [...new Set(truthyKeywords)]
+    let keywords = keywordString.substr(0, keywordString.length - 1)
+        .trim()
+        .replace(/\./g, ';')
+        .split(/\s*;\s*/),
+      truthyKeywords = keywords.filter((keyword) => !!keyword),
+      uniqueKeywords = [...new Set(truthyKeywords)];
 
-		return uniqueKeywords
-	}
+    return uniqueKeywords;
+  }
 
-	parseSegment_(segmentNode) {
-		if (segmentNode.lines().length > 1)
-			throw new Error('SEGMENT may not span multiple lines')
+  parseSegment_(segmentNode) {
+    if (segmentNode.lines().length > 1)
+      throw new Error('SEGMENT may not span multiple lines');
 
-		let matches = /^([1-9]\d*) of ([1-9]\d*)/.exec(segmentNode.lines()[0])
-		if (!matches)
-			throw new Error('SEGMENT must adhere to the format: <digits> of <digits')
+    let matches = /^([1-9]\d*) of ([1-9]\d*)/.exec(segmentNode.lines()[0]);
+    if (!matches)
+      throw new Error('SEGMENT must adhere to the format: <digits> of <digits');
 
-		return {
-			number: Number(matches[1]),
-			total: Number(matches[2])
-		}
-	}
+    return {
+      number: Number(matches[1]),
+      total: Number(matches[2]),
+    };
+  }
 
-	/**
+  /**
 	 * The first line of the ORGANISM sub-keyword contains the formal scientific name; however,
 	 * due to names exceeding 68 characters (80 - 13 + 1), this value may span multiple lines.
 	 * Thus, to distinguish when the formal name completes and the taxonomic classification
@@ -589,33 +589,33 @@ class GenbankStream extends stream.Transform {
 	 * @param {GenbankKeywordNode} sourceNode root node containing SOURCE information
 	 * @returns {object} parsed information
 	 */
-	parseSource_(sourceNode) {
-		let result = {
-			commonName: sourceNode.joinedLines(),
-			formalName: null,
-			taxonomicRanks: null
-		}
+  parseSource_(sourceNode) {
+    let result = {
+      commonName: sourceNode.joinedLines(),
+      formalName: null,
+      taxonomicRanks: null,
+    };
 
-		if (!result.commonName)
-			throw new Error('SOURCE value is required')
+    if (!result.commonName)
+      throw new Error('SOURCE value is required');
 
-		let organismNode = sourceNode.child('  ORGANISM')
-		if (!organismNode)
-			return result
+    let organismNode = sourceNode.child('  ORGANISM');
+    if (!organismNode)
+      return result;
 
-		let organismLines = organismNode.lines(),
-			taxonomy = '',
-			ontoTaxonomy = false
-		result.formalName = organismLines[0]
-		if (result.formalName.indexOf(';') >= 0)
-			throw new Error('  ORGANISM formal name (first line) may not contain a semicolon')
-		for (let i = 1; i < organismLines.length; i++) {
-			let line = organismLines[i]
-			if (ontoTaxonomy) {
-				taxonomy += ` ${line}`
-			}
-			else if (line.indexOf(';') >= 0 || /^\w+\.$/.test(line)) {
-				/** Special case                ^^^^^^^^^^^^^^^^^^^^
+    let organismLines = organismNode.lines(),
+      taxonomy = '',
+      ontoTaxonomy = false;
+    result.formalName = organismLines[0];
+    if (result.formalName.indexOf(';') >= 0)
+      throw new Error('  ORGANISM formal name (first line) may not contain a semicolon');
+    for (let i = 1; i < organismLines.length; i++) {
+      let line = organismLines[i];
+      if (ontoTaxonomy) {
+        taxonomy += ` ${line}`;
+      }
+      else if (line.indexOf(';') >= 0 || /^\w+\.$/.test(line)) {
+        /** Special case                ^^^^^^^^^^^^^^^^^^^^
 				 * In the event that there is a single taxonomic rank without any semicolons but a
 				 * terminal period. For example:
 				 *
@@ -623,115 +623,115 @@ class GenbankStream extends stream.Transform {
 				 *   ORGANISM  halophilic archaeon DL31
 				 *             Archaea.
 				 */
-				ontoTaxonomy = true
-				taxonomy = line
-			}
-			else {
-				result.formalName += ` ${line}`
-			}
-		}
+        ontoTaxonomy = true;
+        taxonomy = line;
+      }
+      else {
+        result.formalName += ` ${line}`;
+      }
+    }
 
-		if (!result.formalName)
-			throw new Error('  ORGANISM value (formal name) is required')
+    if (!result.formalName)
+      throw new Error('  ORGANISM value (formal name) is required');
 
-		if (!taxonomy)
-			throw new Error('  ORGANISM taxonomic classification is missing')
+    if (!taxonomy)
+      throw new Error('  ORGANISM taxonomic classification is missing');
 
-		if (taxonomy.endsWith('.'))
-			taxonomy = taxonomy.slice(0, -1)
+    if (taxonomy.endsWith('.'))
+      taxonomy = taxonomy.slice(0, -1);
 
-		result.taxonomicRanks = taxonomy.split(/;\s*/)
+    result.taxonomicRanks = taxonomy.split(/;\s*/);
 
-		return result
-	}
+    return result;
+  }
 
-	parseReference_(referenceNode) {
-		let value = referenceNode.joinedLines()
-		if (!value)
-			throw new Error('REFERENCE value is required')
+  parseReference_(referenceNode) {
+    let value = referenceNode.joinedLines();
+    if (!value)
+      throw new Error('REFERENCE value is required');
 
-		let matches = /^([1-9]\d*)/.exec(value)
-		if (!matches)
-			throw new Error('REFERENCE must adhere to the format <number>[ <notes>]')
+    let matches = /^([1-9]\d*)/.exec(value);
+    if (!matches)
+      throw new Error('REFERENCE must adhere to the format <number>[ <notes>]');
 
-		let journalNode = referenceNode.child('  JOURNAL'),
-			remainingValue = value.substr(matches[1].length)
+    let journalNode = referenceNode.child('  JOURNAL'),
+      remainingValue = value.substr(matches[1].length);
 
-		if (remainingValue && remainingValue[0] !== ' ')
-			throw new Error('REFERENCE must adhere to the format <number>[ <notes>]')
+    if (remainingValue && remainingValue[0] !== ' ')
+      throw new Error('REFERENCE must adhere to the format <number>[ <notes>]');
 
-		return {
-			number: Number(matches[1]),
-			notes: remainingValue.trim() || null,
-			authors: this.parseNodeValue_(referenceNode.child('  AUTHORS')),
-			consortium: this.parseNodeValue_(referenceNode.child('  CONSRTM')),
-			title: this.parseNodeValue_(referenceNode.child('  TITLE')),
-			journal: this.parseNodeValue_(journalNode),
-			pubmed: journalNode ? this.parseNumber_(journalNode.child('   PUBMED')) : null,
-			medline: this.parseNumber_(referenceNode.child('  MEDLINE')),
-			remark: this.parseNodeValue_(referenceNode.child('  REMARK'))
-		}
-	}
+    return {
+      number: Number(matches[1]),
+      notes: remainingValue.trim() || null,
+      authors: this.parseNodeValue_(referenceNode.child('  AUTHORS')),
+      consortium: this.parseNodeValue_(referenceNode.child('  CONSRTM')),
+      title: this.parseNodeValue_(referenceNode.child('  TITLE')),
+      journal: this.parseNodeValue_(journalNode),
+      pubmed: journalNode ? this.parseNumber_(journalNode.child('   PUBMED')) : null,
+      medline: this.parseNumber_(referenceNode.child('  MEDLINE')),
+      remark: this.parseNodeValue_(referenceNode.child('  REMARK')),
+    };
+  }
 
-	parseNodeValue_(keywordNode) {
-		if (!keywordNode)
-			return null
+  parseNodeValue_(keywordNode) {
+    if (!keywordNode)
+      return null;
 
-		let result = keywordNode.joinedLines()
-		if (!result)
-			throw new Error(`${keywordNode.keyword()} value may not be empty`)
+    let result = keywordNode.joinedLines();
+    if (!result)
+      throw new Error(`${keywordNode.keyword()} value may not be empty`);
 
-		return result
-	}
+    return result;
+  }
 
-	parseNumber_(keywordNode) {
-		if (!keywordNode)
-			return null
+  parseNumber_(keywordNode) {
+    if (!keywordNode)
+      return null;
 
-		let value = keywordNode.lines()[0]
-		if (!value)
-			throw new Error(`${keywordNode.keyword()} value may not be empty`)
+    let value = keywordNode.lines()[0];
+    if (!value)
+      throw new Error(`${keywordNode.keyword()} value may not be empty`);
 
-		if (keywordNode.lines().length > 1)
-			throw new Error(`${keywordNode.keyword()} value may not span multiple lines`)
+    if (keywordNode.lines().length > 1)
+      throw new Error(`${keywordNode.keyword()} value may not span multiple lines`);
 
-		if (!/^\d*$/.test(value))
-			throw new Error(`${keywordNode.keyword()} value is not a valid unsigned integer`)
+    if (!/^\d*$/.test(value))
+      throw new Error(`${keywordNode.keyword()} value is not a valid unsigned integer`);
 
-		return Number(value)
-	}
+    return Number(value);
+  }
 
-	parseComment_(keywordNode) {
-		let value = keywordNode.lines().join('\n')
-		if (!value)
-			throw new Error('COMMENT value may not be empty')
+  parseComment_(keywordNode) {
+    let value = keywordNode.lines().join('\n');
+    if (!value)
+      throw new Error('COMMENT value may not be empty');
 
-		return value.trimRight()
-	}
+    return value.trimRight();
+  }
 
-	parseContig_(contigNode) {
-		let value = contigNode.lines()
-			.join('')
-			.trim()
+  parseContig_(contigNode) {
+    let value = contigNode.lines()
+      .join('')
+      .trim();
 
-		if (!value)
-			throw new Error('CONTIG value may not be empty')
+    if (!value)
+      throw new Error('CONTIG value may not be empty');
 
-		return value
-	}
+    return value;
+  }
 
-	parseOrigin_(originNode) {
-		let sequenceLines = originNode.lines()
-		sequenceLines.shift() // Ignore first line
+  parseOrigin_(originNode) {
+    let sequenceLines = originNode.lines();
+    sequenceLines.shift(); // Ignore first line
 
-		return sequenceLines
-			.join('')
-			.replace(/ /g, '')
-	}
+    return sequenceLines
+      .join('')
+      .replace(/ /g, '');
+  }
 
-	// ----------------------------------------------------
-	// Feature table parsing
-	/**
+  // ----------------------------------------------------
+  // Feature table parsing
+  /**
 	 * Handles the parsing of all lines contained within the feature table section. There are
 	 * two cases that must be considered:
 	 * 1) The line is a continuation line of an existing feature
@@ -740,75 +740,75 @@ class GenbankStream extends stream.Transform {
 	 * @param {string} line input line belonging to feature table
 	 * @returns {undefined}
 	 */
-	handleFeatureLine_(line) {
-		// Case 1: continuation line
-		// Continuation line logic before new feature lines because there will be more continuation
-		// lines than new feature lines
-		if (this.isFeatureContinuationLine_(line)) {
-			this.handleFeatureContinuationLine_(line)
-			return
-		}
+  handleFeatureLine_(line) {
+    // Case 1: continuation line
+    // Continuation line logic before new feature lines because there will be more continuation
+    // lines than new feature lines
+    if (this.isFeatureContinuationLine_(line)) {
+      this.handleFeatureContinuationLine_(line);
+      return;
+    }
 
-		// Case 2: a new feature is beginning
-		let feature = this.featureFromLine_(line)
-		if (feature) {
-			if (!feature.location)
-				throw new Error(`feature ${feature.name} does not have a location`)
+    // Case 2: a new feature is beginning
+    let feature = this.featureFromLine_(line);
+    if (feature) {
+      if (!feature.location)
+        throw new Error(`feature ${feature.name} does not have a location`);
 
-			if (this.currentFeature_) {
-				this.handleCurrentQualifier_()
-				this.entry_.features.push(this.currentFeature_)
-			}
+      if (this.currentFeature_) {
+        this.handleCurrentQualifier_();
+        this.entry_.features.push(this.currentFeature_);
+      }
 
-			this.currentFeature_ = feature
-			this.finishedCurrentFeatureLocation_ = false
-			return
-		}
+      this.currentFeature_ = feature;
+      this.finishedCurrentFeatureLocation_ = false;
+      return;
+    }
 
-		throw new Error('internal error: unexpected feature table line: ' + line)
-	}
+    throw new Error('internal error: unexpected feature table line: ' + line);
+  }
 
-	handleFeatureContinuationLine_(line) {
-		if (!this.currentFeature_)
-			throw new Error('feature continuation line found without associated feature key')
+  handleFeatureContinuationLine_(line) {
+    if (!this.currentFeature_)
+      throw new Error('feature continuation line found without associated feature key');
 
-		let featureInfo = this.extractFeatureInfo_(line)
-		if (!featureInfo)
-			throw new Error('blank feature lines are not allowed')
+    let featureInfo = this.extractFeatureInfo_(line);
+    if (!featureInfo)
+      throw new Error('blank feature lines are not allowed');
 
-		// Three cases:
-		// 1) Continuation of the feature location
-		// 2) Beginning of a qualifier
-		// 3) Continuation of an existing qualifier
+    // Three cases:
+    // 1) Continuation of the feature location
+    // 2) Beginning of a qualifier
+    // 3) Continuation of an existing qualifier
 
-		// Case 1: location spans multiple lines
-		let isLocationContinuation = !this.currentQualifierName_ && !featureInfo.startsWith('/')
-		if (isLocationContinuation) {
-			if (this.finishedCurrentFeatureLocation_)
-				throw new Error(`missing qualifier key: ${featureInfo}`)
+    // Case 1: location spans multiple lines
+    let isLocationContinuation = !this.currentQualifierName_ && !featureInfo.startsWith('/');
+    if (isLocationContinuation) {
+      if (this.finishedCurrentFeatureLocation_)
+        throw new Error(`missing qualifier key: ${featureInfo}`);
 
-			this.currentFeature_.location += featureInfo
-			return
-		}
+      this.currentFeature_.location += featureInfo;
+      return;
+    }
 
-		// This flag helps catch invalid values not associated with a qualifier. For example,
-		// /product="transducer"
-		// "orphan value"
-		//
-		// With this flag, "orphan value" would be added to the feature's location
-		this.finishedCurrentFeatureLocation_ = true
+    // This flag helps catch invalid values not associated with a qualifier. For example,
+    // /product="transducer"
+    // "orphan value"
+    //
+    // With this flag, "orphan value" would be added to the feature's location
+    this.finishedCurrentFeatureLocation_ = true;
 
-		// Case 2: start of a new qualifier
-		if (!this.currentQualifierName_) {
-			this.createNewQualifier_(featureInfo)
-			return
-		}
+    // Case 2: start of a new qualifier
+    if (!this.currentQualifierName_) {
+      this.createNewQualifier_(featureInfo);
+      return;
+    }
 
-		assert(this.currentQualifierValue_)
-		assert(typeof this.currentQualifierValue_ === 'string')
+    assert(this.currentQualifierValue_);
+    assert(typeof this.currentQualifierValue_ === 'string');
 
-		if (this.currentQualifierValue_.startsWith('"')) {
-			/**
+    if (this.currentQualifierValue_.startsWith('"')) {
+      /**
 			 * Special handling of slashes within quoted strings. Add a space before the value of
 			 * ${featureInfo} if it does not begin with / or it begins with '/ '.
 			 *
@@ -824,61 +824,61 @@ class GenbankStream extends stream.Transform {
 			 * product="crotonobetainyl-CoA--carnitine CoA-transferase/alpha-methylacyl-CoA racemase 1"
 			 * product="electron-transferring-flavoprotein dehydrogenase / geranylgeranyl hydrogenase-like protein"
 			 */
-			if (!featureInfo.startsWith('/') || featureInfo.startsWith('/ '))
-				this.currentQualifierValue_ += ' '
-			this.currentQualifierValue_ += featureInfo
+      if (!featureInfo.startsWith('/') || featureInfo.startsWith('/ '))
+        this.currentQualifierValue_ += ' ';
+      this.currentQualifierValue_ += featureInfo;
 
-			// If this qualifier value is completely self-contained on a single line, got ahead
-			// and process it.
-			if (this.hasClosingQuotes_(this.currentQualifierValue_))
-				this.handleCurrentQualifier_()
+      // If this qualifier value is completely self-contained on a single line, got ahead
+      // and process it.
+      if (this.hasClosingQuotes_(this.currentQualifierValue_))
+        this.handleCurrentQualifier_();
 
-			return
-		}
+      return;
+    }
 
-		// Dealing with unquoted continuation lines
-		if (!featureInfo.startsWith('/')) {
-			this.currentQualifierValue_ += ` ${featureInfo}`
-			return
-		}
+    // Dealing with unquoted continuation lines
+    if (!featureInfo.startsWith('/')) {
+      this.currentQualifierValue_ += ` ${featureInfo}`;
+      return;
+    }
 
-		// A new qualifier has been found
-		this.handleCurrentQualifier_()
-		this.createNewQualifier_(featureInfo)
-	}
+    // A new qualifier has been found
+    this.handleCurrentQualifier_();
+    this.createNewQualifier_(featureInfo);
+  }
 
-	createNewQualifier_(featureInfo) {
-		assert(featureInfo.startsWith('/'))
+  createNewQualifier_(featureInfo) {
+    assert(featureInfo.startsWith('/'));
 
-		let qualifier = this.parseQualifier_(featureInfo)
-		if (qualifier.name === 'key' || qualifier.name === 'location')
-			throw new Error('qualifier name must not be "key" or "location"')
+    let qualifier = this.parseQualifier_(featureInfo);
+    if (qualifier.name === 'key' || qualifier.name === 'location')
+      throw new Error('qualifier name must not be "key" or "location"');
 
-		this.currentQualifierName_ = qualifier.name
-		this.currentQualifierValue_ = qualifier.value
+    this.currentQualifierName_ = qualifier.name;
+    this.currentQualifierValue_ = qualifier.value;
 
-		// eslint-disable-next-line curly
-		if (qualifier.value === true || // e.g. /pseudo
+    // eslint-disable-next-line curly
+    if (qualifier.value === true || // e.g. /pseudo
 			qualifier.value === '""' || // e.g. /plasmid=""
 				(qualifier.value.startsWith('"') && this.hasClosingQuotes_(qualifier.value))
-			) {
-			this.handleCurrentQualifier_()
-		}
-	}
+    ) {
+      this.handleCurrentQualifier_();
+    }
+  }
 
-	featureFromLine_(line) {
-		let matches = /^ {5}([\w_\-'*]{1,15}) /.exec(line)
-		if (matches) {
-			return {
-				key: matches[1],
-				location: this.extractFeatureInfo_(line)
-			}
-		}
+  featureFromLine_(line) {
+    let matches = /^ {5}([\w_\-'*]{1,15}) /.exec(line);
+    if (matches) {
+      return {
+        key: matches[1],
+        location: this.extractFeatureInfo_(line),
+      };
+    }
 
-		return null
-	}
+    return null;
+  }
 
-	/**
+  /**
 	 * Technically, this should also test for a non-whitespace character in the 22nd position;
 	 * however, some GenBank records have continuation lines with leading spaces. To mitigate this
 	 * becoming a problem, only the requisite whitespace and then at least one non-whitespace
@@ -897,151 +897,151 @@ class GenbankStream extends stream.Transform {
 	 * @param {String} line
 	 * @returns {Boolean}
 	 */
-	isFeatureContinuationLine_(line) {
-		return /^ {21}.*?\S/.test(line)
-	}
+  isFeatureContinuationLine_(line) {
+    return /^ {21}.*?\S/.test(line);
+  }
 
-	extractFeatureInfo_(line) {
-		return line.substr(kFeatureInformationOffset).trim()
-	}
+  extractFeatureInfo_(line) {
+    return line.substr(kFeatureInformationOffset).trim();
+  }
 
-	/**
+  /**
 	 * Any processing of the qualifier value should be postponed to when all lines of the qualifier
 	 * have been parsed (::handleCurrentQualifier_()) and not in this function.
 	 *
 	 * @param {string} featureInfo the first line (and perhaps the only line) of the qualifier value
 	 * @returns {object} initial qualifier name and value
 	 */
-	parseQualifier_(featureInfo) {
-		let matches = /^\/([\w_\-'*]{1,20})(?:=(.+))?/.exec(featureInfo)
-		if (!matches)
-			throw new Error(`invalid feature qualifier line: ${featureInfo}`)
+  parseQualifier_(featureInfo) {
+    let matches = /^\/([\w_\-'*]{1,20})(?:=(.+))?/.exec(featureInfo);
+    if (!matches)
+      throw new Error(`invalid feature qualifier line: ${featureInfo}`);
 
-		return {
-			name: matches[1],
-			value: typeof matches[2] === 'string' ? matches[2].trim() : true
-			// qualifiers without any value are given value of          ^^^^
-			// true. For example, the pseudo qualifier. This facilitates
-			// testing for this value in the resulting object.
-		}
-	}
+    return {
+      name: matches[1],
+      value: typeof matches[2] === 'string' ? matches[2].trim() : true,
+      // qualifiers without any value are given value of          ^^^^
+      // true. For example, the pseudo qualifier. This facilitates
+      // testing for this value in the resulting object.
+    };
+  }
 
-	handleCurrentQualifier_() {
-		if (!this.currentQualifierName_)
-			return
+  handleCurrentQualifier_() {
+    if (!this.currentQualifierName_)
+      return;
 
-		let value = this.currentQualifierValue_
-		if (typeof value === 'string') {
-			if (value !== '""') { // Special case
-				if (this.hasInvalidLeadingQuotes_(value))
-					throw new Error(`qualifier has invalid leading quotes (must be 0 or odd number): ${value}`)
-				if (this.hasInvalidTrailingQuotes_(value))
-					throw new Error(`qualifier has invalid trailing quotes (must be 0 or odd number): ${value}`)
-				if (this.hasUnescapedInternalQuotes_(value))
-					throw new Error(`qualifier has unescaped internal quotes: ${value}`)
-			}
+    let value = this.currentQualifierValue_;
+    if (typeof value === 'string') {
+      if (value !== '""') { // Special case
+        if (this.hasInvalidLeadingQuotes_(value))
+          throw new Error(`qualifier has invalid leading quotes (must be 0 or odd number): ${value}`);
+        if (this.hasInvalidTrailingQuotes_(value))
+          throw new Error(`qualifier has invalid trailing quotes (must be 0 or odd number): ${value}`);
+        if (this.hasUnescapedInternalQuotes_(value))
+          throw new Error(`qualifier has unescaped internal quotes: ${value}`);
+      }
 
-			let startsWithQuote = value.startsWith('"'),
-				endsWithQuote = value.endsWith('"'),
-				freeFormText = startsWithQuote || endsWithQuote
-			if (startsWithQuote && !endsWithQuote || !startsWithQuote && endsWithQuote)
-				throw new Error(`invalid qualifier free-form text for qualifier, ${this.currentQualifierName_}: missing beginning / end quotes (invalid value: ${value})`)
+      let startsWithQuote = value.startsWith('"'),
+        endsWithQuote = value.endsWith('"'),
+        freeFormText = startsWithQuote || endsWithQuote;
+      if (startsWithQuote && !endsWithQuote || !startsWithQuote && endsWithQuote)
+        throw new Error(`invalid qualifier free-form text for qualifier, ${this.currentQualifierName_}: missing beginning / end quotes (invalid value: ${value})`);
 
-			if (freeFormText)
-				// Remove the leading and trailing quotes, and decode double quotes
-				value = value.slice(1, -1).replace(/""/g, '"')
-			else if (/^-?\d+(\.\d*)?$/.test(value))
-				value = Number(value)
-		}
+      if (freeFormText)
+      // Remove the leading and trailing quotes, and decode double quotes
+        value = value.slice(1, -1).replace(/""/g, '"');
+      else if (/^-?\d+(\.\d*)?$/.test(value))
+        value = Number(value);
+    }
 
-		// ---------------------------------------
-		// All lines have been parsed for this qualifier. Perform any relevant processing
-		// before pushing onto the current feature.
-		switch (this.currentQualifierName_) {
-			case 'translation':
-				value = value.replace(/\s+/g, '')
-				break
-		}
+    // ---------------------------------------
+    // All lines have been parsed for this qualifier. Perform any relevant processing
+    // before pushing onto the current feature.
+    switch (this.currentQualifierName_) {
+      case 'translation':
+        value = value.replace(/\s+/g, '');
+        break;
+    }
 
-		let hasValue = value !== true
-		if (hasValue) {
-			// All qualifier values are stored inside arrays to accommodate multiple
-			// values with the same qualifier name
-			if (!this.currentFeature_[this.currentQualifierName_])
-				this.currentFeature_[this.currentQualifierName_] = [value]
-			else
-				this.currentFeature_[this.currentQualifierName_].push(value)
-		}
-		else {
-			// e.g. /pseudo OR /plasmid=""
-			this.currentFeature_[this.currentQualifierName_] = value
-		}
+    let hasValue = value !== true;
+    if (hasValue) {
+      // All qualifier values are stored inside arrays to accommodate multiple
+      // values with the same qualifier name
+      if (!this.currentFeature_[this.currentQualifierName_])
+        this.currentFeature_[this.currentQualifierName_] = [value];
+      else
+        this.currentFeature_[this.currentQualifierName_].push(value);
+    }
+    else {
+      // e.g. /pseudo OR /plasmid=""
+      this.currentFeature_[this.currentQualifierName_] = value;
+    }
 
-		this.currentQualifierName_ = null
-		this.currentQualifierValue_ = null
-	}
+    this.currentQualifierName_ = null;
+    this.currentQualifierValue_ = null;
+  }
 
-	countLeadingQuotes_(value) {
-		if (!value)
-			return 0
+  countLeadingQuotes_(value) {
+    if (!value)
+      return 0;
 
-		let i = 0
-		while (value[i] === '"')
-			i++
-		return i
-	}
+    let i = 0;
+    while (value[i] === '"')
+      i++;
+    return i;
+  }
 
-	hasInvalidLeadingQuotes_(value) {
-		let numLeadingQuotes = this.countLeadingQuotes_(value)
-		return numLeadingQuotes > 0 && numLeadingQuotes % 2 === 0 // eslint-disable-line no-magic-numbers
-	}
+  hasInvalidLeadingQuotes_(value) {
+    let numLeadingQuotes = this.countLeadingQuotes_(value);
+    return numLeadingQuotes > 0 && numLeadingQuotes % 2 === 0; // eslint-disable-line no-magic-numbers
+  }
 
-	countTrailingQuotes_(value) {
-		if (!value)
-			return 0
-		let i = value.length - 1,
-			n = 0
-		while (i >= 0 && value[i] === '"') {
-			n++
-			i--
-		}
-		return n
-	}
+  countTrailingQuotes_(value) {
+    if (!value)
+      return 0;
+    let i = value.length - 1,
+      n = 0;
+    while (i >= 0 && value[i] === '"') {
+      n++;
+      i--;
+    }
+    return n;
+  }
 
-	hasInvalidTrailingQuotes_(value) {
-		let numTrailingQuotes = this.countTrailingQuotes_(value)
-		return numTrailingQuotes > 0 && isEven(numTrailingQuotes)
-	}
+  hasInvalidTrailingQuotes_(value) {
+    let numTrailingQuotes = this.countTrailingQuotes_(value);
+    return numTrailingQuotes > 0 && isEven(numTrailingQuotes);
+  }
 
-	hasClosingQuotes_(value) {
-		return isOdd(this.countTrailingQuotes_(value))
-	}
+  hasClosingQuotes_(value) {
+    return isOdd(this.countTrailingQuotes_(value));
+  }
 
-	hasUnescapedInternalQuotes_(value) {
-		let n = 0
-		for (let i = 1, z = value.length - 2; i <= z; i++) { // eslint-disable-line no-magic-numbers
-			let isQuote = value[i] === '"'
-			if (!isQuote) {
-				if (n > 0 && isOdd(n))
-					return true
-				n = 0
-				continue
-			}
-			n++
-		}
+  hasUnescapedInternalQuotes_(value) {
+    let n = 0;
+    for (let i = 1, z = value.length - 2; i <= z; i++) { // eslint-disable-line no-magic-numbers
+      let isQuote = value[i] === '"';
+      if (!isQuote) {
+        if (n > 0 && isOdd(n))
+          return true;
+        n = 0;
+        continue;
+      }
+      n++;
+    }
 
-		return isOdd(n)
-	}
+    return isOdd(n);
+  }
 }
 
 function isEven(value) {
-	return value % 2 === 0 // eslint-disable-line no-magic-numbers
+  return value % 2 === 0; // eslint-disable-line no-magic-numbers
 }
 
 function isOdd(value) {
-	return !isEven(value)
+  return !isEven(value);
 }
 
 module.exports = function(options) {
-	return pumpify.obj(split(), new GenbankStream(options))
-}
+  return pumpify.obj(split(), new GenbankStream(options));
+};

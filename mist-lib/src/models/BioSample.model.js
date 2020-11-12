@@ -1,28 +1,28 @@
-'use strict'
+'use strict';
 
 module.exports = function(Sequelize, models, extras) {
-	const fields = {
-		organism: {
+  const fields = {
+    organism: {
       type: Sequelize.TEXT,
-      example: 'Homo Sapiens'
+      example: 'Homo Sapiens',
     },
     description: {
       type: Sequelize.TEXT,
-      example: 'Non-tumor DNA sample from Blood of a human female participant in the dbGaP study'
+      example: 'Non-tumor DNA sample from Blood of a human female participant in the dbGaP study',
     },
     qualifiers: {
-			type: Sequelize.JSONB,
-			description: 'JSON object of attributes further describing this sample',
-			example: '{"submitterHandle": "NCI_CIDR_SmokingTargetedGenomicRegions"}',
-      defaultValue: {}
-    }
-	}
+      type: Sequelize.JSONB,
+      description: 'JSON object of attributes further describing this sample',
+      example: '{"submitterHandle": "NCI_CIDR_SmokingTargetedGenomicRegions"}',
+      defaultValue: {},
+    },
+  };
 
-	return {
-		fields,
-		params: {
+  return {
+    fields,
+    params: {
       tableName: 'biosamples',
-			timestamps: false
-		}
-	}
-}
+      timestamps: false,
+    },
+  };
+};

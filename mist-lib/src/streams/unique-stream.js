@@ -1,7 +1,7 @@
-'use strict'
+'use strict';
 
 // Vendor
-const through2 = require('through2')
+const through2 = require('through2');
 
 /**
  * If ${idFieldOrFunction} is a string, then identity is established by reading the value of
@@ -12,25 +12,25 @@ const through2 = require('through2')
  * @returns {Stream}
  */
 module.exports = function(idFieldOrFunction = 'id') {
-	let uniques = new Set(),
-		useIdField = typeof idFieldOrFunction === 'string'
+  let uniques = new Set(),
+    useIdField = typeof idFieldOrFunction === 'string';
 
-	return through2.obj((object, encoding, done) => {
-		let value = null
-		try {
-			value = useIdField ? object[idFieldOrFunction] : idFieldOrFunction(object)
-		}
-		catch (error) {
-			done(error)
-			return
-		}
+  return through2.obj((object, encoding, done) => {
+    let value = null;
+    try {
+      value = useIdField ? object[idFieldOrFunction] : idFieldOrFunction(object);
+    }
+    catch (error) {
+      done(error);
+      return;
+    }
 
-		if (!uniques.has(value)) {
-			uniques.add(value)
-			done(null, object)
-		}
-		else {
-			done()
-		}
-	})
-}
+    if (!uniques.has(value)) {
+      uniques.add(value);
+      done(null, object);
+    }
+    else {
+      done();
+    }
+  });
+};

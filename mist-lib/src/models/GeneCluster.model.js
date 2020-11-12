@@ -1,16 +1,16 @@
-'use strict'
+'use strict';
 
 module.exports = function(Sequelize, models, extras) {
-	const fields = {
-		component_id: extras.requiredPositiveInteger(),
-		strand: extras.requiredDnaStrand(),
-		size: extras.requiredPositiveInteger()
-	}
+  const fields = {
+    component_id: extras.requiredPositiveInteger(),
+    strand: extras.requiredDnaStrand(),
+    size: extras.requiredPositiveInteger(),
+  };
 
-	return {
-		fields,
-		params: {
-			timestamps: false
-		}
-	}
-}
+  return {
+    fields,
+    params: {
+      timestamps: false,
+    },
+  };
+};
