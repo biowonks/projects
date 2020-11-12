@@ -1,20 +1,18 @@
 'use strict';
 
 // Core
-let child_process = require('child_process'), // eslint-disable-line camelcase
-  crypto = require('crypto'),
-  domain = require('domain'),
-  fs = require('fs'),
-  path = require('path'),
-  zlib = require('zlib');
+const child_process = require('child_process'); // eslint-disable-line camelcase
+const crypto = require('crypto');
+const domain = require('domain');
+const fs = require('fs');
+const path = require('path');
+const zlib = require('zlib');
 
 // Vendor
-let Promise = require('bluebird'),
-  mkdirp = require('mkdirp'),
-  moment = require('moment'),
-  xml2js = require('xml2js'),
-  mv = require('mv'),
-  rimraf = require('rimraf');
+const mkdirp = require('mkdirp');
+const moment = require('moment');
+const xml2js = require('xml2js');
+const mv = require('mv');
 
 /**
  * Creates the directory ${directory} if it does not already exist. Note, the immediate
@@ -309,8 +307,6 @@ exports.mkdirp = function(directory) {
     });
 };
 
-exports.rimraf = Promise.promisify(rimraf);
-
 exports.unlink = function(file) {
   return new Promise((resolve, reject) => {
     fs.unlink(file, (error) => {
@@ -376,3 +372,6 @@ exports.parseAccessionVersion = function(accession) {
 
   return [];
 };
+
+exports.delay = (delayMs) =>
+  new Promise((resolve) => setTimeout(resolve, delayMs));

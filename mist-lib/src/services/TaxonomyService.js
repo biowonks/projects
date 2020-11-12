@@ -1,7 +1,6 @@
 'use strict';
 
 // Vendor
-const Promise = require('bluebird');
 const requestPromise = require('request-promise');
 
 // Local
@@ -57,7 +56,7 @@ class TaxonomyService {
     for (let i = 0; i < tries; i++) {
       promise = promise.catch(() => requestPromise(url))
         .catch(() => {
-          return Promise.delay(kDelayBetweenFailures)
+          return mutil.delay(kDelayBetweenFailures)
             .then(() => Promise.reject());
         });
     }
@@ -68,7 +67,7 @@ class TaxonomyService {
         const endTime = new Date().getTime();
         const spentTime = endTime - startTime;
         const waitTime = spentTime > kDelayTimeBetweenEutilRequest ? 0 : kDelayTimeBetweenEutilRequest - spentTime;
-        return Promise.delay(waitTime)
+        return mutil.delay(waitTime)
           .then(() => result);
       });
   }

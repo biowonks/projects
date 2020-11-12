@@ -1,7 +1,6 @@
 'use strict';
 
 // Vendor
-const Promise = require('bluebird');
 const requestPromise = require('request-promise');
 
 // Constants

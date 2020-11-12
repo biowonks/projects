@@ -7,16 +7,12 @@ let fs = require('fs'),
   path = require('path');
 
 // Vendor
-let expect = require('chai').expect,
-  Promise = require('bluebird');
+let expect = require('chai').expect;
 
 // Local
 let mutil = require('./mutil');
 
 describe('mutil', function() {
-  describe('gunzip', function() {
-  });
-
   describe('pathIsYoungerThan', function() {
     let testFile = path.resolve(__dirname, '__test-file__');
     before(() => {

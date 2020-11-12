@@ -2,12 +2,9 @@
 
 'use strict';
 
-// Vendor
-const Promise = require('bluebird');
-
 // Local
-const genbankStream = require('./genbank-stream'),
-  memoryStream = require('./memory-stream');
+const genbankStream = require('./genbank-stream');
+const memoryStream = require('./memory-stream');
 
 /**
  * Promisifies the stream parsing of GenBank input strings.

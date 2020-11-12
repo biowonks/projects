@@ -4,8 +4,7 @@
 const fs = require('fs');
 
 // Vendor
-const temp = require('temp'),
-  Promise = require('bluebird');
+const temp = require('temp');
 
 // Local
 const streamMixins = require('./stream-mixins');

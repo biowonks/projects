@@ -7,7 +7,6 @@ const path = require('path');
 const url = require('url');
 
 // Vendor
-const Promise = require('bluebird');
 const nock = require('nock');
 
 // Local
@@ -26,11 +25,13 @@ describe('Services', function() {
     let taxonomyService = null;
     let speciesXML = null;
     let intermediateXML = null;
+    let originalDelay = mutil.delay;
 
     before(() => {
       let bootService = new MistBootService();
       models = bootService.setupModels();
       taxonomyService = new TaxonomyService(models.Taxonomy);
+      mutil.delay = () => Promise.resolve();
 
       return mutil.readFile(kSampleXMLFileSpecies)
         .then((xml) => {
@@ -40,6 +41,10 @@ describe('Services', function() {
         .then((xml) => {
           intermediateXML = xml;
         });
+    });
+
+    after(() => {
+      mutil.delay = originalDelay;
     });
 
     afterEach(() => {
@@ -81,9 +86,6 @@ describe('Services', function() {
       });
 
       it('should retry if request returns error', function() {
-        // Mock the delay function
-        Promise.delay = () => Promise.resolve();
-
         const taxonomyId = 41253;
         const nockUrl = taxonomyService.eutilUrl(taxonomyId);
         const parsedUrl = url.parse(nockUrl);

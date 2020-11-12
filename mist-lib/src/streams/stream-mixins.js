@@ -1,8 +1,5 @@
 'use strict';
 
-// Vendor
-const Promise = require('bluebird');
-
 exports.all = function(stream) {
   exports.writePromise(stream);
   exports.endPromise(stream);
