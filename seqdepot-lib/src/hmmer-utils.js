@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 exports.mapHmmer3ArrayToHash = (row) => ({
   name: row[0],
@@ -15,9 +15,9 @@ exports.mapHmmer3ArrayToHash = (row) => ({
   env_from: row[11],
   env_to: row[12],
   env_cov: row[13],
-  acc: row[14]
-})
-exports.mapHmmer3RowArraysToHashes = (rows) => rows.map(exports.mapHmmer3ArrayToHash)
+  acc: row[14],
+});
+exports.mapHmmer3RowArraysToHashes = (rows) => rows.map(exports.mapHmmer3ArrayToHash);
 
 exports.mapHmmer3HashToArray = (row) => ([
   row.name,
@@ -35,5 +35,5 @@ exports.mapHmmer3HashToArray = (row) => ([
   row.env_to,
   row.env_cov,
   row.acc,
-])
-exports.mapHmmer3RowHashesToArrays = (rows) => rows.map(exports.mapHmmer3HashToArray)
+]);
+exports.mapHmmer3RowHashesToArrays = (rows) => rows.map(exports.mapHmmer3HashToArray);
