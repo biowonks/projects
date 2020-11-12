@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 module.exports = [
   {
@@ -119,4 +119,4 @@ module.exports = [
     ],
     queryName: '1386174',
   },
-]
+];

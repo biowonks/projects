@@ -1,20 +1,20 @@
 /**
  * A collection of pipeline utility methods.
  */
-'use strict'
+'use strict';
 
 // Core
 const fs = require('fs'),
-	path = require('path')
+  path = require('path');
 
 // Local
 const OncePipelineModule = require('./OncePipelineModule'),
-	PerGenomePipelineModule = require('./PerGenomePipelineModule'),
-	ModuleId = require('./ModuleId')
+  PerGenomePipelineModule = require('./PerGenomePipelineModule'),
+  ModuleId = require('./ModuleId');
 
 // Constants
 const kHelpIndent1 = '     ',
-	kHelpIndent2 = '       '
+  kHelpIndent2 = '       ';
 
 /**
  * -------------------------------------------------------------------------------------------------
@@ -22,46 +22,46 @@ const kHelpIndent1 = '     ',
  * @returns {String} - help text for all ${ModuleClasses}
  */
 exports.modulesHelp = function(ModuleClasses) {
-	if (!ModuleClasses.length)
-		return kHelpIndent1 + '[none]'
+  if (!ModuleClasses.length)
+    return kHelpIndent1 + '[none]';
 
-	return ModuleClasses.map(exports.moduleHelp).join('\n')
-}
+  return ModuleClasses.map(exports.moduleHelp).join('\n');
+};
 
 /**
  * @param {Function} ModuleClass - module class definitions
  * @returns {String} - help text for using this module
  */
 exports.moduleHelp = function(ModuleClass) {
-	const description = ModuleClass.description()
-	const subModuleMap = ModuleClass.subModuleMap()
-	const moreInfo = ModuleClass.moreInfo()
-	let help = kHelpIndent1 + ModuleClass.name
+  const description = ModuleClass.description();
+  const subModuleMap = ModuleClass.subModuleMap();
+  const moreInfo = ModuleClass.moreInfo();
+  let help = kHelpIndent1 + ModuleClass.name;
 
-	if (subModuleMap.size) {
-		help += ':<sub module>[+...]\n'
-		if (description)
-			help += kHelpIndent2 + description + '\n'
-		help += '\n'
-		for (let subModuleName of subModuleMap.keys()) {
-			const subModuleInfo = subModuleMap.get(subModuleName)
-			if (!subModuleInfo)
-				throw new Error(`Invalid submodule map for ${subModuleName}: value must be an object`)
-			const subDescription = subModuleInfo.description
-			help += kHelpIndent2 + `* ${subModuleName}` + (subDescription ? ` - ${subDescription}` : '') + '\n'
-		}
-	}
-	else if (description) {
-		help += ' - ' + description
-	}
+  if (subModuleMap.size) {
+    help += ':<sub module>[+...]\n';
+    if (description)
+      help += kHelpIndent2 + description + '\n';
+    help += '\n';
+    for (let subModuleName of subModuleMap.keys()) {
+      const subModuleInfo = subModuleMap.get(subModuleName);
+      if (!subModuleInfo)
+        throw new Error(`Invalid submodule map for ${subModuleName}: value must be an object`);
+      const subDescription = subModuleInfo.description;
+      help += kHelpIndent2 + `* ${subModuleName}` + (subDescription ? ` - ${subDescription}` : '') + '\n';
+    }
+  }
+  else if (description) {
+    help += ' - ' + description;
+  }
 
-	if (moreInfo) {
-		help += '\n'
-		help += kHelpIndent2 + moreInfo.split('\n').join('\n' + kHelpIndent2) + '\n'
-	}
+  if (moreInfo) {
+    help += '\n';
+    help += kHelpIndent2 + moreInfo.split('\n').join('\n' + kHelpIndent2) + '\n';
+  }
 
-	return help
-}
+  return help;
+};
 
 /**
  * -------------------------------------------------------------------------------------------------
@@ -69,48 +69,48 @@ exports.moduleHelp = function(ModuleClass) {
  * @returns {Object.<String,Array.<AbstractPipelineModule>>} - object with three keys: 'once', 'perGenome', and 'all'; which contain 'once', 'per-genome', and all pipeline modules, respectively.
  */
 exports.enumerateModules = function(...srcPaths) {
-	let result = {
-		once: [],
-		perGenome: [],
-		all: null
-	}
+  let result = {
+    once: [],
+    perGenome: [],
+    all: null,
+  };
 
-	srcPaths.forEach((srcPath) => {
-		getModuleRootFiles(srcPath)
-		.forEach((moduleRootFile) => {
-			try {
-				// eslint-disable-next-line global-require
-				let ModuleClass = require(`${srcPath}/${moduleRootFile}`)
-				if (ModuleClass.prototype instanceof OncePipelineModule)
-					result.once.push(ModuleClass)
-				else if (ModuleClass.prototype instanceof PerGenomePipelineModule)
-					result.perGenome.push(ModuleClass)
-			}
-			catch (error) {
-				if (!error.code)
-					throw error
-				else if (error.code === 'MODULE_NOT_FOUND')
-					// eslint-disable-next-line no-console
-					console.warn(`WARNING: File could not be loaded: ${srcPath}/${moduleRootFile}\n\n`, error)
-			}
-		})
-	})
+  srcPaths.forEach((srcPath) => {
+    getModuleRootFiles(srcPath)
+      .forEach((moduleRootFile) => {
+        try {
+          // eslint-disable-next-line global-require
+          let ModuleClass = require(`${srcPath}/${moduleRootFile}`);
+          if (ModuleClass.prototype instanceof OncePipelineModule)
+            result.once.push(ModuleClass);
+          else if (ModuleClass.prototype instanceof PerGenomePipelineModule)
+            result.perGenome.push(ModuleClass);
+        }
+        catch (error) {
+          if (!error.code)
+            throw error;
+          else if (error.code === 'MODULE_NOT_FOUND')
+          // eslint-disable-next-line no-console
+            console.warn(`WARNING: File could not be loaded: ${srcPath}/${moduleRootFile}\n\n`, error);
+        }
+      });
+  });
 
-	result.all = [...result.once, ...result.perGenome]
+  result.all = [...result.once, ...result.perGenome];
 
-	return result
-}
+  return result;
+};
 
 /**
  * @param {String} srcPath
  * @returns {Array.<String>} - all directories or files ending in .js beneath ${srcPath}
  */
 function getModuleRootFiles(srcPath) {
-	return fs.readdirSync(srcPath)
-	.filter((file) => {
-		let stat = fs.statSync(path.join(srcPath, file))
-		return stat.isDirectory() || (stat.isFile && file.endsWith('.js'))
-	})
+  return fs.readdirSync(srcPath)
+    .filter((file) => {
+      let stat = fs.statSync(path.join(srcPath, file));
+      return stat.isDirectory() || (stat.isFile && file.endsWith('.js'));
+    });
 }
 
 /**
@@ -120,24 +120,24 @@ function getModuleRootFiles(srcPath) {
  * @returns {Array.<ModuleId>} - array of qualified module names that do not have a cognate ModuleClass or submodule
  */
 exports.findInvalidModuleIds = function(moduleIds, ModuleClasses) {
-	let map = exports.mapModuleClassesByName(ModuleClasses),
-		result = []
+  let map = exports.mapModuleClassesByName(ModuleClasses),
+    result = [];
 
-	ModuleId.unnest(moduleIds).forEach((moduleId) => {
-		let ModuleClass = map.get(moduleId.name())
-		if (!ModuleClass) {
-			result.push(moduleId)
-			return
-		}
+  ModuleId.unnest(moduleIds).forEach((moduleId) => {
+    let ModuleClass = map.get(moduleId.name());
+    if (!ModuleClass) {
+      result.push(moduleId);
+      return;
+    }
 
-		let hasSubModules = ModuleClass.subModuleMap().size > 0,
-			subName = moduleId.subNames()[0]
-		if ((hasSubModules && !subName) || (subName && !ModuleClass.subModuleMap().has(subName)))
-			result.push(moduleId)
-	})
+    let hasSubModules = ModuleClass.subModuleMap().size > 0,
+      subName = moduleId.subNames()[0];
+    if ((hasSubModules && !subName) || (subName && !ModuleClass.subModuleMap().has(subName)))
+      result.push(moduleId);
+  });
 
-	return result
-}
+  return result;
+};
 
 /**
  * -------------------------------------------------------------------------------------------------
@@ -146,9 +146,9 @@ exports.findInvalidModuleIds = function(moduleIds, ModuleClasses) {
  * @returns {Array.<ModuleId>} - those module ids that match a class in ${ModuleClasses}
  */
 exports.matchingModuleIds = function(moduleIds, ModuleClasses) {
-	let map = exports.mapModuleClassesByName(ModuleClasses)
-	return moduleIds.filter((x) => map.has(x.name()))
-}
+  let map = exports.mapModuleClassesByName(ModuleClasses);
+  return moduleIds.filter((x) => map.has(x.name()));
+};
 
 /**
  * -------------------------------------------------------------------------------------------------
@@ -187,34 +187,34 @@ exports.matchingModuleIds = function(moduleIds, ModuleClasses) {
  * @returns {Array.<Object>} - array of "flattened" dependencies
  */
 exports.unnestedDependencyArray = function(ModuleClasses) {
-	let result = []
+  let result = [];
 
-	ModuleClasses.forEach((ModuleClass) => {
-		const subModuleMap = ModuleClass.subModuleMap()
-		let subModuleNames = Array.from(subModuleMap.keys())
-		if (subModuleNames.length) {
-			subModuleNames.forEach((subModuleName) => {
-				const subModuleInfo = subModuleMap.get(subModuleName)
-				let dependencies = ModuleClass.dependencies()
-				if (!!subModuleInfo && Array.isArray(subModuleInfo.dependencies))
-					dependencies = [...dependencies, ...subModuleInfo.dependencies]
+  ModuleClasses.forEach((ModuleClass) => {
+    const subModuleMap = ModuleClass.subModuleMap();
+    let subModuleNames = Array.from(subModuleMap.keys());
+    if (subModuleNames.length) {
+      subModuleNames.forEach((subModuleName) => {
+        const subModuleInfo = subModuleMap.get(subModuleName);
+        let dependencies = ModuleClass.dependencies();
+        if (!!subModuleInfo && Array.isArray(subModuleInfo.dependencies))
+          dependencies = [...dependencies, ...subModuleInfo.dependencies];
 
-				result.push({
-					name: `${ModuleClass.name}:${subModuleName}`,
-					dependencies,
-				})
-			})
-		}
-		else {
-			result.push({
-				name: ModuleClass.name,
-				dependencies: ModuleClass.dependencies()
-			})
-		}
-	})
+        result.push({
+          name: `${ModuleClass.name}:${subModuleName}`,
+          dependencies,
+        });
+      });
+    }
+    else {
+      result.push({
+        name: ModuleClass.name,
+        dependencies: ModuleClass.dependencies(),
+      });
+    }
+  });
 
-	return result
-}
+  return result;
+};
 
 /**
  * -------------------------------------------------------------------------------------------------
@@ -222,5 +222,5 @@ exports.unnestedDependencyArray = function(ModuleClasses) {
  * @returns {Map.<String,Function>}
  */
 exports.mapModuleClassesByName = function(ModuleClasses) {
-	return new Map(ModuleClasses.map((x) => [x.name, x]))
-}
+  return new Map(ModuleClasses.map((x) => [x.name, x]));
+};

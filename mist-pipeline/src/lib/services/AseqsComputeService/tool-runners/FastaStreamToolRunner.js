@@ -1,11 +1,11 @@
-'use strict'
+'use strict';
 
 // Vendor
-const streamEach = require('stream-each')
-const Promise = require('bluebird')
+const streamEach = require('stream-each');
+const Promise = require('bluebird');
 
 // Local
-const AbstractToolRunner = require('./AbstractToolRunner')
+const AbstractToolRunner = require('./AbstractToolRunner');
 
 /**
  * FastaStreamToolRunner encapsulates the common logic for piping each Aseq as a FASTA sequence to a
@@ -15,68 +15,68 @@ const AbstractToolRunner = require('./AbstractToolRunner')
  */
 module.exports =
 class FastaStreamToolRunner extends AbstractToolRunner {
-	/**
+  /**
 	 * @param {Array.<Aseq>} aseqs
 	 * @returns {Promise}
 	 */
-	onRun_(aseqs) {
-		return new Promise((resolve, reject) => {
-			let i = 0,
-				toolStream = this.toolStream_()
-			streamEach(toolStream, (result, next) => {
-				let aseq = aseqs[i]
-				i++
-				this.handleResult_(aseq, result)
-				this.tick_()
-				next()
-			}, (error) => {
-				if (error) {
-					toolStream.destroy()
-					reject(error)
-				}
-				else {
-					resolve(aseqs)
-				}
-			})
+  onRun_(aseqs) {
+    return new Promise((resolve, reject) => {
+      let i = 0,
+        toolStream = this.toolStream_();
+      streamEach(toolStream, (result, next) => {
+        let aseq = aseqs[i];
+        i++;
+        this.handleResult_(aseq, result);
+        this.tick_();
+        next();
+      }, (error) => {
+        if (error) {
+          toolStream.destroy();
+          reject(error);
+        }
+        else {
+          resolve(aseqs);
+        }
+      });
 
-			Promise.each(aseqs, (aseq) => {
-				return toolStream.writePromise(this.getFasta_(aseq))
-			})
-			.then(() => toolStream.end())
-		})
-	}
+      Promise.each(aseqs, (aseq) => {
+        return toolStream.writePromise(this.getFasta_(aseq));
+      })
+        .then(() => toolStream.end());
+    });
+  }
 
-	// ----------------------------------------------------
-	// Virtual protected methods
-	/**
+  // ----------------------------------------------------
+  // Virtual protected methods
+  /**
 	 * Child classes must override this method and are responsible for transferring data from
 	 * ${result} to ${aseq}.
 	 *
 	 * @param {Aseq} aseq
 	 * @param {any} result
 	 */
-	handleResult_(aseq, result) {
-		throw new Error('not implemented')
-	}
+  handleResult_(aseq, result) {
+    throw new Error('not implemented');
+  }
 
-	// eslint-disable-next-line valid-jsdoc
-	/**
+  // eslint-disable-next-line valid-jsdoc
+  /**
 	 * Child classes must override this method and return a relevant tool stream class to be used
 	 * for processing each FASTA sequence.
 	 *
 	 * @returns {Stream}
 	 */
-	toolStream_() {
-		throw new Error('not implemented')
-	}
+  toolStream_() {
+    throw new Error('not implemented');
+  }
 
-	/**
+  /**
 	 * Optional override to permit child classes to massage the fasta sequence if needed.
 	 *
 	 * @param {Aseq} aseq
 	 * @returns {string}
 	 */
-	getFasta_(aseq) {
-		return aseq.toFasta()
-	}
-}
+  getFasta_(aseq) {
+    return aseq.toFasta();
+  }
+};

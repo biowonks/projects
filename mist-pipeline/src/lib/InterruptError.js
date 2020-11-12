@@ -1,8 +1,8 @@
 /**
  * Not exactly an error
  */
-'use strict'
+'use strict';
 
 module.exports =
 class InterruptError extends Error {
-}
+};
