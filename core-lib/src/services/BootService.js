@@ -91,10 +91,6 @@ class BootService {
             throw error;
           });
       })
-      .catch(Sequelize.DatabaseError, (databaseError) => {
-        this.bootLogger_.fatal({sql: databaseError.sql}, databaseError.message);
-        throw databaseError;
-      })
       .then(() => {
         this.setupComplete_ = true;
       });

@@ -35,7 +35,7 @@ class AbstractSeqsService {
       return 0;
     });
 
-    let sql = this.model_.QueryGenerator.bulkInsertQuery(
+    let sql = this.model_.queryGenerator.bulkInsertQuery(
       this.model_.getTableName(),
       records,
       {fields},

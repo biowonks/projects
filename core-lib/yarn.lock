@@ -2026,7 +2026,7 @@ semver@^7.2.1, semver@^7.3.2:
 
 "sequelize-migrator@https://github.com/lukeulrich/sequelize-migrator.git":
   version "1.1.0"
-  resolved "https://github.com/lukeulrich/sequelize-migrator.git#1c7bf05c074296a083df136373e0e985ba9a7704"
+  resolved "https://github.com/lukeulrich/sequelize-migrator.git#3cc85e2d225e3fa12d412ec9d32dad29545d25d2"
 
 "sequelize-model-loader@https://github.com/lukeulrich/sequelize-model-loader.git":
   version "1.0.3"

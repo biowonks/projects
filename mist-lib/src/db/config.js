@@ -21,7 +21,10 @@ module.exports = {
   host: 'mist-pg-db', // docker-specific
   port: 5432,
   name: 'mist_dev',
-  ssl: true,
+  ssl: {
+    require: true,
+    rejectUnauthorized: false,
+  },
   logging: false,
   pool: {
     acquire: Number(process.env.DB_POOL_ACQUIRE_TIMEOUT) || DEFAULT_DB_POOL_ACQUIRE_TIMEOUT,

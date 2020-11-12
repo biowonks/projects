@@ -106,7 +106,7 @@ class SeedNewMAGs extends OncePipelineModule {
     this.seedConfig_ = this.config_.seedNewMAGs;
     this.numGenomesSeeded_ = 0;
     this.dataDir_ = __dirname;
-    this.QueryGenerator_ = this.models_.Genome.QueryGenerator;
+    this.queryGenerator_ = this.models_.Genome.queryGenerator;
     this.queryRegex_ = this.query_ ? new RegExp(this.query_) : null;
     this.ndjsonFile = this.seedConfig_.targetFile;
   }
@@ -347,7 +347,7 @@ class SeedNewMAGs extends OncePipelineModule {
   }
 
   bulkInsertGenomeSummaries_(genomeSummaries, transaction) {
-    const sql = this.QueryGenerator_.bulkInsertQuery(
+    const sql = this.queryGenerator_.bulkInsertQuery(
       kTempTableName,
       genomeSummaries,
       {fields: kTempTableFields},
@@ -370,12 +370,12 @@ ${limit ? 'LIMIT ' + limit : ''}
 RETURNING *`;
 
     return this.sequelize_.query(sql, {transaction, raw: true})
-      .spread((result) => {
-        if (!result.length)
+      .then(([insertedRecords]) => {
+        if (!insertedRecords.length)
           return;
 
-        this.numGenomesSeeded_ += result.length;
-        const newGenomes = result.map((genome) => {
+        this.numGenomesSeeded_ += insertedRecords.length;
+        const newGenomes = insertedRecords.map((genome) => {
           return {
             id: genome.id,
             accession: genome.accession,
@@ -383,7 +383,7 @@ RETURNING *`;
             name: genome.name,
           };
         });
-        this.logger_.info(newGenomes, `Inserted ${result.length} genome records`);
+        this.logger_.info(newGenomes, `Inserted ${insertedRecords.length} MAG records`);
       });
   }
 
