@@ -4,6 +4,9 @@
 const os = require('os');
 const path = require('path');
 
+// Vendor
+const rimraf = require('rimraf');
+
 // Local
 const mutil = require('mist-lib/mutil');
 const AbstractPipelineModule = require('./AbstractPipelineModule');
@@ -38,7 +41,7 @@ class PerGenomePipelineModule extends AbstractPipelineModule {
   teardown() {
     if (this.needsDataDirectory()) {
       return new Promise((resolve, reject) => {
-        mutil.rimraf(this.dataDirectory_, (error) => {
+        rimraf(this.dataDirectory_, (error) => {
           if (error) {
             reject(error);
             return;

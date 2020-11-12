@@ -93,9 +93,12 @@ class IdService {
           return result;
         });
     })
-      .catch(SequenceNotFoundError, () => {
-        return this.createDoNothingOnConflict_(sequenceName)
-          .then(() => this.reserve(sequenceName, amount));
+      .catch((error) => {
+        if (error instanceof SequenceNotFoundError) {
+          return this.createDoNothingOnConflict_(sequenceName)
+            .then(() => this.reserve(sequenceName, amount));
+        }
+        throw error;
       });
   }
 
