@@ -1,9 +1,10 @@
 'use strict';
 
 // Local
-const {camelize} = require('core-lib/util');
+const { camelize } = require('core-lib/util');
 
 // Constants
+const kNCBIPartialSearchForIdUrl = 'https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?db=biosample&retmax=1000&retmode=json&term=';
 const kNCBIPartialBioSampleUrl = 'http://eutils.ncbi.nlm.nih.gov/entrez/eutils/efetch.fcgi?tool=mistdb&email=biowonks@gmail.com&db=biosample&retmode=text&id=';
 
 module.exports =
@@ -12,10 +13,28 @@ class BioSampleService {
     this.eutilsService = eutilsService;
   }
 
-  fetch(id) {
-    if (!id)
-      return Promise.reject(new Error('missing id'));
+  fetchForAccession(accession) {
+    if (!accession) {
+      return Promise.reject(new Error('missing BioSample accession'));
+    }
 
+    const url = kNCBIPartialSearchForIdUrl + accession;
+    return this.eutilsService.fetch(url)
+      .then(JSON.parse)
+      .then((data) => {
+        if (!data || !data.esearchresult || !data.esearchresult.idlist || !data.esearchresult.idlist.length) {
+          throw new Error('BioSample ID search failed to return any results');
+        }
+
+        const bioSampleId = data.esearchresult.idlist[0];
+        return this.fetch(bioSampleId);
+      });
+  }
+
+  fetch(id) {
+    if (!id) {
+      return Promise.reject(new Error('missing BioSample id'));
+    }
 
     const url = kNCBIPartialBioSampleUrl + id;
     return this.eutilsService.fetch(url)
