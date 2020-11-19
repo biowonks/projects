@@ -141,6 +141,7 @@ class GeneClusters extends PerGenomePipelineModule {
             .then(() => this.GeneClusterMember_.bulkCreate(members, {
               validate: true,
               transaction,
+              returning: false,
             }));
         });
       });

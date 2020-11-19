@@ -42,8 +42,12 @@ module.exports = function(models, optLogger) {
   Component.hasMany(GeneCluster);
   GeneCluster.belongsTo(Component);
 
-  GeneCluster.hasMany(GeneClusterMember);
-  GeneClusterMember.belongsTo(GeneCluster);
+  GeneCluster.hasMany(GeneClusterMember, {
+    foreignKey: 'genes_cluster_id'
+  });
+  GeneClusterMember.belongsTo(GeneCluster, {
+    foreignKey: 'genes_cluster_id'
+  });
 
   SignalDomain.hasMany(SignalDomainMember);
   SignalDomainMember.belongsTo(SignalDomain);
