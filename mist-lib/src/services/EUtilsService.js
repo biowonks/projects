@@ -4,9 +4,11 @@
 const requestPromise = require('request-promise');
 
 // Constants
-const kDelayTimeBetweenEutilRequest = 334; // No more than three requests per second allowed
+const kDelayTimeBetweenEutilRequest = Math.ceil(1000 / 3); // No more than three requests per second allowed
 const kDelayBetweenFailures = 1000;
 const kRetryTimes = 5;
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 module.exports =
 class EUtilsService {
@@ -14,25 +16,24 @@ class EUtilsService {
     this.lastFetchTime = 0;
   }
 
-  fetch(url) {
-    const startTime = new Date().getTime();
-    const msSinceLastRequest = startTime - this.lastFetchTime;
+  async fetch(url) {
+    const msSinceLastRequest = Date.now() - this.lastFetchTime;
     const waitTime = Math.max(0, kDelayTimeBetweenEutilRequest - msSinceLastRequest);
-    let promise = Promise.reject();
-    if (waitTime > 0)
-      promise = Promise.delay(waitTime).then(() => promise);
-
-
-    this.lastFetchTime = startTime;
+    if (waitTime > 0) {
+      await delay(waitTime);
+    }
 
     const tries = Math.max(kRetryTimes, 0) + 1;
     for (let i = 0; i < tries; i++) {
-      promise = promise.catch(() => requestPromise(url))
-        .catch(() => {
-          return Promise.delay(kDelayBetweenFailures * (i + 1))
-            .then(() => Promise.reject(new Error(`Failed to fetch URL over ${kRetryTimes} times: ${url}`)));
-        });
+      try {
+        this.lastFetchTime = Date.now();
+        return await requestPromise(url);
+      } catch {
+        console.log('Got an error waiting', kDelayBetweenFailures * (i + 1));
+        await delay(kDelayBetweenFailures * (i + 1));
+      }
     }
-    return promise;
+
+    throw new Error(`Failed to fetch URL over ${kRetryTimes} times: ${url}`);
   }
 };

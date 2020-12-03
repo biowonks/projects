@@ -119,66 +119,62 @@ const moduleOptions = {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 
-// Resolve all non-promise return values to promises
-Promise.coroutine.addYieldHandler((value) => Promise.resolve(value));
-
 // --------------------------------------------------------
 // --------------------------------------------------------
 // Main program startup
-bootService.setup()
-  .then(() => bootService.publicIP())
-  .then((publicIP) => {
-    const workerService = new WorkerService(bootService.models(), publicIP);
-    worker = workerService.buildWorker();
-    worker.job = {
-      genomeIds: program.genomeIds,
-      undo: requestedUndoModuleIds,
-      modules: {
-        once: requestedOnceModuleIds,
-        perGenome: requestedPerGenomeModuleIds,
-      },
-    };
-    return worker.save();
-  })
-  .then(() => {
-    logger = logger.child({
-      workerId: worker.id,
-      ip: worker.public_ip,
-    });
-    logger.info('Registered new worker');
-  })
-  .then(() => {
-    const eutils = new EUtilsService();
-    const app = {
-      eutils,
-      bioSampleService: new BioSampleService(eutils),
-      worker,
-      config,
-      logger: null,
-      query: program.query,
-      shutdownCheck,
-      models: bootService.models(),
-      sequelize: bootService.sequelize(),
-    };
+const main = async () => {
+  const [publicIP] = await Promise.all([
+    bootService.publicIP(),
+    bootService.setup(),
+  ]);
+  const workerService = new WorkerService(bootService.models(), publicIP);
+  worker = workerService.buildWorker();
+  worker.job = {
+    genomeIds: program.genomeIds,
+    undo: requestedUndoModuleIds,
+    modules: {
+      once: requestedOnceModuleIds,
+      perGenome: requestedPerGenomeModuleIds,
+    },
+  };
+  await worker.save();
+  logger = logger.child({
+    workerId: worker.id,
+    ip: worker.public_ip,
+  });
+  logger.info('Registered new worker');
+  const eutils = new EUtilsService();
+  const app = {
+    eutils,
+    bioSampleService: new BioSampleService(eutils),
+    worker,
+    config,
+    logger: null,
+    query: program.query,
+    shutdownCheck,
+    models: bootService.models(),
+    sequelize: bootService.sequelize(),
+  };
+  await runOnceModules(app, requestedOnceModuleIds);
+  await tagModulesForRedo(app, requestedRedoModuleIds);
+  await runPerGenomeModules(app, requestedUndoModuleIds, requestedPerGenomeModuleIds);
 
-    return runOnceModules(app, requestedOnceModuleIds)
-      .then(() => tagModulesForRedo(app, requestedRedoModuleIds))
-      .then(() => runPerGenomeModules(app, requestedUndoModuleIds, requestedPerGenomeModuleIds));
-  })
-  .then(() => {
-    // Worker cleanup
-    logger.info('Pipeline module(s) completed successfully.');
-    return unregisterWorker();
-  })
-  .then(() => {
-    logger.info('Good bye!');
-  })
-  .catch((error) => {
+  // Worker cleanup
+  logger.info('Pipeline module(s) completed successfully.');
+  await unregisterWorker();
+  logger.info('Good bye!');
+};
+
+main()
+  .catch(async (error) => {
     logError(error);
-    return saveWorkerError(error);
+    try {
+      await saveWorkerError(error);
+    } catch(error) {
+      logError(error);
+    }
   })
-  .catch(logError)
-  .finally(() => bootService.sequelize().close()); // faster shutdown
+  .then(() => bootService.sequelize().close()); // faster shutdown
 
 // --------------------------------------------------------
 // --------------------------------------------------------
@@ -239,19 +235,18 @@ function parseGenomeIds(csvGenomeIds) {
   return Array.from(ids);
 }
 
-function unregisterWorker() {
-  if (!worker)
-    return Promise.resolve();
+async function unregisterWorker() {
+  if (!worker) {
+    return;
+  }
 
   logger.info('Updating worker database active status to false');
   worker.active = false;
   worker.normal_exit = true;
 
-  return worker.save({fields: ['active', 'normal_exit']})
-    .then(() => {
-      worker = null;
-    });
-}
+  await worker.save({fields: ['active', 'normal_exit']});
+  worker = null;
+};
 
 function logError(error) {
   const shortMessage = error && error.message ? error.message.substr(0, k1KB) : null;
@@ -278,25 +273,31 @@ function logError(error) {
   }
 }
 
-function saveWorkerError(error) {
-  if (!worker)
-    return Promise.resolve();
+async function saveWorkerError(error) {
+  if (!worker) {
+    return;
+  }
 
   logger.info('Updating worker status');
   worker.active = false;
   worker.normal_exit = false;
   worker.error_message = error.message ? error.message.substr(0, k1KB) : null;
-  if (error.constructor !== InterruptError)
+  if (error.constructor !== InterruptError) {
     worker.error_message += '\n\n' + error.stack;
-  return worker.save({fields: ['active', 'normal_exit', 'error_message', 'job']})
-    .catch(MistBootService.Sequelize.DatabaseError, () => {
-      // When would this ever happen? One example is the genbankReaderStream reading in compressed
+  }
+
+  try {
+    await worker.save({fields: ['active', 'normal_exit', 'error_message', 'job']});
+  } catch (error) {
+    if (error instanceof MistBootService.Sequelize.DatabaseError) {
+      // This may happen for example if the genbankReaderStream borks when reading in compressed
       // gzip data (vs the uncompressed raw text) and including in the error message the binary
       // data line.
       worker.error_message = 'Error message could not be saved to the database. ' +
-			'Please check the logs for contextual details.';
-      return worker.save({fields: ['active', 'normal_exit', 'error_message', 'job']});
-    });
+			  'Please check the logs for contextual details.';
+      await worker.save({fields: ['active', 'normal_exit', 'error_message', 'job']});
+    }
+  }
 }
 
 function shutdown() {
@@ -321,23 +322,21 @@ function shutdownCheck() {
     throw new InterruptError();
 }
 
-function runOnceModules(app, moduleIds) {
+async function runOnceModules(app, moduleIds) {
   const moduleClassMap = putil.mapModuleClassesByName(availableModules.once);
 
-  return Promise.each(moduleIds, (moduleId) => {
+  for (const moduleId of moduleIds) {
     shutdownCheck();
     logger.info(`Starting "once" module: ${moduleId}`);
     app.logger = logger.child({moduleId});
     const ModuleClass = moduleClassMap.get(moduleId.name());
     const moduleInstance = new ModuleClass(app, moduleId.subNames());
-    return moduleInstance.main()
-      .then(() => {
-        logger.info(`Module finished normally: ${moduleId}`);
-      });
-  });
+    await moduleInstance.main();
+    logger.info(`Module finished normally: ${moduleId}`);
+  }
 }
 
-function tagModulesForRedo(app, moduleIds) {
+async function tagModulesForRedo(app, moduleIds) {
   const where = {
     redo: false,
     state: 'done',
@@ -351,19 +350,19 @@ function tagModulesForRedo(app, moduleIds) {
     };
   }
 
-  return app.models.WorkerModule.update({
+  const result = await app.models.WorkerModule.update({
     redo: true,
-  }, {where})
-    .then((result) => {
-      const affectedCount = result[0];
-      if (affectedCount)
-        logger.info(`Marked ${affectedCount} worker modules for redo`);
-    });
+  }, {where});
+  const affectedCount = result[0];
+  if (affectedCount) {
+    logger.info(`Marked ${affectedCount} worker modules for redo`);
+  }
 }
 
-function runPerGenomeModules(app, undoModuleIds, moduleIds) {
-  if (!undoModuleIds.length && !moduleIds.length)
+async function runPerGenomeModules(app, undoModuleIds, moduleIds) {
+  if (!undoModuleIds.length && !moduleIds.length) {
     return null;
+  }
 
   const moduleClassMap = putil.mapModuleClassesByName(availableModules.perGenome);
   const depGraph = createDepGraph(availableModules.perGenome);
@@ -371,60 +370,60 @@ function runPerGenomeModules(app, undoModuleIds, moduleIds) {
   const unnestedModuleIds = ModuleId.unnest(moduleIds);
   let lastGenomeId = null;
 
-  return Promise.coroutine(function *() {
-    // eslint-disable-next-line no-constant-condition
-    while (true) {
-      shutdownCheck();
-      const genome = yield lockNextAvailableGenome(app, unnestedUndoModuleIds, unnestedModuleIds, lastGenomeId);
-      const nothingAvailableToDo = !genome;
-      if (nothingAvailableToDo)
-        break;
-
-      try {
-        yield loadGenomeState(app, genome, depGraph);
-        const activeUndoModuleIds = depGraph.moduleIdsInStates('active', 'undo');
-        if (activeUndoModuleIds.length) {
-          logger.warn({
-            genomeId: genome.id,
-            name: genome.name,
-            activeUndoModuleIds: activeUndoModuleIds.map((x) => x.toString()),
-          }, `Cannot process genome until the following 'active' / 'undo' modules are resolved: ${activeUndoModuleIds.join(', ')}`);
-        }
-        else {
-          // Safe to assume that all worker modules are:
-          // 1) done (redo = false)
-          // 2) done (redo = true): only these require special processing. In particular,
-          //    they need to be undone first. To capture this effect, we simply add these
-          //    to the unnestedUndoModuleIds array :) By leveraging the existing undo
-          //    logic, we reuse all the sanity checks and logic like ensuring that they
-          //    are undone in the proper order.
-          // 3) error
-
-          // The following pushes redo modules onto the undo stack :) Note that
-          // redoModuleIds are not necessarily the ones specified on the command line.
-          // They are based on the dependency graph which is build from the database
-          // state.
-          const redoModuleIds = depGraph.matchingModuleIds(unnestedModuleIds, (node) => {
-            const workerModule = node.workerModule();
-            return workerModule &&
-							workerModule.state === 'done' &&
-							workerModule.redo === true;
-          });
-          unnestedUndoModuleIds = [...unnestedUndoModuleIds, ...redoModuleIds];
-
-          yield undoModules(app, genome, unnestedUndoModuleIds, depGraph, moduleClassMap);
-          yield runModules(app, genome, unnestedModuleIds, depGraph, moduleClassMap);
-        }
-      }
-      catch (error) {
-        yield unlockGenome(genome);
-        throw error;
-      }
-
-      yield unlockGenome(genome);
-      lastGenomeId = genome.id;
+  // eslint-disable-next-line no-constant-condition
+  while (true) {
+    shutdownCheck();
+    const genome = await lockNextAvailableGenome(app, unnestedUndoModuleIds, unnestedModuleIds, lastGenomeId);
+    const nothingAvailableToDo = !genome;
+    if (nothingAvailableToDo) {
+      logger.info('Nothing left to do');
+      break;
     }
-  })();
+
+    try {
+      await loadGenomeState(app, genome, depGraph);
+      const activeUndoModuleIds = depGraph.moduleIdsInStates('active', 'undo');
+      if (activeUndoModuleIds.length) {
+        logger.warn({
+          genomeId: genome.id,
+          name: genome.name,
+          activeUndoModuleIds: activeUndoModuleIds.map((x) => x.toString()),
+        }, `Cannot process genome until the following 'active' / 'undo' modules are resolved: ${activeUndoModuleIds.join(', ')}`);
+      }
+      else {
+        // Safe to assume that all worker modules are:
+        // 1) done (redo = false)
+        // 2) done (redo = true): only these require special processing. In particular,
+        //    they need to be undone first. To capture this effect, we simply add these
+        //    to the unnestedUndoModuleIds array :) By leveraging the existing undo
+        //    logic, we reuse all the sanity checks and logic like ensuring that they
+        //    are undone in the proper order.
+        // 3) error
+
+        // The following pushes redo modules onto the undo stack :) Note that
+        // redoModuleIds are not necessarily the ones specified on the command line.
+        // They are based on the dependency graph which is build from the database
+        // state.
+        const redoModuleIds = depGraph.matchingModuleIds(unnestedModuleIds, (node) => {
+          const workerModule = node.workerModule();
+          return workerModule &&
+            workerModule.state === 'done' &&
+            workerModule.redo === true;
+        });
+        unnestedUndoModuleIds = [...unnestedUndoModuleIds, ...redoModuleIds];
+
+        await undoModules(app, genome, unnestedUndoModuleIds, depGraph, moduleClassMap);
+        await runModules(app, genome, unnestedModuleIds, depGraph, moduleClassMap);
+      }
+    }
+    catch (error) {
+      await unlockGenome(genome);
+      throw error;
+    }
+
+    await unlockGenome(genome);
+    lastGenomeId = genome.id;
+  }
 }
 
 function createDepGraph(ModuleClasses) {
@@ -490,27 +489,28 @@ ORDER BY id
 LIMIT 1
 FOR UPDATE`;
 
-  return app.sequelize.transaction({isolationLevel: kIsolationLevels.READ_COMMITTED}, (transaction) => {
-    return app.sequelize.query(sql, {
+  return app.sequelize.transaction({isolationLevel: kIsolationLevels.READ_COMMITTED}, async (transaction) => {
+    const genomes = await app.sequelize.query(sql, {
       model: app.models.Genome,
       type: app.sequelize.QueryTypes.SELECT,
       transaction,
-    })
-      .then((genomes) => {
-        if (!genomes.length)
-          return null;
+    });
 
-        return genomes[0].update({
-          worker_id: app.worker.id,
-        }, {
-          fields: ['worker_id'],
-          transaction,
-        })
-          .then((genome) => {
-            logger.info({genomeId: genome.id, name: genome.name}, `Locked genome: ${genome.name}`);
-            return genome;
-          });
-      });
+    const genome = genomes[0];
+    if (!genome) {
+      return null;
+    }
+
+    await genome.update({
+      worker_id: app.worker.id,
+    }, {
+      fields: ['worker_id'],
+      transaction,
+    });
+
+    logger.info({genomeId: genome.id, name: genome.name}, `Locked genome: ${genome.name}`);
+
+    return genome;
   });
 }
 
@@ -518,87 +518,82 @@ function genomeIdCondition() {
   return program.genomeIds ? `id IN (${program.genomeIds.join(',')}) AND ` : '';
 }
 
-function loadGenomeState(app, genome, depGraph) {
-  return app.models.WorkerModule.findAll({
+async function loadGenomeState(app, genome, depGraph) {
+  const genomeState = await app.models.WorkerModule.findAll({
     where: {
       genome_id: genome.id,
     },
-  })
-    .then((genomeState) => {
-      depGraph.loadState(genomeState);
-    });
+  });
+  depGraph.loadState(genomeState);
 }
 
-function undoModules(app, genome, unnestedUndoModuleIds, depGraph, moduleClassMap) {
+async function undoModules(app, genome, unnestedUndoModuleIds, depGraph, moduleClassMap) {
   let effectiveUndoModuleIds = depGraph.doneModuleIds(unnestedUndoModuleIds);
   effectiveUndoModuleIds = depGraph.reverseOrderByDepth(effectiveUndoModuleIds);
   effectiveUndoModuleIds = ModuleId.nest(effectiveUndoModuleIds);
-  return Promise.coroutine(function *() {
-    for (let moduleId of effectiveUndoModuleIds) {
-      shutdownCheck();
+  for (let moduleId of effectiveUndoModuleIds) {
+    shutdownCheck();
 
-      const unnestedModuleIds = moduleId.unnest();
-      let dependentModuleIds = new Set();
+    const unnestedModuleIds = moduleId.unnest();
+    let dependentModuleIds = new Set();
 
-      unnestedModuleIds.forEach((unnestedModuleId) => {
-        for (let x of depGraph.moduleIdsDependingOn(unnestedModuleId))
-          dependentModuleIds.add(x);
-      });
-      if (dependentModuleIds.size) {
-        dependentModuleIds = Array.from(dependentModuleIds);
-        logger.info({dependentModuleIds: dependentModuleIds.map((x) => x.toString())},
-          `Unable to undo: ${moduleId}. The following modules must be undone first: ${dependentModuleIds.join(', ')}`);
-        continue;
+    unnestedModuleIds.forEach((unnestedModuleId) => {
+      for (let x of depGraph.moduleIdsDependingOn(unnestedModuleId)) {
+        dependentModuleIds.add(x);
       }
-
-      const ModuleClass = moduleClassMap.get(moduleId.name());
-      app.logger = logger.child({
-        action: 'undo',
-        moduleId: moduleId.toString(),
-        genome: {
-          id: genome.id,
-          name: genome.name,
-        },
-      });
-      logger.info(`Undoing module: ${moduleId}`);
-      const moduleInstance = new ModuleClass(app, genome, moduleId.subNames());
-      const workerModules = depGraph.toNodes(unnestedModuleIds).map((x) => x.workerModule());
-      yield moduleInstance.mainUndo(workerModules, moduleOptions);
-      depGraph.removeState(workerModules);
-      logger.info(`Undo finished normally: ${moduleId}`);
+    });
+    if (dependentModuleIds.size) {
+      dependentModuleIds = Array.from(dependentModuleIds);
+      logger.info({dependentModuleIds: dependentModuleIds.map((x) => x.toString())},
+        `Unable to undo: ${moduleId}. The following modules must be undone first: ${dependentModuleIds.join(', ')}`);
+      continue;
     }
-  })();
+
+    const ModuleClass = moduleClassMap.get(moduleId.name());
+    app.logger = logger.child({
+      action: 'undo',
+      moduleId: moduleId.toString(),
+      genome: {
+        id: genome.id,
+        name: genome.name,
+      },
+    });
+    logger.info(`Undoing module: ${moduleId}`);
+    const moduleInstance = new ModuleClass(app, genome, moduleId.subNames());
+    const workerModules = depGraph.toNodes(unnestedModuleIds).map((x) => x.workerModule());
+    await moduleInstance.mainUndo(workerModules, moduleOptions);
+    depGraph.removeState(workerModules);
+    logger.info(`Undo finished normally: ${moduleId}`);
+  }
 }
 
-function runModules(app, genome, unnestedModuleIds, depGraph, moduleClassMap) {
+async function runModules(app, genome, unnestedModuleIds, depGraph, moduleClassMap) {
   let incompleteModuleIds = depGraph.incompleteModuleIds(unnestedModuleIds);
   incompleteModuleIds = depGraph.orderAndNestByDepth(incompleteModuleIds);
 
-  return Promise.coroutine(function *() {
-    for (let moduleId of incompleteModuleIds) {
-      shutdownCheck();
+  for (let moduleId of incompleteModuleIds) {
+    shutdownCheck();
 
-      const missingDependencies = findMissingDependencies(depGraph, moduleId);
-      if (missingDependencies.length) {
-        logger.info({missingDependencies}, `Unable to run: ${moduleId}. The following dependencies are not satisfied: ${missingDependencies.join(', ')}`);
-        continue;
-      }
-
-      const ModuleClass = moduleClassMap.get(moduleId.name());
-      app.logger = logger.child({
-        moduleId: moduleId.toString(),
-        genome: {
-          id: genome.id,
-          name: genome.name,
-        },
-      });
-      logger.info(`Starting module: ${moduleId}`);
-      const moduleInstance = new ModuleClass(app, genome, moduleId.subNames());
-      const workerModules = yield moduleInstance.main(moduleOptions);
-      depGraph.updateState(workerModules);
-      logger.info(`Module finished normally: ${moduleId}`);
+    const missingDependencies = findMissingDependencies(depGraph, moduleId);
+    if (missingDependencies.length) {
+      logger.info({missingDependencies}, `Unable to run: ${moduleId}. The following dependencies are not satisfied: ${missingDependencies.join(', ')}`);
+      continue;
     }
-  })();
+
+    const ModuleClass = moduleClassMap.get(moduleId.name());
+    app.logger = logger.child({
+      moduleId: moduleId.toString(),
+      genome: {
+        id: genome.id,
+        name: genome.name,
+      },
+    });
+    logger.info(`Starting module: ${moduleId}`);
+    const moduleInstance = new ModuleClass(app, genome, moduleId.subNames());
+    const workerModules = await moduleInstance.main(moduleOptions);
+    depGraph.updateState(workerModules);
+    logger.info(`Module finished normally: ${moduleId}`);
+  }
 }
 
 function findMissingDependencies(depGraph, moduleId) {
@@ -612,11 +607,9 @@ function findMissingDependencies(depGraph, moduleId) {
   return [];
 }
 
-function unlockGenome(genome) {
-  return genome.update({
+async function unlockGenome(genome) {
+  await genome.update({
     worker_id: null,
-  }, {fields: ['worker_id']})
-    .then(() => {
-      logger.info({genome: {id: genome.id, name: genome.name}}, `Unlocked genome: ${genome.name}`);
-    });
+  }, {fields: ['worker_id']});
+  logger.info({genome: {id: genome.id, name: genome.name}}, `Unlocked genome: ${genome.name}`);
 }

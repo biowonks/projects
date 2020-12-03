@@ -15,21 +15,16 @@ class BioSample extends PerGenomePipelineModule {
     this.BioSample_ = this.models_.BioSample;
   }
 
-  run() {
+  async run() {
     const bioSampleAccession = this.genome_.biosample;
+    const bioSample = await this.BioSample_.findByPk(bioSampleAccession);
+    if (bioSample) {
+      this.logger_.info(`BioSample data already exists for: ${bioSampleAccession}`);
+      return null;
+    }
 
-    return this.BioSample_.findByPk(bioSampleAccession)
-      .then((bioSample) => {
-        if (bioSample) {
-          this.logger_.info(`BioSample data already exists for: ${bioSampleAccession}`);
-          return null;
-        }
-
-        return this.bioSampleService.fetchForAccession(bioSampleAccession)
-          .then((data) => this.BioSample_.create(data))
-          .then((bioSampleRecord) => {
-            this.logger_.info(`Created BioSample record for: ${bioSampleRecord.id}`);
-          });
-      });
+    const data = await this.bioSampleService.fetchForAccession(bioSampleAccession);
+    const bioSampleRecord = await this.BioSample_.create(data);
+    this.logger_.info(`Created BioSample record for: ${bioSampleRecord.id}`);
   }
 };

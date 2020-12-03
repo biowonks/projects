@@ -73,29 +73,26 @@ class AbstractPipelineModule {
 	 * @param {boolean} options.optimize if true, run optimization routine after each module completes
 	 * @returns {Promise.<WorkerModule[]>}
 	 */
-  main(options) {
-    let self = this;
-    return Promise.coroutine(function *() {
-      yield self.setup();
-      self.shutdownCheck_();
-      let workerModules = yield self.createWorkerModules_();
-      try {
-        yield self.run();
-      }
-      catch (error) {
-        yield self.updateWorkerModulesState_(workerModules, 'error');
-        throw error;
-      }
-      yield self.updateWorkerModulesState_(workerModules, 'done');
-      yield self.afterRun();
-      self.shutdownCheck_();
-      if (options && options.optimize) {
-        yield self.optimize();
-        self.shutdownCheck_();
-      }
-      yield self.teardown();
-      return workerModules;
-    })();
+  async main(options) {
+    await this.setup();
+    this.shutdownCheck_();
+    let workerModules = await this.createWorkerModules_();
+    try {
+      await this.run();
+    }
+    catch (error) {
+      await this.updateWorkerModulesState_(workerModules, 'error');
+      throw error;
+    }
+    await this.updateWorkerModulesState_(workerModules, 'done');
+    await this.afterRun();
+    this.shutdownCheck_();
+    if (options && options.optimize) {
+      await this.optimize();
+      this.shutdownCheck_();
+    }
+    await this.teardown();
+    return workerModules;
   }
 
   /**
@@ -104,26 +101,23 @@ class AbstractPipelineModule {
 	 * @param {boolean} options.optimize if true, run optimization routine after each module completes
 	 * @returns {Promise.<void>}
 	 */
-  mainUndo(workerModules, options) {
-    let self = this;
-    return Promise.coroutine(function *() {
-      yield self.setup();
-      self.shutdownCheck_();
-      let priorWorkerModuleStates = workerModules.map((x) => x.state);
-      yield self.updateWorkerModulesState_(workerModules, 'undo');
-      try {
-        yield self.undo();
-      }
-      catch (error) {
-        yield self.restorePriorState_(workerModules, priorWorkerModuleStates);
-        throw error;
-      }
-      yield self.deleteWorkerModules_(workerModules);
-      if (options && options.optimize)
-        yield self.optimize();
-      self.shutdownCheck_();
-      yield self.teardown();
-    })();
+  async mainUndo(workerModules, options) {
+    await this.setup();
+    this.shutdownCheck_();
+    let priorWorkerModuleStates = workerModules.map((x) => x.state);
+    await this.updateWorkerModulesState_(workerModules, 'undo');
+    try {
+      await this.undo();
+    }
+    catch (error) {
+      await this.restorePriorState_(workerModules, priorWorkerModuleStates);
+      throw error;
+    }
+    await this.deleteWorkerModules_(workerModules);
+    if (options && options.optimize)
+      await this.optimize();
+    this.shutdownCheck_();
+    await this.teardown();
   }
 
   name() {
@@ -152,11 +146,11 @@ class AbstractPipelineModule {
   teardown() {
   }
 
-  analyze(...tableNames) {
-    return Promise.each(tableNames, (tableName) => {
+  async analyze(...tableNames) {
+    for (const tableName of tableNames) {
       this.logger_.info({tableName: tableName.toString()}, `Analyzing table: ${tableName}`);
-      return this.sequelize_.query(`ANALYZE ${tableName}`, {raw: true});
-    });
+      await this.sequelize_.query(`ANALYZE ${tableName}`, {raw: true});
+    }
   }
 
   workerModuleRecords() {
@@ -187,8 +181,8 @@ class AbstractPipelineModule {
     // such as AseqCompute, there may be multiple worker modules. Thus, dealing with an array
     // or worker modules is supported here.
     let workerModuleRecords = this.workerModuleRecords();
-    return this.sequelize_.transaction((transaction) => {
-      return this.models_.WorkerModule.destroy({
+    return this.sequelize_.transaction(async (transaction) => {
+      await this.models_.WorkerModule.destroy({
         where: {
           genome_id: workerModuleRecords[0].genome_id || null,
           state: 'error',
@@ -197,14 +191,13 @@ class AbstractPipelineModule {
           },
         },
         transaction,
-      })
-        .then(() => {
-          return this.models_.WorkerModule.bulkCreate(workerModuleRecords, {
-            validate: true,
-            returning: true,
-            transaction,
-          });
-        });
+      });
+      const newWorkerModules = await this.models_.WorkerModule.bulkCreate(workerModuleRecords, {
+        validate: true,
+        returning: true,
+        transaction,
+      });
+      return newWorkerModules;
     });
   }
 
@@ -213,10 +206,10 @@ class AbstractPipelineModule {
 	 * @returns {Promise}
 	 */
   deleteWorkerModules_(workerModules) {
-    return this.sequelize_.transaction((transaction) => {
-      return Promise.each(workerModules, (workerModule) => {
-        return workerModule.destroy({transaction});
-      });
+    return this.sequelize_.transaction(async (transaction) => {
+      for (const workerModule of workerModules) {
+        await workerModule.destroy({transaction});
+      }
     });
   }
 
@@ -228,20 +221,22 @@ class AbstractPipelineModule {
 	 * @returns {Promise}
 	 */
   updateWorkerModulesState_(workerModules, newState) {
-    return this.sequelize_.transaction((transaction) => {
-      return Promise.each(workerModules, (workerModule) => {
-        return workerModule.updateState(newState, transaction);
-      });
+    return this.sequelize_.transaction(async (transaction) => {
+      for (const workerModule of workerModules) {
+        await workerModule.updateState(newState, transaction);
+      }
     });
   }
 
   restorePriorState_(workerModules, priorWorkerModuleStates) {
     assert(workerModules.length === priorWorkerModuleStates.length);
 
-    return this.sequelize_.transaction((transaction) => {
-      return Promise.each(workerModules, (workerModule, i) => {
-        return workerModule.updateState(priorWorkerModuleStates[i], transaction);
-      });
+    return this.sequelize_.transaction(async (transaction) => {
+      let i = 0;
+      for (const workerModule of workerModules) {
+        await workerModule.updateState(priorWorkerModuleStates[i], transaction);
+        i++;
+      }
     });
   }
 };

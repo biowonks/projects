@@ -13,44 +13,41 @@ class BioSampleService {
     this.eutilsService = eutilsService;
   }
 
-  fetchForAccession(accession) {
+  async fetchForAccession(accession) {
     if (!accession) {
-      return Promise.reject(new Error('missing BioSample accession'));
+      throw new Error('missing BioSample accession');
     }
 
     const url = kNCBIPartialSearchForIdUrl + accession;
-    return this.eutilsService.fetch(url)
-      .then(JSON.parse)
-      .then((data) => {
-        if (!data || !data.esearchresult || !data.esearchresult.idlist || !data.esearchresult.idlist.length) {
-          throw new Error('BioSample ID search failed to return any results');
-        }
+    const data = JSON.parse(await this.eutilsService.fetch(url));
+    if (!data || !data.esearchresult || !data.esearchresult.idlist || !data.esearchresult.idlist.length) {
+      throw new Error('BioSample ID search failed to return any results');
+    }
 
-        const bioSampleId = data.esearchresult.idlist[0];
-        return this.fetch(bioSampleId);
-      });
+    const bioSampleId = data.esearchresult.idlist[0];
+    return this.fetch(bioSampleId);
   }
 
-  fetch(id) {
+  async fetch(id) {
     if (!id) {
-      return Promise.reject(new Error('missing BioSample id'));
+      throw new Error('missing BioSample id');
     }
 
     const url = kNCBIPartialBioSampleUrl + id;
-    return this.eutilsService.fetch(url)
-      .then((rawBioSample) => this.parseRawResult(id, rawBioSample));
+    const rawBioSample = await this.eutilsService.fetch(url);
+    return this.parseRawResult(id, rawBioSample);
   }
 
   // Assumes that data is not spread over multiple lines
   parseRawResult(id, rawBioSample) {
-    if (typeof rawBioSample !== 'string')
+    if (typeof rawBioSample !== 'string') {
       throw new Error('wrong input; expected string');
-
+    }
 
     const lines = rawBioSample.split('\n');
-    if (!lines.length)
+    if (!lines.length) {
       return null;
-
+    }
 
     const result = {
       id,
