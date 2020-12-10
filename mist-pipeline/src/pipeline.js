@@ -10,7 +10,6 @@ const path = require('path');
 
 // Vendor
 const program = require('commander');
-const Promise = require('bluebird');
 const Sequelize = require('sequelize');
 
 // Local
@@ -31,9 +30,6 @@ const kModulesOncePath = path.resolve(__dirname, '..', 'src', 'modules', 'once')
 const kModulesPerGenomePath = path.resolve(__dirname, '..', 'src', 'modules', 'per-genome');
 const kShutdownGracePeriodMs = 30000;
 const kIsolationLevels = MistBootService.Sequelize.Transaction.ISOLATION_LEVELS;
-
-// Leverage bluebird globally for all Promises
-global.Promise = Promise;
 
 const availableModules = putil.enumerateModules(kModulesOncePath, kModulesPerGenomePath);
 

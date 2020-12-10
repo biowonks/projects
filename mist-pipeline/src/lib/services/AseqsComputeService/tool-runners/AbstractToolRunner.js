@@ -4,9 +4,6 @@
 const assert = require('assert');
 const EventEmitter = require('events');
 
-// Vendor
-const Promise = require('bluebird');
-
 // Local
 const StopWatch = require('mist-lib/services/StopWatch');
 

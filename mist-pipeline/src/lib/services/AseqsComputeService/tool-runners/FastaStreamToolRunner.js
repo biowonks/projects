@@ -2,7 +2,6 @@
 
 // Vendor
 const streamEach = require('stream-each');
-const Promise = require('bluebird');
 
 // Local
 const AbstractToolRunner = require('./AbstractToolRunner');
@@ -20,7 +19,7 @@ class FastaStreamToolRunner extends AbstractToolRunner {
 	 * @returns {Promise}
 	 */
   onRun_(aseqs) {
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       let i = 0,
         toolStream = this.toolStream_();
       streamEach(toolStream, (result, next) => {
@@ -39,10 +38,10 @@ class FastaStreamToolRunner extends AbstractToolRunner {
         }
       });
 
-      Promise.each(aseqs, (aseq) => {
-        return toolStream.writePromise(this.getFasta_(aseq));
-      })
-        .then(() => toolStream.end());
+      for (const aseq of aseqs) {
+        await toolStream.writePromise(this.getFasta_(aseq));
+      }
+      toolStream.end();
     });
   }
 

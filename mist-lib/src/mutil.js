@@ -78,8 +78,10 @@ exports.shellCommand = function(command, optVerbose) {
  * @param {boolean?} optVerbose if true log the command being executed; defaults to false
  * @returns {Promise} promise
  */
-exports.shellCommands = function(commands, optVerbose) {
-  return Promise.each(commands, (command) => exports.shellCommand(command, optVerbose));
+exports.shellCommands = async function(commands, optVerbose) {
+  for (const command of commands) {
+    await exports.shellCommand(command, optVerbose);
+  }
 };
 
 /**
@@ -290,21 +292,14 @@ exports.rename = function(srcFile, destFile) {
  * @param {string} directory target directory
  * @returns {Promise} promise
  */
-exports.mkdirp = function(directory) {
-  return exports.directoryExists(directory)
-    .then((directoryExists) => {
-      if (directoryExists)
-        return {created: false, directory};
+exports.mkdirp = async function(directory) {
+  const directoryExists = await exports.directoryExists(directory);
+  if (directoryExists) {
+    return {created: false, directory};
+  }
 
-      return new Promise((resolve, reject) => {
-        mkdirp(directory, (error) => {
-          if (error)
-            reject(error);
-          else
-            resolve({created: true, directory});
-        });
-      });
-    });
+  await mkdirp(directory);
+  return {created: true, directory};
 };
 
 exports.unlink = function(file) {

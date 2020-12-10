@@ -79,11 +79,6 @@ const kTempTableFields = [
   'meta',
 ];
 
-/**
- * Private error used to prematurely exit a Promise.each
- */
-class ExitPromiseEachError extends Error {}
-
 module.exports =
 class SeedNewMAGs extends OncePipelineModule {
   static description() {
@@ -115,23 +110,22 @@ class SeedNewMAGs extends OncePipelineModule {
     return this.analyze(this.models_.Genome.tableName);
   }
 
-  run() {
-    if (!this.ndjsonFile || !fs.existsSync(this.ndjsonFile))
+  async run() {
+    if (!this.ndjsonFile || !fs.existsSync(this.ndjsonFile)) {
       throw new Error('Missing target file in config. Please add targetFile property to seedNewMAGs and try again.');
-
+    }
 
     // 1. Index all the accessions
     const readMags = this.readMAGFile_(this.ndjsonFile)
       .then((magsArray) => this.indexMAGsByAccession_(magsArray));
     const downloadAssemblySummary = this.downloadAssemblySummary_(this.seedConfig_.assemblySummaryLink);
 
-    return Promise.all([
+    const [magsByAccession, assemblySummaryFile] = await Promise.all([
       readMags,
       downloadAssemblySummary,
-    ]).then(([magsByAccession, assemblySummaryFile]) => {
-      this.shutdownCheck_();
-      return this.processSummaryFile_(assemblySummaryFile, magsByAccession);
-    });
+    ]);
+    this.shutdownCheck_();
+    await this.processSummaryFile_(assemblySummaryFile, magsByAccession);
   }
 
   // ----------------------------------------------------
@@ -185,22 +179,18 @@ class SeedNewMAGs extends OncePipelineModule {
 	 * @param {String} link
 	 * @returns {Promise}
 	 */
-  downloadAssemblySummary_(link) {
-    let destFile = path.resolve(this.dataDir_, link.fileName);
-    return mutil.pathIsYoungerThan(destFile, this.seedConfig_.summaryFileDuration)
-      .then((isYounger) => {
-        if (isYounger) {
-          this.logger_.info({path: destFile}, `Summary file already exists and is younger than ${this.seedConfig_.summaryFileDuration.humanize()}`);
-          return destFile;
-        }
+  async downloadAssemblySummary_(link) {
+    const destFile = path.resolve(this.dataDir_, link.fileName);
+    const isYounger = await mutil.pathIsYoungerThan(destFile, this.seedConfig_.summaryFileDuration);
+    if (isYounger) {
+      this.logger_.info({path: destFile}, `Summary file already exists and is younger than ${this.seedConfig_.summaryFileDuration.humanize()}`);
+      return destFile;
+    }
 
-        this.logger_.info({path: destFile}, `Downloading assembly summary: ${link.fileName}`);
-        return mutil.download(link.url, destFile)
-          .then((downloadResult) => {
-            this.logger_.info('Download finished');
-            return destFile;
-          });
-      });
+    this.logger_.info({path: destFile}, `Downloading assembly summary: ${link.fileName}`);
+    await mutil.download(link.url, destFile);
+    this.logger_.info('Download finished');
+    return destFile;
   }
 
   /**
@@ -219,7 +209,11 @@ class SeedNewMAGs extends OncePipelineModule {
 	 * @param {String?} file
 	 * @returns {Promise}
 	 */
-  processSummaryFile_(file, magsByAccession) {
+  async processSummaryFile_(file, magsByAccession) {
+    if (!file) {
+      return null;
+    }
+
     this.logger_.info({file}, 'Processing summary file');
     const parser = parse({
       columns: true,
@@ -248,7 +242,7 @@ class SeedNewMAGs extends OncePipelineModule {
     let numGenomeSummaries = 0;
     const genomeSummaries = [];
 
-    return new Promise((resolve, reject) => {
+    await new Promise((resolve, reject) => {
       const pipeline = pumpify.obj(readStream, split(), skipLineStream, parser);
       streamEach(pipeline, (row, next) => {
         this.shutdownCheck_();
@@ -270,16 +264,16 @@ class SeedNewMAGs extends OncePipelineModule {
         else
           resolve();
       });
-    })
-      .then(() => {
-        this.logger_.info(`Read ${numGenomeSummaries} genome summaries`);
-        if (genomeSummaries.length)
-          this.logger_.info(`Matched ${genomeSummaries.length} genome summaries`);
+    });
 
-        return this.createTemporaryTable_();
-      })
-      .then(() => this.insertNewGenomes_(genomeSummaries))
-      .then(this.dropTemporaryTable_.bind(this));
+    this.logger_.info(`Read ${numGenomeSummaries} genome summaries`);
+    if (genomeSummaries.length) {
+      this.logger_.info(`Matched ${genomeSummaries.length} genome summaries`);
+    }
+
+    await this.createTemporaryTable_();
+    await this.insertNewGenomes_(genomeSummaries);
+    await this.dropTemporaryTable_();
   }
 
   genomeDataFromRow_(row) {
@@ -310,8 +304,9 @@ class SeedNewMAGs extends OncePipelineModule {
     };
 
     for (let key in genomeData) {
-      if (!genomeData[key])
+      if (!genomeData[key]) {
         genomeData[key] = null;
+      }
     }
 
     return genomeData;
@@ -330,20 +325,19 @@ class SeedNewMAGs extends OncePipelineModule {
     return this.sequelize_.query(kCreateTempTableSql);
   }
 
-  insertNewGenomes_(genomeSummaries) {
-    return Promise.each(generatorUtil.batch(genomeSummaries, kBatchSize), (genomeSummariesBatch) => {
+  async insertNewGenomes_(genomeSummaries) {
+    for (const genomeSummariesBatch of generatorUtil.batch(genomeSummaries, kBatchSize)) {
       this.shutdownCheck_();
-      return this.sequelize_.transaction((transaction) => {
-        return this.bulkInsertGenomeSummaries_(genomeSummariesBatch, transaction)
-          .then(() => this.addNewGenomes_(transaction))
-          .then(() => this.truncateTemporaryTable_(transaction));
-      })
-        .then(() => {
-          if (this.maximumGenomesSeeded_())
-            throw new ExitPromiseEachError();
-        });
-    })
-      .catch(ExitPromiseEachError, () => {}); // noop
+      await this.sequelize_.transaction(async (transaction) => {
+        await this.bulkInsertGenomeSummaries_(genomeSummariesBatch, transaction);
+        await this.addNewGenomes_(transaction);
+        await this.truncateTemporaryTable_(transaction);
+      });
+
+      if (this.maximumGenomesSeeded_()) {
+        return;
+      }
+    }
   }
 
   bulkInsertGenomeSummaries_(genomeSummaries, transaction) {
@@ -357,7 +351,7 @@ class SeedNewMAGs extends OncePipelineModule {
     return this.sequelize_.query(sql, {transaction});
   }
 
-  addNewGenomes_(transaction) {
+  async addNewGenomes_(transaction) {
     const limit = this.seedConfig_.maxNewGenomesPerRun ?
       Math.max(0, this.seedConfig_.maxNewGenomesPerRun - this.numGenomesSeeded_) :
       null;
@@ -369,22 +363,19 @@ WHERE b.accession is null
 ${limit ? 'LIMIT ' + limit : ''}
 RETURNING *`;
 
-    return this.sequelize_.query(sql, {transaction, raw: true})
-      .then(([insertedRecords]) => {
-        if (!insertedRecords.length)
-          return;
+    const [insertedRecords] = await this.sequelize_.query(sql, {transaction, raw: true});
+    if (!insertedRecords.length) {
+      return;
+    }
 
-        this.numGenomesSeeded_ += insertedRecords.length;
-        const newGenomes = insertedRecords.map((genome) => {
-          return {
-            id: genome.id,
-            accession: genome.accession,
-            version: genome.version,
-            name: genome.name,
-          };
-        });
-        this.logger_.info(newGenomes, `Inserted ${insertedRecords.length} MAG records`);
-      });
+    this.numGenomesSeeded_ += insertedRecords.length;
+    const newGenomes = insertedRecords.map((genome) => ({
+      id: genome.id,
+      accession: genome.accession,
+      version: genome.version,
+      name: genome.name,
+    }));
+    this.logger_.info(newGenomes, `Inserted ${insertedRecords.length} genome records`);
   }
 
   truncateTemporaryTable_(transaction) {

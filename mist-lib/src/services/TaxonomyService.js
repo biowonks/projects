@@ -15,8 +15,7 @@ const kDelayBetweenFailures = 1000;
 const kRetryTimes = 5;
 
 /**
- * Private error used for indicating that a given taxonomic node already exists and breaking out of
- * a Promise.each chain.
+ * Private error used for indicating that a given taxonomic node already exists.
  */
 class IntermediateRankExistsError extends Error {}
 
@@ -46,8 +45,9 @@ class TaxonomyService {
 	 */
   fetchFromNCBI(taxonomyId) {
     const startTime = new Date().getTime();
-    if (!/^[1-9]\d*$/.test(taxonomyId))
+    if (!/^[1-9]\d*$/.test(taxonomyId)) {
       return Promise.reject(new Error('invalid taxonomy id: must be positive integer'));
+    }
 
     const url = this.eutilUrl(taxonomyId);
 
@@ -79,37 +79,39 @@ class TaxonomyService {
 	 * @param {Number} taxonomyId - NCBI taxonomy identifier
 	 * @returns {Promise} taxonomyObject with id, name, rank, parent
 	 */
-  updateTaxonomy(taxonomyId) {
-    return this.fetchLocal_(taxonomyId)
-      .then((localRawTaxonomy) => {
-        if (localRawTaxonomy)
-          return localRawTaxonomy;
-        return this.nodeExists_(taxonomyId);
-      })
-      .then((nodeExists) => {
-        if (nodeExists) {
-          this.logger_.info(`Node exists: ${taxonomyId}`);
-          return this.fetchLocal_(taxonomyId);
+  async updateTaxonomy(taxonomyId) {
+    const localRawTaxonomy = await this.fetchLocal_(taxonomyId);
+    if (localRawTaxonomy) {
+      return localRawTaxonomy;
+    }
+    const nodeExists = await this.nodeExists_(taxonomyId);
+    if (nodeExists) {
+      this.logger_.info(`Node exists: ${taxonomyId}`);
+      return this.fetchLocal_(taxonomyId);
+    }
+
+    const rawTaxonomy = await this.fetchFromNCBI(taxonomyId);
+    let reversedLineage = rawTaxonomy.lineage.slice().reverse();
+
+    for (const node of reversedLineage) {
+      try {
+        await this.insertNodeIfNew_(node);
+      } catch (error) {
+        if (error instanceof IntermediateRankExistsError) {
+          break;
         }
-
-        return this.fetchFromNCBI(taxonomyId)
-          .then((rawTaxonomy) => {
-            let reversedLineage = rawTaxonomy.lineage.slice().reverse();
-
-            return Promise.each(reversedLineage, this.insertNodeIfNew_.bind(this))
-              .catch(IntermediateRankExistsError, () => {}) // noop, helps break out of the each loop
-              .then(() => rawTaxonomy);
-          });
-      });
+      }
+    }
+    return rawTaxonomy;
   }
 
   /**
 	 * @param {String} xml - NCBI Taxonomy XML report
 	 * @returns {Promise.<Object>} - reshaped taxonomy
 	 */
-  parseNCBITaxonomyXML(xml) {
-    return mutil.xmlToJs(xml)
-      .then((ncbiTaxonomy) => this.reshapeNCBITaxonomy(ncbiTaxonomy));
+  async parseNCBITaxonomyXML(xml) {
+    const ncbiTaxonomy = await mutil.xmlToJs(xml);
+    return this.reshapeNCBITaxonomy(ncbiTaxonomy);
   }
 
   /**
@@ -141,34 +143,31 @@ class TaxonomyService {
 	 *	}
 	 */
   reshapeNCBITaxonomy(ncbiTaxonomy) {
-    let result = {
-        taxid: null,
-        organism: null,
-        lineage: [],
-        superkingdom: null,
-        kingdom: null,
-        phylum: null,
-        class: null,
-        order: null,
-        family: null,
-        genus: null,
-        species: null,
-        strain: null,
-      },
-      taxon = ncbiTaxonomy.TaxaSet.Taxon[0],
-      currentNode = {
-        id: Number(taxon.TaxId[0]),
-        parent_taxonomy_id: Number(taxon.ParentTaxId[0]),
-        name: taxon.ScientificName[0],
-        rank: taxon.Rank[0],
-      },
-      rankObjects = taxon.LineageEx[0].Taxon;
-
-    result.taxid = Number(taxon.TaxId[0]);
-    result.organism = taxon.ScientificName[0];
+    const taxon = ncbiTaxonomy.TaxaSet.Taxon[0];
+    const result = {
+      taxid: Number(taxon.TaxId[0]),
+      organism: taxon.ScientificName[0],
+      lineage: [],
+      superkingdom: null,
+      kingdom: null,
+      phylum: null,
+      class: null,
+      order: null,
+      family: null,
+      genus: null,
+      species: null,
+      strain: null,
+    };
+    const currentNode = {
+      id: result.taxid,
+      parent_taxonomy_id: Number(taxon.ParentTaxId[0]),
+      name: taxon.ScientificName[0],
+      rank: taxon.Rank[0],
+    };
+    const rankObjects = taxon.LineageEx[0].Taxon;
 
     rankObjects.forEach((rankObject, i) => {
-      let node = {
+      const node = {
         id: Number(rankObject.TaxId[0]),
         parent_taxonomy_id: i > 0 ? result.lineage[i - 1].id : kNCBIRootTaxonomyId,
         name: rankObject.ScientificName[0],
@@ -180,8 +179,9 @@ class TaxonomyService {
     });
 
     result.lineage.push(currentNode);
-    if (result[currentNode.rank] === null)
+    if (result[currentNode.rank] === null) {
       result[currentNode.rank] = currentNode.name;
+    }
 
     if (result.species) {
       let strain = result.organism
@@ -192,8 +192,9 @@ class TaxonomyService {
 
       // It is quite possible that strain will equal the empty string. The following test
       // avoids saving this to the database (strain will be null)
-      if (strain)
+      if (strain) {
         result.strain = strain;
+      }
     }
 
     return result;
@@ -203,7 +204,7 @@ class TaxonomyService {
 	 * @param {Number} taxonomyId - NCBI taxonomy id
 	 * @returns {List} genomic children of given taxonomy id
 	 */
-  fetchChildren(taxonomyId, options) {
+  async fetchChildren(taxonomyId, options) {
     let taxonomyTableName = this.taxonomyModel_.getTableName(),
       sql = '';
     if (options.isImmediate) {
@@ -224,31 +225,21 @@ class TaxonomyService {
         sql += 'select * from tree_nodes';
     }
 
-    return this.taxonomyModel_.sequelize.query(sql, {
+    const rows = await this.taxonomyModel_.sequelize.query(sql, {
       replacements: [taxonomyId],
       type: this.taxonomyModel_.sequelize.QueryTypes.SELECT,
-    })
-      .then((rows) => {
-        if (!rows.length)
-          return null;
+    });
 
-        let result = rows;
-        return result;
-      });
+    return rows.length ? rows : null;
   }
 
   /**
 	 * @param {Number} taxonomyId - NCBI taxonomy id
 	 * @returns {List} lineage of taxonomic nodes - objects
 	 */
-  fetchLineage(taxonomyId) {
-    return this.fetchLocal_(taxonomyId)
-      .then((result) => {
-        if (result)
-          return result.lineage.slice().reverse();
-
-        return [];
-      });
+  async fetchLineage(taxonomyId) {
+    const result = await this.fetchLocal_(taxonomyId);
+    return Boolean(result) ? result.lineage.slice().reverse() : [];
   }
 
   // ----------------------------------------------------
@@ -258,16 +249,14 @@ class TaxonomyService {
 	 * @param {Transaction} [transaction = null] - Sequelize transaction object
 	 * @returns {Promise} with resolve as boolean true if the give node Taxonomy ID exists in the taxonomy table
 	 */
-  nodeExists_(taxonomyId, transaction = null) {
-    return this.taxonomyModel_.findOne({
+  async nodeExists_(taxonomyId, transaction = null) {
+    const taxonomyRow = await this.taxonomyModel_.findOne({
       where: {
         id: taxonomyId,
       },
       transaction,
-    })
-      .then((taxonomyRow) => {
-        return !!taxonomyRow;
-      });
+    });
+    return Boolean(taxonomyRow);
   }
 
   /**
@@ -284,23 +273,21 @@ class TaxonomyService {
   insertNodeIfNew_(taxonomyRecord) {
     return this.taxonomyModel_.sequelize.transaction({
       isolationLevel: 'READ COMMITTED',
-    }, (transaction) => {
-      return this.nodeExists_(taxonomyRecord.id, transaction)
-        .then((nodeExists) => {
-          // No need iterate insertion check for parents. If the node already exists, its parents must exist as well.
-          if (nodeExists)
-            throw new IntermediateRankExistsError();
+    }, async (transaction) => {
+      const nodeExists = await this.nodeExists_(taxonomyRecord.id, transaction);
+      // No need iterate insertion check for parents. If the node already exists, its parents must exist as well.
+      if (nodeExists) {
+        throw new IntermediateRankExistsError();
+      }
 
-          return this.taxonomyModel_.create(taxonomyRecord, {transaction})
-            .then((taxonomy) => {
-              if (this.logger_)
-                this.logger_.info(taxonomy.get(), `Inserted new taxonomy node: ${taxonomy.name} with id: ${taxonomy.id}`);
-            });
-        });
+      const taxonomy = await this.taxonomyModel_.create(taxonomyRecord, {transaction});
+      if (this.logger_) {
+        this.logger_.info(taxonomy.get(), `Inserted new taxonomy node: ${taxonomy.name} with id: ${taxonomy.id}`);
+      }
     });
   }
 
-  fetchLocal_(taxonomyId) {
+  async fetchLocal_(taxonomyId) {
     let taxonomyTableName = this.taxonomyModel_.getTableName(),
       sql = `with recursive tree_nodes as (
     select * from ${taxonomyTableName} where id = ?
@@ -309,34 +296,33 @@ class TaxonomyService {
 )
 select * from tree_nodes`;
 
-
-    return this.taxonomyModel_.sequelize.query(sql, {
+    const rows = await this.taxonomyModel_.sequelize.query(sql, {
       replacements: [taxonomyId],
       type: this.taxonomyModel_.sequelize.QueryTypes.SELECT,
-    })
-      .then((rows) => {
-        if (!rows.length)
-          return null;
+    });
+    if (!rows.length) {
+      return null;
+    }
 
-        let result = {
-          lineage: rows,
-          superkingdom: null,
-          kingdom: null,
-          phylum: null,
-          class: null,
-          order: null,
-          family: null,
-          genus: null,
-          species: null,
-          strain: null,
-        };
+    const result = {
+      lineage: rows,
+      superkingdom: null,
+      kingdom: null,
+      phylum: null,
+      class: null,
+      order: null,
+      family: null,
+      genus: null,
+      species: null,
+      strain: null,
+    };
 
-        for (let row of rows) {
-          if (Reflect.has(result, row.rank))
-            result[row.rank] = row.name;
-        }
+    for (const row of rows) {
+      if (Reflect.has(result, row.rank)) {
+        result[row.rank] = row.name;
+      }
+    }
 
-        return result;
-      });
+    return result;
   }
 };

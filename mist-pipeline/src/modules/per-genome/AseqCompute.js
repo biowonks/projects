@@ -153,17 +153,15 @@ ORDER BY b.id`;
 	 * @param {Array.<Object>} groups
 	 * @returns {Promise}
 	 */
-  computeGroups_(groups) {
-    return Promise.each(groups, (group) => {
+  async computeGroups_(groups) {
+    for (const group of groups) {
       this.logger_.info({
         numAseqs: group.aseqs.length,
         toolIds: group.toolIds,
       }, `Computing ${group.toolIds.join(', ')} for ${group.aseqs.length} aseqs`);
-      return this.aseqsService_.compute(group.aseqs, group.toolIds)
-        .then(() => {
-          this.shutdownCheck_();
-        });
-    });
+      await this.aseqsService_.compute(group.aseqs, group.toolIds);
+      this.shutdownCheck_();
+    }
   }
 
   /**
@@ -173,15 +171,15 @@ ORDER BY b.id`;
 	 * @param {Transaction} transaction
 	 * @returns {Promise}
 	 */
-  saveGroups_(groups, transaction) {
+  async saveGroups_(groups, transaction) {
     const alternateCondition = this.alternateCondition_();
-    return Promise.each(groups, (group) => {
+    for (const group of groups) {
       this.logger_.info({
         numAseqs: group.aseqs.length,
         toolIds: group.toolIds,
       }, `Saving ${group.toolIds.join(', ')} results for ${group.aseqs.length} aseqs`);
-      return this.aseqsService_.saveToolData(group.aseqs, group.toolIds, alternateCondition, transaction);
-    });
+      await this.aseqsService_.saveToolData(group.aseqs, group.toolIds, alternateCondition, transaction);
+    }
   }
 
   alternateCondition_() {

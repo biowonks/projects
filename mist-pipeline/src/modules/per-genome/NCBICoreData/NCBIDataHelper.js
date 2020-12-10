@@ -5,7 +5,6 @@ const assert = require('assert');
 const fs = require('fs');
 
 // Vendor
-const Promise = require('bluebird');
 const byline = require('byline'); // TODO: replace with split
 
 // Local

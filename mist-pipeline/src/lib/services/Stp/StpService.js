@@ -4,7 +4,6 @@
 const assert = require('assert');
 
 // Vendor
-const Promise = require('bluebird');
 const streamEach = require('stream-each');
 
 // Local
@@ -94,7 +93,7 @@ class StpService {
     if (!cheItems.length)
       return null;
 
-    return new Promise((resolve, reject) => {
+    return new Promise(async (resolve, reject) => {
       const stream = this.createCheToolStream_();
       let i = 0;
       streamEach(stream, (hmmerResult, next) => {
@@ -136,9 +135,10 @@ class StpService {
         }
       });
 
-      // Write all chemotaxis sequences to the stream
-      Promise.each(cheItems, (cheItem) => stream.writePromise(cheItem.aseq.toFasta()))
-        .then(() => stream.end());
+      for (const cheItem of cheItems) {
+        await stream.writePromise(cheItem.aseq.toFasta());
+      }
+      stream.end();
     });
   }
 

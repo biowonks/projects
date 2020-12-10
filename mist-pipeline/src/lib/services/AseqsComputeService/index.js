@@ -4,9 +4,6 @@
 const fs = require('fs');
 const path = require('path');
 
-// Vendor
-const Promise = require('bluebird');
-
 // Local
 const AseqsService = require('mist-lib/services/AseqsService');
 
@@ -50,12 +47,13 @@ class AseqsComputeService extends AseqsService {
 	 * @param {Array.<String>} toolIds
 	 * @returns {Array.<Aseq>} - aseqs decorated with the computed results
 	 */
-  compute(aseqs, toolIds) {
+  async compute(aseqs, toolIds) {
     let invalidToolId = this.firstInvalidToolId(toolIds);
-    if (invalidToolId)
-      return Promise.reject(new Error(`invalid tool id: ${invalidToolId}`));
+    if (invalidToolId) {
+      throw new Error(`invalid tool id: ${invalidToolId}`);
+    }
 
-    return Promise.each(toolIds, (toolId) => {
+    for (const toolId of toolIds) {
       // eslint-disable-next-line no-mixed-requires
       const meta = kToolRunnerIdMap.get(toolId);
       const ToolRunner = require(meta.path); // eslint-disable-line global-require
@@ -66,10 +64,11 @@ class AseqsComputeService extends AseqsService {
         this.logger_.info(progress, `${toolId} progress event: ${Math.floor(progress.percent)}%`);
       });
 
-      return toolRunner.setup_()
-        .then(() => toolRunner.run(aseqs));
-    })
-      .then(() => aseqs);
+      await toolRunner.setup_();
+      await toolRunner.run(aseqs);
+    }
+
+    return aseqs;
   }
 
   /**
@@ -82,7 +81,7 @@ class AseqsComputeService extends AseqsService {
 	 * @param {Transaction} [transaction=null]
 	 * @returns {Array.<Aseq>}
 	 */
-  saveToolData(aseqs, toolIds, alternateCondition = '', transaction = null) {
+  async saveToolData(aseqs, toolIds, alternateCondition = '', transaction = null) {
     if (!toolIds.length)
       return Promise.resolve(aseqs);
 
@@ -94,10 +93,12 @@ class AseqsComputeService extends AseqsService {
     // http://stackoverflow.com/questions/1520417/deadlock-error-in-insert-statement
     // http://stackoverflow.com/a/1521183
     aseqsCopy.sort((a, b) => {
-      if (a.id < b.id)
+      if (a.id < b.id) {
         return -1;
-      if (a.id > b.id)
+      }
+      if (a.id > b.id) {
         return 1;
+      }
 
       return 0;
     });
@@ -111,18 +112,19 @@ UPDATE ${this.model_.getTableName()}
 SET ${setSql}
 WHERE id = ? AND (${nullClause} ${alternateCondition})`;
 
-    return Promise.each(aseqsCopy, (aseq) => {
-      for (let i = 0; i < nToolIds; i++)
+    for (const aseq of aseqsCopy) {
+      for (let i = 0; i < nToolIds; i++) {
         replacements[i] = JSON.stringify(aseq.getDataValue(toolIds[i]));
+      }
       replacements[nToolIds] = aseq.id;
 
-      return this.sequelize_.query(sql, {
+      await this.sequelize_.query(sql, {
         replacements,
         plain: true,
         type: this.sequelize_.QueryTypes.UPDATE,
         transaction,
       });
-    });
+    }
   }
 
   /**
@@ -175,9 +177,9 @@ WHERE id = ? AND (${nullClause} ${alternateCondition})`;
  * @returns {Array.<Object>} - array of supported AseqsService tools (as determined by querying the tool-runners subdirectory). Each object contains each tool-runner's meta data and an id field which is the basename of the tool-runner.
  */
 function discoverToolRunners() {
-  let basePath = 'tool-runners',
-    toolRunnersDir = path.join(__dirname, basePath),
-    suffix = 'ToolRunner.js';
+  const basePath = 'tool-runners';
+  const toolRunnersDir = path.join(__dirname, basePath);
+  const suffix = 'ToolRunner.js';
 
   return fs.readdirSync(toolRunnersDir)
     .filter((fileName) => {
@@ -202,6 +204,6 @@ function discoverToolRunners() {
       Reflect.deleteProperty(runner, '$path');
       return meta;
     })
-  // Only include those that have a non-null id
+    // Only include those that have a non-null id
     .filter((x) => !!x.id);
 }

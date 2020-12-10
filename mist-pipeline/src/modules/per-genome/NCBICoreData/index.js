@@ -20,9 +20,6 @@ const genbankMistStream = require('lib/streams/genbank-mist-stream');
 const mutil = require('mist-lib/mutil');
 const ncbiAssemblyReportStream = require('lib/streams/ncbi-assembly-report-stream');
 
-// Other
-const streamEachPromise = Promise.promisify(streamEach);
-
 /**
  * This module handles downloading and loading raw genomic data into the database.
  *
@@ -109,19 +106,11 @@ class NCBICoreData extends PerGenomePipelineModule {
     });
   }
 
-  run() {
-    let self = this;
-    return Promise.coroutine(function *() {
-      // 1. Obtain the core genome files (if not already downloaded and stored locally)
-      yield self.download_('assembly-report');
-      yield self.download_('genomic-genbank');
-
-      // 2. Index the information from the assembly report
-      yield self.indexAssemblyReport_();
-
-      // 3. Parse and load the genomic genbank file
-      yield self.parseAndLoadGenome_();
-    })();
+  async run() {
+    await this.download_('assembly-report');
+    await this.download_('genomic-genbank');
+    await this.indexAssemblyReport_();
+    await this.parseAndLoadGenome_();
   }
 
   // ----------------------------------------------------
@@ -145,23 +134,29 @@ class NCBICoreData extends PerGenomePipelineModule {
 	 * Downloads and indexes the information from the assembly report.
 	 * @returns {Promise}
 	 */
-  indexAssemblyReport_() {
-    return Promise.try(() => {
-      const assemblyReportFile = this.fileMapper_.pathFor('assembly-report');
-      const readStream = fs.createReadStream(assemblyReportFile);
-      const ncbiAssemblyReportReader = ncbiAssemblyReportStream();
-      const pipeline = pumpify.obj(readStream, ncbiAssemblyReportReader);
+  async indexAssemblyReport_() {
+    const assemblyReportFile = this.fileMapper_.pathFor('assembly-report');
+    const readStream = fs.createReadStream(assemblyReportFile);
+    const ncbiAssemblyReportReader = ncbiAssemblyReportStream();
+    const pipeline = pumpify.obj(readStream, ncbiAssemblyReportReader);
 
-      return streamEachPromise(pipeline, (assembly, next) => {
+    await new Promise((resolve, reject) => {
+      streamEach(pipeline, (assembly, next) => {
         this.assemblyReportMap_.set(assembly.refseqAccession, assembly);
         this.assemblyReportMap_.set(assembly.genbankAccession, assembly);
         next();
+      }, (error) => {
+        if (error) {
+          pipeline.destroy();
+          reject(error);
+          return;
+        }
+        resolve();
       })
-        .then(() => {
-          this.logger_.info(`Read ${this.assemblyReportMap_.size} row(s) from the assembly report`);
-          this.shutdownCheck_();
-        });
     });
+
+    this.logger_.info(`Read ${this.assemblyReportMap_.size} row(s) from the assembly report`);
+    this.shutdownCheck_();
   }
 
   /**
@@ -174,22 +169,23 @@ class NCBICoreData extends PerGenomePipelineModule {
 	 *
 	 * @returns {Promise}
 	 */
-  parseAndLoadGenome_() {
-    return this.readAllGenBankData_()
-      .then(this.reserveAndAssignIds_.bind(this))
-      .then((mistData) => {
-        return this.sequelize_.transaction({
-          isolationLevel: 'READ COMMITTED', // Necessary to avoid getting: could not serialize access due to concurrent update errors
-        }, (transaction) => {
-          return this.loadComponents_(mistData.components, transaction)
-            .then(() => this.bulkLoadRecords_(mistData.genomeReferences, this.models_.GenomeReference, transaction))
-            .then(() => this.loadGeneSeqs_(mistData.geneSeqs, transaction))
-            .then(() => this.loadProteinSeqs_(mistData.proteinSeqs, transaction))
-            .then(() => this.bulkLoadRecords_(mistData.genes, this.models_.Gene, transaction))
-            .then(() => this.bulkLoadRecords_(mistData.xrefs, this.models_.Xref, transaction))
-            .then(() => this.bulkLoadRecords_(mistData.componentFeatures, this.models_.ComponentFeature, transaction));
-        });
-      });
+  async parseAndLoadGenome_() {
+    const genbankData = await this.readAllGenBankData_();
+    const mistData = await this.reserveAndAssignIds_(genbankData);
+    return this.sequelize_.transaction(
+      {
+        isolationLevel: 'READ COMMITTED', // Necessary to avoid getting: could not serialize access due to concurrent update errors
+      },
+      async (transaction) => {
+        await this.loadComponents_(mistData.components, transaction);
+        await this.bulkLoadRecords_(mistData.genomeReferences, this.models_.GenomeReference, transaction);
+        await this.loadGeneSeqs_(mistData.geneSeqs, transaction);
+        await this.loadProteinSeqs_(mistData.proteinSeqs, transaction);
+        await this.bulkLoadRecords_(mistData.genes, this.models_.Gene, transaction);
+        await this.bulkLoadRecords_(mistData.xrefs, this.models_.Xref, transaction);
+        await this.bulkLoadRecords_(mistData.componentFeatures, this.models_.ComponentFeature, transaction);
+      },
+    );
   }
 
   /**
@@ -198,7 +194,7 @@ class NCBICoreData extends PerGenomePipelineModule {
 	 *
 	 * @returns {Promise.<Object>}
 	 */
-  readAllGenBankData_() {
+  async readAllGenBankData_() {
     const result = {
       geneSeqs: [],
       proteinSeqs: [],
@@ -209,36 +205,47 @@ class NCBICoreData extends PerGenomePipelineModule {
       xrefs: [],
     };
 
-    return Promise.try(() => {
-      const genbankFlatFile = this.fileMapper_.pathFor('genomic-genbank');
-      const readStream = fs.createReadStream(genbankFlatFile);
-      const gunzipStream = zlib.createGunzip();
-      const genbankReader = genbankStream();
-      const genbankMistReader = genbankMistStream(this.genome_.id, this.genome_.version);
-      const pipeline = pumpify.obj(readStream, gunzipStream, genbankReader, genbankMistReader);
+    const genbankFlatFile = this.fileMapper_.pathFor('genomic-genbank');
+    const readStream = fs.createReadStream(genbankFlatFile);
+    const gunzipStream = zlib.createGunzip();
+    const genbankReader = genbankStream();
+    const genbankMistReader = genbankMistStream(this.genome_.id, this.genome_.version);
+    const pipeline = pumpify.obj(readStream, gunzipStream, genbankReader, genbankMistReader);
 
-      genbankReader.on('error', (error) => {
-        this.logger_.fatal(error, 'Genbank reader error');
-      });
+    genbankReader.on('error', (error) => {
+      this.logger_.fatal(error, 'Genbank reader error');
+    });
 
-      return streamEachPromise(pipeline, (parsedGenBankRecord, next) => {
+    await new Promise((resolve, reject) => {
+      streamEach(pipeline, (parsedGenBankRecord, next) => {
         // Only load one set of references per genome. It appears that most GenBank encoded genomes
         // repeat the same genome references for each "component". To avoid duplicate references,
         // the first set of genome references are the only ones that are "inserted".
-        if (result.genomeReferences === null)
+        if (result.genomeReferences === null) {
           result.genomeReferences = parsedGenBankRecord.genomeReferences;
+        }
         result.components.push(parsedGenBankRecord.component);
         for (let key in result) {
-          if (key === 'genomeReferences')
+          if (key === 'genomeReferences') {
             continue;
+          }
 
-          if (Reflect.has(parsedGenBankRecord, key))
+          if (Reflect.has(parsedGenBankRecord, key)) {
             result[key] = result[key].concat(parsedGenBankRecord[key]);
+          }
         }
         next();
+      }, (error) => {
+        if (error) {
+          pipeline.destroy();
+          reject(error);
+          return;
+        }
+
+        resolve();
       });
-    })
-      .then(() => result);
+    });
+    return result;
   }
 
   /**
@@ -249,21 +256,17 @@ class NCBICoreData extends PerGenomePipelineModule {
 	 * @param {Object.<String,Array.<Object>>} mistData
 	 * @returns {Promise}
 	 */
-  reserveAndAssignIds_(mistData) {
-    return this.idService_.assignIds(mistData.genomeReferences, this.models_.GenomeReference)
-      .then(() => this.idService_.assignIds(mistData.components, this.models_.Component))
-      .then((componentIdMap) => {
-        this.idService_.setForeignKeyIds(mistData.genes, 'component_id', componentIdMap);
-        this.idService_.setForeignKeyIds(mistData.componentFeatures, 'component_id', componentIdMap);
-        return this.idService_.assignIds(mistData.genes, this.models_.Gene);
-      })
-      .then((geneIdMap) => {
-        this.idService_.setForeignKeyIds(mistData.xrefs, 'gene_id', geneIdMap);
-        this.idService_.setForeignKeyIds(mistData.componentFeatures, 'gene_id', geneIdMap);
-        return this.idService_.assignIds(mistData.componentFeatures, this.models_.ComponentFeature);
-      })
-      .then(() => this.idService_.assignIds(mistData.xrefs, this.models_.Xref))
-      .then(() => mistData);
+  async reserveAndAssignIds_(mistData) {
+    await this.idService_.assignIds(mistData.genomeReferences, this.models_.GenomeReference);
+    const componentIdMap = await this.idService_.assignIds(mistData.components, this.models_.Component);
+    this.idService_.setForeignKeyIds(mistData.genes, 'component_id', componentIdMap);
+    this.idService_.setForeignKeyIds(mistData.componentFeatures, 'component_id', componentIdMap);
+    const geneIdMap = await this.idService_.assignIds(mistData.genes, this.models_.Gene);
+    this.idService_.setForeignKeyIds(mistData.xrefs, 'gene_id', geneIdMap);
+    this.idService_.setForeignKeyIds(mistData.componentFeatures, 'gene_id', geneIdMap);
+    await this.idService_.assignIds(mistData.componentFeatures, this.models_.ComponentFeature);
+    await this.idService_.assignIds(mistData.xrefs, this.models_.Xref);
+    return mistData;
   }
 
   /**
@@ -271,10 +274,11 @@ class NCBICoreData extends PerGenomePipelineModule {
 	 * @param {Transaction} transaction
 	 * @returns {Promise}
 	 */
-  loadComponents_(components, transaction) {
+  async loadComponents_(components, transaction) {
     const numComponents = components.length;
     this.logger_.info(`Loading ${numComponents} components`);
-    return Promise.each(components, (component, i) => {
+    for (let i = 0; i < components.length; i++) {
+      const component = components[i];
       this.addAssemblyReportData_(component);
       const logger = this.logger_.child({
         version: component.version,
@@ -284,11 +288,9 @@ class NCBICoreData extends PerGenomePipelineModule {
         numComponents,
       });
       logger.info(`about to insert component ${component.name}`);
-      return this.models_.Component.create(component, {transaction})
-        .then(() => {
-          logger.info(`inserted component ${component.name}`);
-        });
-    });
+      await this.models_.Component.create(component, {transaction});
+      logger.info(`inserted component ${component.name}`);
+    }
   }
 
   /**
@@ -299,8 +301,9 @@ class NCBICoreData extends PerGenomePipelineModule {
 	 */
   addAssemblyReportData_(component) {
     let assemblyReport = this.assemblyReportMap_.get(component.version);
-    if (!assemblyReport)
+    if (!assemblyReport) {
       throw new Error('Genbank record does not have corresponding assembly report entry: ' + component.version);
+    }
 
     /**
 		 * In some cases, there is no corresponding GenBank record. For example, take the plasmids
@@ -334,8 +337,9 @@ class NCBICoreData extends PerGenomePipelineModule {
 	 * @returns {Promise}
 	 */
   bulkLoadRecords_(records, model, transaction) {
-    if (records.length === 0)
+    if (records.length === 0) {
       return null;
+    }
 
     this.logger_.info(`Loading ${records.length} ${model.name}s`);
     return model.bulkCreate(records, {
@@ -352,8 +356,9 @@ class NCBICoreData extends PerGenomePipelineModule {
 	 */
   loadGeneSeqs_(geneSeqs, transaction) {
     const numDseqs = geneSeqs.length;
-    if (!numDseqs)
+    if (!numDseqs) {
       return null;
+    }
 
     this.logger_.info(`Loading (ignoring duplicates) ${numDseqs} gene seqs (dseqs)`);
     return this.dseqsService_.insertIgnoreSeqs(geneSeqs, transaction);
@@ -366,8 +371,9 @@ class NCBICoreData extends PerGenomePipelineModule {
 	 */
   loadProteinSeqs_(proteinSeqs, transaction) {
     const numAseqs = proteinSeqs.length;
-    if (!numAseqs)
+    if (!numAseqs) {
       return null;
+    }
 
     this.logger_.info(`Loading (ignoring duplicates) ${numAseqs} protein seqs (aseqs)`);
     return this.aseqsService_.insertIgnoreSeqs(proteinSeqs, transaction);
