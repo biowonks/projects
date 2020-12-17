@@ -1,30 +1,30 @@
-'use strict'
+'use strict';
 
 module.exports = function(app, middlewares, routeMiddlewares) {
-	const models = app.get('models')
-	const helper = app.get('lib').RouteHelper.for(models.Component)
+  const models = app.get('models');
+  const helper = app.get('lib').RouteHelper.for(models.Component);
 
-	return [
-		middlewares.parseCriteriaForMany(models.Component, {
-			accessibleModels: [
-				models.Genome,
-				models.WorkerModule
-			]
-		}),
-		helper.findManyHandler()
-	]
-}
+  return [
+    middlewares.parseCriteriaForMany(models.Component, {
+      accessibleModels: [
+        models.Genome,
+        models.WorkerModule,
+      ],
+    }),
+    helper.findManyHandler(),
+  ];
+};
 
 module.exports.docs = function(modelExamples) {
-	return {
-		name: 'Fetch Many Components',
-		description: 'Returns an array of components (replicons / contigs). Note this does not include the associated DNA.',
-		example: {
-			response: {
-				body: [
-					modelExamples.Component
-				]
-			}
-		}
-	}
-}
+  return {
+    name: 'Fetch Many Components',
+    description: 'Returns an array of components (replicons / contigs). Note this does not include the associated DNA.',
+    example: {
+      response: {
+        body: [
+          modelExamples.Component,
+        ],
+      },
+    },
+  };
+};

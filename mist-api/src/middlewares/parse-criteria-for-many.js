@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 /**
  * Converts applicable query object parameters into a criteria object suitable for use with the
@@ -11,24 +11,24 @@
  * @returns {Function}
  */
 module.exports = function(app, middlewares) {
-	let criteriaService = app.get('services').criteria,
-		CriteriaError = app.get('errors').CriteriaError
+  let criteriaService = app.get('services').criteria,
+    CriteriaError = app.get('errors').CriteriaError;
 
-	/**
+  /**
 	 * {inputGetter} is optional function
 	 */
-	return (primaryModel, criteriaOptions = {}, inputGetter = null) => {
-		return function parseCriteriaForMany(req, res, next) {
-			const input = inputGetter ? inputGetter(req) : req.query
-			const criteria = criteriaService.createFromQueryObjectForMany(primaryModel, input, criteriaOptions)
-			const errors = criteriaService.findErrors(criteria, primaryModel, criteriaOptions)
-			if (!errors) {
-				res.locals.criteria = criteria
-				next()
-			}
-			else {
-				next(new CriteriaError('Invalid criteria', errors))
-			}
-		}
-	}
-}
+  return (primaryModel, criteriaOptions = {}, inputGetter = null) => {
+    return function parseCriteriaForMany(req, res, next) {
+      const input = inputGetter ? inputGetter(req) : req.query;
+      const criteria = criteriaService.createFromQueryObjectForMany(primaryModel, input, criteriaOptions);
+      const errors = criteriaService.findErrors(criteria, primaryModel, criteriaOptions);
+      if (!errors) {
+        res.locals.criteria = criteria;
+        next();
+      }
+      else {
+        next(new CriteriaError('Invalid criteria', errors));
+      }
+    };
+  };
+};

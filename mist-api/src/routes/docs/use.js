@@ -1,17 +1,17 @@
-'use strict'
+'use strict';
 
 // Core
-const path = require('path')
+const path = require('path');
 
 // Vendor
-const express = require('express')
+const express = require('express');
 
 // Constants
-const kDocsPath = path.resolve(__dirname, '..', '..', 'docs', 'build')
+const kDocsPath = path.resolve(__dirname, '..', '..', 'docs', 'build');
 const staticHandler = express.static(kDocsPath, {
-	fallthrough: false
-})
+  fallthrough: false,
+});
 
 module.exports = function() {
-	return staticHandler
-}
+  return staticHandler;
+};

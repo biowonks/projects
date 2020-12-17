@@ -1,15 +1,15 @@
-'use strict'
+'use strict';
 
 // Vendor
-const bodyParser = require('body-parser')
+const bodyParser = require('body-parser');
 // Local
-const { geneFinderMiddlewares, docs } = require('./genes-route-helpers');
+const {geneFinderMiddlewares, docs} = require('./genes-route-helpers');
 
 module.exports = function(app, middlewares) {
   return [
     bodyParser.urlencoded({extended: false}),
-    ...geneFinderMiddlewares(app, middlewares, (req) => req.body)
-  ]
-}
+    ...geneFinderMiddlewares(app, middlewares, (req) => req.body),
+  ];
+};
 
-module.exports.docs = docs
+module.exports.docs = docs;
