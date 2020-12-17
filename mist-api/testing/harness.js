@@ -1,41 +1,42 @@
 'use strict';
 
-var chai = require('chai'),
-	supertestAsPromised = require('supertest-as-promised');
+const chai = require('chai');
+const request = require('supertest');
 
-var appFn = require('../app');
+const appFn = require('../app');
 
 // --------------------------------------------------------
 // One-time app
-var harness = {
-	app: null
+const harness = {
+  app: null,
 };
 
 (function initialize() {
-	global.expect = chai.expect;
+  global.expect = chai.expect;
 
-	appFn()
-	.then(function(app) {
-		harness.app = app;
-		harness.request = supertestAsPromised(app);
+  appFn()
+    .then(function(app) {
+      harness.app = app;
+      harness.request = request;
 
-		injectRoutePrefix(app.get('config').routing.prefix, harness.request);
-	});
+      injectRoutePrefix(app.get('config').routing.prefix);
+    });
 
-	function injectRoutePrefix(prefix, request, optHttpVerbs) {
-		if (!prefix)
-			return;
+  function injectRoutePrefix(prefix, optHttpVerbs) {
+    if (!prefix) {
+      return;
+    }
 
-		var httpVerbs = optHttpVerbs ? optHttpVerbs : ['get', 'post', 'put', 'delete'];
-		httpVerbs.forEach(function(httpVerb) {
-			var tmpFn = request[httpVerb];
-			request[httpVerb] = function(partialUrl) {
-				return tmpFn(prefix + partialUrl);
-			};
-		});
-	}
+    let httpVerbs = optHttpVerbs ? optHttpVerbs : ['get', 'post', 'put', 'delete'];
+    httpVerbs.forEach(function(httpVerb) {
+      let tmpFn = request[httpVerb];
+      request[httpVerb] = function(partialUrl) {
+        return tmpFn(prefix + partialUrl);
+      };
+    });
+  }
 })();
 
 module.exports = function() {
-	return harness;
+  return harness;
 };

@@ -15,7 +15,8 @@ services:
     depends_on:
       - pg-db
     ports:
-      - 5000:5000
+      - 15000:15000
+      - 14000:14000 # Default API port
     volumes:
       - .:/app
       - /app/mist-lib/node_modules

@@ -5,7 +5,7 @@ let os = require('os')
 
 // Constants
 const kDefaultMaxMemory = 512 // MB
-const kDefaultPort = 5000
+const kDefaultPort = 14000
 
 module.exports = function() {
   let cpus = Number(process.env.CPUS) || 1

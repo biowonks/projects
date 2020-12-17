@@ -575,8 +575,6 @@ describe('services', function() {
 
         const pageValues = [1, '1', 5, '5'];
         pageValues.forEach((page) => {
-          expect(page).at.most(maxPage);
-
           let expectedOffset = null;
           if (Number(page) > 1) {
             expectedOffset = (Number(page) - 1) * defaultPerPage;
