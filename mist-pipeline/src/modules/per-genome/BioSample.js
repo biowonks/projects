@@ -15,6 +15,22 @@ class BioSample extends PerGenomePipelineModule {
     this.BioSample_ = this.models_.BioSample;
   }
 
+  async undo() {
+    const bioSampleId = this.genome_.biosample;
+    if (!bioSampleId) {
+      return;
+    }
+
+    this.logger_.info('Deleting BioSample data');
+    await this.BioSample_.destroy({
+      where: {
+        id: bioSampleId,
+      },
+    });
+
+    this.logger_.info('Deleted genome BioSample data');
+  }
+
   async run() {
     const bioSampleAccession = this.genome_.biosample;
     const bioSample = await this.BioSample_.findByPk(bioSampleAccession);
