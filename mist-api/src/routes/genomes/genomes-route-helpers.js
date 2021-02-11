@@ -24,6 +24,7 @@ exports.genomeFinderMiddlewares = function(app, middlewares, inputGetter) {
       accessibleModels: [
         models.WorkerModule,
         models.Component,
+        models.BioSample,
       ],
       permittedWhereFields: [
         'id',
