@@ -1,21 +1,21 @@
-'use strict'
+'use strict';
 
 // Local
-const AbstractLocation = require('./AbstractLocation')
+const AbstractLocation = require('./AbstractLocation');
 
 module.exports =
 class MockLocation extends AbstractLocation {
-	constructor(lowerBound, upperBound) {
-		super()
-		this.lowerBound_ = lowerBound
-		this.upperBound_ = upperBound
-	}
+  constructor(lowerBound, upperBound) {
+    super();
+    this.lowerBound_ = lowerBound;
+    this.upperBound_ = upperBound;
+  }
 
-	lowerBound() {
-		return this.lowerBound_
-	}
+  lowerBound() {
+    return this.lowerBound_;
+  }
 
-	upperBound() {
-		return this.upperBound_
-	}
-}
+  upperBound() {
+    return this.upperBound_;
+  }
+};

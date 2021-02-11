@@ -15,7 +15,8 @@ services:
     depends_on:
       - pg-db
     ports:
-      - 5000:5000
+      - 15000:15000
+      - 14000:14000 # Default API port
     volumes:
       - .:/app
       - /app/mist-lib/node_modules
@@ -31,9 +32,9 @@ services:
 
   # -------------------------------------------------------
   pg-db:
-    image: biowonks/mist-pg-db:5252539
+    image: biowonks/mist-pg-db:fbbac35
     volumes:
-      - db-10.3:/var/lib/postgresql/data
+      - db-13.0:/var/lib/postgresql/data
     environment:
       # The POSTGRES_* variables are passed to the postgresql image
       - POSTGRES_USER
@@ -53,4 +54,4 @@ services:
 
 # -------------------------------------------------------
 volumes:
-  db-10.3:
+  db-13.0:

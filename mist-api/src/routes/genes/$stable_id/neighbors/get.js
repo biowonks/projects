@@ -1,22 +1,22 @@
-'use strict'
+'use strict';
 
 // Vendor
-const _ = require('lodash')
-const validator = require('validator')
-const { Op } = require('sequelize')
+const _ = require('lodash');
+const validator = require('validator');
+const {Op} = require('sequelize');
 
 // Local
-const arrayUtil = require('core-lib/array-util')
+const arrayUtil = require('core-lib/array-util');
 
 // Constants
-const kDefaultNeighborAmount = 5
-const kMaxNeighborAmount = 15
+const kDefaultNeighborAmount = 5;
+const kMaxNeighborAmount = 15;
 
 module.exports = function(app, middlewares, routeMiddlewares) {
-  const models = app.get('models')
-  const Gene = models.Gene
+  const models = app.get('models');
+  const Gene = models.Gene;
 
-	return [
+  return [
     middlewares.parseQueryParams(
       [
         {
@@ -38,13 +38,13 @@ module.exports = function(app, middlewares, routeMiddlewares) {
           paramName: 'amountAfter',
           transform: parseInt,
         },
-      ]
+      ],
     ),
     middlewares.exists(Gene, {
       attributes: ['id', 'component_id'],
       paramName: 'stable_id',
       queryAttribute: 'stable_id',
-      targetName: 'gene'
+      targetName: 'gene',
     }),
     (req, res, next) => {
       res.locals.gene.findNeighborIds({
@@ -52,26 +52,26 @@ module.exports = function(app, middlewares, routeMiddlewares) {
         amountBefore: res.locals.cleanQuery.amountBefore,
         amountAfter: res.locals.cleanQuery.amountAfter,
       })
-      .then((result) => {
-        res.locals.neighborGeneIdRanges = result
-        next()
-      })
-      .catch(next)
+        .then((result) => {
+          res.locals.neighborGeneIdRanges = result;
+          next();
+        })
+        .catch(next);
     },
-		middlewares.parseCriteriaForMany(models.Gene, {
-			accessibleModels: [
-				models.Component,
-				models.Aseq,
-				models.Dseq
-			]
-		}),
-		(req, res, next) => {
+    middlewares.parseCriteriaForMany(models.Gene, {
+      accessibleModels: [
+        models.Component,
+        models.Aseq,
+        models.Dseq,
+      ],
+    }),
+    (req, res, next) => {
       // Finally! Retrieve the neighboring genes
-      const { criteria, neighborGeneIdRanges } = res.locals
+      const {criteria, neighborGeneIdRanges} = res.locals;
 
       if (!neighborGeneIdRanges.length) {
-        res.json([])
-        return
+        res.json([]);
+        return;
       }
 
       criteria.where = {
@@ -80,19 +80,20 @@ module.exports = function(app, middlewares, routeMiddlewares) {
             id: {
               [Op.between]: range,
             },
-          }
+          };
         }),
-      }
-      criteria.limit = kMaxNeighborAmount * 2
+      };
+      // eslint-disable-next-line no-magic-numbers
+      criteria.limit = kMaxNeighborAmount * 2;
       Gene.findAll(criteria)
-      .then((entities) => {
+        .then((entities) => {
         // Re-order entities to be "centered" around target gene
-        const idLists = neighborGeneIdRanges.map((geneIdRange) => _.range(geneIdRange[0], geneIdRange[1] + 1))
-        const sortedIds = arrayUtil.flatten(idLists)
-        const sortedEntities = arrayUtil.sortBy(entities, sortedIds, 'id')
-        res.json(sortedEntities)
-      })
-      .catch(next)
+          const idLists = neighborGeneIdRanges.map((geneIdRange) => _.range(geneIdRange[0], geneIdRange[1] + 1));
+          const sortedIds = arrayUtil.flatten(idLists);
+          const sortedEntities = arrayUtil.sortBy(entities, sortedIds, 'id');
+          res.json(sortedEntities);
+        })
+        .catch(next);
     },
-	]
-}
+  ];
+};

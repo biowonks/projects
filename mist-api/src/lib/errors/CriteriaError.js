@@ -1,7 +1,7 @@
-'use strict'
+'use strict';
 
 // Local
-const BadRequestError = require('./BadRequestError')
+const BadRequestError = require('./BadRequestError');
 
 /**
  * @constructor
@@ -11,8 +11,8 @@ const BadRequestError = require('./BadRequestError')
  */
 module.exports =
 class CriteriaError extends BadRequestError {
-	constructor(optMessage, optData) {
-		super(optMessage, optData)
-		this.name = 'CriteriaError'
-	}
-}
+  constructor(optMessage, optData) {
+    super(optMessage, optData);
+    this.name = 'CriteriaError';
+  }
+};

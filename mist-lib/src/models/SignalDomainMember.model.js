@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 module.exports = function(Sequelize, models, extras) {
   const fields = {
@@ -35,18 +35,19 @@ module.exports = function(Sequelize, models, extras) {
     }),
     pubmed_ids: Object.assign(extras.arrayWithNoEmptyValues(), {
       description: 'array of relevant PubMed identifiers',
+      // eslint-disable-next-line no-magic-numbers
       example: [9301332, 9382818],
     }),
     pdb_ids: Object.assign(extras.arrayWithNoEmptyValues(), {
       description: 'array of relevant PDB identifiers',
       example: [],
     }),
-  }
+  };
 
   return {
     classMethods: {
       sequenceName: function() {
-        return 'signal_domains_members'
+        return 'signal_domains_members';
       },
     },
     fields,
@@ -54,5 +55,5 @@ module.exports = function(Sequelize, models, extras) {
       tableName: 'signal_domains_members',
       timestamps: false,
     },
-  }
-}
+  };
+};

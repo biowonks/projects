@@ -1,7 +1,7 @@
-'use strict'
+'use strict';
 
 // Local
-const util = require('./util')
+const util = require('./util');
 
 describe('util', () => {
   describe('findNeighoringIndices', () => {
@@ -116,16 +116,16 @@ describe('util', () => {
         options: {amount: 3},
         expect: [[9, 10], [1, 1], [3, 5]],
       },
-    ]
+    ];
 
     examples.forEach((example) => {
-      const {index, rangeStart, rangeStop, isCircular, options} = example
+      const {index, rangeStart, rangeStop, isCircular, options} = example;
       it(`index ${index} of [${rangeStart}..${rangeStop}], circular: ${isCircular}, options: ${JSON.stringify(options)} should return ${JSON.stringify(example.expect)}`, () => {
-        const result = util.findNeighoringIndices(index, rangeStart, rangeStop, isCircular, options)
-        expect(result).eql(example.expect)
-      })
-    })
-  })
+        const result = util.findNeighoringIndices(index, rangeStart, rangeStop, isCircular, options);
+        expect(result).eql(example.expect);
+      });
+    });
+  });
 
   describe('splitIntoTerms', () => {
     const examples = [
@@ -221,15 +221,15 @@ describe('util', () => {
         value: '\'al\'pha\'',
         expect: ['alpha'],
       },
-    ]
+    ];
 
     examples.forEach((example) => {
       it(`${example.value} -> ${JSON.stringify(example.expect)}`, () => {
-        let result = util.splitIntoTerms(example.value)
-        expect(result).members(example.expect)
-      })
-    })
-  })
+        let result = util.splitIntoTerms(example.value);
+        expect(result).members(example.expect);
+      });
+    });
+  });
 
   describe('camelize', () => {
     const examples = [
@@ -273,13 +273,13 @@ describe('util', () => {
         value: 'one two three',
         expect: 'oneTwoThree',
       },
-    ]
+    ];
 
     examples.forEach((example) => {
       it(`${example.value} -> ${example.expect}`, () => {
-        let result = util.camelize(example.value)
-        expect(result).eql(example.expect)
-      })
-    })
-  })
-})
+        let result = util.camelize(example.value);
+        expect(result).eql(example.expect);
+      });
+    });
+  });
+});

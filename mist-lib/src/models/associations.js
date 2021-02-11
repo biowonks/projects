@@ -1,55 +1,68 @@
-'use strict'
+'use strict';
 
 module.exports = function(models, optLogger) {
-	if (optLogger)
-		optLogger.info('Setting up model associations')
+  if (optLogger) {
+    optLogger.info('Setting up model associations');
+  }
 
-	const {
-		Worker,
-		Genome,
-		WorkerModule,
-		Component,
-		Gene,
-		GeneCluster,
-		GeneClusterMember,
-		Aseq,
-		Dseq,
-		SignalDomain,
-		SignalDomainMember,
-		SignalGene,
-	} = models
+  const {
+    BioSample,
+    Worker,
+    Genome,
+    WorkerModule,
+    Component,
+    Gene,
+    GeneCluster,
+    GeneClusterMember,
+    Aseq,
+    Dseq,
+    SignalDomain,
+    SignalDomainMember,
+    SignalGene,
+  } = models;
 
-	Worker.hasMany(WorkerModule)
+  Worker.hasMany(WorkerModule);
 
-	Genome.hasMany(WorkerModule)
-	Genome.belongsTo(Worker)
+  Genome.hasMany(WorkerModule);
+  Genome.belongsTo(Worker);
 
-	Genome.hasMany(Component)
-	Component.belongsTo(Genome)
+  Genome.hasMany(Component);
+  Component.belongsTo(Genome);
 
-	WorkerModule.belongsTo(Worker)
-	WorkerModule.belongsTo(Genome)
+  Genome.belongsTo(BioSample, {
+    foreignKey: 'biosample_id',
+  });
+  BioSample.hasMany(Genome, {
+    foreignKey: 'biosample_id',
+  });
 
-	Component.hasMany(Gene)
-	Gene.belongsTo(Component)
+  WorkerModule.belongsTo(Worker);
+  WorkerModule.belongsTo(Genome);
 
-	Gene.belongsTo(Aseq)
-	Gene.belongsTo(Dseq)
+  Component.hasMany(Gene);
+  Gene.belongsTo(Component);
 
-	Aseq.hasMany(Gene)
-	Dseq.hasMany(Gene)
+  Gene.belongsTo(Aseq);
+  Gene.belongsTo(Dseq);
 
-	Component.hasMany(GeneCluster)
-	GeneCluster.belongsTo(Component)
+  Aseq.hasMany(Gene);
+  Dseq.hasMany(Gene);
 
-	GeneCluster.hasMany(GeneClusterMember)
-	GeneClusterMember.belongsTo(GeneCluster)
+  Component.hasMany(GeneCluster);
+  GeneCluster.belongsTo(Component);
 
-	SignalDomain.hasMany(SignalDomainMember)
-	SignalDomainMember.belongsTo(SignalDomain)
+  GeneCluster.hasMany(GeneClusterMember, {
+    foreignKey: 'genes_cluster_id',
+  });
+  GeneClusterMember.belongsTo(GeneCluster, {
+    foreignKey: 'genes_cluster_id',
+  });
 
-	Component.hasMany(SignalGene)
-	Gene.hasOne(SignalGene)
-	SignalGene.belongsTo(Gene)
-	SignalGene.belongsTo(Component)
-}
+  SignalDomain.hasMany(SignalDomainMember);
+  SignalDomainMember.belongsTo(SignalDomain);
+
+  Component.hasMany(SignalGene);
+  Gene.hasOne(SignalGene);
+  SignalGene.belongsTo(Gene);
+  SignalGene.belongsTo(Component);
+};

@@ -1,8 +1,8 @@
-'use strict'
+'use strict';
 
 // Local
-const PerGenomePipelineModule = require('../../PerGenomePipelineModule')
+const PerGenomePipelineModule = require('../../PerGenomePipelineModule');
 
 module.exports =
 class PerGenomeTwoModule extends PerGenomePipelineModule {
-}
+};

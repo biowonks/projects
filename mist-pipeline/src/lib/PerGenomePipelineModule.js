@@ -1,64 +1,75 @@
-'use strict'
+'use strict';
 
 // Core
-const os = require('os'),
-	path = require('path')
+const os = require('os');
+const path = require('path');
+
+// Vendor
+const rimraf = require('rimraf');
 
 // Local
-const mutil = require('mist-lib/mutil'),
-	AbstractPipelineModule = require('./AbstractPipelineModule'),
-	FileMapper = require('./services/FileMapper')
+const mutil = require('mist-lib/mutil');
+const AbstractPipelineModule = require('./AbstractPipelineModule');
+const FileMapper = require('./services/FileMapper');
 
 // Constants
-const kRootTmpDirectory = path.join(os.tmpdir(), 'biowonks')
+const kRootTmpDirectory = path.join(os.tmpdir(), 'biowonks');
 
 module.exports =
 class PerGenomePipelineModule extends AbstractPipelineModule {
-	constructor(app, genome) {
-		super(app)
+  constructor(app, genome) {
+    super(app);
 
-		this.genome_ = genome
-		this.fileMapper_ = new FileMapper(kRootTmpDirectory, genome)
-		this.dataDirectory_ = this.fileMapper_.genomeRootPath()
-	}
+    this.genome_ = genome;
+    this.fileMapper_ = new FileMapper(kRootTmpDirectory, genome);
+    this.dataDirectory_ = this.fileMapper_.genomeRootPath();
+  }
 
-	setup() {
-		if (this.needsDataDirectory())
-			return this.ensureDataDirectoryExists_()
+  setup() {
+    if (this.needsDataDirectory())
+      return this.ensureDataDirectoryExists_();
 
-		return null
-	}
+    return null;
+  }
 
-	newWorkerModuleData() {
-		let workerModuleData = super.newWorkerModuleData()
-		workerModuleData.genome_id = this.genome_.id
-		return workerModuleData
-	}
+  newWorkerModuleData() {
+    let workerModuleData = super.newWorkerModuleData();
+    workerModuleData.genome_id = this.genome_.id;
+    return workerModuleData;
+  }
 
-	teardown() {
-		if (this.needsDataDirectory()) {
-			return mutil.rimraf(this.dataDirectory_)
-			.then(() => {
-				this.logger_.info({dataDirectory: this.dataDirectory_}, 'Removed data directory')
-			})
-		}
+  teardown() {
+    if (this.needsDataDirectory()) {
+      return new Promise((resolve, reject) => {
+        rimraf(this.dataDirectory_, (error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
 
-		return null
-	}
+          resolve();
+        });
+      }).then(() => {
+        this.logger_.info({dataDirectory: this.dataDirectory_}, 'Removed data directory');
+      });
+    }
 
-	// ----------------------------------------------------
-	// Protected methods
-	needsDataDirectory() {
-		return false
-	}
+    return null;
+  }
 
-	// ----------------------------------------------------
-	// Private methods
-	ensureDataDirectoryExists_() {
-		return mutil.mkdirp(this.dataDirectory_)
-		.then((result) => {
-			if (result.created)
-				this.logger_.info({dataDirectory: this.dataDirectory_}, 'Created data directory')
-		})
-	}
-}
+  // ----------------------------------------------------
+  // Protected methods
+  needsDataDirectory() {
+    return false;
+  }
+
+  // ----------------------------------------------------
+  // Private methods
+  ensureDataDirectoryExists_() {
+    return mutil.mkdirp(this.dataDirectory_)
+      .then((result) => {
+        if (result.created)
+          this.logger_.info({dataDirectory: this.dataDirectory_}, 'Created data directory');
+      });
+  }
+};

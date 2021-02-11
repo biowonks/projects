@@ -19,30 +19,30 @@
  * - Why the .model.js suffix? This clearly distinguishes each file as a model definition vs
  *   a class definition (the basename of which matches the class name exactly).
  */
-'use strict'
+'use strict';
 
 // Vendor
-const modelLoader = require('sequelize-model-loader')
+const modelLoader = require('sequelize-model-loader');
 
 // Local
-const setupAssociations = require('./associations')
+const setupAssociations = require('./associations');
 
 module.exports = function(sequelize, seqdepotModels, logger = null) {
-	const modelExtras = require('core-lib/model-extras')(sequelize.Sequelize) // eslint-disable-line global-require
+  const modelExtras = require('core-lib/model-extras')(sequelize.Sequelize); // eslint-disable-line global-require
 
-	const models = modelLoader(__dirname, sequelize, {
-		logger,
-		context: modelExtras
-	})
+  const models = modelLoader(__dirname, sequelize, {
+    logger,
+    context: modelExtras,
+  });
 
-	for (let name in seqdepotModels) {
-		const isConflictingName = Reflect.has(models, name)
-		if (isConflictingName)
-			throw new Error(`model name conflict: ${name} exists in both MiST and SeqDepot`)
-		models[name] = seqdepotModels[name]
-	}
+  for (let name in seqdepotModels) {
+    const isConflictingName = Reflect.has(models, name);
+    if (isConflictingName)
+      throw new Error(`model name conflict: ${name} exists in both MiST and SeqDepot`);
+    models[name] = seqdepotModels[name];
+  }
 
-	setupAssociations(models, logger)
+  setupAssociations(models, logger);
 
-	return models
-}
+  return models;
+};

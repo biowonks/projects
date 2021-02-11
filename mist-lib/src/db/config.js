@@ -1,13 +1,13 @@
-'use strict'
+'use strict';
 
 // Core
-const path = require('path')
+const path = require('path');
 
-const DEFAULT_DB_POOL_ACQUIRE_TIMEOUT = 120000
-const DEFAULT_DB_POOL_MAX = 5
-const DEFAULT_DB_POOL_MIN = 0
-const DEFAULT_DB_POOL_IDLE = 10000
-const DEFAULT_DB_POOL_EVICT = 1000
+const DEFAULT_DB_POOL_ACQUIRE_TIMEOUT = 120000;
+const DEFAULT_DB_POOL_MAX = 5;
+const DEFAULT_DB_POOL_MIN = 0;
+const DEFAULT_DB_POOL_IDLE = 10000;
+const DEFAULT_DB_POOL_EVICT = 1000;
 
 // Default database configuration.
 module.exports = {
@@ -21,7 +21,10 @@ module.exports = {
   host: 'mist-pg-db', // docker-specific
   port: 5432,
   name: 'mist_dev',
-  ssl: true,
+  ssl: {
+    require: true,
+    rejectUnauthorized: false,
+  },
   logging: false,
   pool: {
     acquire: Number(process.env.DB_POOL_ACQUIRE_TIMEOUT) || DEFAULT_DB_POOL_ACQUIRE_TIMEOUT,
@@ -37,7 +40,7 @@ module.exports = {
 
   migrations: {
     path: path.resolve(__dirname, 'migrations'),
-    pattern: /^\d{4}_[\w-_\.]+\.sql$/,
+    pattern: /^\d{4}_[\w-_.]+\.sql$/,
   },
 
   seqdepot: {
@@ -52,4 +55,4 @@ module.exports = {
       path: path.resolve(__dirname, '..', 'node_modules', 'seqdepot-lib', 'models'),
     },
   },
-}
+};

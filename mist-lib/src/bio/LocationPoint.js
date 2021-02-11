@@ -1,31 +1,31 @@
-'use strict'
+'use strict';
 
 // Core
-const assert = require('assert')
+const assert = require('assert');
 
 // 345 or -1
 module.exports =
 class LocationPoint {
-	constructor(position) {
-		assert(typeof position === 'number', 'position argument must be a number')
-		assert(position !== 0, 'position argument cannot be zero')
-		this.position_ = position
-		this.exact_ = true
-	}
+  constructor(position) {
+    assert(typeof position === 'number', 'position argument must be a number');
+    assert(position !== 0, 'position argument cannot be zero');
+    this.position_ = position;
+    this.exact_ = true;
+  }
 
-	isExact() {
-		return this.exact_
-	}
+  isExact() {
+    return this.exact_;
+  }
 
-	lowerBound() {
-		return this.position_
-	}
+  lowerBound() {
+    return this.position_;
+  }
 
-	upperBound() {
-		return this.position_
-	}
+  upperBound() {
+    return this.position_;
+  }
 
-	/**
+  /**
 	 * Definite: not necessarily exact, but a base position that may serve as at least
 	 * a known position to start from. For example, <10 has a definite start because while
 	 * its exact start is somewhere before 10, it must include 10 itself. On the other hand,
@@ -38,15 +38,15 @@ class LocationPoint {
 	 *
 	 * @returns {boolean} always true for this base class implementation
 	 */
-	hasDefiniteStart() {
-		return true
-	}
+  hasDefiniteStart() {
+    return true;
+  }
 
-	/**
+  /**
 	 * @see hasDefiniteStart() for details.
 	 * @returns {boolean} always true for this base class implementation
 	 */
-	hasDefiniteStop() {
-		return true
-	}
-}
+  hasDefiniteStop() {
+    return true;
+  }
+};

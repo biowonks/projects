@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 /**
  * Converts applicable query object parameters into a criteria object suitable for use with the
@@ -11,20 +11,20 @@
  * @returns {Function}
  */
 module.exports = function(app, middlewares) {
-	const criteriaService = app.get('services').criteria
-	const CriteriaError = app.get('errors').CriteriaError
+  const criteriaService = app.get('services').criteria;
+  const CriteriaError = app.get('errors').CriteriaError;
 
-	return (primaryModel, accessibleModels) => {
-		return function parseCriteria(req, res, next) {
-			const criteria = criteriaService.createFromQueryObject(primaryModel, req.query)
-			const errors = criteriaService.findErrors(criteria, primaryModel, accessibleModels)
-			if (!errors) {
-				res.locals.criteria = criteria
-				next()
-			}
-			else {
-				next(new CriteriaError('Invalid criteria', errors))
-			}
-		}
-	}
-}
+  return (primaryModel, accessibleModels) => {
+    return function parseCriteria(req, res, next) {
+      const criteria = criteriaService.createFromQueryObject(primaryModel, req.query);
+      const errors = criteriaService.findErrors(criteria, primaryModel, accessibleModels);
+      if (!errors) {
+        res.locals.criteria = criteria;
+        next();
+      }
+      else {
+        next(new CriteriaError('Invalid criteria', errors));
+      }
+    };
+  };
+};

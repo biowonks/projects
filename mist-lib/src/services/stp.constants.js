@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 module.exports = {
   AGFAM_TOOL_ID: 'agfam2',
@@ -8,7 +8,7 @@ module.exports = {
   MAX_HK_CA_SEPARATION: 60,
   PFAM_TOOL_ID: 'pfam31',
   THRESHOLD: .001,
-}
+};
 
 module.exports.PrimaryRank = {
   ecf: 'ecf',
@@ -16,7 +16,7 @@ module.exports.PrimaryRank = {
   tcp: 'tcp',
   chemotaxis: 'chemotaxis',
   other: 'other',
-}
+};
 
 module.exports.SecondaryRank = {
   chea: 'chea',
@@ -33,7 +33,7 @@ module.exports.SecondaryRank = {
   rr: 'rr',
   mcp: 'mcp',
   other: 'other',
-}
+};
 
 // Deprecated: 9 Sep 2018
 module.exports.pfamHDUnrelatedSignalDomains = new Set([
@@ -47,7 +47,7 @@ module.exports.pfamHDUnrelatedSignalDomains = new Set([
   'DEAD',
   'Helicase_C',
   'tRNA-synt_1d',
-])
+]);
 
 module.exports.pfamHKNonSignalDomains = new Set([
   'DNA_gyraseA_C',
@@ -59,4 +59,4 @@ module.exports.pfamHKNonSignalDomains = new Set([
   'DNA_mis_repair',
   'MutL_C',
   'Topo-VIb_trans',
-])
+]);

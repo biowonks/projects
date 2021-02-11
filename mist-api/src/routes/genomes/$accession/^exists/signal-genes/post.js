@@ -1,15 +1,15 @@
-'use strict'
+'use strict';
 
 // Vendor
-const bodyParser = require('body-parser')
+const bodyParser = require('body-parser');
 // Local
-const { signalGeneFinderMiddlewares, docs } = require('./signal-genes-route-helpers')
+const {signalGeneFinderMiddlewares, docs} = require('./signal-genes-route-helpers');
 
 module.exports = function(app, middlewares) {
   return [
     bodyParser.urlencoded({extended: false}),
-    ...signalGeneFinderMiddlewares(app, middlewares, (req) => req.body)
-  ]
-}
+    ...signalGeneFinderMiddlewares(app, middlewares, (req) => req.body),
+  ];
+};
 
-module.exports.docs = docs
+module.exports.docs = docs;

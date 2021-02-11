@@ -1,7 +1,7 @@
-'use strict'
+'use strict';
 
 // Constants
-const kPostgresPort = 5432
+const kPostgresPort = 5432;
 
 /**
  * @param {Object} dbConfig
@@ -26,31 +26,31 @@ const kPostgresPort = 5432
  * @returns {Object}
  */
 module.exports = function(dbConfig) {
-	if (dbConfig.migrations) {
-		if (!dbConfig.migrations.schema)
-			dbConfig.migrations.schema = dbConfig.schema
-	}
+  if (dbConfig.migrations) {
+    if (!dbConfig.migrations.schema)
+      dbConfig.migrations.schema = dbConfig.schema;
+  }
 
-	if (!dbConfig.sequelizeOptions)
-		dbConfig.sequelizeOptions = {}
+  if (!dbConfig.sequelizeOptions)
+    dbConfig.sequelizeOptions = {};
 
-	let sequelizeOptions = dbConfig.sequelizeOptions
-	if (!sequelizeOptions.define)
-		sequelizeOptions.define = {}
-	if (!sequelizeOptions.dialectOptions)
-		sequelizeOptions.dialectOptions = {}
+  let sequelizeOptions = dbConfig.sequelizeOptions;
+  if (!sequelizeOptions.define)
+    sequelizeOptions.define = {};
+  if (!sequelizeOptions.dialectOptions)
+    sequelizeOptions.dialectOptions = {};
 
-	// Enforce underscored table names and timestamps by default
-	sequelizeOptions.define.underscored = Reflect.has(dbConfig, 'underscoredTableNames') ? !!dbConfig.underscoredTableNames : true
-	sequelizeOptions.define.timestamps = Reflect.has(dbConfig, 'timestamps') ? !!dbConfig.timestamps : true
+  // Enforce underscored table names and timestamps by default
+  sequelizeOptions.define.underscored = Reflect.has(dbConfig, 'underscoredTableNames') ? !!dbConfig.underscoredTableNames : true;
+  sequelizeOptions.define.timestamps = Reflect.has(dbConfig, 'timestamps') ? !!dbConfig.timestamps : true;
 
-	sequelizeOptions.define.schema = dbConfig.schema
-	sequelizeOptions.dialect = dbConfig.dialect || 'postgres'
-	sequelizeOptions.dialectOptions.application_name = dbConfig.applicationName
-	sequelizeOptions.host = dbConfig.host || 'localhost'
-	sequelizeOptions.port = dbConfig.port || kPostgresPort
-	sequelizeOptions.dialectOptions.ssl = dbConfig.ssl
-	sequelizeOptions.logging = dbConfig.logging
+  sequelizeOptions.define.schema = dbConfig.schema;
+  sequelizeOptions.dialect = dbConfig.dialect || 'postgres';
+  sequelizeOptions.dialectOptions.application_name = dbConfig.applicationName;
+  sequelizeOptions.host = dbConfig.host || 'localhost';
+  sequelizeOptions.port = dbConfig.port || kPostgresPort;
+  sequelizeOptions.dialectOptions.ssl = dbConfig.ssl;
+  sequelizeOptions.logging = dbConfig.logging;
 
-	return dbConfig
-}
+  return dbConfig;
+};

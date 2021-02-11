@@ -1,4 +1,4 @@
-'use strict'
+'use strict';
 
 /**
  * Checks for the existence of an entity in the database and assigns it to the local response
@@ -9,9 +9,9 @@
  * @returns {Function}
  */
 module.exports = function(app, middlewares) {
-	const errors = app.get('errors')
+  const errors = app.get('errors');
 
-	/**
+  /**
 	 * @param {Model} model
 	 * @param {Object} options
 	 * @param {Array.<String>} attributes field to fetch when searching for the entity
@@ -20,25 +20,27 @@ module.exports = function(app, middlewares) {
 	 * @param {String} options.targetName name to assign resulting entity to in the res.locals Object
 	 * @returns {Function}
 	 */
-	return (model, options) => {
-		if (!options || !options.queryAttribute || !options.paramName || !options.targetName)
-			throw new Error(`Invalid options to *exists* middleware for model: ${model.name}. Please check that queryAttribute, paramName, and targetName are all defined.`)
+  return (model, options) => {
+    if (!options || !options.queryAttribute || !options.paramName || !options.targetName) {
+      throw new Error(`Invalid options to *exists* middleware for model: ${model.name}. Please check that queryAttribute, paramName, and targetName are all defined.`);
+    }
 
-		return function exists(req, res, next) {
-			model.findOne({
-				where: {
-					[options.queryAttribute]: req.params[options.paramName]
-				},
-				attributes: options.attributes
-			})
-			.then((entity) => {
-				if (!entity)
-					throw errors.notFoundError
+    return function exists(req, res, next) {
+      model.findOne({
+        where: {
+          [options.queryAttribute]: req.params[options.paramName],
+        },
+        attributes: options.attributes,
+      })
+        .then((entity) => {
+          if (!entity) {
+            throw errors.notFoundError;
+          }
 
-				res.locals[options.targetName] = entity
-				next()
-			})
-			.catch(next)
-		}
-	}
-}
+          res.locals[options.targetName] = entity;
+          next();
+        })
+        .catch(next);
+    };
+  };
+};

@@ -1,18 +1,18 @@
-'use strict'
+'use strict';
 
 // Local
-const AseqCompute = require('./AseqCompute')
-const StpToolRunner = require('lib/services/AseqsComputeService/tool-runners/StpToolRunner')
+const AseqCompute = require('./AseqCompute');
+const StpToolRunner = require('lib/services/AseqsComputeService/tool-runners/StpToolRunner');
 
 module.exports =
 class Stp extends AseqCompute {
   static description() {
-    return 'signal transduction protein identification'
+    return 'signal transduction protein identification';
   }
 
   static subModuleMap() {
     // Empty map object denotes no submodules
-    return new Map()
+    return new Map();
   }
 
   static dependencies() {
@@ -21,30 +21,30 @@ class Stp extends AseqCompute {
       'AseqCompute:pfam31',
       'AseqCompute:agfam2',
       'AseqCompute:ecf1',
-    ]
+    ];
   }
 
   constructor(app, genome) {
-    super(app, genome, [StpToolRunner.meta.id])
-    this.version_ = app.config.toolRunners[StpToolRunner.meta.id].version
+    super(app, genome, [StpToolRunner.meta.id]);
+    this.version_ = app.config.toolRunners[StpToolRunner.meta.id].version;
   }
 
   undo() {
-    this.logger_.info(`Deleting this genome's ${this.models_.SignalGene.getTableName()}`)
-		return this.sequelize_.transaction({
-			isolationLevel: 'READ COMMITTED'
-		}, (transaction) => {
+    this.logger_.info(`Deleting this genome's ${this.models_.SignalGene.getTableName()}`);
+    return this.sequelize_.transaction({
+      isolationLevel: 'READ COMMITTED',
+    }, (transaction) => {
       return this.deleteSignalGenes_(transaction)
-      .then(() => this.nullStpForWrongVersion_(transaction))
-		})
+        .then(() => this.nullStpForWrongVersion_(transaction));
+    });
   }
 
   afterSave(transaction) {
-    const { Aseq, Component, Gene, SignalGene } = this.models_
-    const componentTableName = Component.getTableName()
-    const geneTableName = Gene.getTableName()
-    const signalGeneTableName = SignalGene.getTableName()
-    const aseqTableName = Aseq.getTableName()
+    const {Aseq, Component, Gene, SignalGene} = this.models_;
+    const componentTableName = Component.getTableName();
+    const geneTableName = Gene.getTableName();
+    const signalGeneTableName = SignalGene.getTableName();
+    const aseqTableName = Aseq.getTableName();
 
     const sql = `
       INSERT INTO ${signalGeneTableName} (
@@ -69,13 +69,13 @@ class Stp extends AseqCompute {
       FROM ${componentTableName} a JOIN ${geneTableName} b ON (a.id = b.component_id)
         JOIN ${aseqTableName} c ON (b.aseq_id = c.id)
       WHERE a.genome_id = ? AND stp is not null AND stp->'ranks'->0 is not null
-    `
+    `;
     return this.sequelize_.query(sql, {
       plain: true,
       raw: true,
       replacements: [this.genome_.id],
       transaction,
-    })
+    });
   }
 
   afterRun() {
@@ -88,9 +88,9 @@ class Stp extends AseqCompute {
         },
       },
     })
-    .then((numSignalGenes) => {
-      this.logger_.info({numSignalGenes}, `Identified ${numSignalGenes} signaling genes`)
-    })
+      .then((numSignalGenes) => {
+        this.logger_.info({numSignalGenes}, `Identified ${numSignalGenes} signaling genes`);
+      });
   }
 
   /**
@@ -98,30 +98,30 @@ class Stp extends AseqCompute {
    * version.
    */
   alternateAseqsMissingDataCondition() {
-    return `stp is not null AND stp->'version' != '${this.version_}'`
+    return `stp is not null AND stp->'version' != '${this.version_}'`;
   }
 
   // Return Stp
   workerModuleRecords() {
-    return [this.newWorkerModuleData()]
+    return [this.newWorkerModuleData()];
   }
 
-	// ----------------------------------------------------
-	// Private methods
+  // ----------------------------------------------------
+  // Private methods
   deleteSignalGenes_(transaction) {
     return this.genome_.getComponents({
       attributes: ['id'],
       transaction,
     })
-    .then((components) => {
-      const componentIds = components.map((component) => component.id)
-      return this.models_.SignalGene.destroy({
-        where: {
-          component_id: componentIds,
-        },
-        transaction,
-      })
-    })
+      .then((components) => {
+        const componentIds = components.map((component) => component.id);
+        return this.models_.SignalGene.destroy({
+          where: {
+            component_id: componentIds,
+          },
+          transaction,
+        });
+      });
   }
 
   /**
@@ -130,9 +130,9 @@ class Stp extends AseqCompute {
    * @param {Transaction} transaction
    */
   nullStpForWrongVersion_(transaction) {
-    const aseqTableName = this.models_.Aseq.getTableName()
-    const componentTableName = this.models_.Component.getTableName()
-    const geneTableName = this.models_.Gene.getTableName()
+    const aseqTableName = this.models_.Aseq.getTableName();
+    const componentTableName = this.models_.Component.getTableName();
+    const geneTableName = this.models_.Gene.getTableName();
 
     const sql = `
       UPDATE ${aseqTableName}
@@ -142,12 +142,12 @@ class Stp extends AseqCompute {
         ${aseqTableName}.id = ${geneTableName}.aseq_id AND
         stp is not null AND
         stp->'version' = '${this.version_}'
-    `
+    `;
     return this.sequelize_.query(sql, {
       plain: true,
       raw: true,
       replacements: [this.genome_.id],
       transaction,
-    })
+    });
   }
-}
+};
