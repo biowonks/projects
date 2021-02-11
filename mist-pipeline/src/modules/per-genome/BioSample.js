@@ -1,6 +1,6 @@
 'use strict';
 
-const { Op } = require('sequelize');
+const {Op} = require('sequelize');
 
 // Local
 const PerGenomePipelineModule = require('lib/PerGenomePipelineModule');
@@ -26,7 +26,7 @@ class BioSample extends PerGenomePipelineModule {
 
     return this.sequelize_.transaction({
       isolationLevel: 'READ COMMITTED',
-    }, async (transaction) => {
+    }, async(transaction) => {
       const numGenomesWithThisBioSampleId = await this.Genome_.count({
         where: {
           biosample_id: bioSampleId,
@@ -70,7 +70,7 @@ class BioSample extends PerGenomePipelineModule {
     // already present in another genome
     return this.sequelize_.transaction({
       isolationLevel: 'READ COMMITTED',
-    }, async (transaction) => {
+    }, async(transaction) => {
       const existingBioSampleResult = await this.Genome_.findOne({
         attributes: ['biosample_id'],
         where: {

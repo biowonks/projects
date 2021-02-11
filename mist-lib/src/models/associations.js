@@ -29,8 +29,12 @@ module.exports = function(models, optLogger) {
   Genome.hasMany(Component);
   Component.belongsTo(Genome);
 
-  Genome.belongsTo(BioSample);
-  BioSample.hasMany(Genome);
+  Genome.belongsTo(BioSample, {
+    foreignKey: 'biosample_id',
+  });
+  BioSample.hasMany(Genome, {
+    foreignKey: 'biosample_id',
+  });
 
   WorkerModule.belongsTo(Worker);
   WorkerModule.belongsTo(Genome);
