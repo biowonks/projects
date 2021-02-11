@@ -1,6 +1,6 @@
 FROM biowonks/mist-lib.base
 
-MAINTAINER BioWonks <biowonks@users.noreply.github.com>
+LABEL BioWonks <biowonks@users.noreply.github.com>
 
 COPY _common /app/_common
 COPY bin /app/bin

@@ -1,4 +1,4 @@
-FROM mhart/alpine-node:8.11.2
+FROM mhart/alpine-node:14.15.5
 
 ARG GIT_HASH
 

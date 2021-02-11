@@ -1,4 +1,4 @@
-FROM mhart/alpine-node:8.11.2
+FROM mhart/alpine-node:14.15.5
 
 ARG GIT_HASH
 
@@ -18,5 +18,13 @@ COPY . /app
 WORKDIR /app/mist-api
 RUN chown -R biowonks:biowonks /app
 USER biowonks
-RUN yarn
+
+# Because building the docs relies on imports from core-lib,
+# seqdepot-lib, and mist-lib, the following hack ensures all
+# those packages are present before attempting the build.
+# Definitely not ideal.
+RUN cd /app/core-lib && yarn && \
+	cd /app/seqdepot-lib && yarn && \
+	cd /app/mist-lib && yarn && \
+	cd /app/mist-api && yarn
 CMD ["yarn", "start"]
