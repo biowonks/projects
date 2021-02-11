@@ -50,7 +50,7 @@ class BioSampleService {
     }
 
     const result = {
-      id,
+      id: parseInt(id),
       organism: null,
       description: lines.shift(),
       qualifiers: {},

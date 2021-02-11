@@ -1,10 +1,12 @@
 'use strict';
 
 module.exports = function(models, optLogger) {
-  if (optLogger)
+  if (optLogger) {
     optLogger.info('Setting up model associations');
+  }
 
   const {
+    BioSample,
     Worker,
     Genome,
     WorkerModule,
@@ -27,6 +29,9 @@ module.exports = function(models, optLogger) {
   Genome.hasMany(Component);
   Component.belongsTo(Genome);
 
+  Genome.belongsTo(BioSample);
+  BioSample.hasMany(Genome);
+
   WorkerModule.belongsTo(Worker);
   WorkerModule.belongsTo(Genome);
 
@@ -43,10 +48,10 @@ module.exports = function(models, optLogger) {
   GeneCluster.belongsTo(Component);
 
   GeneCluster.hasMany(GeneClusterMember, {
-    foreignKey: 'genes_cluster_id'
+    foreignKey: 'genes_cluster_id',
   });
   GeneClusterMember.belongsTo(GeneCluster, {
-    foreignKey: 'genes_cluster_id'
+    foreignKey: 'genes_cluster_id',
   });
 
   SignalDomain.hasMany(SignalDomainMember);

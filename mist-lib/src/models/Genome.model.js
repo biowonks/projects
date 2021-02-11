@@ -148,6 +148,10 @@ module.exports = function(Sequelize, models, extras) {
       allowNull: false,
       defaultValue: {},
     },
+    biosample_id: Object.assign(extras.positiveInteger(), {
+      description: 'foreign identifier to any known biosample record',
+      example: 3215740,
+    }),
   };
 
   const instanceMethods = {
