@@ -86,11 +86,10 @@ create table components (
 	created_at timestamp with time zone not null default clock_timestamp(),
 	updated_at timestamp with time zone not null default clock_timestamp(),
 
-	unique(version),
-
 	foreign key(genome_id) references genomes(id) on update cascade on delete cascade
 );
 create index on components(genome_id);
+create index on components(version);
 
 -- Genes contains the data for not only gene features, but also any associated CDS or RNA features.
 -- All other features are stored in the components_features table further below.
