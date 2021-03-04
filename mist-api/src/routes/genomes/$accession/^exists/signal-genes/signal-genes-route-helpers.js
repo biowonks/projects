@@ -39,6 +39,21 @@ exports.signalGeneFinderMiddlewares = function(app, middlewares, inputGetter) {
         },
         required: true,
       });
+
+      // Optimization to help PostgreSQL avoid using the wrong index. Namely,
+      // when there is an order by (added by default if not specified) and a
+      // limit applied, the query planner will poorly choose to scan the
+      // signal_genes_pkey index instead of the component_id indices. We nudge
+      // the planner away from this by also ordering by component_id if this is
+      // the case.
+      const firstOrderBy = res.locals.criteria.order[0];
+      const orderingByPrimaryKeyOnly = res.locals.criteria.order.length === 1
+        && firstOrderBy.length
+        && firstOrderBy[0] === models.SignalGene.primaryKeyAttributes[0];
+      if (orderingByPrimaryKeyOnly) {
+        res.locals.criteria.order.push(['component_id']);
+      }
+
       const ranks = splitAndScrubString(
         inputGetter(req)['where.ranks'],
         ',',
