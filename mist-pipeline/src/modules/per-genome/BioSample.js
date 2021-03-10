@@ -89,6 +89,11 @@ class BioSample extends PerGenomePipelineModule {
 
       if (!bioSampleId) {
         const data = await this.bioSampleService.fetchForAccession(bioSampleAccession);
+        if (data === null) {
+          this.logger_.info('No BioSample data found; ignoring entry');
+          return;
+        }
+
         const [bioSampleRecord, wasCreated] = await this.BioSample_.findOrCreate({
           where: {
             id: data.id,

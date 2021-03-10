@@ -19,12 +19,54 @@ class BioSampleService {
     }
 
     const url = kNCBIPartialSearchForIdUrl + accession;
-    const data = JSON.parse(await this.eutilsService.fetch(url));
-    if (!data || !data.esearchresult || !data.esearchresult.idlist || !data.esearchresult.idlist.length) {
-      throw new Error('BioSample ID search failed to return any results');
+    /**
+     * Example empty response:
+     *
+     * {
+     *   "header": {
+     *     "type": "esearch",
+     *     "version": "0.3"
+     *   },
+     *   "esearchresult": {
+     *     "count": "0",
+     *    "retmax": "0",
+     *    "retstart": "0",
+     *    "idlist": [],
+     *    "translationset": [],
+     *    "querytranslation": "(SAMN04323527[All Fields])",
+     *    "errorlist": {
+     *      "phrasesnotfound": [
+     *        "SAMN04323527"
+     *      ],
+     *      "fieldsnotfound": []
+     *    },
+     *    "warninglist": {
+     *      "phrasesignored": [],
+     *      "quotedphrasesnotfound": [],
+     *      "outputmessages": [
+     *        "No items found."
+     *      ]
+     *    }
+     *  }
+     * }
+     */
+    let data;
+    try {
+      data = JSON.parse(await this.eutilsService.fetch(url));
+    } catch (error) {
+      throw new Error(`Unable to fetch / parse JSON payload: ${url} ${error}`);
+    }
+
+    if (!data || !data.esearchresult || !data.esearchresult.idlist) {
+      throw new Error(`BioSample ID search returned an unexpected response: ${url} ${data}`);
     }
 
     const bioSampleId = data.esearchresult.idlist[0];
+    if (!bioSampleId) {
+      // This situation may happen when there is no result found from the search
+      return null;
+    }
+
     return this.fetch(bioSampleId);
   }
 
