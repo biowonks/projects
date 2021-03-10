@@ -3880,8 +3880,8 @@ send@0.17.1:
     statuses "~1.5.0"
 
 "sequelize-migrator@https://github.com/lukeulrich/sequelize-migrator.git":
-  version "1.2.1"
-  resolved "https://github.com/lukeulrich/sequelize-migrator.git#786fa599255629c5011c1be7b8c9711346cbc808"
+  version "1.2.2"
+  resolved "https://github.com/lukeulrich/sequelize-migrator.git#8e73d76d228dc2756d99d23a25a0c4cc5ad252b6"
 
 "sequelize-model-loader@https://github.com/lukeulrich/sequelize-model-loader.git":
   version "1.0.3"

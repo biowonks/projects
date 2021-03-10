@@ -1977,8 +1977,8 @@ semver@^7.2.1, semver@^7.3.2:
   integrity sha512-OrOb32TeeambH6UrhtShmF7CRDqhL6/5XpPNp2DuRH6+9QLw/orhp72j87v8Qa1ScDkvrrBNpZcDejAirJmfXQ==
 
 "sequelize-migrator@https://github.com/lukeulrich/sequelize-migrator.git":
-  version "1.0.5"
-  resolved "https://github.com/lukeulrich/sequelize-migrator.git#5ce5343cac35e76c4cc4e78aba819c121177371e"
+  version "1.2.2"
+  resolved "https://github.com/lukeulrich/sequelize-migrator.git#8e73d76d228dc2756d99d23a25a0c4cc5ad252b6"
 
 "sequelize-model-loader@https://github.com/lukeulrich/sequelize-model-loader.git":
   version "1.0.3"
