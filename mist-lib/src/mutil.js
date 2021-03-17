@@ -54,14 +54,14 @@ exports.mkdir = function(directory) {
  */
 exports.shellCommand = function(command, optVerbose) {
   return new Promise((resolve, reject) => {
-    if (optVerbose)
+    if (optVerbose) {
       console.info(command); // eslint-disable-line no-console
+    }
 
     child_process.exec(command, (error, stdout, stderr) => {
       if (error) {
         reject(error);
-      }
-      else {
+      } else {
         resolve({
           stdout,
           stderr,
@@ -95,8 +95,9 @@ exports.shellCommands = async function(commands, optVerbose) {
  * @returns {Promise} promise
  */
 exports.download = function(url, optDestFile) {
-  if (!url)
+  if (!url) {
     return Promise.reject(new Error('Missing url argument: url'));
+  }
 
   let destFile = null,
     tmpDestFile = null;
@@ -137,8 +138,9 @@ exports.download = function(url, optDestFile) {
  * @returns {string} absolute path to the computed destFile
  */
 function determineDestFile_(url, optDestFile) {
-  if (!optDestFile)
+  if (!optDestFile) {
     return Promise.resolve(path.basename(url));
+  }
 
   return exports.stat(optDestFile)
     .then((stats) => {
@@ -146,8 +148,9 @@ function determineDestFile_(url, optDestFile) {
     })
     .catch((error) => {
       let fileDoesntExist = error.code === 'ENOENT';
-      if (fileDoesntExist)
+      if (fileDoesntExist) {
         return path.resolve(optDestFile);
+      }
 
       throw error;
     });
@@ -155,8 +158,9 @@ function determineDestFile_(url, optDestFile) {
 
 exports.durationFromInterval = function(interval) {
   let matches = /^(\d+)\s+(\w+)/.exec(interval);
-  if (!matches)
+  if (!matches) {
     return moment.duration(interval);
+  }
 
   return moment.duration(parseInt(matches[1]), matches[2]);
 };
@@ -191,10 +195,11 @@ exports.gunzip = function(gzFile, optDestFile) {
 exports.readFile = function(file) {
   return new Promise((resolve, reject) => {
     fs.readFile(file, 'utf8', (error, data) => {
-      if (error)
+      if (error) {
         reject(error);
-      else
+      } else {
         resolve(data);
+      }
     });
   });
 };
@@ -202,10 +207,11 @@ exports.readFile = function(file) {
 exports.xmlToJs = function(xml) {
   return new Promise((resolve, reject) => {
     xml2js.parseString(xml, {trim: true}, (error, result) => {
-      if (error)
+      if (error) {
         reject(error);
-      else
+      } else {
         resolve(result);
+      }
     });
   });
 };
@@ -213,10 +219,11 @@ exports.xmlToJs = function(xml) {
 exports.stat = function(queryPath) {
   return new Promise((resolve, reject) => {
     fs.stat(queryPath, (error, stats) => {
-      if (error)
+      if (error) {
         reject(error);
-      else
+      } else {
         resolve(stats);
+      }
     });
   });
 };
@@ -244,10 +251,11 @@ exports.basename = function(fileName) {
 exports.directoryExists = function(directory) {
   return new Promise((resolve) => {
     fs.stat(directory, (error, stats) => {
-      if (error)
+      if (error) {
         resolve(false);
-      else
+      } else {
         resolve(stats.isDirectory());
+      }
     });
   });
 };
@@ -280,10 +288,11 @@ exports.fileNotEmpty = function(file) {
 exports.rename = function(srcFile, destFile) {
   return new Promise((resolve, reject) => {
     mv(srcFile, destFile, (error) => {
-      if (error)
+      if (error) {
         reject(error);
-      else
+      } else {
         resolve({srcFile, destFile});
+      }
     });
   });
 };
@@ -305,10 +314,11 @@ exports.mkdirp = async function(directory) {
 exports.unlink = function(file) {
   return new Promise((resolve, reject) => {
     fs.unlink(file, (error) => {
-      if (!error || error.code === 'ENOENT')
+      if (!error || error.code === 'ENOENT') {
         resolve();
-      else
+      } else {
         reject(error);
+      }
     });
   });
 };
@@ -358,12 +368,14 @@ exports.sequence = function *(initialIndex = 1, delta = 1) {
  * @returns {Array} 2-element array containing the accession and version
  */
 exports.parseAccessionVersion = function(accession) {
-  if (!accession)
+  if (!accession) {
     return [];
+  }
 
   let parts = accession.split('.');
-  if (parts.length <= 2) // eslint-disable-line no-magic-numbers
+  if (parts.length <= 2) { // eslint-disable-line no-magic-numbers
     return [parts[0], /^\d+$/.test(parts[1]) ? Number(parts[1]) : null];
+  }
 
   return [];
 };

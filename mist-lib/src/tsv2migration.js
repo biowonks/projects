@@ -43,14 +43,14 @@ the following name structure:
   .parse(process.argv);
 
 const [stpSpecFile] = program.args;
-if (!stpSpecFile)
+if (!stpSpecFile) {
   dieWithHelp();
-
+}
 
 const version = extractVersion(stpSpecFile);
-if (version === null)
+if (version === null) {
   dieWithHelp(`FATAL: Unable to find version in "${stpSpecFile}". Please ensure the file name is formatted correctly.\n`);
-
+}
 
 readStpSpecFile(stpSpecFile)
   .then((specRows) => {
@@ -70,8 +70,9 @@ readStpSpecFile(stpSpecFile)
 
 // --------------------------------------------------------
 function dieWithHelp(error) {
-  if (error)
+  if (error) {
     console.error(error);
+  }
 
   program.outputHelp();
   process.exit();
@@ -86,8 +87,9 @@ function groupBy(rows, fieldName) {
   const result = {};
   rows.forEach((row) => {
     const fieldValue = row[fieldName];
-    if (!result[fieldValue])
+    if (!result[fieldValue]) {
       result[fieldValue] = [];
+    }
 
 
     result[fieldValue].push(row);
@@ -144,29 +146,29 @@ function generateInsertValues(row, fieldNames) {
 
 function sqlValue(value) {
   if (Array.isArray(value)) {
-    if (value.length === 0)
+    if (value.length === 0) {
       return 'NULL';
-
+    }
 
     return 'array[' + value.map((x) => sqlValue(x))
       .join(', ') + ']';
   }
 
-  if (value === null)
+  if (value === null) {
     return 'NULL';
+  }
 
-
-  if (value === true)
+  if (value === true) {
     return 'true';
+  }
 
-
-  if (value === false)
+  if (value === false) {
     return 'false';
+  }
 
-
-  if (/^\d+$/.test(value))
+  if (/^\d+$/.test(value)) {
     return value;
-
+  }
 
   return quote(value);
 }

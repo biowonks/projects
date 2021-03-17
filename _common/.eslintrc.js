@@ -18,7 +18,7 @@ module.exports = {
     sinon: true,
   },
   parserOptions: {
-    ecmaVersion: 8,
+    ecmaVersion: 2018,
   },
   rules: {
     // Possible errors
@@ -64,7 +64,7 @@ module.exports = {
     'array-callback-return': warn,
     'block-scoped-var': error,
     complexity: off,
-    'consistent-return': error,
+    'consistent-return': off,
     curly: [error, 'all'],
     'default-case': off,
     'dot-location': [error, 'property'],
@@ -157,7 +157,7 @@ module.exports = {
     // Styling
     'array-bracket-spacing': error,
     'block-spacing': error,
-    'brace-style': [error, 'stroustrup', {allowSingleLine: false}],
+    'brace-style': [error, '1tbs', {allowSingleLine: false}],
     camelcase: [error, {properties: 'never'}],
     'comma-spacing': [error, {before: false, after: true}],
     'comma-style': [error, 'last', {exceptions: {ArrayExpression: true, ObjectExpression: true}}],
@@ -204,7 +204,7 @@ module.exports = {
     'no-underscore-dangle': off,
     'no-unneeded-ternary': error,
     'no-whitespace-before-property': error,
-    'object-curly-spacing': [error, 'never'],
+    'object-curly-spacing': off,
     'one-var': off,
     'one-var-declaration-per-line': [error, 'always'],
     'operator-assignment': error,
@@ -217,7 +217,7 @@ module.exports = {
     'semi-spacing': [error, {before: false, after: true}],
     'sort-vars': off,
     'space-before-blocks': [error, 'always'],
-    'space-before-function-paren': [error, 'never'],
+    'space-before-function-paren': [error, {anonymous: 'never', named: 'never', asyncArrow: 'always'}],
     'space-in-parens': [error, 'never'],
     'space-infix-ops': error,
     'space-unary-ops': [warn, {words: true, nonwords: false}],

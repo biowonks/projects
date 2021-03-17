@@ -26,7 +26,7 @@ class BioSample extends PerGenomePipelineModule {
 
     return this.sequelize_.transaction({
       isolationLevel: 'READ COMMITTED',
-    }, async(transaction) => {
+    }, async (transaction) => {
       const numGenomesWithThisBioSampleId = await this.Genome_.count({
         where: {
           biosample_id: bioSampleId,
@@ -70,7 +70,7 @@ class BioSample extends PerGenomePipelineModule {
     // already present in another genome
     return this.sequelize_.transaction({
       isolationLevel: 'READ COMMITTED',
-    }, async(transaction) => {
+    }, async (transaction) => {
       const existingBioSampleResult = await this.Genome_.findOne({
         attributes: ['biosample_id'],
         where: {
@@ -104,12 +104,10 @@ class BioSample extends PerGenomePipelineModule {
         bioSampleId = bioSampleRecord.id;
         if (wasCreated) {
           this.logger_.info(`Created new BioSample record with id: ${bioSampleId}`);
-        }
-        else {
+        } else {
           this.logger_.info(`Found existing BioSample record with id: ${bioSampleId}`);
         }
-      }
-      else {
+      } else {
         this.logger_.info('Found existing genome with matching biosample result');
       }
 
