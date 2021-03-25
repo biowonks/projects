@@ -2,12 +2,9 @@
 
 // Core
 const assert = require('assert');
-const fs = require('fs');
-
-// Vendor
-const byline = require('byline'); // TODO: replace with split
 
 // Local
+const { readChecksumsFromFile } = require('core-lib/checksum-util');
 const mutil = require('mist-lib/mutil');
 
 const MAX_DOWNLOAD_TRIES = 10;
@@ -39,8 +36,9 @@ class NCBIDataHelper {
   }
 
   download(sourceType) {
-    if (sourceType === 'checksums')
+    if (sourceType === 'checksums') {
       return this.ensureChecksumsLoaded_();
+    }
 
     const destFile = this.fileMapper_.pathFor(sourceType);
     return mutil.fileNotEmpty(destFile)
@@ -108,8 +106,9 @@ class NCBIDataHelper {
 
   ensureChecksumsLoaded_() {
     // Case 1: checksums already loaded into memory
-    if (this.checksums_)
+    if (this.checksums_) {
       return Promise.resolve(this.checksums_);
+    }
 
     // Case 2: checksums exist on file system but are not yet in memory
     return this.loadChecksums_()
@@ -122,7 +121,7 @@ class NCBIDataHelper {
 
   loadChecksums_() {
     const checksumsFile = this.fileMapper_.pathFor('checksums');
-    return this.readChecksumsFromFile_(checksumsFile)
+    return readChecksumsFromFile(checksumsFile)
       .catch((error) => {
         return mutil.unlink(checksumsFile)
           .finally(() => {
@@ -146,51 +145,6 @@ class NCBIDataHelper {
     this.logger_.info({url, destFile}, 'Downloading checksums');
     return this.downloadFile_(url, destFile)
       .then(this.loadChecksums_.bind(this));
-  }
-
-  readChecksumsFromFile_(file) {
-    return new Promise((resolve, reject) => {
-      const readStream = fs.createReadStream(file);
-      const lineStream = byline.createStream(readStream);
-      const checksums = {};
-      let invalidChecksumLine = null;
-
-      readStream
-        .on('error', reject);
-
-      lineStream
-        .on('error', reject)
-        .on('data', (line) => {
-          let checksum = this.parseChecksumLine_(line);
-          if (checksum) {
-            let md5 = checksum[0],
-              fileName = checksum[1];
-            checksums[fileName] = md5;
-          }
-          else if (!invalidChecksumLine && /\S/.test(line)) {
-            invalidChecksumLine = line;
-          }
-        })
-        .on('end', () => {
-          if (!invalidChecksumLine) {
-            resolve(checksums);
-          }
-          else {
-            this.logger_.error({line: invalidChecksumLine}, 'Invalid checksum line');
-            reject(new Error(`Invalid checksum line: ${invalidChecksumLine}`));
-          }
-        });
-    });
-  }
-
-  parseChecksumLine_(line) {
-    const matches = /^([a-f0-9]{32})\s+(?:\.\/)?(\S+)/i.exec(line);
-    if (!matches)
-      return null;
-
-    const md5 = matches[1];
-    const fileName = matches[2];
-    return [md5, fileName];
   }
 
   downloadFile_(url, targetFile) {

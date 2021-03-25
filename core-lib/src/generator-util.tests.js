@@ -2,19 +2,22 @@
 'use strict';
 
 // Local
-const generatorUtil = require('./generator-util');
+const {
+  batch,
+  asyncBatch,
+} = require('./generator-util');
 
 describe('generator-util', function() {
   describe('batch', function() {
     it('empty array returns undefined', function() {
-      let x = generatorUtil.batch([]),
-        result = x.next();
+      const x = batch([]);
+      const result = x.next();
 
       expect(result.value).not.ok;
       expect(result.done).true;
     });
 
-    let examples = [
+    const examples = [
       {
         array: [1, 2],
         size: 0,
@@ -49,13 +52,41 @@ describe('generator-util', function() {
 
     examples.forEach((example) => {
       it(`batch(${JSON.stringify(example.array)}, ${example.size}) -> ${JSON.stringify(example.expect)}`, function() {
-        let result = [],
-          x = generatorUtil.batch(example.array, example.size);
-        for (let i of x)
+        const result = [];
+        const x = batch(example.array, example.size);
+        for (let i of x) {
           result.push(i);
+        }
 
         expect(result).eql(example.expect);
       });
+    });
+  });
+
+  describe('asyncBatch', () => {
+    const makeAsyncIterator = (amount) => {
+      return {
+        [Symbol.asyncIterator]() {
+          return {
+            current: 0,
+            async next() {
+              if (this.current < amount) {
+                return { done: false, value: this.current++ };
+              }
+              return { done: true };
+            },
+          };
+        },
+      };
+    };
+
+    it('should iterate over a 3 element array with batch size 2', async () => {
+      const result = [];
+      const iterator = makeAsyncIterator(3);
+      for await (const chunk of asyncBatch(iterator, 2)) {
+        result.push(chunk);
+      }
+      expect(result).eql([[0, 1], [2]]);
     });
   });
 });

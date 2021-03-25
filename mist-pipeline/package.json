@@ -41,6 +41,7 @@
     "bunyan": "1.8.14",
     "byline": "4.2.x",
     "commander": "6.2.0",
+    "csv-parse": "^4.15.3",
     "duplex-child-process": "1.0.1",
     "duplexify": "^3.5.0",
     "inflection": "1.10.0",
@@ -67,7 +68,6 @@
   },
   "devDependencies": {
     "chai": "^4.2.0",
-    "csv-parse": "^1.0.1",
     "eslint": "^7.12.1",
     "mocha": "^8.2.1",
     "nock": "^13.0.5",

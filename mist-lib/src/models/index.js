@@ -37,8 +37,9 @@ module.exports = function(sequelize, seqdepotModels, logger = null) {
 
   for (let name in seqdepotModels) {
     const isConflictingName = Reflect.has(models, name);
-    if (isConflictingName)
+    if (isConflictingName) {
       throw new Error(`model name conflict: ${name} exists in both MiST and SeqDepot`);
+    }
     models[name] = seqdepotModels[name];
   }
 

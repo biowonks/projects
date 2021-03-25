@@ -37,10 +37,11 @@ exports.removeOverlappingDomains = (regionContainer, domains) => {
     const domain = domains[i];
     const region = new Region(domain.start, domain.stop);
     const overlaps = regionContainer.findOverlaps(region, exports.kTolerance);
-    if (overlaps.length)
+    if (overlaps.length) {
       domains.splice(i, 1);
-    else
+    } else {
       regionContainer.add(region);
+    }
   }
 };
 
@@ -50,8 +51,9 @@ exports.removeOverlappingDomains = (regionContainer, domains) => {
  */
 exports.removeInsignificantOverlaps = (domains, threshold = kDefaultThreshold) => {
   // eslint-disable-next-line no-magic-numbers
-  if (domains.length < 2)
+  if (domains.length < 2) {
     return;
+  }
 
   const regionContainer = new RegionContainer();
 
@@ -73,8 +75,7 @@ exports.removeInsignificantOverlaps = (domains, threshold = kDefaultThreshold) =
       // the current domain/region evalue. This is because we sort by decreasing evalue and iterate
       // through the list backwards (start with the lowest evalue prediction).
       domains.splice(i, 1);
-    }
-    else {
+    } else {
       regionContainer.add(region);
     }
   }
@@ -88,38 +89,44 @@ exports.hasInsignificantOverlap = (regions, queryEvalue, threshold = kDefaultThr
     const regionDomain = region.data;
     const evalue = regionDomain.evalue;
     const isInsignificant = Math.abs(queryEvalue - evalue) > threshold;
-    if (isInsignificant)
+    if (isInsignificant) {
       return true;
+    }
   }
   return false;
 };
 
 exports.removeSpecificDomainsOverlappingWith = (domain, targetDomainNameSet, domainsToFilter) => {
-  if (!targetDomainNameSet || !domainsToFilter)
+  if (!targetDomainNameSet || !domainsToFilter) {
     return;
+  }
 
   domainsToFilter.sort((a, b) => a.start - b.start);
   for (let i = domainsToFilter.length - 1; i >= 0; i--) {
     const domainToFilter = domainsToFilter[i];
-    if (!targetDomainNameSet.has(domainToFilter.name))
+    if (!targetDomainNameSet.has(domainToFilter.name)) {
       continue;
+    }
 
     // Hacky overlap test
     // eslint-disable-next-line no-magic-numbers
     const mid = domainToFilter.start + (domainToFilter.stop - domainToFilter.start) / 2;
-    if (mid >= domain.start && mid <= domain.stop)
+    if (mid >= domain.start && mid <= domain.stop) {
       domainsToFilter.splice(i, 1);
+    }
   }
 };
 
 exports.setContainsSomeDomains = function(domains, someSet) {
   assert(someSet, 'missing required argument');
-  if (!domains)
+  if (!domains) {
     return false;
+  }
 
   for (let domain of domains) {
-    if (someSet.has(domain.name))
+    if (someSet.has(domain.name)) {
       return true;
+    }
   }
   return false;
 };
@@ -137,8 +144,7 @@ exports.readStpSpecFile = (file) => {
         if (row.specific) {
           const specific = row.specific.toLowerCase();
           row.specific = specific === 'yes' || specific === 1 || specific === 'true';
-        }
-        else {
+        } else {
           row.specific = false;
         }
 
@@ -155,8 +161,9 @@ function combineIds(row, prefix, amount, regex) {
   for (let i = 1; i <= amount; i++) {
     const fieldName = prefix + i;
     const id = row[fieldName];
-    if (id && regex.test(id))
+    if (id && regex.test(id)) {
       ids.push(id);
+    }
   }
   return ids;
 }
@@ -170,8 +177,9 @@ exports.pluck = (row, fieldNames) => {
 };
 
 exports.canClassifyChemotaxis = (ranks) => {
-  if (!ranks || ranks[0] !== PrimaryRank.chemotaxis)
+  if (!ranks || ranks[0] !== PrimaryRank.chemotaxis) {
     return false;
+  }
 
   switch (ranks[1]) {
     case SecondaryRank.chea:

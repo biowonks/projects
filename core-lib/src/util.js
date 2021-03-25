@@ -85,8 +85,9 @@ exports.scrub = (value, invalidRegex = /[^\w .-]/g) => {
 
 exports.splitAndScrubString = (value, delimiter = /\s+/) => {
   const result = [];
-  if (value === undefined || value === null)
+  if (value === undefined || value === null) {
     return result;
+  }
 
   return String(value).split(delimiter)
     .map(exports.scrub)
@@ -107,8 +108,9 @@ exports.splitAndScrubString = (value, delimiter = /\s+/) => {
  */
 exports.splitIntoTerms = (value) => {
   const result = [];
-  if (value === undefined || value === null)
+  if (value === undefined || value === null) {
     return result;
+  }
 
   const quotedTerms = [];
   const valueWithoutQuotedTerms = String(value).replace(/"([^"]*)"/g, (_, quotedWord) => {
@@ -135,8 +137,9 @@ exports.tsvFile2ArrayOfObjects = (file) => {
       .pipe(split())
       .on('data', (line) => {
         const isEmptyLine = /^\s*$/.test(line);
-        if (isEmptyLine)
+        if (isEmptyLine) {
           return;
+        }
 
         if (headerFields) {
           const parts = line.split(/\t/);
@@ -146,8 +149,7 @@ exports.tsvFile2ArrayOfObjects = (file) => {
           });
 
           result.push(row);
-        }
-        else {
+        } else {
           headerFields = line.toLowerCase().split(/\t/);
         }
       })
@@ -159,13 +161,15 @@ exports.tsvFile2ArrayOfObjects = (file) => {
 };
 
 exports.camelize = (value) => {
-  if (!value)
+  if (!value) {
     return value;
+  }
 
 
   const parts = value.trim().split(/\s+/);
-  if (parts.length === 1)
+  if (parts.length === 1) {
     return value.trim();
+  }
 
 
   const initial = parts.shift();
