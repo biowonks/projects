@@ -92,11 +92,11 @@ exports.signalGeneFinderMiddlewares = function(app, middlewares, inputGetter) {
             const escapedArrayList = namesByKindAndFunction
               .map((name) => sequelize.escape(name))
               .join(',');
-            const queryInterface = sequelize.getQueryInterface();
-            const tableName = queryInterface.quoteTable(
+            const { queryGenerator } = sequelize.getQueryInterface();
+            const tableName = queryGenerator.quoteTable(
               models.SignalGene.name,
             );
-            const field = queryInterface.quoteIdentifier('counts');
+            const field = queryGenerator.quoteIdentifier('counts');
             _.set(
               res.locals.criteria,
               ['where', Op.and],
