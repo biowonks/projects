@@ -86,7 +86,7 @@ exports.signalGeneFinderMiddlewares = function(app, middlewares, inputGetter) {
             transaction,
           );
         })
-        .then((namesByKindAndFunction) => {
+        .then(async (namesByKindAndFunction) => {
           if (namesByKindAndFunction.length) {
             // TODO: refactor this into a helper method that may be easily reused
             const escapedArrayList = namesByKindAndFunction
@@ -97,6 +97,35 @@ exports.signalGeneFinderMiddlewares = function(app, middlewares, inputGetter) {
               models.SignalGene.name,
             );
             const field = queryGenerator.quoteIdentifier('counts');
+
+            // HACK! Searching directly against counts is quite slow! Here we find the list of all
+            // signal genes constrained to the given genome. This set should be relatively small
+            // and may then be used to constrain filtering against the domain counts.
+            //
+            // Ideally, we don't have to do this at all... (maybe PG 13 is smarter than PG 10)
+            const componentModelIncludeIndex = res.locals.criteria.include.findIndex(({model}) => model === models.Component);
+            if (componentModelIncludeIndex < 0) {
+              throw new Error('failed to find component include');
+            }
+
+            // Apply any other criteria, but constrain attributes to the id field and any other
+            // included fields (could also strip away these too).
+            const result = await models.SignalGene.findAll({
+              ...res.locals.criteria,
+              attributes: ['id'],
+              include: [
+                res.locals.criteria.include[componentModelIncludeIndex],
+              ],
+              // No limit, offset, or ordering since we are fetching the entire set
+              limit: null,
+              offset: null,
+              order: null,
+            });
+            const signalGeneIdsForEntireGenome = result.map((row) => row.get('id'));
+            // Constraining to id list which already constrains to the given genome
+            delete res.locals.criteria.include[componentModelIncludeIndex].where;
+            delete res.locals.criteria.include[componentModelIncludeIndex].required;
+
             _.set(
               res.locals.criteria,
               ['where', Op.and],
@@ -104,6 +133,9 @@ exports.signalGeneFinderMiddlewares = function(app, middlewares, inputGetter) {
                 `${tableName}.${field} ?| array[${escapedArrayList}]`,
               ),
             );
+            res.locals.criteria.where.id = {
+              [Op.in]: signalGeneIdsForEntireGenome,
+            };
             next();
             return;
           }
