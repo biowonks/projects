@@ -237,9 +237,8 @@ exports.stat = function(queryPath) {
 exports.pathIsYoungerThan = function(queryPath, ms) {
   return exports.stat(queryPath)
     .then((fsStats) => {
-      let birthMoment = moment(fsStats.birthtime);
-
-      return moment().diff(birthMoment) < ms;
+      let createdMoment = moment(fsStats.ctime);
+      return moment().diff(createdMoment) < ms;
     })
     .catch(() => false);
 };

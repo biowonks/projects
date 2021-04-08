@@ -8,13 +8,15 @@ const split = require('split');
 
 exports.readChecksumsFromFile = (file) => {
   return new Promise((resolve, reject) => {
-    const lineStream = createReadStream(file)
-      .pipe(split());
+    const lineStream = createReadStream(file);
     const checksums = {};
     let invalidChecksumLine = null;
 
     lineStream
-      .on('error', reject)
+      .on('error', reject) // Must have the error handler directly attached
+                           // to the read stream or it will bork with uncaught
+                           // error if ${file} doesn't exist
+      .pipe(split())
       .on('data', (line) => {
         const checksum = exports.parseChecksumLine(line);
         if (checksum) {
