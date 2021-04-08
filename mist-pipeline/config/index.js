@@ -12,6 +12,7 @@ const database = require('../src/node_modules/mist-lib/db/config');
 
 // --------------------------------------------------------
 const vendorPath = path.resolve(__dirname, '..', 'vendor');
+const summaryFileDuration = moment.duration(1, 'day');
 
 const config = {
   paths: {
@@ -116,7 +117,7 @@ const config = {
   // ----------------------------------------------------
   // Specific module configuration
   seedNewGenomes: {
-    summaryFileDuration: moment.duration(1, 'day'),
+    summaryFileDuration,
     maxNewGenomesPerRun: 5,
     assemblySummaryLinks: [
       {
@@ -132,8 +133,19 @@ const config = {
     ],
   },
 
+  seedGenBankGenomes: {
+    summaryFileDuration,
+    maxNewGenomesPerRun: 0,
+    assemblySummaryLinks: [
+      {
+        fileName: 'assembly-summary-genbank.tsv',
+        url: 'https://ftp.ncbi.nlm.nih.gov/genomes/genbank/assembly_summary_genbank.txt',
+      },
+    ],
+  },
+
   seedNewMAGs: {
-    summaryFileDuration: moment.duration(1, 'day'),
+    summaryFileDuration,
     maxNewGenomesPerRun: 0,
     assemblySummaryLink: {
       fileName: 'assembly-summary-genbank.tsv',

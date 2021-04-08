@@ -184,6 +184,7 @@ class SeedNewGenomes extends OncePipelineModule {
       trim: true,
       relax: true,
       skip_empty_lines: true,
+      skip_lines_with_error: true,
       auto_parse: false,	// do not attempt to convert input strings to native types
     });
 
@@ -194,12 +195,14 @@ class SeedNewGenomes extends OncePipelineModule {
     // newline character that is stripped by LineStream.
     let skippedFirstLine = false;
     const skipLineStream = through2.obj(function(line, encoding, done) {
-      if (skippedFirstLine)
-      // The CSV parser expects input with newlines. Here we add them back because the
-      // LineStream removes them.
-        this.push(line + '\n'); // eslint-disable-line no-invalid-this
-      else
+      if (skippedFirstLine) {
+        // The CSV parser expects input with newlines. Here we add them back because the
+        // LineStream removes them.
+        // eslint-disable-next-line no-invalid-this
+        this.push(line + '\n');
+      } else {
         skippedFirstLine = true;
+      }
       done();
     });
     let numGenomeSummaries = 0;
@@ -210,16 +213,19 @@ class SeedNewGenomes extends OncePipelineModule {
       streamEach(pipeline, (row, next) => {
         this.shutdownCheck_();
         const genomeData = this.genomeDataFromRow_(row);
-        if (genomeData)
+        if (genomeData) {
           numGenomeSummaries++;
-        if (this.acceptGenome_(genomeData))
+        }
+        if (this.acceptGenome_(genomeData)) {
           genomeSummaries.push(genomeData);
+        }
         next();
       }, (error) => {
-        if (error)
+        if (error) {
           reject(error);
-        else
+        } else {
           resolve();
+        }
       });
     });
 

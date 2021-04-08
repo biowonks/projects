@@ -28,8 +28,9 @@ class NCBIDataHelper {
   isDownloaded(sourceType) {
     return this.ensureChecksumsLoaded_()
       .then(() => {
-        if (sourceType === 'checksums')
+        if (sourceType === 'checksums') {
           return true;
+        }
 
         return this.verify_(sourceType);
       });
@@ -43,13 +44,15 @@ class NCBIDataHelper {
     const destFile = this.fileMapper_.pathFor(sourceType);
     return mutil.fileNotEmpty(destFile)
       .then((notEmpty) => {
-        if (!notEmpty)
+        if (!notEmpty) {
           return this.downloadAndVerify_(sourceType);
+        }
 
         return this.verify_(sourceType)
           .then((isComplete) => {
-            if (isComplete)
+            if (isComplete) {
               return null;
+            }
 
             // File exists but is not complete
             this.logger_.info({sourceType, file: destFile}, 'File exists, but is not complete');
@@ -85,8 +88,9 @@ class NCBIDataHelper {
     const destFile = this.fileMapper_.pathFor(sourceType);
     return mutil.fileExists(destFile)
       .then((fileExists) => {
-        if (!fileExists)
+        if (!fileExists) {
           return false;
+        }
 
         const fileName = this.fileMapper_.localFileNameFor(sourceType);
         const ncbiFileName = this.fileMapper_.ncbiFileNameFor(sourceType);
@@ -153,8 +157,9 @@ class NCBIDataHelper {
       .catch((error) => {
         ++tries;
         this.logger_.error({error, url, targetFile, tries}, 'Failed to download file. Retrying');
-        if (tries >= MAX_DOWNLOAD_TRIES)
+        if (tries >= MAX_DOWNLOAD_TRIES) {
           throw error;
+        }
         return mutil.delay(DELAY_BETWEEN_DOWNLOAD_ATTEMPTS_MS).then(download);
       });
 
