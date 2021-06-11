@@ -16,11 +16,11 @@ module.exports = {
 
   // NOTE: The DATABASE_URL environment variable if defined will override these values.
   dialect: 'postgres',
-  user: 'mist_dev_admin',
-  password: '$&hxsALC!7_c',
-  host: 'mist-pg-db', // docker-specific
+  user: 'mist-admin',
+  password: 'mist-admin-password',
+  host: 'pg-db', // docker-specific
   port: 5432,
-  name: 'mist_dev',
+  name: 'mist',
   ssl: {
     require: true,
     rejectUnauthorized: false,

@@ -34,7 +34,7 @@ services:
   pg-db:
     image: biowonks/mist-pg-db:fbbac35
     volumes:
-      - db-13.0:/var/lib/postgresql/data
+      - db-13.3:/var/lib/postgresql/data
     environment:
       # The POSTGRES_* variables are passed to the postgresql image
       - POSTGRES_USER
@@ -54,4 +54,4 @@ services:
 
 # -------------------------------------------------------
 volumes:
-  db-13.0:
+  db-13.3:

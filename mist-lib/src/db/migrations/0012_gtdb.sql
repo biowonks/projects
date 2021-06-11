@@ -6,13 +6,13 @@ create table gtdb (
   ncbi_assembly_name text,
   ncbi_genbank_accession text,
 
-	superkingdom text,
-	phylum text,
-	class text,
-	orderr text,
-	family text,
-	genus text,
-	species text,
+  superkingdom text,
+  phylum text,
+  class text,
+  orderr text,
+  family text,
+  genus text,
+  species text,
 
   -- The following 6 fields are taken from the sp_clusters file and are
   -- only defined for representative genomes

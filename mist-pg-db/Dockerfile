@@ -1,4 +1,4 @@
-FROM postgres:13.1
+FROM postgres:13.3
 
 ARG GIT_HASH
 
