@@ -51,7 +51,7 @@
     "inflection": "1.10.0",
     "lodash": "4.17.20",
     "mkdirp": "1.0.4",
-    "moment": "2.29.1",
+    "moment": "2.29.4",
     "mv": "2.1.1",
     "newrelic": "^7.0.2",
     "node-config-loader": "https://github.com/lukeulrich/node-config-loader.git",
